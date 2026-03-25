@@ -1,0 +1,117 @@
+export type UserRole = 'super_admin' | 'company_admin' | 'manager' | 'staff' | 'sales_agent';
+
+export interface NavItem {
+  name: string;
+  icon: string;
+  path: string;
+  moduleId: string; // The primary key used to check against user.allowedModules
+  children?: NavItem[]; // Optional child items for dropdowns like Reports
+}
+
+/**
+ * Navigation configuration.
+ * Roles are no longer hardcoded here. Instead, each item is tied to a moduleId.
+ * The User object returned by the API will specify which moduleIds that user can access.
+ */
+export const navigationConfig: NavItem[] = [
+  { name: 'Dashboard', icon: 'bi-grid-1x2', path: '/dashboard', moduleId: 'default' },
+  { name: 'Item', icon: 'bi-box-seam', path: '/master/items', moduleId: 'mod_items' },
+  { name: 'Process', icon: 'bi-gear-wide-connected', path: '/master/processes', moduleId: 'mod_processes' },
+  { name: 'Customer', icon: 'bi-people', path: '/customers', moduleId: 'mod_customer' },
+  { name: 'Vendor', icon: 'bi-truck', path: '/vendors', moduleId: 'mod_vendor' },
+  { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
+  { name: 'Inward', icon: 'bi-box-arrow-in-right', path: '/inward', moduleId: 'mod_inward' },
+  { name: 'Outward', icon: 'bi-box-arrow-up-right', path: '/outward', moduleId: 'mod_outward' },
+  { name: 'Invoice', icon: 'bi-file-earmark-spreadsheet', path: '/invoices', moduleId: 'mod_invoice' },
+  { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
+  { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'default' },
+  { 
+    name: 'Reports', 
+    icon: 'bi-file-earmark-text', 
+    path: '#', 
+    moduleId: 'default',
+    children: [
+      { name: 'Payment Report', icon: 'bi-cash-stack', path: '/reports/payment', moduleId: 'mod_voucher' },
+      { name: 'Invoice Report', icon: 'bi-file-earmark-bar-graph', path: '/reports/invoice', moduleId: 'mod_invoice' },
+      { name: 'Inward Report', icon: 'bi-box-arrow-in-left', path: '/reports/inward', moduleId: 'mod_inward' },
+      { name: 'Voucher', icon: 'bi-receipt-cutoff', path: '/reports/voucher', moduleId: 'mod_voucher' },
+      { name: 'GST Report', icon: 'bi-file-text', path: '/reports/gst', moduleId: 'mod_invoice' },
+      { name: 'Ledger Report', icon: 'bi-journal', path: '/ledger', moduleId: 'mod_ledger' },
+    ]
+  },
+  { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
+  { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
+  { name: 'Payments & Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
+  { name: 'Employees', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
+  { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
+  { name: 'Sales Hub', icon: 'bi-graph-up-arrow', path: '/sales-hub', moduleId: 'mod_sales_hub' },
+  { name: 'Sales Map', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_hub' },
+  { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
+  { name: 'Companies', icon: 'bi-building', path: '/admin/companies', moduleId: 'super_admin' },
+  { name: 'Settings', icon: 'bi-gear', path: '/settings', moduleId: 'default' },
+];
+
+export interface ModulePermission {
+  moduleId: string;
+  canRead: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+export type PermissionUser = {
+  role: string;
+  modulePermissions?: ModulePermission[];
+};
+
+/**
+ * Utility to check if a user can access a navigation item based on 
+ * their modulePermissions (provided by API/Data) and the company's active profile.
+ * Just requires 'canRead' permission.
+ */
+export const hasPermission = (
+  item: NavItem, 
+  user: PermissionUser | null | undefined, 
+  companyModules: string[] | undefined
+): boolean => {
+  if (!user || !user.modulePermissions) return false;
+
+  // Super Admin & Company Admin bypass
+  if (user.role === 'super_admin' || user.role === 'company_admin') return true;
+
+  // 2. Default Access (items like Dashboard/Settings that don't belong to a specific paid module)
+  if (item.moduleId === 'default') return true;
+
+  // 3. Module check: Is this module active for the organization?
+  const isModuleActive = companyModules?.includes(item.moduleId);
+  if (!isModuleActive) return false;
+
+  // 4. User check: Does the user have read access?
+  const perm = user.modulePermissions.find(p => p.moduleId === item.moduleId);
+  return perm ? perm.canRead : false;
+};
+
+/**
+ * Utility function to check specific action permissions (Create, Edit, Delete).
+ * Will be used inside component pages (e.g., hiding the "New Lead" button if !canCreate).
+ */
+export const checkActionPermission = (
+  user: PermissionUser | null | undefined,
+  moduleId: string,
+  action: 'create' | 'edit' | 'delete'
+): boolean => {
+  if (!user || !user.modulePermissions) return false;
+  
+  // Super Admin & Company Admin bypass
+  if (user.role === 'super_admin' || user.role === 'company_admin') return true;
+  
+  const perm = user.modulePermissions.find(p => p.moduleId === moduleId);
+  if (!perm) return false;
+  
+  switch (action) {
+    case 'create': return perm.canCreate;
+    case 'edit': return perm.canEdit;
+    case 'delete': return perm.canDelete;
+    default: return false;
+  }
+};

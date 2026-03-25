@@ -1,0 +1,142 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { User, Company } from '@/types/modules';
+import { setCookie, deleteCookie } from '@/lib/cookies';
+
+interface AuthState {
+  user: User | null;
+  company: Company | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+}
+
+// Load initial state from localStorage if available (Client-side only)
+const getInitialState = (): AuthState => {
+  if (typeof window !== 'undefined') {
+    const savedAuth = localStorage.getItem('globus_auth');
+    if (savedAuth) {
+      try {
+        const parsed = JSON.parse(savedAuth);
+        // Migration/Sanity Check: Ensure the loaded user has the new modulePermissions field
+        if (parsed.user && !parsed.user.modulePermissions) {
+           localStorage.removeItem('globus_auth');
+           return { user: null, company: null, token: null, isAuthenticated: false, loading: false, error: null };
+        }
+        return {
+          ...parsed,
+          loading: false,
+          error: null,
+        };
+      } catch (e) {
+        console.error('Failed to parse saved auth', e);
+      }
+    }
+  }
+  return {
+    user: null,
+    company: null,
+    token: null,
+    isAuthenticated: false,
+    loading: false,
+    error: null,
+  };
+};
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: getInitialState(),
+  reducers: {
+    loginStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    loginSuccess: (state, action: PayloadAction<{ user: any; company: Company | null; token: string }>) => {
+      const { user } = action.payload;
+      // Handle potential snake_case from DB
+      const processedUser: User = {
+        ...user,
+        company_id: user.company_id || user.company_id,
+        modulePermissions: user.modulePermissions || (typeof user.module_permissions === 'string' ? JSON.parse(user.module_permissions) : user.module_permissions) || []
+      };
+
+      state.loading = false;
+      state.user = processedUser;
+      state.company = action.payload.company;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+      
+      // Persist to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('globus_auth', JSON.stringify({
+          user: processedUser,
+          company: action.payload.company,
+          token: action.payload.token,
+          isAuthenticated: true
+        }));
+        // Set cookie for middleware
+        setCookie('token', action.payload.token);
+      }
+    },
+    loginFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    logout: (state) => {
+      state.user = null;
+      state.company = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      
+      // Clear persistence
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('globus_auth');
+        deleteCookie('token');
+      }
+    },
+    setCompanyContext: (state, action: PayloadAction<Company | null>) => {
+      state.company = action.payload;
+      if (typeof window !== 'undefined') {
+        const savedAuth = localStorage.getItem('globus_auth');
+        if (savedAuth) {
+          try {
+            const parsed = JSON.parse(savedAuth);
+            localStorage.setItem('globus_auth', JSON.stringify({
+              ...parsed,
+              company: action.payload
+            }));
+          } catch (e) {
+            console.error('Failed to update persisted company context', e);
+          }
+        }
+      }
+    },
+    updateUser: (state, action: PayloadAction<any>) => {
+      const user = action.payload;
+      const processedUser: User = {
+        ...user,
+        company_id: user.company_id || user.company_id,
+        modulePermissions: user.modulePermissions || (typeof user.module_permissions === 'string' ? JSON.parse(user.module_permissions) : user.module_permissions) || []
+      };
+      
+      state.user = processedUser;
+      if (typeof window !== 'undefined') {
+        const savedAuth = localStorage.getItem('globus_auth');
+        if (savedAuth) {
+          try {
+            const parsed = JSON.parse(savedAuth);
+            localStorage.setItem('globus_auth', JSON.stringify({
+              ...parsed,
+              user: processedUser
+            }));
+          } catch (e) {
+            console.error('Failed to update persisted user profile', e);
+          }
+        }
+      }
+    },
+  },
+});
+
+export const { loginStart, loginSuccess, loginFailure, logout, setCompanyContext, updateUser } = authSlice.actions;
+export default authSlice.reducer;
