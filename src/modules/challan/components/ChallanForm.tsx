@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { addChallan, updateChallan } from '@/redux/features/challanSlice';
+import { createChallan, updateChallan } from '@/redux/features/challanSlice';
 import { Challan, Customer, Vendor } from '@/data/mockModules';
 import StatusModal from '@/components/StatusModal';
 
@@ -97,7 +97,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
     e.preventDefault();
     try {
       if (mode === 'create') {
-        dispatch(addChallan(formData));
+        dispatch(createChallan(formData) as any);
         setModal({
           isOpen: true,
           type: 'success',
@@ -105,7 +105,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
           message: `Delivery challan ${formData.challanNo} has been successfully generated.`
         });
       } else {
-        dispatch(updateChallan({ ...initialData!, ...formData }));
+        dispatch(updateChallan({ ...initialData!, ...formData }) as any);
         setModal({
           isOpen: true,
           type: 'success',

@@ -29,7 +29,7 @@ export default function CompaniesPage() {
 
   const confirmDelete = () => {
     if (confirmText === 'DELETE' && deleteModal.company_id) {
-      dispatch(deleteCompany(deleteModal.company_id));
+      dispatch(deleteCompany(deleteModal.company_id) as any);
       setDeleteModal({ isOpen: false, company_id: null });
       setConfirmText('');
     }

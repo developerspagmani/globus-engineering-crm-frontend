@@ -36,7 +36,9 @@ export default function EditInvoicePage() {
               <h2 className="fw-bold mb-1">Edit Invoice: {invoice.invoiceNumber}</h2>
               <p className="text-muted small mb-0">Modify billing details for {invoice.customerName}.</p>
             </div>
-            <InvoiceForm mode="edit" initialData={invoice} />
+            <React.Suspense fallback={<div>Loading form...</div>}>
+              <InvoiceForm mode="edit" initialData={invoice} />
+            </React.Suspense>
           </>
         )}
       </div>

@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 
-const NewVoucherPage = () => {
+const NewVoucherPageContent = () => {
   const searchParams = useSearchParams();
   const customerId = searchParams.get('customerId');
   const invoiceId = searchParams.get('invoiceId');
@@ -49,6 +49,14 @@ const NewVoucherPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const NewVoucherPage = () => {
+  return (
+    <React.Suspense fallback={<div className="p-5 text-center">Initializing interface...</div>}>
+      <NewVoucherPageContent />
+    </React.Suspense>
   );
 };
 

@@ -30,7 +30,7 @@ const CompanySettings: React.FC = () => {
         name: formData.name,
         slug: formData.slug,
       };
-      dispatch(updateCompany(updatedCompany));
+      dispatch(updateCompany(updatedCompany) as any);
       // Note: In a real app, we'd also update the context in authSlice if needed
       setSaving(false);
       setMessage('Company details updated successfully!');

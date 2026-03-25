@@ -26,7 +26,9 @@ export default function CreateInvoicePage() {
           </div>
         </div>
 
-        <InvoiceForm mode="create" />
+        <React.Suspense fallback={<div>Loading form...</div>}>
+          <InvoiceForm mode="create" />
+        </React.Suspense>
       </div>
     </ModuleGuard>
   );
