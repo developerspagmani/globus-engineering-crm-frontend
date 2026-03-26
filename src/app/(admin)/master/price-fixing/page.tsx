@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchPriceFixings, createPriceFixingThunk, fetchItems, fetchProcesses } from '@/redux/features/masterSlice';
+import { fetchPriceFixings, createPriceFixingThunk, updatePriceFixingThunk, deletePriceFixingThunk, fetchItems, fetchProcesses } from '@/redux/features/masterSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
@@ -15,6 +15,7 @@ export default function PriceFixingPage() {
   const { company } = useSelector((state: RootState) => state.auth);
   
   const [view, setView] = useState<'add' | 'list'>('list');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ 
     customerId: '', 
@@ -37,17 +38,41 @@ export default function PriceFixingPage() {
       const item = items.find(i => String(i.id) === formData.itemId);
       const process = processes.find(p => String(p.id) === formData.processId);
 
-      await (dispatch as any)(createPriceFixingThunk({ 
+      const payload = { 
         ...formData, 
         customerName: customer?.name || '',
         itemName: item?.itemName || '',
         processName: process?.processName || '',
         company_id: company.id 
-      }));
+      };
+
+      if (editingId) {
+        await (dispatch as any)(updatePriceFixingThunk({ id: editingId, ...payload }));
+        setEditingId(null);
+      } else {
+        await (dispatch as any)(createPriceFixingThunk(payload));
+      }
       setFormData({ customerId: '', itemId: '', processId: '', price: '' });
       setView('list');
     } else {
       alert("Please select a company from the top navigation first.");
+    }
+  };
+
+  const handleEdit = (pf: any) => {
+    setEditingId(pf.id);
+    setFormData({ 
+      customerId: String(pf.customerId), 
+      itemId: String(pf.itemId), 
+      processId: String(pf.processId), 
+      price: String(pf.price) 
+    });
+    setView('add');
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this price fixing entry?')) {
+      (dispatch as any)(deletePriceFixingThunk(id));
     }
   };
 
@@ -65,8 +90,8 @@ export default function PriceFixingPage() {
           <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>Price Fixing Details</h4>
           <div className="d-flex gap-2">
             <button
-              onClick={() => setView('add')}
-              className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
+              onClick={() => { setView('add'); setEditingId(null); setFormData({ customerId: '', itemId: '', processId: '', price: '' }); }}
+              className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' && !editingId ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
               style={{ backgroundColor: '#9C27B0', border: 'none', fontSize: '0.85rem' }}
             >
               <i className="bi bi-plus" style={{ fontSize: '1.2rem' }}></i>
@@ -86,6 +111,9 @@ export default function PriceFixingPage() {
         <div className="p-5">
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
+              <div className="mb-4">
+                <h5 className="fw-bold text-primary">{editingId ? 'Edit Price Fixing' : 'Add New Price Fixing'}</h5>
+              </div>
               <form onSubmit={handleSubmit}>
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
@@ -94,7 +122,7 @@ export default function PriceFixingPage() {
                   <div className="col-md-9">
                     <select
                       required
-                      className="form-control border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
+                      className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
                       style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
                       value={formData.customerId}
                       onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
@@ -112,7 +140,7 @@ export default function PriceFixingPage() {
                   <div className="col-md-9">
                     <select
                       required
-                      className="form-control border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
+                      className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
                       style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
                       value={formData.itemId}
                       onChange={(e) => setFormData({ ...formData, itemId: e.target.value })}
@@ -130,7 +158,7 @@ export default function PriceFixingPage() {
                   <div className="col-md-9">
                     <select
                       required
-                      className="form-control border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
+                      className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
                       style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
                       value={formData.processId}
                       onChange={(e) => setFormData({ ...formData, processId: e.target.value })}
@@ -165,15 +193,15 @@ export default function PriceFixingPage() {
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
                     style={{ backgroundColor: '#00C853', border: 'none', minWidth: '100px' }}
                   >
-                    ADD
+                    {editingId ? 'UPDATE' : 'ADD'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ customerId: '', itemId: '', processId: '', price: '' })}
+                    onClick={() => { setFormData({ customerId: '', itemId: '', processId: '', price: '' }); setEditingId(null); }}
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
                     style={{ backgroundColor: '#FF3D00', border: 'none', minWidth: '100px' }}
                   >
-                    RESET
+                    {editingId ? 'CANCEL' : 'RESET'}
                   </button>
                 </div>
               </form>
@@ -195,7 +223,7 @@ export default function PriceFixingPage() {
                 </div>
               </div>
 
-              <div className="table-responsive rounded-2 border">
+              <div className="table-responsive rounded-2 border mx-auto p-1" style={{ maxWidth: '900px' }}>
                 <table className="table table-hover align-middle mb-0">
                   <thead className="bg-light">
                     <tr>
@@ -225,10 +253,10 @@ export default function PriceFixingPage() {
                           <td className="px-4 py-3 fw-bold">{pf.customerName}</td>
                           <td className="px-4 py-3">{pf.itemName}</td>
                           <td className="px-4 py-3 text-muted italic">{pf.processName}</td>
-                          <td className="px-4 py-3 text-end fw-bold text-success">₹ {pf.price.toLocaleString('en-IN')}</td>
+                          <td className="px-4 py-3 text-end fw-bold text-success">₹ {Number(pf.price).toLocaleString('en-IN')}</td>
                           <td className="px-4 py-3 text-end">
-                            <button className="btn btn-sm btn-link text-info me-2"><i className="bi bi-pencil"></i></button>
-                            <button className="btn btn-sm btn-link text-danger"><i className="bi bi-trash"></i></button>
+                            <button onClick={() => handleEdit(pf)} className="btn btn-sm btn-link text-info me-2 shadow-none p-0"><i className="bi bi-pencil"></i></button>
+                            <button onClick={() => handleDelete(pf.id)} className="btn btn-sm btn-link text-danger shadow-none p-0"><i className="bi bi-trash"></i></button>
                           </td>
                         </tr>
                       ))

@@ -124,6 +124,13 @@ export default function OutwardListPage() {
                     </td>
                   </tr>
                 ))}
+                {paginatedItems.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-5 text-muted">
+                      No outward records found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchItems, createItemThunk } from '@/redux/features/masterSlice';
+import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 
@@ -13,6 +13,7 @@ export default function ItemDetailsPage() {
   const { company } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ itemCode: '', itemName: '' });
 
@@ -23,11 +24,28 @@ export default function ItemDetailsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (company?.id) {
-      await (dispatch as any)(createItemThunk({ ...formData, company_id: company.id }));
+      if (editingId) {
+        await (dispatch as any)(updateItemThunk({ id: editingId, ...formData }));
+        setEditingId(null);
+      } else {
+        await (dispatch as any)(createItemThunk({ ...formData, company_id: company.id }));
+      }
       setFormData({ itemCode: '', itemName: '' });
       setView('list');
     } else {
       alert("Please select a company from the top navigation first.");
+    }
+  };
+
+  const handleEdit = (item: any) => {
+    setEditingId(item.id);
+    setFormData({ itemCode: item.itemCode, itemName: item.itemName });
+    setView('add');
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this item?')) {
+      (dispatch as any)(deleteItemThunk(id));
     }
   };
 
@@ -44,8 +62,8 @@ export default function ItemDetailsPage() {
           <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>Item Details</h4>
           <div className="d-flex gap-2">
             <button
-              onClick={() => setView('add')}
-              className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
+              onClick={() => { setView('add'); setEditingId(null); setFormData({ itemCode: '', itemName: '' }); }}
+              className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' && !editingId ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
               style={{ backgroundColor: '#9C27B0', border: 'none', fontSize: '0.85rem' }}
             >
               <i className="bi bi-plus" style={{ fontSize: '1.2rem' }}></i>
@@ -65,6 +83,9 @@ export default function ItemDetailsPage() {
         <div className="p-5">
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
+              <div className="mb-4">
+                <h5 className="fw-bold text-primary">{editingId ? 'Edit Item' : 'Add New Item'}</h5>
+              </div>
               <form onSubmit={handleSubmit}>
                 {/* Item Code Field */}
                 <div className="row mb-5 align-items-center">
@@ -109,15 +130,15 @@ export default function ItemDetailsPage() {
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
                     style={{ backgroundColor: '#00C853', border: 'none', minWidth: '100px' }}
                   >
-                    ADD
+                    {editingId ? 'UPDATE' : 'ADD'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ itemCode: '', itemName: '' })}
+                    onClick={() => { setFormData({ itemCode: '', itemName: '' }); setEditingId(null); }}
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
                     style={{ backgroundColor: '#FF3D00', border: 'none', minWidth: '100px' }}
                   >
-                    RESET
+                    {editingId ? 'CANCEL' : 'RESET'}
                   </button>
                 </div>
               </form>
@@ -139,7 +160,7 @@ export default function ItemDetailsPage() {
                 </div>
               </div>
 
-              <div className="table-responsive rounded-2 border">
+              <div className="table-responsive rounded-2 border mx-auto p-1" style={{ maxWidth: '900px' }}>
                 <table className="table table-hover align-middle mb-0">
                   <thead className="bg-light">
                     <tr>
@@ -152,13 +173,13 @@ export default function ItemDetailsPage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={3} className="text-center py-5">
+                        <td colSpan={4} className="text-center py-5">
                           <div className="spinner-border spinner-border-sm text-primary"></div>
                         </td>
                       </tr>
                     ) : filteredItems.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="text-center py-5 text-muted">No items found</td>
+                        <td colSpan={4} className="text-center py-5 text-muted">No items found</td>
                       </tr>
                     ) : (
                       filteredItems.map((item, index) => (
@@ -167,8 +188,8 @@ export default function ItemDetailsPage() {
                           <td className="px-4 py-3 font-monospace">{item.itemCode}</td>
                           <td className="px-4 py-3">{item.itemName}</td>
                           <td className="px-4 py-3 text-end">
-                            <button className="btn btn-sm btn-link text-info me-2"><i className="bi bi-pencil"></i></button>
-                            <button className="btn btn-sm btn-link text-danger"><i className="bi bi-trash"></i></button>
+                            <button onClick={() => handleEdit(item)} className="btn btn-sm btn-link text-info me-2 shadow-none p-0"><i className="bi bi-pencil"></i></button>
+                            <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-link text-danger shadow-none p-0"><i className="bi bi-trash"></i></button>
                           </td>
                         </tr>
                       ))

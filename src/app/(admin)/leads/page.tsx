@@ -119,7 +119,7 @@ const LeadsPage = () => {
         </div>
       </div>
 
-      <div className="table-responsive">
+      <div className="table-responsive p-1 mx-auto" style={{ maxWidth: '1100px' }}>
         <table className="table align-middle">
           <thead>
             <tr>

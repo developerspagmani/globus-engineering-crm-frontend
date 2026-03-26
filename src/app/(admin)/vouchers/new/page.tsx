@@ -27,7 +27,7 @@ const NewVoucherPageContent = () => {
     paymentMode: 'bank' as const,
     status: 'draft' as const,
     company_id: targetInvoice.company_id,
-    referenceNo: `INV-${targetInvoice.invoiceNumber}`
+    referenceNo: String(targetInvoice.id)
   } : undefined;
 
   return (

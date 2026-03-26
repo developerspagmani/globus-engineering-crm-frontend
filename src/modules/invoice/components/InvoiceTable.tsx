@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { deleteInvoice, setInvoicePage } from '@/redux/features/invoiceSlice';
+import { deleteInvoice, setInvoicePage, fetchNextNumbers } from '@/redux/features/invoiceSlice';
 import { deleteInward, fetchInwards } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
 import { checkActionPermission } from '@/config/permissions';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const InvoiceTable: React.FC = () => {
   const dispatch = useDispatch();
@@ -16,11 +18,107 @@ const InvoiceTable: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST'>('INVOICELIST');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [localFilter, setLocalFilter] = useState('');
+
+  // --- ACTIONS ---
+  const handlePrint = () => {
+    const table = document.querySelector('table');
+    if (!table) return;
+
+    // Clone table and remove action column
+    const printTable = table.cloneNode(true) as HTMLTableElement;
+    const headerRow = printTable.querySelector('thead tr');
+    if (headerRow) {
+      const lastTh = headerRow.querySelector('th:last-child');
+      if (lastTh) lastTh.remove();
+    }
+    const bodyRows = printTable.querySelectorAll('tbody tr');
+    bodyRows.forEach(row => {
+      const lastTd = row.querySelector('td:last-child');
+      if (lastTd) lastTd.remove();
+    });
+
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (!printWindow) return;
+
+    printWindow.document.write('<html><head><title>Print Records</title>');
+    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: Arial;} th, td {border: 1px solid #ddd; padding: 10px; text-align: left;} th {background-color: #f2f2f2;} .text-uppercase {text-transform: uppercase;}</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<h2 style="text-align: center;">Globus Engineering CRM - Record Export</h2>');
+    printWindow.document.write(printTable.outerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const handleCopyTable = () => {
+    const table = document.querySelector('table');
+    if (!table) return;
+    
+    let text = "";
+    const rows = table.querySelectorAll('tr');
+    rows.forEach(row => {
+      const cols = Array.from(row.querySelectorAll('th, td'));
+      // Exclude the last column (Action)
+      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
+      text += rowData + "\n";
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Table data copied to clipboard!");
+    });
+  };
+
+  const handleExportExcel = () => {
+    const rows = document.querySelectorAll('table tr');
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    rows.forEach(row => {
+      const cols = Array.from(row.querySelectorAll('th, td'));
+      // Exclude the last column (Action)
+      const rowData = cols.slice(0, -1)
+        .map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`)
+        .join(",");
+      csvContent += rowData + "\r\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `invoices_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const table = document.querySelector('table');
+    if (!table) return;
+
+    const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(h => (h as HTMLElement).innerText.trim());
+    const data = Array.from(table.querySelectorAll('tbody tr')).map(row => {
+      return Array.from(row.querySelectorAll('td')).slice(0, -1).map(td => (td as HTMLElement).innerText.trim());
+    });
+
+    doc.text("Globus Engineering CRM - Invoice Records", 14, 15);
+    autoTable(doc, {
+      head: [headers],
+      body: data,
+      startY: 20,
+      theme: 'striped',
+      headStyles: { fillColor: [0, 188, 212] }, // Match Cyan
+    });
+
+    doc.save(`invoices_export_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
 
   // Automatically fetch inwards if not already loaded when viewing Add Invoice tab
   React.useEffect(() => {
     if (activeCompany?.id) {
       (dispatch as any)(fetchInwards(activeCompany.id));
+      (dispatch as any)(fetchNextNumbers(activeCompany.id));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -106,12 +204,11 @@ const InvoiceTable: React.FC = () => {
              <option>50</option>
           </select>
        </div>
-       <div className="d-flex gap-1 flex-wrap">
-          <button className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#00bcd4', borderColor: '#00bcd4' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
-          <button className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#9c27b0', borderColor: '#9c27b0' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
-          <button className="btn btn-success btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm"><i className="bi bi-files fw-bold"></i> COPY</button>
-          <button className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}><i className="bi bi-file-earmark-pdf fw-bold"></i> PDF</button>
-          <button className="btn btn-light btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border"><i className="bi bi-layout-three-columns fw-bold"></i> <i className="bi bi-chevron-down ms-1"></i></button>
+       <div className="d-flex gap-1 flex-wrap hide-print">
+          <button onClick={handlePrint} className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#00bcd4', borderColor: '#00bcd4' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
+          <button onClick={handleExportExcel} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#9c27b0', borderColor: '#9c27b0' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
+          <button onClick={handleCopyTable} className="btn btn-success btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm"><i className="bi bi-files fw-bold"></i> COPY</button>
+          <button onClick={handleExportPDF} className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}><i className="bi bi-file-earmark-pdf fw-bold"></i> PDF</button>
        </div>
     </div>
   );
@@ -187,7 +284,6 @@ const InvoiceTable: React.FC = () => {
             <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td className="text-center pe-4">
               <div className="d-flex justify-content-center gap-2">
-                 <button className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#3f51b5', width: '32px', height: '32px', lineHeight: '18px' }}><i className="bi bi-printer fw-bold" style={{ fontSize: '0.8rem' }}></i></button>
                  <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#4caf50', width: '32px', height: '32px', lineHeight: '18px' }}><i className="bi bi-pencil fw-bold" style={{ fontSize: '0.8rem' }}></i></Link>
                  <button className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#f44336', width: '32px', height: '32px', lineHeight: '18px' }} onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}><i className="bi bi-x-lg fw-bold" style={{ fontSize: '0.8rem' }}></i></button>
               </div>
@@ -223,7 +319,6 @@ const InvoiceTable: React.FC = () => {
             <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td className="text-center pe-4">
                <div className="d-flex justify-content-center gap-2">
-                 <button className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#03a9f4', width: '32px', height: '32px', lineHeight: '18px' }}><i className="bi bi-printer fw-bold" style={{ fontSize: '0.8rem' }}></i></button>
                  <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#4caf50', width: '32px', height: '32px', lineHeight: '18px' }}><i className="bi bi-pencil fw-bold" style={{ fontSize: '0.8rem' }}></i></Link>
                  <button className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#f44336', width: '32px', height: '32px', lineHeight: '18px' }} onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}><i className="bi bi-x-lg fw-bold" style={{ fontSize: '0.8rem' }}></i></button>
                </div>
@@ -264,6 +359,16 @@ const InvoiceTable: React.FC = () => {
         .btn:hover { opacity: 0.9; }
         .border-danger { border-color: #ff4081 !important; color: #ff4081 !important; }
         .text-danger { color: #ff4081 !important; }
+        
+        @media print {
+          :global(body *) { visibility: hidden; }
+          .table-responsive, .table-responsive * { visibility: visible; }
+          .table-responsive { position: absolute; left: 0; top: 0; width: 100%; }
+          .table th:last-child, .table td:last-child { display: none !important; }
+          .table { border: 1px solid #dee2e6 !important; width: 100% !important; }
+          .hide-print { display: none !important; }
+          :global(.sidebar), :global(.header), :global(.breadcrumb), .card-header, .pagination, .border-bottom { display: none !important; }
+        }
       `}</style>
     </div>
   );

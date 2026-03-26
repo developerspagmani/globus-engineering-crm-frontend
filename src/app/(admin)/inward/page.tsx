@@ -63,7 +63,7 @@ export default function InwardListPage() {
         <div className="card border-0 shadow-sm mb-4">
           <div className="card-body">
             <div className="row g-3">
-              <div className="col-md-12">
+              <div className="col-md-8">
                 <input
                   type="text"
                   className="form-control"

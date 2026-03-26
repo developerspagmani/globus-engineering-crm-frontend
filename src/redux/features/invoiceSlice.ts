@@ -116,6 +116,18 @@ export const deleteInvoice = createAsyncThunk(
   }
 );
 
+export const fetchNextNumbers = createAsyncThunk(
+  'invoices/fetchNextNumbers',
+  async (companyId: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/invoices/next-numbers?companyId=${companyId}`);
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch next numbers');
+    }
+  }
+);
+
 interface InvoiceState {
   items: Invoice[];
   loading: boolean;
@@ -136,6 +148,8 @@ interface InvoiceState {
     nextNumber: number;
     showLogo: boolean;
     accentColor: string;
+    nextInvoice: string | null;
+    nextChallan: string | null;
   };
 }
 
@@ -159,6 +173,8 @@ const initialState: InvoiceState = {
     nextNumber: 1,
     showLogo: true,
     accentColor: '#0d6efd',
+    nextInvoice: null,
+    nextChallan: null,
   },
 };
 
@@ -202,6 +218,10 @@ const invoiceSlice = createSlice({
       })
       .addCase(deleteInvoice.fulfilled, (state, action) => {
         state.items = state.items.filter(inv => inv.id !== action.payload);
+      })
+      .addCase(fetchNextNumbers.fulfilled, (state, action) => {
+        state.settings.nextInvoice = String(action.payload.nextInvoice || '').padStart(4, '0');
+        state.settings.nextChallan = String(action.payload.nextChallan || '').padStart(4, '0');
       });
   }
 });

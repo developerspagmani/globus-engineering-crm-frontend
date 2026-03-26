@@ -74,7 +74,7 @@ export default function InvoiceHistoryPage() {
             <div className="card border-0 shadow-sm rounded-4 h-100">
                <div className="card-body p-4">
                   <div className="x-small text-uppercase tracking-widest text-muted fw-bold mb-2">Total Billed</div>
-                  <div className="h3 fw-900 mb-0 font-monospace">${totalBilled.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                  <div className="h3 fw-900 mb-0 font-monospace">₹{totalBilled.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                </div>
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function InvoiceHistoryPage() {
             <div className="card border-0 shadow-sm rounded-4 h-100">
                <div className="card-body p-4">
                   <div className="x-small text-uppercase tracking-widest text-success fw-bold mb-2">Total Paid</div>
-                  <div className="h3 fw-900 mb-0 font-monospace text-success">${totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                  <div className="h3 fw-900 mb-0 font-monospace text-success">₹{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                </div>
             </div>
           </div>
@@ -90,7 +90,7 @@ export default function InvoiceHistoryPage() {
             <div className="card border-0 shadow-sm rounded-4 h-100 border-start border-4 border-warning">
                <div className="card-body p-4">
                   <div className="x-small text-uppercase tracking-widest text-warning fw-bold mb-2">Outstanding Balance</div>
-                  <div className="h3 fw-900 mb-0 font-monospace text-warning">${totalUnpaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                  <div className="h3 fw-900 mb-0 font-monospace text-warning">₹{totalUnpaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                </div>
             </div>
           </div>

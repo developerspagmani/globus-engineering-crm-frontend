@@ -162,7 +162,7 @@ const SalesHubPage = () => {
               <h5 className="fw-800 text-dark mb-0">Sales Pipeline</h5>
               <button className="btn btn-light btn-sm rounded-pill px-3 fw-700 x-small text-muted border">VIEW ALL</button>
             </div>
-            <div className="table-responsive">
+            <div className="table-responsive p-1">
               <table className="table mb-0 align-middle">
                 <thead className="bg-light bg-opacity-50">
                   <tr>

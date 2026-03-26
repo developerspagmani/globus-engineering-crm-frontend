@@ -117,6 +117,60 @@ export const createPriceFixingThunk = createAsyncThunk('master/createPriceFixing
   };
 });
 
+// Update actions
+export const updateItemThunk = createAsyncThunk('master/updateItem', async ({ id, ...data }: any) => {
+  const response = await api.put(`/items/${id}`, data);
+  const item = response.data.data;
+  return {
+    id: item.id,
+    itemCode: item.item_code,
+    itemName: item.item_name,
+    company_id: item.company_id,
+  };
+});
+
+export const updateProcessThunk = createAsyncThunk('master/updateProcess', async ({ id, ...data }: any) => {
+  const response = await api.put(`/processes/${id}`, data);
+  const p = response.data.data;
+  return {
+    id: p.id,
+    processName: p.process_name,
+    company_id: p.company_id,
+  };
+});
+
+export const updatePriceFixingThunk = createAsyncThunk('master/updatePriceFixing', async ({ id, ...data }: any) => {
+  const response = await api.put(`/price-fixings/${id}`, data);
+  const pf = response.data.data;
+  return {
+    id: pf.id,
+    customerId: pf.customer_id,
+    customerName: pf.customer_name,
+    itemId: pf.item_id,
+    itemName: pf.item_name,
+    processId: pf.process_id,
+    processName: pf.process_name,
+    price: pf.price,
+    company_id: pf.company_id,
+  };
+});
+
+// Delete actions
+export const deleteItemThunk = createAsyncThunk('master/deleteItem', async (id: string) => {
+  await api.delete(`/items/${id}`);
+  return id;
+});
+
+export const deleteProcessThunk = createAsyncThunk('master/deleteProcess', async (id: string) => {
+  await api.delete(`/processes/${id}`);
+  return id;
+});
+
+export const deletePriceFixingThunk = createAsyncThunk('master/deletePriceFixing', async (id: string) => {
+  await api.delete(`/price-fixings/${id}`);
+  return id;
+});
+
 const masterSlice = createSlice({
   name: 'master',
   initialState,
@@ -142,6 +196,27 @@ const masterSlice = createSlice({
       })
       .addCase(createPriceFixingThunk.fulfilled, (state, action) => {
         state.priceFixings.unshift(action.payload);
+      })
+      .addCase(updateItemThunk.fulfilled, (state, action) => {
+        const index = state.items.findIndex(i => i.id === action.payload.id);
+        if (index !== -1) state.items[index] = action.payload;
+      })
+      .addCase(updateProcessThunk.fulfilled, (state, action) => {
+        const index = state.processes.findIndex(p => p.id === action.payload.id);
+        if (index !== -1) state.processes[index] = action.payload;
+      })
+      .addCase(updatePriceFixingThunk.fulfilled, (state, action) => {
+        const index = state.priceFixings.findIndex(pf => pf.id === action.payload.id);
+        if (index !== -1) state.priceFixings[index] = action.payload;
+      })
+      .addCase(deleteItemThunk.fulfilled, (state, action) => {
+        state.items = state.items.filter(i => i.id !== action.payload);
+      })
+      .addCase(deleteProcessThunk.fulfilled, (state, action) => {
+        state.processes = state.processes.filter(p => p.id !== action.payload);
+      })
+      .addCase(deletePriceFixingThunk.fulfilled, (state, action) => {
+        state.priceFixings = state.priceFixings.filter(pf => pf.id !== action.payload);
       });
   },
 });

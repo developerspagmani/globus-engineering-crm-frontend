@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import Breadcrumb from '@/components/Breadcrumb';
 import EmployeeForm from '@/modules/employee/components/EmployeeForm';
@@ -13,11 +13,18 @@ const EditEmployeePage = () => {
   const router = useRouter();
 
   const { items } = useSelector((state: RootState) => state.employee);
-  const employee = items.find(item => item.id === id);
+  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const employee = items.find(item => String(item.id) === String(id));
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if ((items.length === 0 || !employee) && activeCompany?.id) {
+       import('@/redux/features/employeeSlice').then(({ fetchEmployees }) => {
+          (dispatch as any)(fetchEmployees(activeCompany.id));
+       });
+    }
+  }, [dispatch, activeCompany?.id, items.length, employee, id]);
 
   if (!mounted) return null;
 
@@ -43,8 +50,15 @@ const EditEmployeePage = () => {
             { label: 'Edit Profile', active: true }
           ]} 
         />
-        <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Edit: {employee.name}</h3>
-        <p className="text-muted small mb-0">Update career details, department, or status for {employee.employeeId}.</p>
+      </div>
+      <div className="mb-4 d-flex align-items-center">
+        <button type="button" className="btn btn-outline-secondary border-0 p-0 me-3" onClick={() => router.push('/employees')} title="Back to Employees">
+           <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+        </button>
+        <div>
+          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Edit Employee Profile</h3>
+          <p className="text-muted small mb-0">Update personal or professional details for {employee?.name || 'staff member'}.</p>
+        </div>
       </div>
 
       <div className="row justify-content-center">

@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 export default function NewVendorPage() {
   return (
-    <ModuleGuard moduleId="mod_supplier">
+    <ModuleGuard moduleId="mod_vendor" requiredRole="super_admin">
       <div className="container-fluid py-4">
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb">

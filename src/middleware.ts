@@ -18,9 +18,13 @@ export function middleware(request: NextRequest) {
   // Check for auth token in cookies/headers
   const token = request.cookies.get('token')?.value;
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
-  const isAdminPage = pathname.startsWith('/dashboard') || pathname.startsWith('/admin') || pathname.startsWith('/invoices');
+  const isProtectedPage = [
+    '/dashboard', '/admin', '/invoices', '/employees', '/customers', 
+    '/vendors', '/leads', '/inward', '/outward', '/challan', 
+    '/ledger', '/vouchers', '/master', '/settings'
+  ].some(p => pathname.startsWith(p));
 
-  if (isAdminPage && !token) {
+  if (isProtectedPage && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

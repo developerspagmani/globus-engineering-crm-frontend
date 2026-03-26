@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { addEmployee, updateEmployee } from '@/redux/features/employeeSlice';
-import { Employee } from '@/data/mockModules';
+import { Employee } from '@/types/modules';
 import StatusModal from '@/components/StatusModal';
 
 interface EmployeeFormProps {
@@ -18,7 +18,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
   const router = useRouter();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
 
-  const [formData, setFormData] = useState<Omit<Employee, 'id' | 'createdAt'>>({
+  const [formData, setFormData] = useState<Omit<Employee, 'id'>>({
     employeeId: `GLOB-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
     name: '',
     email: '',
@@ -29,6 +29,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
     salary: 0,
     joiningDate: new Date().toISOString().split('T')[0],
     status: 'active',
+    createdAt: new Date().toISOString()
   });
 
   const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
@@ -51,20 +52,25 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
         salary: initialData.salary,
         joiningDate: initialData.joiningDate,
         status: initialData.status,
+        createdAt: initialData.createdAt
       });
     }
   }, [initialData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'salary' ? parseFloat(value) || 0 : value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: name === 'salary' ? parseFloat(value) || 0 : value,
+      company_id: prev.company_id || activeCompany?.id || ''
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (mode === 'create') {
-        dispatch(addEmployee(formData));
+        (dispatch as any)(addEmployee(formData));
         setModal({
           isOpen: true,
           type: 'success',
@@ -72,7 +78,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
           message: `${formData.name} has been added to the system.`
         });
       } else {
-        dispatch(updateEmployee({ ...initialData!, ...formData }));
+        (dispatch as any)(updateEmployee({ ...initialData!, ...formData }));
         setModal({
           isOpen: true,
           type: 'success',

@@ -82,7 +82,7 @@ const PendingPaymentPage = () => {
                         <td className="text-muted small">{inv.dcNo || '-'}</td>
                         <td className="text-dark fw-bold small">{inv.invoiceNumber}</td>
                         <td className="text-dark small">{new Date(inv.date).toLocaleDateString()}</td>
-                        <td className="text-dark fw-bold small font-monospace">${(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
+                        <td className="text-dark fw-bold small font-monospace">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
                         <td className="text-center">
                           {overdueDays > 0 ? (
                             <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{overdueDays} Days</span>

@@ -230,18 +230,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             {renderInput('Customer Name', 'name', 'text', true)}
-            {renderInput('Company Name', 'company', 'text', true)}
-            {renderInput('Email Address', 'email', 'email', true)}
-            {renderInput('Phone Number', 'phone', 'text', true)}
-            <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Industry</label>
-              <select className="form-select" name="industry" value={formData.industry} onChange={handleChange} required>
-                <option value="Automotive">Automotive</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Construction">Construction</option>
-                <option value="Machinery">Machinery</option>
-              </select>
-            </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status</label>
               <select className="form-select" name="status" value={formData.status} onChange={handleChange} required>

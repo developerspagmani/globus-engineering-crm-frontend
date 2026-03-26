@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { Employee } from '@/types/modules';
-import { setEmployeeFilters, setEmployeePage, deleteEmployee } from '@/redux/features/employeeSlice';
+import { setEmployeeFilters, setEmployeePage, deleteEmployee, fetchEmployees } from '@/redux/features/employeeSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
 
@@ -28,7 +28,10 @@ const EmployeesPage = () => {
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    if (activeCompany?.id) {
+       (dispatch as any)(fetchEmployees(activeCompany.id));
+    }
+  }, [dispatch, activeCompany?.id]);
 
   if (!mounted) return null;
 
@@ -200,7 +203,7 @@ const EmployeesPage = () => {
                       <button 
                         className="btn btn-white btn-sm border shadow-sm rounded-circle p-0" 
                         style={{ width: '32px', height: '32px' }}
-                        onClick={() => { if(confirm('Delete employee record?')) dispatch(deleteEmployee(emp.id)) }}
+                        onClick={() => { if(confirm('Delete employee record?')) (dispatch as any)(deleteEmployee(emp.id)) }}
                       >
                         <i className="bi bi-trash text-danger"></i>
                       </button>

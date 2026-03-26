@@ -29,8 +29,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
   const { items: masterItems, processes: masterProcesses, priceFixings } = useSelector((state: RootState) => state.master);
 
   const [formData, setFormData] = useState<any>({
-    invoiceNumber: String(settings.nextNumber).padStart(4, '0'),
-    challanNumber: String(settings.nextNumber).padStart(4, '0'),
+    invoiceNumber: settings.nextInvoice || '',
+    challanNumber: settings.nextChallan || '',
     customerId: '',
     customerName: '',
     company_id: company?.id || '',
@@ -72,19 +72,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
        (dispatch as any)(fetchPriceFixings(company.id));
        (dispatch as any)(fetchCustomers(company.id));
 
-       // Fetch real-time next sequential numbers from database
-       import('@/lib/axios').then(async ({ default: api }) => {
-          try {
-             const { data } = await api.get(`/invoices/next-numbers?companyId=${company.id}`);
-             setFormData((prev: any) => ({
-                ...prev,
-                invoiceNumber: String(data.nextInvoice).padStart(4, '0'),
-                challanNumber: String(data.nextChallan).padStart(4, '0')
-             }));
-          } catch (err) {
-             console.error('Failed to pre-fetch next sequence numbers:', err);
-          }
-       });
+       // Fetch real-time next sequential numbers from database ONLY in create mode
+       if (mode === 'create') {
+          import('@/lib/axios').then(async ({ default: api }) => {
+             try {
+                const { data } = await api.get(`/invoices/next-numbers?companyId=${company.id}`);
+                setFormData((prev: any) => ({
+                   ...prev,
+                   invoiceNumber: prev.invoiceNumber || String(data.nextInvoice || data.nextInvoiceNo || '').padStart(4, '0'),
+                   challanNumber: prev.challanNumber || String(data.nextChallan || data.nextDeliveryNo || '').padStart(4, '0')
+                }));
+             } catch (err) {
+                console.error('Failed to pre-fetch next sequence numbers:', err);
+             }
+          });
+       }
     } else {
        (dispatch as any)(fetchCustomers());
     }
@@ -113,6 +115,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
     
     return pf ? pf.price : 0;
   };
+  
+  // Sync pre-fetched sequential numbers from Redux to Form
+  useEffect(() => {
+    if (mode === 'create' && !formData.invoiceNumber && settings.nextInvoice) {
+      setFormData((prev: any) => ({
+        ...prev,
+        invoiceNumber: settings.nextInvoice,
+        challanNumber: settings.nextChallan,
+      }));
+    }
+  }, [settings.nextInvoice, settings.nextChallan, mode, formData.invoiceNumber]);
 
   useEffect(() => {
     if (initialData) {
@@ -233,8 +246,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
   return (
     <div className="container-fluid py-4 bg-white min-vh-100">
       <form onSubmit={e => e.preventDefault()}>
-        <div className="d-flex align-items-center mb-5 pb-4 border-bottom">
-           <h4 className="text-danger fw-bold mb-0 me-4">Select the Bill Type</h4>
+         <div className="d-flex align-items-center mb-5 pb-2">
+            <button type="button" className="btn btn-outline-secondary border-0 p-0 me-3" onClick={() => router.back()} title="Back to Invoices">
+               <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+            </button>
+            <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
+         </div>
+
+        {mode === 'create' && (
+          <div className="d-flex align-items-center mb-5 pb-4 border-bottom">
+             <h4 className="text-danger fw-bold mb-0 me-4">Select the Bill Type</h4>
            <div style={{ width: '300px' }}>
               <select 
                 className="form-select border-0 border-bottom rounded-0 py-2 fs-5"
@@ -248,6 +269,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
               </select>
            </div>
         </div>
+        )}
 
         <div className="mb-5">
            <div className="row mb-4 align-items-center">
@@ -371,7 +393,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} />
                            </td>
                            <td className="py-3 text-end fw-semibold">
-                              {(item.amount || 0).toFixed(2)}
+                              ₹ {(item.amount || 0).toFixed(2)}
                            </td>
                          </>
                        )}
@@ -400,7 +422,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
              <div className="col-md-4">
                 <div className="d-flex justify-content-between mb-3 text-muted">
                    <span>Sub Total</span>
-                   <span className="text-dark">{formData.subTotal?.toFixed(2)}</span>
+                   <span className="text-dark">₹ {formData.subTotal?.toFixed(2)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-3 text-muted align-items-center">
                    <span>(-) Discount</span>
@@ -418,11 +440,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                       <input type="number" className="form-control form-control-sm mx-2 border-0 border-bottom rounded-0 text-center" style={{ width: '40px' }} value={12} readOnly />
                       <span>%</span>
                    </div>
-                   <span className="text-dark">{formData.taxTotal?.toFixed(2)}</span>
+                   <span className="text-dark">₹ {formData.taxTotal?.toFixed(2)}</span>
                 </div>
                 <div className="border-top pt-3 d-flex justify-content-between align-items-center">
                    <h5 className="fw-bold mb-0">Grand Total</h5>
-                   <h4 className="fw-bold mb-0">{formData.grandTotal?.toFixed(2)}</h4>
+                   <h4 className="fw-bold mb-0">₹ {formData.grandTotal?.toFixed(2)}</h4>
                 </div>
              </div>
           </div>

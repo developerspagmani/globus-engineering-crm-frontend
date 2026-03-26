@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchProcesses, createProcessThunk } from '@/redux/features/masterSlice';
+import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 
@@ -13,6 +13,7 @@ export default function ProcessDetailsPage() {
   const { company } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ processName: '' });
 
@@ -23,11 +24,28 @@ export default function ProcessDetailsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (company?.id) {
-      await (dispatch as any)(createProcessThunk({ ...formData, company_id: company.id }));
+      if (editingId) {
+        await (dispatch as any)(updateProcessThunk({ id: editingId, ...formData }));
+        setEditingId(null);
+      } else {
+        await (dispatch as any)(createProcessThunk({ ...formData, company_id: company.id }));
+      }
       setFormData({ processName: '' });
       setView('list');
     } else {
       alert("Please select a company from the top navigation first.");
+    }
+  };
+
+  const handleEdit = (p: any) => {
+    setEditingId(p.id);
+    setFormData({ processName: p.processName });
+    setView('add');
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this process?')) {
+      (dispatch as any)(deleteProcessThunk(id));
     }
   };
 
@@ -43,8 +61,8 @@ export default function ProcessDetailsPage() {
           <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>Process Details</h4>
           <div className="d-flex gap-2">
             <button
-              onClick={() => setView('add')}
-              className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
+              onClick={() => { setView('add'); setEditingId(null); setFormData({ processName: '' }); }}
+              className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' && !editingId ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
               style={{ backgroundColor: '#9C27B0', border: 'none', fontSize: '0.85rem' }}
             >
               <i className="bi bi-plus" style={{ fontSize: '1.2rem' }}></i>
@@ -64,6 +82,9 @@ export default function ProcessDetailsPage() {
         <div className="p-5">
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
+              <div className="mb-4">
+                <h5 className="fw-bold text-primary">{editingId ? 'Edit Process' : 'Add New Process'}</h5>
+              </div>
               <form onSubmit={handleSubmit}>
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
@@ -88,15 +109,15 @@ export default function ProcessDetailsPage() {
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
                     style={{ backgroundColor: '#00C853', border: 'none', minWidth: '100px' }}
                   >
-                    ADD
+                    {editingId ? 'UPDATE' : 'ADD'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ processName: '' })}
+                    onClick={() => { setFormData({ processName: '' }); setEditingId(null); }}
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
                     style={{ backgroundColor: '#FF3D00', border: 'none', minWidth: '100px' }}
                   >
-                    RESET
+                    {editingId ? 'CANCEL' : 'RESET'}
                   </button>
                 </div>
               </form>
@@ -118,7 +139,7 @@ export default function ProcessDetailsPage() {
                 </div>
               </div>
 
-              <div className="table-responsive rounded-2 border mx-auto" style={{ maxWidth: '800px' }}>
+              <div className="table-responsive rounded-2 border mx-auto p-1" style={{ maxWidth: '900px' }}>
                 <table className="table table-hover align-middle mb-0">
                   <thead className="bg-light">
                     <tr>
@@ -144,8 +165,8 @@ export default function ProcessDetailsPage() {
                           <td className="px-4 py-3 text-muted">{index + 1}</td>
                           <td className="px-4 py-3 fw-bold">{p.processName}</td>
                           <td className="px-4 py-3 text-end">
-                            <button className="btn btn-sm btn-link text-info me-2 p-0 shadow-none"><i className="bi bi-pencil"></i></button>
-                            <button className="btn btn-sm btn-link text-danger p-0 shadow-none"><i className="bi bi-trash"></i></button>
+                            <button onClick={() => handleEdit(p)} className="btn btn-sm btn-link text-info me-2 p-0 shadow-none"><i className="bi bi-pencil"></i></button>
+                            <button onClick={() => handleDelete(p.id)} className="btn btn-sm btn-link text-danger p-0 shadow-none"><i className="bi bi-trash"></i></button>
                           </td>
                         </tr>
                       ))

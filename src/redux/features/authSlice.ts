@@ -56,13 +56,20 @@ const authSlice = createSlice({
       // Handle potential snake_case from DB
       const processedUser: User = {
         ...user,
-        company_id: user.company_id || user.company_id,
+        company_id: user.company_id,
         modulePermissions: user.modulePermissions || (typeof user.module_permissions === 'string' ? JSON.parse(user.module_permissions) : user.module_permissions) || []
       };
 
+      const rawCompany = action.payload.company || user.company;
+      const processedCompany: Company | null = rawCompany ? {
+        ...rawCompany,
+        id: rawCompany.id || (rawCompany as any).id,
+        activeModules: rawCompany.activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || []
+      } as any : null;
+
       state.loading = false;
       state.user = processedUser;
-      state.company = action.payload.company;
+      state.company = processedCompany;
       state.token = action.payload.token;
       state.isAuthenticated = true;
       
@@ -70,7 +77,7 @@ const authSlice = createSlice({
       if (typeof window !== 'undefined') {
         localStorage.setItem('globus_auth', JSON.stringify({
           user: processedUser,
-          company: action.payload.company,
+          company: processedCompany,
           token: action.payload.token,
           isAuthenticated: true
         }));

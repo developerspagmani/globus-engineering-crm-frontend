@@ -20,13 +20,13 @@ export default function DashboardPage() {
   const stats = isViewingGlobal ? [
     { label: 'Active Tenants', value: '12', change: '+2', icon: 'bi-building', color: 'primary' },
     { label: 'Total Users', value: '450', change: '+15', icon: 'bi-people', color: 'success' },
-    { label: 'Monthly Revenue', value: '$12,400', change: '+8%', icon: 'bi-bank', color: 'info' },
+    { label: 'Monthly Revenue', value: '₹12,400', change: '+8%', icon: 'bi-bank', color: 'info' },
     { label: 'System Health', value: '99.9%', change: 'Stable', icon: 'bi-cpu', color: 'warning' },
   ] : [
-    { label: 'Total Invoiced', value: company?.id === 'comp_apex' ? '$12,450' : '$124,284', change: '+12%', icon: 'bi-currency-dollar', color: 'primary' },
-    { label: 'Pending Payments', value: company?.id === 'comp_apex' ? '$1,200' : '$24,500', change: '-3.2%', icon: 'bi-clock-history', color: 'warning' },
+    { label: 'Total Invoiced', value: company?.id === 'comp_apex' ? '₹12,450' : '₹124,284', change: '+12%', icon: 'bi-currency-rupee', color: 'primary' },
+    { label: 'Pending Payments', value: company?.id === 'comp_apex' ? '₹1,200' : '₹24,500', change: '-3.2%', icon: 'bi-clock-history', color: 'warning' },
     { label: 'Invoices Paid', value: company?.id === 'comp_apex' ? '8' : '45', change: '+5%', icon: 'bi-check-circle', color: 'success' },
-    { label: 'Raw Materials Cost', value: company?.id === 'comp_apex' ? '$3,150' : '$45,210', change: '+18%', icon: 'bi-tools', color: 'info' },
+    { label: 'Raw Materials Cost', value: company?.id === 'comp_apex' ? '₹3,150' : '₹45,210', change: '+18%', icon: 'bi-tools', color: 'info' },
   ];
 
   return (
@@ -102,7 +102,7 @@ export default function DashboardPage() {
                   <button className="btn btn-link link-primary p-0 text-decoration-none small">View All</button>
                 </div>
                 <div className="card-body">
-                  <div className="table-responsive">
+                  <div className="table-responsive p-1">
                     <table className="table table-hover align-middle">
                       <thead className="table-light">
                         <tr>

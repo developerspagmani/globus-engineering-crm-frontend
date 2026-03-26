@@ -63,7 +63,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           chequeNo: initialData.chequeNo || '',
           customerId: targetId,
           customerName: name,
-          selectedInvoices: initialData.referenceNo ? [initialData.referenceNo] : [],
+          selectedInvoices: initialData.referenceNo 
+            ? initialData.referenceNo.split(',').map(s => s.trim()) 
+            : [],
           totalAmount: initialData.amount
         }));
       }

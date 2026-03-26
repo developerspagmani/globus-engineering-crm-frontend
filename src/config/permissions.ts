@@ -15,16 +15,27 @@ export interface NavItem {
  */
 export const navigationConfig: NavItem[] = [
   { name: 'Dashboard', icon: 'bi-grid-1x2', path: '/dashboard', moduleId: 'default' },
+  { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
+  { name: 'Customer', icon: 'bi-people', path: '/customers', moduleId: 'mod_customer' },
+  
+  // masters
   { name: 'Item', icon: 'bi-box-seam', path: '/master/items', moduleId: 'mod_items' },
   { name: 'Process', icon: 'bi-gear-wide-connected', path: '/master/processes', moduleId: 'mod_processes' },
-  { name: 'Customer', icon: 'bi-people', path: '/customers', moduleId: 'mod_customer' },
-  { name: 'Vendor', icon: 'bi-truck', path: '/vendors', moduleId: 'mod_vendor' },
   { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
+  
+  // Logistics
+  { name: 'Vendor', icon: 'bi-truck', path: '/vendors', moduleId: 'mod_vendor' },
   { name: 'Inward', icon: 'bi-box-arrow-in-right', path: '/inward', moduleId: 'mod_inward' },
   { name: 'Outward', icon: 'bi-box-arrow-up-right', path: '/outward', moduleId: 'mod_outward' },
+  { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
+  
+  // Finance
   { name: 'Invoice', icon: 'bi-file-earmark-spreadsheet', path: '/invoices', moduleId: 'mod_invoice' },
+  { name: 'Payments & Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
-  { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'default' },
+  { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
+  
+  // Reports
   { 
     name: 'Reports', 
     icon: 'bi-file-earmark-text', 
@@ -36,17 +47,18 @@ export const navigationConfig: NavItem[] = [
       { name: 'Inward Report', icon: 'bi-box-arrow-in-left', path: '/reports/inward', moduleId: 'mod_inward' },
       { name: 'Voucher', icon: 'bi-receipt-cutoff', path: '/reports/voucher', moduleId: 'mod_voucher' },
       { name: 'GST Report', icon: 'bi-file-text', path: '/reports/gst', moduleId: 'mod_invoice' },
-      { name: 'Ledger Report', icon: 'bi-journal', path: '/ledger', moduleId: 'mod_ledger' },
     ]
   },
-  { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
-  { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
-  { name: 'Payments & Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
+  { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'default' },
+  
+  // HR & Admin
   { name: 'Employees', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
-  { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
+  { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
+
+  // Sales Hub & Map moved to end
   { name: 'Sales Hub', icon: 'bi-graph-up-arrow', path: '/sales-hub', moduleId: 'mod_sales_hub' },
   { name: 'Sales Map', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_hub' },
-  { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
+
   { name: 'Companies', icon: 'bi-building', path: '/admin/companies', moduleId: 'super_admin' },
   { name: 'Settings', icon: 'bi-gear', path: '/settings', moduleId: 'default' },
 ];
@@ -74,19 +86,28 @@ export const hasPermission = (
   user: PermissionUser | null | undefined, 
   companyModules: string[] | undefined
 ): boolean => {
-  if (!user || !user.modulePermissions) return false;
+  if (!user) return false;
 
-  // Super Admin & Company Admin bypass
-  if (user.role === 'super_admin' || user.role === 'company_admin') return true;
+  // 1. Super Admin Role Check (Always has access to everything)
+  if (user.role === 'super_admin') return true;
 
-  // 2. Default Access (items like Dashboard/Settings that don't belong to a specific paid module)
+  // 3. Special Case: super_admin only items (like Companies)
+  if (item.moduleId === 'super_admin') return false; // Non-super-admins cannot see this
+
+  // 4. Company Admin Role Check (Bypasses regular module/read permissions)
+  if (user.role === 'company_admin') return true;
+
+  // 5. Default Access (items like Dashboard/Settings that don't belong to a specific paid module)
   if (item.moduleId === 'default') return true;
 
-  // 3. Module check: Is this module active for the organization?
-  const isModuleActive = companyModules?.includes(item.moduleId);
-  if (!isModuleActive) return false;
+  // 6. Module check: Is this module active for the organization?
+  if (user.role !== 'sales_agent') {
+    const isModuleActive = companyModules?.includes(item.moduleId);
+    if (!isModuleActive) return false;
+  }
 
-  // 4. User check: Does the user have read access?
+  // 7. User specific module read permission check
+  if (!user.modulePermissions) return false;
   const perm = user.modulePermissions.find(p => p.moduleId === item.moduleId);
   return perm ? perm.canRead : false;
 };
