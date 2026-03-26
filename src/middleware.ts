@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/proxy')) {
     const targetUrl = new URL(
       pathname.replace('/api/proxy', '/api'),
-      'http://localhost:5000'
+      'http://localhost:3001'
     );
     return NextResponse.rewrite(targetUrl);
   }
@@ -25,7 +25,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (isAuthPage && token) {
-     return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
