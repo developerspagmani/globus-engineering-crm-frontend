@@ -16,11 +16,14 @@ export default function NewLedgerAccountPage() {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
+        email: '',
+        phone: '',
+        industry: 'General',
         street1: '',
         street2: '',
         city: '',
         state: '',
-        status: 'active'
+        status: 'active' as const
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
