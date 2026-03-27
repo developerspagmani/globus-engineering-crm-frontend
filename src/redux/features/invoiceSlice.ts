@@ -7,6 +7,7 @@ const mapInvoice = (inv: any): Invoice => ({
   invoiceNumber: String(inv.invoice_no || `INV-${inv.id}`),
   customerId: inv.customer_id?.toString() || '',
   customerName: inv.customer_name || 'N/A',
+  address: inv.address || '',
   company_id: inv.company_id?.toString() || '',
   date: inv.invoice_date ? new Date(inv.invoice_date).toISOString().split('T')[0] : '',
   dueDate: inv.due_date ? new Date(inv.due_date).toISOString().split('T')[0] : '',
@@ -25,6 +26,8 @@ const mapInvoice = (inv: any): Invoice => ({
   inwardId: inv.inward_id?.toString(),
   createdAt: inv.app_created_at || inv.created_at,
   notes: inv.notes || '',
+  gstin: inv.gstin || '',
+  state: inv.state || '',
   paidAmount: parseFloat(inv.paid_amount || '0')
 });
 
@@ -65,7 +68,10 @@ export const createInvoice = createAsyncThunk(
         poNo: (data as any).poNo,
         poDate: (data as any).poDate,
         dcNo: (data as any).dcNo,
-        dcDate: (data as any).dcDate
+        dcDate: (data as any).dcDate,
+        address: (data as any).address,
+        gstin: (data as any).gstin,
+        state: (data as any).state
       });
       return mapInvoice(response.data);
     } catch (err: any) {
@@ -95,7 +101,10 @@ export const updateInvoice = createAsyncThunk(
         poNo: data.poNo,
         poDate: data.poDate,
         dcNo: data.dcNo,
-        dcDate: data.dcDate
+        dcDate: data.dcDate,
+        address: (data as any).address,
+        gstin: (data as any).gstin,
+        state: (data as any).state
       });
       return mapInvoice(response.data);
     } catch (err: any) {

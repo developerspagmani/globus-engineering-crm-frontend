@@ -47,8 +47,6 @@ const InwardReportPage = () => {
             <input type="text" className="form-control form-control-sm border-0 border-bottom rounded-0 shadow-none px-0" style={{ width: '200px' }} placeholder="Customer name..." />
          </div>
          <div className="d-flex gap-1 flex-wrap">
-            <button className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border-0" style={{ backgroundColor: '#00bcd4', fontSize: '11px' }}>PRINT</button>
-            <button className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm border-0" style={{ backgroundColor: '#9c27b0', fontSize: '11px' }}>EXCEL</button>
          </div>
       </div>
 

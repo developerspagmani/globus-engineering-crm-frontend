@@ -82,72 +82,95 @@ export default function OutwardListPage() {
         </div>
 
         <div className="card border-0 shadow-sm">
-          <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th className="px-4">Outward No</th>
-                  <th>Customer</th>
-                  <th>Invoice Ref</th>
-                  <th>Vehicle No</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th className="text-end px-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedItems.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-4 fw-bold">{item.outwardNo}</td>
-                    <td>{item.customerName}</td>
-                    <td><code className="bg-light px-2 rounded text-dark">{item.invoiceReference}</code></td>
-                    <td>{item.vehicleNo}</td>
-                    <td>{item.date}</td>
-                    <td>
-                      <span className={`badge bg-${item.status === 'completed' ? 'success' : item.status === 'pending' ? 'warning' : 'danger'} bg-opacity-10 text-${item.status === 'completed' ? 'success' : item.status === 'pending' ? 'warning' : 'danger'} rounded-pill`}>
-                        {item.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="text-end px-4">
-                      <div className="d-flex justify-content-end gap-2">
-                        {checkActionPermission(user, 'mod_outward', 'edit') && (
-                          <Link href={`/outward/${item.id}/edit`} className="btn btn-sm btn-outline-primary border-0">
-                            <i className="bi bi-pencil"></i>
-                          </Link>
-                        )}
-                        {checkActionPermission(user, 'mod_outward', 'delete') && (
-                          <button className="btn btn-sm btn-outline-danger border-0" onClick={() => { if(confirm('Delete?')) (dispatch as any)(deleteOutward(item.id)) }}>
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {paginatedItems.length === 0 && (
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table table-hover align-middle mb-0">
+                <thead>
                   <tr>
-                    <td colSpan={7} className="text-center py-5 text-muted">
-                      No outward records found.
-                    </td>
+                    <th className="px-4 py-3 border-0">Sno</th>
+                    <th className="py-3 border-0">Outward No</th>
+                    <th className="py-3 border-0">Customer</th>
+                    <th className="py-3 border-0">Invoice Ref</th>
+                    <th className="py-3 border-0">Vehicle No</th>
+                    <th className="py-3 border-0">Date</th>
+                    <th className="py-3 border-0">Status</th>
+                    <th className="py-3 border-0 text-center px-4">Action</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {totalPages > 1 && (
-            <div className="card-footer bg-white p-3 d-flex justify-content-between border-0">
-              <span className="text-muted small">Showing {paginatedItems.length} entries</span>
-              <nav>
-                <ul className="pagination pagination-sm mb-0">
-                  {[...Array(totalPages)].map((_, i) => (
-                    <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => (dispatch as any)(setOutwardPage(i + 1))}>{i + 1}</button>
-                    </li>
+                </thead>
+                <tbody>
+                  {paginatedItems.map((item, index) => (
+                    <tr key={item.id}>
+                      <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                      <td className="text-nowrap fw-bold text-dark">{item.outwardNo}</td>
+                      <td className="text-nowrap text-muted small">{item.customerName}</td>
+                      <td className="text-nowrap text-muted small"><span className="badge bg-light text-dark border-0 shadow-sm">{item.invoiceReference}</span></td>
+                      <td className="text-nowrap text-muted small">{item.vehicleNo}</td>
+                      <td className="text-nowrap text-muted small">{item.date}</td>
+                      <td>
+                        <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
+                          {item.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="text-center px-4 text-nowrap">
+                        <div className="d-flex justify-content-center gap-2">
+                          {checkActionPermission(user, 'mod_outward', 'edit') && (
+                            <Link href={`/outward/${item.id}/edit`} className="btn-action-edit" title="Edit">
+                              <i className="bi bi-pencil-fill"></i>
+                            </Link>
+                          )}
+                          {checkActionPermission(user, 'mod_outward', 'delete') && (
+                            <button 
+                              className="btn-action-delete" 
+                              title="Delete"
+                              onClick={() => { if(confirm('Delete?')) (dispatch as any)(deleteOutward(item.id)) }}
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   ))}
-                </ul>
-              </nav>
+                  {paginatedItems.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="text-center py-5 text-muted">
+                        No outward records found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
+            
+            {totalPages > 1 && (
+              <div className="px-4 py-3 border-top d-flex align-items-center justify-content-between">
+                <div className="text-muted small">
+                  Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
+                </div>
+                <nav aria-label="Table navigation">
+                  <ul className="pagination pagination-sm mb-0">
+                    <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setOutwardPage(pagination.currentPage - 1))}>
+                        <i className="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    {[...Array(totalPages)].map((_, i) => (
+                      <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => dispatch(setOutwardPage(i + 1))}>
+                          {i + 1}
+                        </button>
+                      </li>
+                    ))}
+                    <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setOutwardPage(pagination.currentPage + 1))}>
+                        <i className="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </ModuleGuard>

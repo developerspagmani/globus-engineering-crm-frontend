@@ -2,8 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import Link from 'next/link';
 import { RootState } from '@/redux/store';
-import { fetchLedgerEntries } from '@/redux/features/ledgerSlice';
+import { fetchLedgerEntries, addLedgerEntry } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import jsPDF from 'jspdf';
@@ -104,7 +105,7 @@ export default function LedgerPage() {
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Ledger Export</title>');
-    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: Arial;} th, td {border: 1px solid #ddd; padding: 10px; text-align: left;} th {background-color: #f2f2f2;} .text-uppercase {text-transform: uppercase;}</style>');
+    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: "Roboto", sans-serif;} th, td {border: 1px solid #ddd; padding: 10px; text-align: left;} th {background-color: #f2f2f2;} .text-uppercase {text-transform: uppercase;}</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<h2 style="text-align: center;">Globus Engineering CRM - Ledger Report</h2>');
     printWindow.document.write(printTable.outerHTML);
@@ -185,14 +186,14 @@ export default function LedgerPage() {
             <p className="text-muted small mb-0">Total parties with transactions: {uniqueParties.length}</p>
           </div>
           <div className="d-flex gap-2 hide-print">
-            <button className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ backgroundColor: '#ff4081', border: 'none' }}>
+            <Link 
+              href="/ledger/new"
+              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
+              style={{ backgroundColor: '#ff4081', border: 'none' }}
+            >
               <i className="bi bi-plus-lg"></i>
-              <span className="fw-bold text-uppercase small">Add</span>
-            </button>
-            <button className="btn btn-danger d-flex align-items-center gap-2 px-4 shadow-sm" style={{ backgroundColor: '#f44336', border: 'none' }}>
-              <i className="bi bi-list"></i>
-              <span className="fw-bold text-uppercase small">List</span>
-            </button>
+              <span className="fw-bold text-uppercase small">Add Ledger</span>
+            </Link>
           </div>
         </div>
 
@@ -226,8 +227,8 @@ export default function LedgerPage() {
                       <option value={50}>50</option>
                    </select> */}
                    <div className="d-flex gap-1 ms-3 hide-print flex-wrap">
-                      <button onClick={handlePrint} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#00bcd4', borderColor: '#00bcd4' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
-                      <button onClick={handleExportExcel} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#9c27b0', borderColor: '#9c27b0' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
+                      <button onClick={handlePrint} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
+                      <button onClick={handleExportExcel} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#da3e00', borderColor: '#da3e00' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
                       <button onClick={handleCopyTable} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#4caf50', borderColor: '#4caf50' }}><i className="bi bi-files fw-bold"></i> COPY</button>
                       <button onClick={handleExportPDF} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}><i className="bi bi-file-earmark-pdf fw-bold"></i> PDF</button>
                    </div>

@@ -47,10 +47,10 @@ export default function InvoiceHistoryPage() {
             {checkActionPermission(user, 'mod_invoice', 'edit') && (
               <Link 
                 href="/invoices/customize" 
-                className="btn btn-outline-dark d-flex align-items-center gap-2 px-4 shadow-sm bg-white rounded-4 fw-bold border-light"
-                style={{ height: '48px' }}
+                className="btn btn-light d-flex align-items-center gap-2 px-4 shadow-sm bg-white rounded-4 fw-bold border"
+                style={{ height: '48px', color: '#212529' }}
               >
-                <i className="bi bi-palette"></i>
+                <i className="bi bi-palette text-primary"></i>
                 <span>Customize Template</span>
                 <i className="bi bi-chevron-right small opacity-50 ms-1"></i>
               </Link>

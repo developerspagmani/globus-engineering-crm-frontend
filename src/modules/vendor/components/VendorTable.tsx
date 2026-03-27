@@ -68,46 +68,25 @@ const VendorTable: React.FC = () => {
       <div className="card-body p-0">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
-            <thead className="table-light">
+            <thead>
               <tr>
-                <th className="px-4 py-3 border-0 text-nowrap">Sno</th>
-                <th className="py-3 border-0 text-nowrap">Vendor Name</th>
-                <th className="py-3 border-0 text-nowrap">Street 1</th>
-                <th className="py-3 border-0 text-nowrap">Street 2</th>
-                <th className="py-3 border-0 text-nowrap">City</th>
-                <th className="py-3 border-0 text-nowrap">State</th>
-                <th className="py-3 border-0 text-nowrap">State Code</th>
-                <th className="py-3 border-0 text-nowrap">Area</th>
-                <th className="py-3 border-0 text-nowrap">Pin Code</th>
-                <th className="py-3 border-0 text-nowrap">Contact Person 1</th>
-                <th className="py-3 border-0 text-nowrap">Designation 1</th>
-                <th className="py-3 border-0 text-nowrap">Email id 1</th>
-                <th className="py-3 border-0 text-nowrap">Phone Number 1</th>
-                <th className="py-3 border-0 text-nowrap">Contact Person 2</th>
-                <th className="py-3 border-0 text-nowrap">Designation 2</th>
-                <th className="py-3 border-0 text-nowrap">Email id 2</th>
-                <th className="py-3 border-0 text-nowrap">Phone Number 2</th>
-                <th className="py-3 border-0 text-nowrap">Contact Person 3</th>
-                <th className="py-3 border-0 text-nowrap">Designation 3</th>
-                <th className="py-3 border-0 text-nowrap">Email id 3</th>
-                <th className="py-3 border-0 text-nowrap">Phone Number 3</th>
-                <th className="py-3 border-0 text-nowrap">Landline</th>
-                <th className="py-3 border-0 text-nowrap">GSt</th>
-                <th className="py-3 border-0 text-nowrap">Tin</th>
-                <th className="py-3 border-0 text-nowrap">CST</th>
-                <th className="py-3 border-0 text-nowrap">TC</th>
-                <th className="py-3 border-0 text-nowrap">VMC</th>
-                <th className="py-3 border-0 text-nowrap">HMC</th>
-                <th className="py-3 border-0 text-nowrap">Vendor Type</th>
-                <th className="py-3 border-0 text-center px-4 text-nowrap">Action</th>
+                <th className="px-4 py-3 border-0">Sno</th>
+                <th className="py-3 border-0">Vendor Name</th>
+                <th className="py-3 border-0">Email</th>
+                <th className="py-3 border-0">Phone Number</th>
+                <th className="py-3 border-0">GSTN</th>
+                <th className="py-3 border-0 text-center px-4">Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={30} className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
+                  <td colSpan={6} className="text-center py-5">
+                    <div className="d-flex flex-column align-items-center gap-3">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                      <span className="text-muted small fw-bold text-uppercase tracking-wider">Fetching Vendors...</span>
                     </div>
                   </td>
                 </tr>
@@ -117,51 +96,24 @@ const VendorTable: React.FC = () => {
                     <tr key={vendor.id}>
                       <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td className="text-nowrap fw-bold text-dark">{vendor.name || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.street1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.street2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.city || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.state || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.stateCode || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.area || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.pinCode || '0'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{vendor.contactPerson1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.designation1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.emailId1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.phoneNumber1 || '-'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{vendor.contactPerson2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.designation2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.emailId2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.phoneNumber2 || '-'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{vendor.contactPerson3 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.designation3 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.emailId3 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.phoneNumber3 || '-'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{vendor.landline || '0'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.gst || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.tin || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.cst || '-'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.tc || '0'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.vmc || '0'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.hmc || '0'}</td>
-                      <td className="text-nowrap text-muted small">{vendor.vendorType || 'vendor'}</td>
+                      <td className="text-nowrap text-muted small">{vendor.email || vendor.emailId1 || '-'}</td>
+                      <td className="text-nowrap text-muted small">{vendor.phone || vendor.phoneNumber1 || '-'}</td>
+                      <td className="text-nowrap text-muted small"><span className="badge bg-light text-dark border-0 shadow-sm">{vendor.gst || '-'}</span></td>
                       
                       <td className="text-center px-4 text-nowrap">
-                        <div className="d-flex justify-content-center gap-1">
+                        <div className="d-flex justify-content-center gap-2">
                           {user?.role === 'super_admin' && (
-                            <Link href={`/vendors/${vendor.id}/edit`} className="btn btn-sm btn-success border-0 rounded-1 text-white p-1 px-2" title="Edit">
-                              <i className="bi bi-pencil-fill xs-small"></i>
+                            <Link href={`/vendors/${vendor.id}/edit`} className="btn-action-edit" title="Edit">
+                              <i className="bi bi-pencil-fill"></i>
                             </Link>
                           )}
                           {user?.role === 'super_admin' && (
                             <button 
-                              className="btn btn-sm btn-danger border-0 rounded-1 text-white p-1 px-2"
+                              className="btn-action-delete"
                               onClick={() => handleDelete(vendor.id)}
+                              title="Delete"
                             >
-                              <i className="bi bi-x-lg xs-small"></i>
+                              <i className="bi bi-x-lg"></i>
                             </button>
                           )}
                         </div>
@@ -170,7 +122,7 @@ const VendorTable: React.FC = () => {
                   ))}
                   {paginatedItems.length === 0 && (
                     <tr>
-                      <td colSpan={30} className="text-center py-5 text-muted">
+                      <td colSpan={6} className="text-center py-5 text-muted">
                         No vendors found matching your filters.
                       </td>
                     </tr>

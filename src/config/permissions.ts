@@ -15,26 +15,25 @@ export interface NavItem {
  */
 export const navigationConfig: NavItem[] = [
   { name: 'Dashboard', icon: 'bi-grid-1x2', path: '/dashboard', moduleId: 'default' },
-  { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
   { name: 'Customer', icon: 'bi-people', path: '/customers', moduleId: 'mod_customer' },
-  
-  // masters
   { name: 'Item', icon: 'bi-box-seam', path: '/master/items', moduleId: 'mod_items' },
   { name: 'Process', icon: 'bi-gear-wide-connected', path: '/master/processes', moduleId: 'mod_processes' },
-  { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
   
-  // Logistics
-  { name: 'Vendor', icon: 'bi-truck', path: '/vendors', moduleId: 'mod_vendor' },
   { name: 'Inward', icon: 'bi-box-arrow-in-right', path: '/inward', moduleId: 'mod_inward' },
   { name: 'Outward', icon: 'bi-box-arrow-up-right', path: '/outward', moduleId: 'mod_outward' },
   { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
-  
-  // Finance
+  { name: 'Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
   { name: 'Invoice', icon: 'bi-file-earmark-spreadsheet', path: '/invoices', moduleId: 'mod_invoice' },
-  { name: 'Payments & Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
-  { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
   { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
-  
+  { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
+  { name: 'Active Sales Area', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_hub' },
+  { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
+  { name: 'Employee Management', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
+  { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
+  { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
+  { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'default' },
+  { name: 'Sales Hub', icon: 'bi-graph-up-arrow', path: '/sales-hub', moduleId: 'mod_sales_hub' },
+
   // Reports
   { 
     name: 'Reports', 
@@ -49,15 +48,6 @@ export const navigationConfig: NavItem[] = [
       { name: 'GST Report', icon: 'bi-file-text', path: '/reports/gst', moduleId: 'mod_invoice' },
     ]
   },
-  { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'default' },
-  
-  // HR & Admin
-  { name: 'Employees', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
-  { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
-
-  // Sales Hub & Map moved to end
-  { name: 'Sales Hub', icon: 'bi-graph-up-arrow', path: '/sales-hub', moduleId: 'mod_sales_hub' },
-  { name: 'Sales Map', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_hub' },
 
   { name: 'Companies', icon: 'bi-building', path: '/admin/companies', moduleId: 'super_admin' },
   { name: 'Settings', icon: 'bi-gear', path: '/settings', moduleId: 'default' },

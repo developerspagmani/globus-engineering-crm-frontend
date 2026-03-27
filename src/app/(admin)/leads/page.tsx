@@ -152,11 +152,11 @@ const LeadsPage = () => {
                           PROMOTE TO CUSTOMER
                         </button>
                       )}
-                      {checkActionPermission(user, 'mod_lead', 'edit') && (
-                        <Link href={`/leads/${lead.id}/edit`} className="btn btn-light btn-sm rounded-circle p-2 border">
-                          <i className="bi bi-pencil"></i>
-                        </Link>
-                      )}
+                       {checkActionPermission(user, 'mod_lead', 'edit') && (
+                         <Link href={`/leads/${lead.id}/edit`} className="btn-action-edit" title="Edit">
+                           <i className="bi bi-pencil-fill"></i>
+                         </Link>
+                       )}
                    </div>
                 </td>
               </tr>

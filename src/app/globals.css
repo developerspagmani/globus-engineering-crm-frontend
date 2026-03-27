@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
 :root {
   --sidebar-width: 270px;
@@ -40,7 +40,7 @@
 body {
   background-color: var(--bg-body);
   color: var(--text-main);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.9rem;
   letter-spacing: -0.015em;
   -webkit-font-smoothing: antialiased;
@@ -312,6 +312,44 @@ body {
 .table tbody td:last-child {
   border-top-right-radius: var(--radius-lg);
   border-bottom-right-radius: var(--radius-lg);
+}
+
+.btn-action-edit {
+  width: 32px;
+  height: 32px;
+  background-color: #00a651 !important; /* Green from the image */
+  color: white !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  border: none !important;
+  transition: opacity 0.2s;
+}
+
+.btn-action-edit:hover {
+  opacity: 0.85;
+  color: white !important;
+}
+
+.btn-action-delete {
+  width: 32px;
+  height: 32px;
+  background-color: #ed1c24 !important; /* Red from the image */
+  color: white !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  border: none !important;
+  transition: opacity 0.2s;
+}
+
+.btn-action-delete:hover {
+  opacity: 0.85;
+  color: white !important;
 }
 
 /* Utilities & Animations */

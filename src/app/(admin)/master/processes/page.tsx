@@ -63,7 +63,7 @@ export default function ProcessDetailsPage() {
             <button
               onClick={() => { setView('add'); setEditingId(null); setFormData({ processName: '' }); }}
               className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' && !editingId ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
-              style={{ backgroundColor: '#9C27B0', border: 'none', fontSize: '0.85rem' }}
+              style={{ backgroundColor: '#da3e00', border: 'none', fontSize: '0.85rem' }}
             >
               <i className="bi bi-plus" style={{ fontSize: '1.2rem' }}></i>
               <span>ADD</span>
@@ -71,7 +71,7 @@ export default function ProcessDetailsPage() {
             <button
               onClick={() => setView('list')}
               className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'list' ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
-              style={{ backgroundColor: '#E91E63', border: 'none', fontSize: '0.85rem' }}
+              style={{ backgroundColor: '#475569', border: 'none', fontSize: '0.85rem' }}
             >
               <i className="bi bi-arrow-repeat" style={{ fontSize: '1.1rem' }}></i>
               <span>LIST</span>
@@ -107,7 +107,7 @@ export default function ProcessDetailsPage() {
                   <button
                     type="submit"
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
-                    style={{ backgroundColor: '#00C853', border: 'none', minWidth: '100px' }}
+                    style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '100px' }}
                   >
                     {editingId ? 'UPDATE' : 'ADD'}
                   </button>
@@ -115,7 +115,7 @@ export default function ProcessDetailsPage() {
                     type="button"
                     onClick={() => { setFormData({ processName: '' }); setEditingId(null); }}
                     className="btn px-4 py-2 text-white fw-bold rounded-1"
-                    style={{ backgroundColor: '#FF3D00', border: 'none', minWidth: '100px' }}
+                    style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
                   >
                     {editingId ? 'CANCEL' : 'RESET'}
                   </button>
@@ -165,8 +165,14 @@ export default function ProcessDetailsPage() {
                           <td className="px-4 py-3 text-muted">{index + 1}</td>
                           <td className="px-4 py-3 fw-bold">{p.processName}</td>
                           <td className="px-4 py-3 text-end">
-                            <button onClick={() => handleEdit(p)} className="btn btn-sm btn-link text-info me-2 p-0 shadow-none"><i className="bi bi-pencil"></i></button>
-                            <button onClick={() => handleDelete(p.id)} className="btn btn-sm btn-link text-danger p-0 shadow-none"><i className="bi bi-trash"></i></button>
+                            <div className="d-flex justify-content-end gap-2">
+                              <button onClick={() => handleEdit(p)} className="btn-action-edit" title="Edit">
+                                <i className="bi bi-pencil-fill"></i>
+                              </button>
+                              <button onClick={() => handleDelete(p.id)} className="btn-action-delete" title="Delete">
+                                <i className="bi bi-x-lg"></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))

@@ -205,8 +205,8 @@ const InvoiceTable: React.FC = () => {
           </select>
        </div>
        <div className="d-flex gap-1 flex-wrap hide-print">
-          <button onClick={handlePrint} className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#00bcd4', borderColor: '#00bcd4' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
-          <button onClick={handleExportExcel} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#9c27b0', borderColor: '#9c27b0' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
+          <button onClick={handlePrint} className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
+          <button onClick={handleExportExcel} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#da3e00', borderColor: '#da3e00' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
           <button onClick={handleCopyTable} className="btn btn-success btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm"><i className="bi bi-files fw-bold"></i> COPY</button>
           <button onClick={handleExportPDF} className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}><i className="bi bi-file-earmark-pdf fw-bold"></i> PDF</button>
        </div>
@@ -238,17 +238,16 @@ const InvoiceTable: React.FC = () => {
             <td className="text-muted small">{inward.date}</td>
             <td className="text-center pe-4">
               <div className="d-flex justify-content-center gap-2">
-                <Link href={`/invoices/new?inwardId=${inward.id}`} className="btn btn-sm text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style={{ backgroundColor: '#ff4081', width: '32px', height: '32px' }} title="View/Create Invoice">
-                  <i className="bi bi-eye fw-bold"></i>
+                <Link href={`/invoices/new?inwardId=${inward.id}`} className="btn-action-edit" style={{ backgroundColor: '#ff4081 !important' }} title="View/Create Invoice">
+                  <i className="bi bi-eye-fill"></i>
                 </Link>
                 {checkActionPermission(user, 'mod_invoice', 'delete') && (
                   <button 
-                    className="btn btn-sm text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
-                    style={{ backgroundColor: '#f44336', width: '32px', height: '32px' }} 
+                    className="btn-action-delete" 
                     title="Delete Inward"
                     onClick={() => { if(window.confirm('Are you sure you want to delete this inward entry?')) dispatch(deleteInward(inward.id) as any) }}
                   >
-                    <i className="bi bi-x-circle fw-bold"></i>
+                    <i className="bi bi-x-lg"></i>
                   </button>
                 )}
               </div>
@@ -284,8 +283,12 @@ const InvoiceTable: React.FC = () => {
             <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td className="text-center pe-4">
               <div className="d-flex justify-content-center gap-2">
-                 <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#4caf50', width: '32px', height: '32px', lineHeight: '18px' }}><i className="bi bi-pencil fw-bold" style={{ fontSize: '0.8rem' }}></i></Link>
-                 <button className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#f44336', width: '32px', height: '32px', lineHeight: '18px' }} onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}><i className="bi bi-x-lg fw-bold" style={{ fontSize: '0.8rem' }}></i></button>
+                 <Link href={`/invoices/${invoice.id}/edit`} className="btn-action-edit" title="Edit">
+                   <i className="bi bi-pencil-fill"></i>
+                 </Link>
+                 <button className="btn-action-delete" onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}>
+                   <i className="bi bi-x-lg"></i>
+                 </button>
               </div>
             </td>
           </tr>
@@ -318,10 +321,22 @@ const InvoiceTable: React.FC = () => {
             <td className="text-muted small">{invoice.date}</td>
             <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td className="text-center pe-4">
-               <div className="d-flex justify-content-center gap-2">
-                 <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#4caf50', width: '32px', height: '32px', lineHeight: '18px' }}><i className="bi bi-pencil fw-bold" style={{ fontSize: '0.8rem' }}></i></Link>
-                 <button className="btn btn-sm text-white rounded-circle shadow-sm" style={{ backgroundColor: '#f44336', width: '32px', height: '32px', lineHeight: '18px' }} onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}><i className="bi bi-x-lg fw-bold" style={{ fontSize: '0.8rem' }}></i></button>
-               </div>
+                <div className="d-flex justify-content-center gap-2">
+                    {checkActionPermission(user, 'mod_invoice', 'edit') && (
+                        <Link href={`/invoices/${invoice.id}/edit`} className="btn-action-edit" title="Edit">
+                            <i className="bi bi-pencil-fill"></i>
+                        </Link>
+                    )}
+                    {checkActionPermission(user, 'mod_invoice', 'delete') && (
+                        <button 
+                            className="btn-action-delete" 
+                            title="Delete"
+                            onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}
+                        >
+                            <i className="bi bi-x-lg"></i>
+                        </button>
+                    )}
+                </div>
             </td>
           </tr>
         ))}

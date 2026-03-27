@@ -149,108 +149,117 @@ const EmployeesPage = () => {
         </div>
       </div>
 
-      {/* List Table */}
-      <div className="table-responsive">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Employee Details</th>
-              <th>Dept & Role</th>
-              <th>Contact</th>
-              <th className="text-end">Salary</th>
-              <th>Joining Date</th>
-              <th>Status</th>
-              <th className="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedItems.map((emp) => (
-              <tr key={emp.id}>
-                <td>
-                  <div className="d-flex align-items-center gap-3">
-                    <div className="avatar bg-primary bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center fw-800" style={{ width: '40px', height: '40px' }}>
-                      {emp.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="fw-800 text-dark mb-0">{emp.name}</div>
-                      <div className="x-small text-muted fw-700 text-uppercase tracking-widest">{emp.employeeId}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div className={`x-small fw-800 text-uppercase tracking-wider ${getDeptColor(emp.department)}`}>{emp.department}</div>
-                  <div className="small fw-600 text-muted">{emp.designation}</div>
-                </td>
-                <td>
-                  <div className="small fw-600 text-dark">{emp.email}</div>
-                  <div className="x-small text-muted">{emp.phone}</div>
-                </td>
-                <td className="text-end">
-                  <div className="fw-800 text-dark">₹{emp.salary.toLocaleString('en-IN')}</div>
-                </td>
-                <td>
-                  <div className="small fw-600">{new Date(emp.joiningDate).toLocaleDateString()}</div>
-                </td>
-                <td>{getStatusBadge(emp.status)}</td>
-                <td className="text-end">
-                  <div className="d-flex justify-content-end gap-2">
-                    {checkActionPermission(user, 'mod_employee', 'edit') && (
-                      <Link href={`/employees/${emp.id}/edit`} className="btn btn-white btn-sm border shadow-sm rounded-pill px-3 fw-700">
-                        Edit
-                      </Link>
-                    )}
-                    {checkActionPermission(user, 'mod_employee', 'delete') && (
-                      <button 
-                        className="btn btn-white btn-sm border shadow-sm rounded-circle p-0" 
-                        style={{ width: '32px', height: '32px' }}
-                        onClick={() => { if(confirm('Delete employee record?')) (dispatch as any)(deleteEmployee(emp.id)) }}
-                      >
-                        <i className="bi bi-trash text-danger"></i>
+      <div className="card border-0 shadow-sm">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 border-0">Sno</th>
+                  <th className="py-3 border-0">Employee Details</th>
+                  <th className="py-3 border-0">Dept & Role</th>
+                  <th className="py-3 border-0">Contact</th>
+                  <th className="py-3 border-0 text-end">Salary</th>
+                  <th className="py-3 border-0">Joining Date</th>
+                  <th className="py-3 border-0 text-center">Status</th>
+                  <th className="py-3 border-0 text-center px-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedItems.map((emp, index) => (
+                  <tr key={emp.id}>
+                    <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                    <td>
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="avatar bg-light text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>
+                          {emp.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="fw-bold text-dark mb-0">{emp.name}</div>
+                          <div className="x-small text-muted fw-bold text-uppercase">{emp.employeeId}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-nowrap text-muted small">
+                      <div className={`fw-bold text-uppercase ${getDeptColor(emp.department)}`}>{emp.department}</div>
+                      <div className="fw-normal">{emp.designation}</div>
+                    </td>
+                    <td className="text-nowrap text-muted small">
+                      <div className="fw-bold text-dark">{emp.email}</div>
+                      <div className="fw-normal">{emp.phone}</div>
+                    </td>
+                    <td className="text-nowrap text-end fw-bold text-dark">
+                      ₹{emp.salary.toLocaleString('en-IN')}
+                    </td>
+                    <td className="text-nowrap text-muted small">
+                      {new Date(emp.joiningDate).toLocaleDateString()}
+                    </td>
+                    <td className="text-center">
+                      <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
+                        {emp.status.toUpperCase().replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="text-center px-4 text-nowrap">
+                      <div className="d-flex justify-content-center gap-2">
+                        {checkActionPermission(user, 'mod_employee', 'edit') && (
+                          <Link href={`/employees/${emp.id}/edit`} className="btn-action-edit" title="Edit">
+                            <i className="bi bi-pencil-fill"></i>
+                          </Link>
+                        )}
+                        {checkActionPermission(user, 'mod_employee', 'delete') && (
+                          <button 
+                            className="btn-action-delete"
+                            onClick={() => { if(confirm('Delete employee record?')) (dispatch as any)(deleteEmployee(emp.id)) }}
+                            title="Delete"
+                          >
+                            <i className="bi bi-x-lg"></i>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {paginatedItems.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="text-center py-5 text-muted">
+                      No employees found matching your filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="px-4 py-3 border-top d-flex align-items-center justify-content-between">
+              <div className="text-muted small">
+                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
+              </div>
+              <nav aria-label="Table navigation">
+                <ul className="pagination pagination-sm mb-0">
+                  <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setEmployeePage(pagination.currentPage - 1))}>
+                      <i className="bi bi-chevron-left"></i>
+                    </button>
+                  </li>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setEmployeePage(i + 1))}>
+                        {i + 1}
                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {paginatedItems.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center py-5">
-                  <div className="text-muted opacity-50 mb-3"><i className="bi bi-person-badge" style={{ fontSize: '3rem' }}></i></div>
-                  <h6 className="fw-700 text-dark">No employees found</h6>
-                  <p className="small text-muted mb-0">Record your first workforce profile today.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="d-flex justify-content-center mt-5">
-          <nav>
-            <ul className="pagination pagination-sm gap-2">
-              {[...Array(totalPages)].map((_, i) => (
-                <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
-                  <button 
-                    className={`page-link rounded-circle d-flex align-items-center justify-content-center fw-800 ${pagination.currentPage === i + 1 ? 'bg-primary border-primary' : 'text-muted border-white shadow-sm'}`} 
-                    style={{ width: '36px', height: '36px' }}
-                    onClick={() => dispatch(setEmployeePage(i + 1))}
-                  >
-                    {i + 1}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
+                    </li>
+                  ))}
+                  <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setEmployeePage(pagination.currentPage + 1))}>
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          )}
         </div>
-      )}
-
-      <style jsx>{`
-        .bg-success-soft { background-color: rgba(16, 185, 129, 0.1); }
-        .bg-warning-soft { background-color: rgba(245, 158, 11, 0.1); }
-        .bg-danger-soft { background-color: rgba(239, 68, 68, 0.1); }
-      `}</style>
+      </div>
     </div>
   );
 };

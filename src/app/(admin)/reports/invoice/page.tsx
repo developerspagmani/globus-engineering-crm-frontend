@@ -63,9 +63,9 @@ const InvoiceReportPage = () => {
             />
          </div>
          <div className="d-flex gap-1 flex-wrap">
-            <button className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border-0" style={{ backgroundColor: '#00bcd4', fontSize: '11px' }}>PRINT</button>
-            <button className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm border-0" style={{ backgroundColor: '#9c27b0', fontSize: '11px' }}>EXCEL</button>
-            <button className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border-0" style={{ backgroundColor: '#ff9800', fontSize: '11px' }}>PDF</button>
+            {/* <button className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border-0" style={{ backgroundColor: '#3B82F6', fontSize: '11px' }}>PRINT</button>
+            <button className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm border-0" style={{ backgroundColor: '#da3e00', fontSize: '11px' }}>EXCEL</button>
+            <button className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border-0" style={{ backgroundColor: '#ff9800', fontSize: '11px' }}>PDF</button> */}
          </div>
       </div>
 

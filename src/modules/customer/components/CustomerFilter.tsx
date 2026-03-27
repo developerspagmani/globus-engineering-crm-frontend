@@ -18,7 +18,7 @@ const CustomerFilter: React.FC = () => {
     <div className="card border-0 shadow-sm mb-4">
       <div className="card-body">
         <div className="row g-3">
-          <div className="col-md-6 col-lg-4">
+          <div className="col-md-6 col-lg-8">
             <div className="input-group">
               <span className="input-group-text bg-white border-end-0">
                 <i className="bi bi-search text-muted"></i>
@@ -59,14 +59,6 @@ const CustomerFilter: React.FC = () => {
               <option value="Construction">Construction</option>
               <option value="Machinery">Machinery</option>
             </select>
-          </div>
-          <div className="col-md-12 col-lg-4 d-flex gap-2">
-            <button className="btn btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center">
-              <i className="bi bi-file-earmark-arrow-down me-2"></i> Import
-            </button>
-            <button className="btn btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center">
-              <i className="bi bi-file-earmark-arrow-up me-2"></i> Export
-            </button>
           </div>
         </div>
       </div>

@@ -89,16 +89,16 @@ const CompanyUserTable: React.FC = () => {
                   </td>
                   <td className="text-end px-4">
                     <div className="d-flex justify-content-end gap-2">
-                       {/* checkActionPermission(currentUser, 'mod_user_management', 'edit') */}
-                      <Link href={`/users/${user.id}/edit`} className="btn btn-sm btn-outline-primary border-0 rounded-circle p-2">
-                        <i className="bi bi-gear-fill"></i>
+                      <Link href={`/users/${user.id}/edit`} className="btn-action-edit" title="Edit">
+                        <i className="bi bi-pencil-fill"></i>
                       </Link>
                       <button 
-                        className="btn btn-sm btn-outline-danger border-0 rounded-circle p-2"
+                        className="btn-action-delete"
                         onClick={() => handleDelete(user.id)}
                         disabled={user.id === currentUser?.id}
+                        title="Delete"
                       >
-                        <i className="bi bi-person-x-fill"></i>
+                        <i className="bi bi-x-lg"></i>
                       </button>
                     </div>
                   </td>

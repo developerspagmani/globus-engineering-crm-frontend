@@ -43,6 +43,8 @@ export interface Invoice {
   grand_total?: string;
   discount: number;
   paidAmount: number;
+  gstin?: string;
+  state?: string;
   notes?: string;
   createdAt: string;
   app_created_at?: string;

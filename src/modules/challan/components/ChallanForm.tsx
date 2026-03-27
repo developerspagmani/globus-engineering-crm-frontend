@@ -163,8 +163,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               >
                 <option value="">Select {formData.partyType === 'customer' ? 'Customer' : 'Vendor'}</option>
                 {formData.partyType === 'customer' 
-                  ? customers.map(c => <option key={c.id} value={c.id}>{c.company} ({c.name})</option>)
-                  : vendors.map(v => <option key={v.id} value={v.id}>{v.company} ({v.name})</option>)
+                  ? customers.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)
+                  : vendors.map(v => <option key={v.id} value={v.id}>{v.company || v.name}</option>)
                 }
               </select>
             </div>

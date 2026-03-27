@@ -60,7 +60,12 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
   const handleItemChange = (index: number, field: string, value: any) => {
     const newItems = [...formData.items];
-    (newItems[index] as any)[field] = value;
+    let val = value;
+    if (field === 'quantity') {
+      val = value === '' ? 0 : parseFloat(value);
+      if (isNaN(val)) val = 0;
+    }
+    (newItems[index] as any)[field] = val;
     setFormData(prev => ({ ...prev, items: newItems }));
   };
 
@@ -96,36 +101,55 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
     <div className="card border-0 shadow-sm">
       <div className="card-body p-4">
         <form onSubmit={handleSubmit}>
-          <div className="row g-4 mb-5">
-            <div className="col-md-3">
-              <label className="form-label small fw-bold text-uppercase">Outward No</label>
-              <input type="text" className="form-control" name="outwardNo" value={formData.outwardNo} onChange={handleChange} required />
-            </div>
-            <div className="col-md-6">
-              <label className="form-label small fw-bold text-uppercase">Customer</label>
-              <select className="form-select" name="customerId" value={formData.customerId} onChange={handleChange} required>
-                <option value="">Select Customer</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.company} ({c.name})</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-3">
-              <label className="form-label small fw-bold text-uppercase">Invoice Ref</label>
-              <input type="text" className="form-control" name="invoiceReference" value={formData.invoiceReference} onChange={handleChange} placeholder="Ex. INV-2024-001" required />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label small fw-bold text-uppercase">Dispatch Challan</label>
-              <input type="text" className="form-control" name="challanNo" value={formData.challanNo} onChange={handleChange} required />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label small fw-bold text-uppercase">Vehicle No</label>
-              <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="Ex. GA-01-AB-1234" required />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label small fw-bold text-uppercase">Dispatch Date</label>
-              <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} required />
-            </div>
+          <div className="mb-5">
+             <div className="row g-4">
+                <div className="col-md-6">
+                   <div className="row mb-3 align-items-center">
+                      <label className="col-sm-3 text-muted fw-bold">Outward No</label>
+                      <div className="col-sm-9">
+                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold" name="outwardNo" value={formData.outwardNo} onChange={handleChange} required />
+                      </div>
+                   </div>
+                   <div className="row mb-3 align-items-center">
+                      <label className="col-sm-3 text-muted fw-bold">Customer</label>
+                      <div className="col-sm-9">
+                         <select className="form-select border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required>
+                            <option value="">Select Customer</option>
+                            {customers.map(c => (
+                               <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                            ))}
+                         </select>
+                      </div>
+                   </div>
+                   <div className="row mb-3 align-items-center">
+                      <label className="col-sm-3 text-muted fw-bold">Dispatch Challan</label>
+                      <div className="col-sm-9">
+                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="challanNo" value={formData.challanNo} onChange={handleChange} required />
+                      </div>
+                   </div>
+                </div>
+
+                <div className="col-md-6">
+                   <div className="row mb-3 align-items-center">
+                      <label className="col-sm-3 text-muted fw-bold">Dispatch Date</label>
+                      <div className="col-sm-9">
+                         <input type="date" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="date" value={formData.date} onChange={handleChange} required />
+                      </div>
+                   </div>
+                   <div className="row mb-3 align-items-center">
+                      <label className="col-sm-3 text-muted fw-bold">Invoice Ref</label>
+                      <div className="col-sm-9">
+                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="invoiceReference" value={formData.invoiceReference} onChange={handleChange} placeholder="Ex. INV-2024-001" required />
+                      </div>
+                   </div>
+                   <div className="row mb-3 align-items-center">
+                      <label className="col-sm-3 text-muted fw-bold">Vehicle No</label>
+                      <div className="col-sm-9">
+                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="Ex. GA-01-AB-1234" required />
+                      </div>
+                   </div>
+                </div>
+             </div>
           </div>
 
           <div className="mb-4">
@@ -138,7 +162,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                 </div>
                 <div className="col-md-2">
                   <label className="small text-muted">Quantity</label>
-                  <input type="number" className="form-control" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseFloat(e.target.value))} required />
+                  <input type="number" className="form-control" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required />
                 </div>
                 <div className="col-md-2">
                   <label className="small text-muted">Unit</label>

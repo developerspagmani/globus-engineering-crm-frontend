@@ -75,44 +75,20 @@ const CustomerTable: React.FC = () => {
       <div className="card-body p-0">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
-            <thead className="table-light">
+            <thead>
               <tr>
-                <th className="px-4 py-3 border-0 text-nowrap">Sno</th>
-                <th className="py-3 border-0 text-nowrap">Customer Name</th>
-                <th className="py-3 border-0 text-nowrap">Strret1</th>
-                <th className="py-3 border-0 text-nowrap">Strret2</th>
-                <th className="py-3 border-0 text-nowrap">City</th>
-                <th className="py-3 border-0 text-nowrap">State</th>
-                <th className="py-3 border-0 text-nowrap">State Code</th>
-                <th className="py-3 border-0 text-nowrap">Area</th>
-                <th className="py-3 border-0 text-nowrap">Pin Code</th>
-                <th className="py-3 border-0 text-nowrap">Contact Person 1</th>
-                <th className="py-3 border-0 text-nowrap">Designation 1</th>
-                <th className="py-3 border-0 text-nowrap">Email id 1</th>
-                <th className="py-3 border-0 text-nowrap">Phone Number 1</th>
-                <th className="py-3 border-0 text-nowrap">Contact Person 2</th>
-                <th className="py-3 border-0 text-nowrap">Designation 2</th>
-                <th className="py-3 border-0 text-nowrap">Email id 2</th>
-                <th className="py-3 border-0 text-nowrap">Phone Number 2</th>
-                <th className="py-3 border-0 text-nowrap">Contact Person 3</th>
-                <th className="py-3 border-0 text-nowrap">Designation 3</th>
-                <th className="py-3 border-0 text-nowrap">Email id 3</th>
-                <th className="py-3 border-0 text-nowrap">Phone Number 3</th>
-                <th className="py-3 border-0 text-nowrap">Landline</th>
-                <th className="py-3 border-0 text-nowrap">GSt</th>
-                <th className="py-3 border-0 text-nowrap">Tin</th>
-                <th className="py-3 border-0 text-nowrap">CST</th>
-                <th className="py-3 border-0 text-nowrap">TC</th>
-                <th className="py-3 border-0 text-nowrap">VMC</th>
-                <th className="py-3 border-0 text-nowrap">HMC</th>
-                <th className="py-3 border-0 text-nowrap">Customer Type</th>
-                <th className="py-3 border-0 text-center px-4 text-nowrap">Action</th>
+                <th className="px-4 py-3 border-0">Sno</th>
+                <th className="py-3 border-0">Customer Name</th>
+                <th className="py-3 border-0">Email</th>
+                <th className="py-3 border-0">Phone Number</th>
+                <th className="py-3 border-0">GSTN</th>
+                <th className="py-3 border-0 text-center px-4">Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={30} className="text-center py-5">
+                  <td colSpan={6} className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-3">
                       <div className="spinner-border text-primary" role="status">
                         <span className="visually-hidden">Loading...</span>
@@ -127,51 +103,24 @@ const CustomerTable: React.FC = () => {
                     <tr key={customer.id}>
                       <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td className="text-nowrap fw-bold text-dark">{customer.name || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.street1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.street2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.city || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.state || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.stateCode || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.area || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.pinCode || '0'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{customer.contactPerson1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.designation1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.emailId1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.phoneNumber1 || '-'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{customer.contactPerson2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.designation2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.emailId2 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.phoneNumber2 || '-'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{customer.contactPerson3 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.designation3 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.emailId3 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.phoneNumber3 || '-'}</td>
-                      
-                      <td className="text-nowrap text-muted small">{customer.landline || '0'}</td>
-                      <td className="text-nowrap text-muted small">{customer.gst || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.tin || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.cst || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.tc || '0'}</td>
-                      <td className="text-nowrap text-muted small">{customer.vmc || '0'}</td>
-                      <td className="text-nowrap text-muted small">{customer.hmc || '0'}</td>
-                      <td className="text-nowrap text-muted small">{customer.customerType || 'Customer'}</td>
+                      <td className="text-nowrap text-muted small">{customer.email || customer.emailId1 || '-'}</td>
+                      <td className="text-nowrap text-muted small">{customer.phone || customer.phoneNumber1 || '-'}</td>
+                      <td className="text-nowrap text-muted small"><span className="badge bg-light text-dark border-0 shadow-sm">{customer.gst || '-'}</span></td>
                       
                       <td className="text-center px-4 text-nowrap">
-                        <div className="d-flex justify-content-center gap-1">
+                        <div className="d-flex justify-content-center gap-2">
                           {checkActionPermission(user, 'mod_customer', 'edit') && (
-                            <Link href={`/customers/${customer.id}/edit`} className="btn btn-sm btn-success border-0 rounded-1 text-white p-1 px-2" title="Edit">
-                              <i className="bi bi-pencil-fill xs-small"></i>
+                            <Link href={`/customers/${customer.id}/edit`} className="btn-action-edit" title="Edit">
+                              <i className="bi bi-pencil-fill"></i>
                             </Link>
                           )}
                           {checkActionPermission(user, 'mod_customer', 'delete') && (
                             <button 
-                              className="btn btn-sm btn-danger border-0 rounded-1 text-white p-1 px-2"
+                              className="btn-action-delete"
                               onClick={() => handleDelete(customer.id)}
+                              title="Delete"
                             >
-                              <i className="bi bi-x-lg xs-small"></i>
+                              <i className="bi bi-x-lg"></i>
                             </button>
                           )}
                         </div>
@@ -180,7 +129,7 @@ const CustomerTable: React.FC = () => {
                   ))}
                   {paginatedItems.length === 0 && (
                     <tr>
-                      <td colSpan={30} className="text-center py-5 text-muted">
+                      <td colSpan={6} className="text-center py-5 text-muted">
                         No customers found matching your filters.
                       </td>
                     </tr>

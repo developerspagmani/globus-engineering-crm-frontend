@@ -73,8 +73,14 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>Bill To Customer</div>
             <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#111827' }}>{invoice.customerName}</div>
             <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.4rem', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
-              {invoice.address || 'Address Not Provided'}
+              {invoice.address || 'Address Not Provided'}<br />
+              {invoice.state && <span>Place of Supply: <strong>{invoice.state}</strong></span>}
             </div>
+            {invoice.gstin && (
+                <div style={{ fontSize: '0.85rem', color: '#4b5563', marginTop: '0.5rem' }}>
+                    GSTIN/UIN: <strong style={{ color: '#111827' }}>{invoice.gstin}</strong>
+                </div>
+            )}
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>Order Info</div>
