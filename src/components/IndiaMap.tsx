@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import * as d3 from 'd3';
-import * as topojson from 'topojson-client';
+import { feature } from 'topojson-client';
 import { isDistrictMatch } from '@/utils/geo_utils';
 
 interface IndiaMapProps {
@@ -99,13 +99,18 @@ function IndiaMap({
                 const topology = await response.json();
 
                 // Convert TopoJSON to GeoJSON features
-                const states = topojson.feature(topology, topology.objects.states);
-                const districts = topojson.feature(topology, topology.objects.districts);
+                if (!topology.objects || !topology.objects.states || !topology.objects.districts) {
+                    throw new Error('Invalid map data format');
+                }
+
+                const states = feature(topology, topology.objects.states as any);
+                const districts = feature(topology, topology.objects.districts as any);
 
                 geoCache.states = states;
                 geoCache.districts = districts;
                 setGeoData({ states, districts });
                 setError(null);
+                console.log("Map data loaded successfully");
             } catch (err) {
                 console.error("Error loading TopoJSON", err);
                 setError("Failed to load map data. Please check your connection.");
@@ -182,26 +187,33 @@ function IndiaMap({
     }, [selectedRegion, geoData, selectedState]);
 
     const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
-    const baseRenderedRef = useRef(false);
 
     // 3. Render
     useEffect(() => {
-        if (!geoData || !geoData.states || !geoData.districts || !svgRef.current || dimensions.width === 0 || dimensions.height === 0) return;
+        if (!geoData || !geoData.states || !geoData.districts || !svgRef.current || dimensions.width === 0 || dimensions.height === 0) {
+            console.log("Map render skipped. Data:", !!geoData, "SVG:", !!svgRef.current, "Dims:", dimensions);
+            return;
+        }
 
         const { width, height } = dimensions;
+        console.log("Rendering map with dimensions:", width, height);
+        
         const svg = d3.select<SVGSVGElement, unknown>(svgRef.current);
-        const projection = d3.geoMercator().fitExtent([[80, 80], [width - 80, height - 80]], geoData.states);
-        const pathGenerator = d3.geoPath().projection(projection);
-
-        // Initialize structural groups once
-        if (!baseRenderedRef.current) {
+        
+        // Ensure SVG internal size matches container
+        svg.attr("width", width).attr("height", height);
+        
+        // Always ensure structural groups exist
+        let g = svg.select<SVGGElement>(".main-wrapper-g");
+        if (g.empty()) {
             svg.selectAll("*").remove();
+            console.log("Initializing SVG groups for the first time");
             const defs = svg.append("defs");
             defs.append("filter").attr("id", "selection-glow").attr("x", "-50%").attr("y", "-50%").attr("width", "200%").attr("height", "200%")
                 .call(f => f.append("feGaussianBlur").attr("stdDeviation", "2").attr("result", "blur"))
                 .call(f => f.append("feComposite").attr("in", "SourceGraphic").attr("in2", "blur").attr("operator", "over"));
 
-            const g = svg.append("g").attr("class", "main-wrapper-g");
+            g = svg.append("g").attr("class", "main-wrapper-g");
             g.append("g").attr("class", "states-layer");
             g.append("g").attr("class", "districts-layer");
             g.append("g").attr("class", "labels-layer").style("pointer-events", "none");
@@ -209,11 +221,11 @@ function IndiaMap({
             zoomRef.current = d3.zoom<SVGSVGElement, unknown>()
                 .scaleExtent([1, 100])
                 .on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
-                    const g = svg.select(".main-wrapper-g");
-                    g.attr("transform", event.transform.toString());
-                    g.selectAll<SVGPathElement, any>("path").attr("stroke-width", d => (d.properties?.NAME_2 ? 0.2 : 0.5) / event.transform.k);
+                    const currentG = svg.select(".main-wrapper-g");
+                    currentG.attr("transform", event.transform.toString());
+                    currentG.selectAll<SVGPathElement, any>("path").attr("stroke-width", d => (d.properties?.district ? 0.2 : 0.5) / event.transform.k);
                     svg.select(".labels-layer").selectAll<SVGTextElement, any>("text").style("font-size", (d: any) => {
-                        const base = d.properties?.NAME_2 ? 4 : 10;
+                        const base = d.properties?.district ? 4 : 10;
                         return (base / Math.sqrt(event.transform.k)) + "px";
                     });
                 });
@@ -223,19 +235,19 @@ function IndiaMap({
                 .on("touchstart.zoom", null)
                 .on("wheel.zoom", null)
                 .on("dblclick.zoom", null);
-
-            // Set initial scale to 1
-            svg.call(zoomRef.current.transform as any, d3.zoomIdentity);
-            baseRenderedRef.current = true;
         }
 
-        const g = svg.select(".main-wrapper-g");
-        const statesG = g.select(".states-layer");
-        const districtsG = g.select(".districts-layer");
-        const labelsG = g.select(".labels-layer");
+        const projection = d3.geoMercator().fitExtent([[20, 20], [width - 20, height - 20]], geoData.states);
+        const pathGenerator = d3.geoPath().projection(projection);
+
+        const mainG = svg.select(".main-wrapper-g");
+        const statesG = mainG.select(".states-layer");
+        const districtsG = mainG.select(".districts-layer");
+        const labelsG = mainG.select(".labels-layer");
 
         const currentTransform = viewMode === 'states' ? d3.zoomIdentity : d3.zoomTransform(svg.node() as Element);
-        g.attr("transform", currentTransform.toString());
+        mainG.attr("transform", currentTransform.toString());
+
 
         const zoomToFeature = (feature: any) => {
             if (!zoomRef.current || !svgRef.current) return;
@@ -406,7 +418,7 @@ function IndiaMap({
             lastZoomedStateRef.current = null;
         }
 
-    }, [geoData, dimensions, activeDistricts, activeDistrict, viewMode, selectedState, searchTerm]);
+    }, [geoData, dimensions, activeDistricts, activeStates, activeDistrict, viewMode, selectedState, searchTerm]);
 
     const handleZoomIn = () => {
         if (svgRef.current && zoomRef.current) {
@@ -462,9 +474,10 @@ function IndiaMap({
             )}
             <svg
                 ref={svgRef}
-                className={`w-100 h-100 transition-opacity duration-700 ${isDimensionsReady && geoData ? 'opacity-100' : 'opacity-0'}`}
-                style={{ cursor: 'grab' }}
+                className={`w-100 h-100 transition-opacity duration-700 ${isDimensionsReady && geoData ? 'opacity-100' : 'opacity-100'}`}
+                style={{ cursor: 'grab', background: 'transparent' }}
             />
+
 
             {/* Smarter Floating Tooltip (Ref-based for speed) */}
             {hoveredRegion && (

@@ -116,15 +116,17 @@ export default function CompaniesPage() {
                       <div className="d-flex justify-content-end gap-2">
                         <Link
                           href={`/admin/companies/${company.id}/edit`}
-                          className="btn btn-sm btn-outline-primary border-0 rounded-circle p-2 d-flex align-items-center justify-content-center"
+                          className="btn-action-edit"
+                          title="Edit"
                         >
-                          <i className="bi bi-pencil-square fs-5"></i>
+                          <i className="bi bi-pencil-fill"></i>
                         </Link>
                         <button
                           onClick={() => handleDeleteTrigger(company.id)}
-                          className="btn btn-sm btn-outline-danger border-0 rounded-circle p-2"
+                          className="btn-action-delete"
+                          title="Delete"
                         >
-                          <i className="bi bi-trash3-fill fs-5"></i>
+                          <i className="bi bi-x-lg"></i>
                         </button>
                       </div>
                     </td>

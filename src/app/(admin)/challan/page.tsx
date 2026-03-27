@@ -23,8 +23,8 @@ const ChallanPage = () => {
     if (activeCompany && item.company_id !== activeCompany.id) return false;
 
     const matchesSearch =
-      item.challanNo.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.partyName.toLowerCase().includes(filters.search.toLowerCase());
+      (item.challanNo?.toLowerCase() ?? '').includes(filters.search.toLowerCase()) ||
+      (item.partyName?.toLowerCase() ?? '').includes(filters.search.toLowerCase());
     const matchesType = filters.type === 'all' || item.type === filters.type;
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
     return matchesSearch && matchesType && matchesStatus;

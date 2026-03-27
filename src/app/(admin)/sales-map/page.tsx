@@ -10,13 +10,20 @@ import IndiaMap from '@/components/IndiaMap';
 import CustomerTable from '@/components/CustomerTable';
 import { isDistrictMatch } from '@/utils/geo_utils';
 import { Company } from '@/types/modules';
+import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchCompanies } from '@/redux/features/companySlice';
 
 const SalesMapPage = () => {
     const dispatch = useDispatch();
     const router = useRouter();
-    const { user, company } = useSelector((state: RootState) => state.auth);
+    const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
     const { items: companies } = useSelector((state: RootState) => state.companies);
     const customers = useSelector((state: RootState) => state.customers.items);
+
+    useEffect(() => {
+        (dispatch as any)(fetchCustomers(activeCompany?.id));
+        (dispatch as any)(fetchCompanies());
+    }, [dispatch, activeCompany?.id]);
     const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'states' | 'districts'>('states');
     const [searchQuery, setSearchQuery] = useState('');
@@ -142,7 +149,7 @@ const SalesMapPage = () => {
                             </div>
                             <div className="text-start">
                                 <h1 className="h6 fw-black mb-0 text-uppercase tracking-tight text-dark">
-                                    {hasMounted ? (company?.name || 'Global View') : 'Global View'}
+                                    {hasMounted ? (activeCompany?.name || 'Global View') : 'Global View'}
                                 </h1>
                                 <div className="x-small text-muted fw-bold tracking-widest leading-none mt-1">SALES TERRITORY MAP</div>
                             </div>
@@ -151,20 +158,20 @@ const SalesMapPage = () => {
                             <li className="px-3 py-2 text-uppercase x-small fw-800 text-muted tracking-widest border-bottom mb-2">Select Company Context</li>
                             <li>
                                 <button 
-                                    className={`dropdown-item py-2 d-flex align-items-center gap-2 ${!company ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
+                                    className={`dropdown-item py-2 d-flex align-items-center gap-2 ${!activeCompany ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
                                     onClick={() => handleCompanySwitch(null)}
                                 >
-                                    <i className={`bi bi-globe ${!company ? 'opacity-100' : 'opacity-0'}`}></i>
+                                    <i className={`bi bi-globe ${!activeCompany ? 'opacity-100' : 'opacity-0'}`}></i>
                                     <span>Global System View</span>
                                 </button>
                             </li>
                             {companies.map((comp) => (
                                 <li key={comp.id}>
                                     <button 
-                                        className={`dropdown-item py-2 d-flex align-items-center gap-2 ${company?.id === comp.id ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
+                                        className={`dropdown-item py-2 d-flex align-items-center gap-2 ${activeCompany?.id === comp.id ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
                                         onClick={() => handleCompanySwitch(comp)}
                                     >
-                                        <i className={`bi bi-check-lg ${company?.id === comp.id ? 'opacity-100' : 'opacity-0'}`}></i>
+                                        <i className={`bi bi-check-lg ${activeCompany?.id === comp.id ? 'opacity-100' : 'opacity-0'}`}></i>
                                         {comp.name}
                                     </button>
                                 </li>
@@ -214,7 +221,10 @@ const SalesMapPage = () => {
                                         {viewMode === 'states' ? 'All India View' : `Viewing State: ${selectedRegion}`}
                                     </div>
                                 </div>
-                                <div className="flex-grow-1 d-flex justify-content-center align-items-center position-relative">
+                                <div 
+                                    className="flex-grow-1 d-flex justify-content-center align-items-center position-relative"
+                                    style={{ height: '800px', width: '100%' }}
+                                >
                                     <IndiaMap
                                         onRegionSelect={handleRegionSelect}
                                         selectedRegion={selectedRegion}

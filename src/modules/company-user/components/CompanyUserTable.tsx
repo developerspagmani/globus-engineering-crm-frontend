@@ -22,8 +22,8 @@ const CompanyUserTable: React.FC = () => {
     // If a specific company is selected, filter by it.
     if (activeCompany && item.company_id !== String(activeCompany.id)) return false;
     
-    const matchesSearch = item.name.toLowerCase().includes(filters.search.toLowerCase()) || 
-                         item.email.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesSearch = (item.name?.toLowerCase() ?? '').includes(filters.search.toLowerCase()) || 
+                         (item.email?.toLowerCase() ?? '').includes(filters.search.toLowerCase());
     const matchesRole = filters.role === 'all' || item.role === filters.role;
     
     return matchesSearch && matchesRole;

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { Lead } from '@/data/mockModules';
+import { Lead } from '@/types/modules';
 import { addLead, updateLead } from '@/redux/features/leadSlice';
 
 interface LeadFormProps {
@@ -55,12 +55,13 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === 'create') {
-      dispatch(addLead(formData));
+      (dispatch as any)(addLead(formData));
     } else if (mode === 'edit' && initialData) {
-      dispatch(updateLead({ ...initialData, ...formData }));
+      (dispatch as any)(updateLead({ ...initialData, ...formData }));
     }
     router.push('/leads');
   };
+
 
   return (
     <div className="card shadow-sm border-0 animate-fade-in">

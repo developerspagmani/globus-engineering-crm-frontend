@@ -22,89 +22,107 @@ const InvoiceReportPage = () => {
   if (!mounted) return null;
 
   const filteredInvoices = invoices.filter(inv => {
-     const matchesSearch = inv.customerName.toLowerCase().includes(search.toLowerCase()) || 
-                          inv.invoiceNumber.toLowerCase().includes(search.toLowerCase());
-     return matchesSearch;
+     const searchTerm = search.toLowerCase();
+     return (
+       (inv.customerName?.toLowerCase() ?? '').includes(searchTerm) || 
+       (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm)
+     );
   });
 
   return (
-    <div className="card shadow-sm border-0 bg-white overflow-hidden rounded-0 mb-5">
-      <div className="card-header bg-white border-bottom-0 pb-2 px-4 d-flex align-items-center gap-2 mt-2">
-         <i className="bi bi-house-door-fill text-dark small"></i>
-         <span className="text-muted small">Home / Dashboard / Invoice Report</span>
-      </div>
-
-      <div className="px-4 py-3 d-flex justify-content-between align-items-center">
-        <h4 className="fw-normal text-dark mb-0 fs-3">Invoice Report</h4>
-        <button className="btn btn-link text-muted p-0 shadow-none" onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}><i className="bi bi-arrow-repeat fs-5"></i></button>
-      </div>
-
-      <div className="px-4 py-3 bg-white mt-2 d-flex align-items-center gap-3">
-        <span className="small text-muted fw-bold">Select Date</span>
-        <div className="border border-light rounded px-3 py-2 d-flex align-items-center gap-2" style={{ backgroundColor: '#fdfdfd' }}>
-           <i className="bi bi-calendar3 text-muted"></i>
-           <span className="small text-dark">{new Date().toLocaleDateString()} - {new Date().toLocaleDateString()}</span>
+    <div className="container-fluid py-4 animate-fade-in">
+      {/* Header Section */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="fw-bold mb-1 text-dark">Invoice Report</h2>
+          <p className="text-muted small mb-0">Detailed analysis of outbound billing and tax statements.</p>
         </div>
-        <button className="btn btn-success fw-bold px-4 shadow-sm border-0 text-white ms-4" style={{ backgroundColor: '#28a745' }}>
-          GO
+        <button 
+          className="btn btn-white shadow-sm border px-3 d-flex align-items-center gap-2"
+          onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}
+        >
+          <i className="bi bi-arrow-repeat text-primary"></i>
+          <span className="small fw-bold text-muted">Refresh</span>
         </button>
       </div>
 
-      <div className="d-flex justify-content-between px-4 align-items-center py-3 bg-white flex-wrap gap-3 mt-4 border-top">
-         <div className="d-flex align-items-center gap-2">
-            <span className="small text-muted fw-semibold flex-shrink-0">Filter:</span>
-            <input 
-               type="text" 
-               className="form-control form-control-sm border-0 border-bottom rounded-0 shadow-none px-0" 
-               style={{ width: '200px' }} 
-               placeholder="Search by customer or invoice..."
-               value={search}
-               onChange={(e) => setSearch(e.target.value)}
-            />
-         </div>
-         <div className="d-flex gap-1 flex-wrap">
-            {/* <button className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border-0" style={{ backgroundColor: '#3B82F6', fontSize: '11px' }}>PRINT</button>
-            <button className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm border-0" style={{ backgroundColor: '#da3e00', fontSize: '11px' }}>EXCEL</button>
-            <button className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm border-0" style={{ backgroundColor: '#ff9800', fontSize: '11px' }}>PDF</button> */}
-         </div>
+      {/* Filter Section */}
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-9">
+              <div className="position-relative">
+                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input
+                  type="text"
+                  className="form-control ps-5"
+                  placeholder="Search by invoice number or customer name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="col-md-3">
+               <div className="input-group">
+                 <span className="input-group-text bg-white small fw-bold text-muted">Period</span>
+                 <select className="form-select form-select-sm">
+                   <option>This Month</option>
+                   <option>Last Month</option>
+                   <option>FY 2023-24</option>
+                 </select>
+               </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="table-responsive px-4 pb-4">
-        <table className="table align-middle mb-0 table-hover bg-white w-100">
-          <thead className="text-dark border-bottom border-top border-light">
-            <tr>
-              <th className="fw-semibold py-3 border-0 bg-white" style={{ fontSize: '13px' }}>Sno</th>
-              <th className="fw-semibold border-0 bg-white" style={{ fontSize: '13px' }}>Date</th>
-              <th className="fw-semibold border-0 bg-white" style={{ fontSize: '13px' }}>Invoice No</th>
-              <th className="fw-semibold border-0 bg-white" style={{ fontSize: '13px' }}>Customer Name</th>
-              <th className="fw-semibold border-0 bg-white" style={{ fontSize: '13px', textAlign: 'right' }}>Base Amount</th>
-              <th className="fw-semibold border-0 bg-white" style={{ fontSize: '13px', textAlign: 'right' }}>Tax Amount</th>
-              <th className="fw-semibold border-0 bg-white" style={{ fontSize: '13px', textAlign: 'right' }}>Grand Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-               <tr><td colSpan={7} className="text-center py-4">Loading Invoices...</td></tr>
-            ) : filteredInvoices.map((inv, index) => (
-              <tr key={inv.id} className="border-bottom-light">
-                <td style={{ fontSize: '13px' }}>{index + 1}</td>
-                <td style={{ fontSize: '13px' }}>{inv.date}</td>
-                <td style={{ fontSize: '13px' }} className="fw-bold">{inv.invoiceNumber}</td>
-                <td style={{ fontSize: '13px' }} className="text-uppercase">{inv.customerName}</td>
-                <td style={{ fontSize: '13px', textAlign: 'right' }}>₹{inv.subTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td style={{ fontSize: '13px', textAlign: 'right' }}>₹{inv.taxTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td style={{ fontSize: '13px', textAlign: 'right' }} className="fw-bold">₹{inv.grandTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-              </tr>
-            ))}
-            {filteredInvoices.length === 0 && !loading && (
-               <tr>
-                 <td colSpan={7} className="text-center py-5 text-muted bg-white">
-                    <h6 className="fw-normal">No Invoices found for current selection</h6>
-                 </td>
-               </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Table Section */}
+      <div className="card border-0 shadow-sm">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="bg-light">
+                <tr>
+                  <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Date</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Invoice No</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Customer</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-end">Base Amount</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-end">Tax Amount</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-end px-4">Grand Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-5">
+                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
+                      <span className="text-muted small">Loading invoice data...</span>
+                    </td>
+                  </tr>
+                ) : filteredInvoices.map((inv, index) => (
+                  <tr key={inv.id}>
+                    <td className="px-4 small text-muted font-monospace">{index + 1}</td>
+                    <td className="small text-muted">{inv.date}</td>
+                    <td className="fw-bold text-dark">{inv.invoiceNumber}</td>
+                    <td className="text-uppercase small fw-600 text-dark">{inv.customerName}</td>
+                    <td className="text-end small">₹{inv.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="text-end small text-muted">₹{inv.taxTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td className="text-end fw-bold text-dark px-4">₹{inv.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+                {!loading && filteredInvoices.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-5">
+                      <i className="bi bi-receipt text-muted opacity-25 display-4 d-block mb-3"></i>
+                      <span className="text-muted small">No invoices found matching your search.</span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

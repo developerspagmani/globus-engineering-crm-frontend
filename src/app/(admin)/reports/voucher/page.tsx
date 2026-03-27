@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { setVoucherFilters, fetchVouchers } from '@/redux/features/voucherSlice';
+import { fetchVouchers } from '@/redux/features/voucherSlice';
 
 const VoucherReportPage = () => {
   const [mounted, setMounted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const dispatch = useDispatch();
-  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, loading } = useSelector((state: RootState) => state.voucher);
+  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { items, loading } = useSelector((state: RootState) => state.voucher);
 
   useEffect(() => {
     setMounted(true);
@@ -20,90 +21,126 @@ const VoucherReportPage = () => {
 
   if (!mounted) return null;
 
-  // Filter Logic
   const filteredItems = items.filter(voucher => {
-    if (activeCompany && String(voucher.company_id || (voucher as any).companyId || '').toLowerCase() !== String(activeCompany.id).toLowerCase()) return false;
-    const matchesCustomer = (voucher.partyName || '').toLowerCase().includes((filters.search || '').toLowerCase());
-    return matchesCustomer;
+    const search = searchTerm.toLowerCase();
+    return (
+      (voucher.partyName?.toLowerCase() ?? '').includes(search) ||
+      (voucher.voucherNo?.toLowerCase() ?? '').includes(search) ||
+      (voucher.chequeNo?.toLowerCase() ?? '').includes(search) ||
+      (voucher.referenceNo?.toLowerCase() ?? '').includes(search)
+    );
   });
 
   return (
-    <div className="card shadow-sm border-0 bg-white overflow-hidden rounded-0 mb-5 animate-fade-in">
-      <div className="card-header bg-white border-bottom-0 pb-2 px-4 d-flex align-items-center gap-2 mt-2">
-         <i className="bi bi-house-door-fill text-dark small"></i>
-         <span className="text-muted small">Dashboard / Voucher List</span>
+    <div className="container-fluid py-4 animate-fade-in">
+      {/* Header Section */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="fw-bold mb-1 text-dark">Voucher Report</h2>
+          <p className="text-muted small mb-0">Record of all financial receipts and payments.</p>
+        </div>
+        <button 
+          className="btn btn-white shadow-sm border px-3 d-flex align-items-center gap-2"
+          onClick={() => (dispatch as any)(fetchVouchers(activeCompany?.id))}
+        >
+          <i className="bi bi-arrow-repeat text-primary"></i>
+          <span className="small fw-bold text-muted">Refresh</span>
+        </button>
       </div>
 
-      <div className="px-4 py-3 d-flex justify-content-between align-items-center">
-        <h4 className="fw-normal text-dark mb-0 fs-3">Voucher List</h4>
-        <div className="d-flex gap-2">
-          <button className="btn btn-link text-muted p-0 shadow-none" onClick={() => (dispatch as any)(fetchVouchers(activeCompany?.id))}><i className="bi bi-arrow-repeat fs-5"></i></button>
+      {/* Filter Section */}
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-9">
+              <div className="position-relative">
+                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input
+                  type="text"
+                  className="form-control ps-5"
+                  placeholder="Search by customer name, voucher no or reference..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="col-md-3">
+               <div className="input-group">
+                 <span className="input-group-text bg-white small fw-bold text-muted">Type</span>
+                 <select className="form-select form-select-sm">
+                   <option>All Types</option>
+                   <option>Receipt</option>
+                   <option>Payment</option>
+                 </select>
+               </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="d-flex text-uppercase px-4 bg-white border-bottom mt-1 pt-2">
-         <button 
-           className="btn shadow-none border-0 rounded-0 pb-3 px-4 fw-bold small border-bottom border-danger text-danger"
-           style={{ borderBottomWidth: '2px !important' }}
-         >
-           VOUCHER
-         </button>
-      </div>
-
-      <div className="table-responsive px-4 pb-4 mt-4">
-        {loading ? (
-          <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>
-        ) : (
-          <table className="table align-middle mb-0 bg-white w-100 table-hover">
-            <thead className="text-dark border-bottom border-top border-light">
-              <tr>
-                <th className="fw-semibold py-3 border-0 bg-white" style={{ fontSize: '13px' }}>Sno</th>
-                <th className="fw-semibold border-0 bg-white" style={{ fontSize: '13px' }}>Customer</th>
-                <th className="fw-semibold border-0 bg-white text-nowrap" style={{ fontSize: '13px' }}>Voucher No</th>
-                <th className="fw-semibold border-0 bg-white text-nowrap" style={{ fontSize: '13px' }}>Date</th>
-                <th className="fw-semibold border-0 bg-white text-nowrap" style={{ fontSize: '13px' }}>Type</th>
-                <th className="fw-semibold border-0 bg-white text-nowrap" style={{ fontSize: '13px' }}>Cheque / Ref No</th>
-                <th className="fw-semibold border-0 bg-white text-nowrap" style={{ fontSize: '13px' }}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((voucher, index) => (
-                <tr key={voucher.id} className="border-bottom border-light">
-                  <td className="text-dark" style={{ fontSize: '13px', paddingTop: '16px', paddingBottom: '16px' }}>{index + 1}</td>
-                  <td style={{ paddingTop: '16px', paddingBottom: '16px' }}>
-                     <div className="text-dark text-uppercase fw-bold" style={{ fontSize: '12px' }}>{voucher.partyName}</div>
-                  </td>
-                  <td className="text-dark" style={{ fontSize: '13px' }}>{voucher.voucherNo}</td>
-                  <td className="text-dark text-nowrap" style={{ fontSize: '13px' }}>{voucher.date}</td>
-                  <td className="text-dark text-uppercase" style={{ fontSize: '11px' }}>
-                    <span className={`badge rounded-0 ${voucher.type === 'receipt' ? 'bg-success' : 'bg-primary'}`}>
-                      {voucher.type}
-                    </span>
-                  </td>
-                  <td className="text-dark text-nowrap fw-bold" style={{ fontSize: '13px' }}>
-                    {voucher.chequeNo || voucher.referenceNo || '-'}
-                  </td>
-                  <td className="text-dark fw-bold" style={{ fontSize: '13px' }}>
-                    ₹{voucher.amount.toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-              {filteredItems.length === 0 && (
+      {/* Table Section */}
+      <div className="card border-0 shadow-sm">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="bg-light">
                 <tr>
-                  <td colSpan={7} className="text-center py-5 text-muted bg-white">
-                     <h6 className="fw-normal">No Voucher Data Available</h6>
-                  </td>
+                  <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Customer</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">Voucher No</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">Date</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">Mode</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-end px-4">Amount</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-5">
+                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
+                      <span className="text-muted small">Loading vouchers...</span>
+                    </td>
+                  </tr>
+                ) : filteredItems.map((voucher, index) => (
+                  <tr key={voucher.id}>
+                    <td className="px-4 small text-muted font-monospace">{index + 1}</td>
+                    <td>
+                      <div className="fw-bold text-dark small text-uppercase mb-0">{voucher.partyName}</div>
+                      <div className="text-muted x-small">
+                        {voucher.type === 'receipt' ? 
+                          <span className="text-success"><i className="bi bi-arrow-down-left me-1"></i>Receipt</span> : 
+                          <span className="text-danger"><i className="bi bi-arrow-up-right me-1"></i>Payment</span>
+                        }
+                      </div>
+                    </td>
+                    <td className="text-center small fw-bold text-dark font-monospace">{voucher.voucherNo}</td>
+                    <td className="text-center small text-muted">{voucher.date}</td>
+                    <td className="text-center">
+                      <div className="d-flex flex-column align-items-center">
+                        <span className="badge bg-light text-dark border-0 fw-600 px-3 py-1 rounded-pill small mb-1">
+                          {voucher.paymentMode}
+                        </span>
+                        <span className="x-small text-muted">{voucher.chequeNo || voucher.referenceNo || '-'}</span>
+                      </div>
+                    </td>
+                    <td className="text-end fw-bold text-dark px-4 fs-6">
+                      ₹{voucher.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                ))}
+                {!loading && filteredItems.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="text-center py-5">
+                      <i className="bi bi-journal-x text-muted opacity-25 display-4 d-block mb-3"></i>
+                      <span className="text-muted small">No vouchers found matching your filters.</span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
-      <style jsx>{`
-        .table th { border-bottom: 2px solid #eee !important; font-size: 0.8rem; }
-        .table td { border-bottom: 1px solid #f9f9f9; }
-      `}</style>
     </div>
   );
 };

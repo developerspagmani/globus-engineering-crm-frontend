@@ -8,8 +8,9 @@ import { fetchCustomers } from '@/redux/features/customerSlice';
 
 const GstReportPage = () => {
   const [mounted, setMounted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const dispatch = useDispatch();
-  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: invoices, loading: invLoading } = useSelector((state: RootState) => state.invoices);
   const { items: customers, loading: custLoading } = useSelector((state: RootState) => state.customers);
 
@@ -17,92 +18,133 @@ const GstReportPage = () => {
     setMounted(true);
     (dispatch as any)(fetchInvoices(activeCompany?.id));
     (dispatch as any)(fetchCustomers());
-  }, [dispatch, activeCompany]);
+  }, [dispatch, activeCompany?.id]);
 
   if (!mounted) return null;
 
-  // Only real invoices (Type: INVOICE or BOTH)
   const filteredItems = (invoices || []).filter(inv => {
-    if (activeCompany && inv.company_id !== activeCompany.id) return false;
-    return inv.type === 'INVOICE' || inv.type === 'BOTH';
+    const search = searchTerm.toLowerCase();
+    const matchSearch = inv.customerName?.toLowerCase().includes(search) || 
+                       inv.invoiceNumber?.toLowerCase().includes(search) ||
+                       inv.dcNo?.toLowerCase().includes(search);
+    
+    const isRightType = inv.type === 'INVOICE' || inv.type === 'BOTH' || (inv as any).type === 'invoice';
+    return matchSearch && isRightType;
   });
 
   return (
-    <div className="card shadow-sm border-0 bg-white overflow-hidden rounded-0 mb-5 animate-fade-in">
-      <div className="card-header bg-white border-bottom-0 pb-2 px-4 d-flex align-items-center gap-2 mt-2">
-         <i className="bi bi-house-door-fill text-dark small"></i>
-         <span className="text-muted small">Home / Dashboard / Gst Report</span>
-      </div>
-
-      <div className="px-4 py-3 d-flex justify-content-between align-items-center">
-        <h4 className="fw-normal text-dark mb-0 fs-3">Gst Report</h4>
-        <button className="btn btn-link text-muted p-0 shadow-none"><i className="bi bi-arrow-repeat fs-5"></i></button>
-      </div>
-
-      <div className="px-4 py-3 bg-white mt-2 d-flex align-items-center gap-3">
-        <span className="small text-muted fw-bold">Select Date</span>
-        <div className="border border-light rounded px-3 py-2 d-flex align-items-center gap-2" style={{ backgroundColor: '#fdfdfd' }}>
-           <i className="bi bi-calendar3 text-muted"></i>
-           <span className="small text-dark">01/01/2023 - 01/31/2023</span>
+    <div className="container-fluid py-4 animate-fade-in">
+      {/* Header Section */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="fw-bold mb-1 text-dark">GST Report</h2>
+          <p className="text-muted small mb-0">Analysis of tax collection and liability for the selected period.</p>
         </div>
-        <button className="btn btn-success fw-bold px-4 shadow-sm border-0 text-white ms-4" style={{ backgroundColor: '#28a745' }}>
-          GO
+        <button 
+          className="btn btn-white shadow-sm border px-3 d-flex align-items-center gap-2"
+          onClick={() => {
+            (dispatch as any)(fetchInvoices(activeCompany?.id));
+            (dispatch as any)(fetchCustomers());
+          }}
+        >
+          <i className="bi bi-arrow-repeat text-primary"></i>
+          <span className="small fw-bold text-muted">Refresh</span>
         </button>
       </div>
 
-      <div className="table-responsive px-4 pb-4 mt-4">
-        {(invLoading || custLoading) ? (
-          <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>
-        ) : (
-          <table className="table align-middle mb-0 table-hover bg-white w-100">
-            <thead className="text-dark border-bottom border-top border-light">
-              <tr>
-                <th className="fw-semibold py-3 border-0 bg-white text-center" style={{ fontSize: '12px' }}>Sno</th>
-                <th className="fw-semibold text-center border-0 bg-white text-center" style={{ fontSize: '12px' }}>Date</th>
-                <th className="fw-semibold border-0 bg-white" style={{ fontSize: '12px' }}>Customer</th>
-                <th className="fw-semibold text-center border-0 bg-white" style={{ fontSize: '12px' }}>GST TIN</th>
-                <th className="fw-semibold text-center border-0 bg-white" style={{ fontSize: '12px' }}>Dc No</th>
-                <th className="fw-semibold text-center border-0 bg-white text-center" style={{ fontSize: '12px' }}>Invoice No</th>
-                <th className="fw-semibold text-center border-0 bg-white" style={{ fontSize: '12px' }}>Amount</th>
-                <th className="fw-semibold text-center border-0 bg-white" style={{ fontSize: '12px' }}>CGST</th>
-                <th className="fw-semibold text-center border-0 bg-white" style={{ fontSize: '12px' }}>SGST</th>
-                <th className="fw-semibold text-center border-0 bg-white" style={{ fontSize: '12px' }}>IGST</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((inv, index) => {
-                const selectedCustomer = customers.find(c => c.id === inv.customerId);
-                const isLocal = !selectedCustomer || selectedCustomer.state?.toUpperCase() === 'TAMIL NADU' || selectedCustomer.stateCode === '33';
-                
-                const cgst = isLocal && inv.taxTotal > 0 ? (inv.taxTotal / 2).toFixed(2) : '0.00';
-                const sgst = isLocal && inv.taxTotal > 0 ? (inv.taxTotal / 2).toFixed(2) : '0.00';
-                const igst = !isLocal && inv.taxTotal > 0 ? inv.taxTotal.toFixed(2) : '0.00';
+      {/* Filter Section */}
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-9">
+              <div className="position-relative">
+                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input
+                  type="text"
+                  className="form-control ps-5"
+                  placeholder="Search by customer name, invoice or DC number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="col-md-3">
+               <div className="input-group">
+                 <span className="input-group-text bg-white small fw-bold text-muted">Date</span>
+                 <input type="date" className="form-control form-control-sm" defaultValue="2024-03-01" />
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                return (
-                  <tr key={inv.id} className="border-bottom border-light">
-                    <td className="text-dark text-center" style={{ fontSize: '12px' }}>{index + 1}</td>
-                    <td className="text-dark text-center" style={{ fontSize: '12px' }}>{inv.date}</td>
-                    <td className="text-dark text-uppercase small" style={{ fontSize: '12px' }}>{inv.customerName}</td>
-                    <td className="text-dark text-center" style={{ fontSize: '12px' }}>{selectedCustomer?.gst || '-'}</td>
-                    <td className="text-dark text-center text-uppercase" style={{ fontSize: '12px' }}>{inv.dcNo || '-'}</td>
-                    <td className="text-dark text-center" style={{ fontSize: '12px' }}>{inv.invoiceNumber}</td>
-                    <td className="text-dark text-center fw-bold" style={{ fontSize: '12px' }}>₹{inv.grandTotal.toFixed(2)}</td>
-                    <td className="text-dark text-center" style={{ fontSize: '12px' }}>{cgst}</td>
-                    <td className="text-dark text-center" style={{ fontSize: '12px' }}>{sgst}</td>
-                    <td className="text-dark text-center" style={{ fontSize: '12px' }}>{igst}</td>
-                  </tr>
-                );
-              })}
-              {filteredItems.length === 0 && (
+      {/* Table Section */}
+      <div className="card border-0 shadow-sm">
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0">
+              <thead className="bg-light">
                 <tr>
-                  <td colSpan={10} className="text-center py-5 text-muted bg-white">
-                     <h6 className="fw-normal">No Invoices Available for GST Report</h6>
-                  </td>
+                  <th className="px-4 py-3 border-0 small fw-bold text-muted text-center">Sno</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">Date</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Customer</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">GSTIN</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">Invoice No</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-end">Amount</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">CGST</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">SGST</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center px-4">IGST</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {(invLoading || custLoading) ? (
+                  <tr>
+                    <td colSpan={9} className="text-center py-5">
+                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
+                      <span className="text-muted small">Generating tax report...</span>
+                    </td>
+                  </tr>
+                ) : filteredItems.map((inv, index) => {
+                  const selectedCustomer = customers.find(c => c.id === inv.customerId);
+                  const isLocal = !selectedCustomer || selectedCustomer.state?.toUpperCase() === 'TAMIL NADU' || selectedCustomer.stateCode === '33';
+                  
+                  const cgst = isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
+                  const sgst = isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
+                  const igst = !isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
+
+                  return (
+                    <tr key={inv.id}>
+                      <td className="px-4 small text-muted font-monospace text-center">{index + 1}</td>
+                      <td className="small text-center text-muted">{inv.date}</td>
+                      <td>
+                        <div className="fw-bold text-dark small text-uppercase mb-0">{inv.customerName}</div>
+                        <div className="x-small text-muted">{inv.dcNo ? `DC: ${inv.dcNo}` : ''}</div>
+                      </td>
+                      <td className="text-center">
+                        <span className="badge bg-light text-dark border-0 fw-600 px-3 py-1 rounded-pill small">
+                          {selectedCustomer?.gst || '-'}
+                        </span>
+                      </td>
+                      <td className="text-center small fw-bold text-dark font-monospace">{inv.invoiceNumber}</td>
+                      <td className="text-end fw-bold text-dark">₹{inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="text-center small text-muted">{cgst}</td>
+                      <td className="text-center small text-muted">{sgst}</td>
+                      <td className="text-center small text-muted px-4">{igst}</td>
+                    </tr>
+                  );
+                })}
+                {!invLoading && filteredItems.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="text-center py-5">
+                      <i className="bi bi-file-earmark-bar-graph text-muted opacity-25 display-4 d-block mb-3"></i>
+                      <span className="text-muted small">No tax records found for the current selection.</span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

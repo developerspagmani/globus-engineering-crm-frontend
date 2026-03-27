@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
-import { setLeadFilters, deleteLead } from '@/redux/features/leadSlice';
+import { setLeadFilters, deleteLead, fetchLeads } from '@/redux/features/leadSlice';
 import { createCustomer } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import StatusModal from '@/components/StatusModal';
@@ -24,7 +24,8 @@ const LeadsPage = () => {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    (dispatch as any)(fetchLeads(activeCompany?.id));
+  }, [dispatch, activeCompany?.id]);
 
   if (!mounted) return null;
 
@@ -55,7 +56,7 @@ const LeadsPage = () => {
         company_id: lead.company_id,
       }));
       
-      dispatch(deleteLead(lead.id));
+      (dispatch as any)(deleteLead(lead.id));
       
       setModal({
         isOpen: true,
