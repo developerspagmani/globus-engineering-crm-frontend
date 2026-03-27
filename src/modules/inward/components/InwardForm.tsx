@@ -19,7 +19,7 @@ interface InwardFormProps {
 const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: masterItems, processes: masterProcesses } = useSelector((state: RootState) => state.master);
 
@@ -67,7 +67,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
     if (initialData) {
       setFormData({
         inwardNo: initialData.inwardNo,
-        customerId: initialData.customerId || '',
+        customerId: String(initialData.customerId || ''),
         customerName: initialData.customerName || '',
         vendorId: initialData.vendorId || '',
         vendorName: initialData.vendorName || '',
@@ -221,7 +221,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
             <div className="col-md-6 d-flex">
               <label className="form-label mb-0 align-self-center text-muted col-3">Customer</label>
               <select className="form-select border-0 border-bottom rounded-0 px-2 shadow-none" name="customerId" value={formData.customerId} onChange={handleChange} required>
-                <option value=""></option>
+                <option value="">{customersLoading ? 'Loading Customers...' : ''}</option>
                 {customers.map(c => (
                   <option key={c.id} value={c.id}>{c.company || c.name}</option>
                 ))}

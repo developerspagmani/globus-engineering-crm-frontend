@@ -46,10 +46,10 @@ export const fetchItems = createAsyncThunk('master/fetchItems', async (company_i
   const url = company_id ? `/items?companyId=${company_id}` : '/items';
   const response = await api.get(url);
   return response.data.data.map((item: any) => ({
-    id: item.id,
-    itemCode: item.item_code,
-    itemName: item.item_name,
-    company_id: item.company_id,
+    id: String(item.id),
+    itemCode: String(item.item_code || ''),
+    itemName: String(item.item_name || ''),
+    company_id: String(item.company_id || ''),
   }));
 });
 
@@ -57,9 +57,9 @@ export const fetchProcesses = createAsyncThunk('master/fetchProcesses', async (c
   const url = company_id ? `/processes?companyId=${company_id}` : '/processes';
   const response = await api.get(url);
   return response.data.data.map((p: any) => ({
-    id: p.id,
-    processName: p.process_name,
-    company_id: p.company_id,
+    id: String(p.id),
+    processName: String(p.process_name || ''),
+    company_id: String(p.company_id || ''),
   }));
 });
 
@@ -67,15 +67,15 @@ export const fetchPriceFixings = createAsyncThunk('master/fetchPriceFixings', as
   const url = company_id ? `/price-fixings?companyId=${company_id}` : '/price-fixings';
   const response = await api.get(url);
   return response.data.data.map((pf: any) => ({
-    id: pf.id,
-    customerId: pf.customer_id,
-    customerName: pf.customer_name,
-    itemId: pf.item_id,
-    itemName: pf.item_name,
-    processId: pf.process_id,
-    processName: pf.process_name,
-    price: pf.price,
-    company_id: pf.company_id,
+    id: String(pf.id),
+    customerId: String(pf.customer_id || ''),
+    customerName: String(pf.customer_name || ''),
+    itemId: String(pf.item_id || ''),
+    itemName: String(pf.item_name || ''),
+    processId: String(pf.process_id || ''),
+    processName: String(pf.process_name || ''),
+    price: Number(pf.price || 0),
+    company_id: String(pf.company_id || ''),
   }));
 });
 

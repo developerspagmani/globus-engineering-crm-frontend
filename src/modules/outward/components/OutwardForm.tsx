@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { createOutward, updateOutward } from '@/redux/features/outwardSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
 import { OutwardEntry } from '@/types/modules';
 
 interface OutwardFormProps {
@@ -15,7 +16,7 @@ interface OutwardFormProps {
 const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
 
   const [formData, setFormData] = useState<Omit<OutwardEntry, 'id' | 'createdAt'>>({
@@ -32,10 +33,16 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
   });
 
   useEffect(() => {
+    if (activeCompany?.id) {
+      (dispatch as any)(fetchCustomers(activeCompany.id));
+    }
+  }, [dispatch, activeCompany?.id]);
+
+  useEffect(() => {
     if (initialData) {
       setFormData({
         outwardNo: initialData.outwardNo,
-        customerId: initialData.customerId,
+        customerId: String(initialData.customerId || ''),
         customerName: initialData.customerName,
         invoiceReference: initialData.invoiceReference,
         challanNo: initialData.challanNo,

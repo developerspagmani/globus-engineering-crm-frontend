@@ -10,8 +10,8 @@ import ModuleGuard from '@/components/ModuleGuard';
 
 export default function PriceFixingPage() {
   const dispatch = useDispatch();
-  const { priceFixings, items, processes, loading } = useSelector((state: RootState) => state.master);
-  const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { priceFixings, items, processes, loading: masterLoading } = useSelector((state: RootState) => state.master);
+  const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
   const { company } = useSelector((state: RootState) => state.auth);
   
   const [view, setView] = useState<'add' | 'list'>('list');
@@ -28,7 +28,7 @@ export default function PriceFixingPage() {
     (dispatch as any)(fetchPriceFixings(company?.id));
     (dispatch as any)(fetchItems(company?.id));
     (dispatch as any)(fetchProcesses(company?.id));
-    (dispatch as any)(fetchCustomers());
+    (dispatch as any)(fetchCustomers(company?.id));
   }, [dispatch, company?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,11 +123,11 @@ export default function PriceFixingPage() {
                     <select
                       required
                       className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
                       value={formData.customerId}
                       onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
                     >
-                      <option value="">Select Customer</option>
+                      <option value="">{customersLoading ? 'Loading Customers...' : 'Select Customer'}</option>
                       {customers.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
                     </select>
                   </div>
@@ -141,7 +141,7 @@ export default function PriceFixingPage() {
                     <select
                       required
                       className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.itemId}
                       onChange={(e) => setFormData({ ...formData, itemId: e.target.value })}
                     >
@@ -159,7 +159,7 @@ export default function PriceFixingPage() {
                     <select
                       required
                       className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
                       value={formData.processId}
                       onChange={(e) => setFormData({ ...formData, processId: e.target.value })}
                     >
@@ -180,7 +180,7 @@ export default function PriceFixingPage() {
                       required
                       placeholder="Price"
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     />
@@ -236,7 +236,7 @@ export default function PriceFixingPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {loading ? (
+                    {masterLoading || customersLoading ? (
                       <tr>
                         <td colSpan={6} className="text-center py-5">
                           <div className="spinner-border spinner-border-sm text-primary"></div>

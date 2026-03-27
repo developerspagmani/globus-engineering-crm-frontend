@@ -98,7 +98,7 @@ export default function ItemDetailsPage() {
                       required
                       placeholder="Item Code"
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
                       value={formData.itemCode}
                       onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
                     />
@@ -116,7 +116,7 @@ export default function ItemDetailsPage() {
                       required
                       placeholder="Item Name"
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
                       value={formData.itemName}
                       onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
                     />

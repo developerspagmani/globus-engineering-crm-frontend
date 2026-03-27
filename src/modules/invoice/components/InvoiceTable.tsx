@@ -166,14 +166,14 @@ const InvoiceTable: React.FC = () => {
         style={activeTab === 'ADD_INVOICE' ? { borderBottomWidth: '2px !important' } : {}}
         onClick={() => setActiveTab('ADD_INVOICE')}
       >
-        ADD INVOICE
+        INVOICE SELECTION
       </button>
       <button 
         className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'INVOICELIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
         style={activeTab === 'INVOICELIST' ? { borderBottomWidth: '2px !important' } : {}}
         onClick={() => setActiveTab('INVOICELIST')}
       >
-        INVOICELIST
+        WP LIST
       </button>
       <button 
         className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'WOP_LIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}

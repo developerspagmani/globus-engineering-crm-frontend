@@ -23,7 +23,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    const inwardId = searchParams.get('inwardId');
 
    const { company } = useSelector((state: RootState) => state.auth);
-   const { items: customers } = useSelector((state: RootState) => state.customers);
+   const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
    const { items: inwards } = useSelector((state: RootState) => state.inward);
    const { settings } = useSelector((state: RootState) => state.invoices);
    const { items: masterItems, processes: masterProcesses, priceFixings } = useSelector((state: RootState) => state.master);
@@ -137,6 +137,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          console.log('--- INVOICE EDIT: LOADED INITIAL DATA ---', initialData);
          const mappedData = {
             ...initialData,
+            customerId: String(initialData.customerId || ''),
             invoiceNumber: initialData.invoiceNumber || (initialData as any).invoice_no,
             date: initialData.date || (initialData as any).invoice_date,
             billType: initialData.billType || (initialData as any).bill_type || 'With Process',
@@ -328,7 +329,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               value={formData.customerId}
                               onChange={handleInputChange}
                            >
-                              <option value="">Choose Customer...</option>
+                              <option value="">{customersLoading ? 'Loading Customers...' : 'Choose Customer...'}</option>
                               {customers.map(c => (
                                  <option key={c.id} value={c.id}>{c.name}</option>
                               ))}

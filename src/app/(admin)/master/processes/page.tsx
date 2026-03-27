@@ -96,7 +96,7 @@ export default function ProcessDetailsPage() {
                       required
                       placeholder="Process"
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem', color: '#888' }}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
                       value={formData.processName}
                       onChange={(e) => setFormData({ ...formData, processName: e.target.value })}
                     />
