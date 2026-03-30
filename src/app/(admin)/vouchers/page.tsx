@@ -7,11 +7,12 @@ import { RootState } from '@/redux/store';
 import { setVoucherFilters, setVoucherPage, fetchVouchers, deleteVoucher } from '@/redux/features/voucherSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 const VoucherPage = () => {
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination } = useSelector((state: RootState) => state.voucher);
+  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.voucher);
 
   React.useEffect(() => {
     if (activeCompany?.id) {
@@ -91,7 +92,7 @@ const VoucherPage = () => {
                 <input 
                   type="text" 
                   className="form-control border-start-0 ps-0" 
-                  placeholder="Search by voucher #, party, description..." 
+                  placeholder="Search by voucher no, party..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setVoucherFilters({ search: e.target.value }))}
                 />
@@ -147,57 +148,67 @@ const VoucherPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedItems.map((voucher, index) => (
-                  <tr key={voucher.id}>
-                    <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                    <td className="text-nowrap fw-bold text-dark">
-                      {voucher.voucherNo}
-                      <div className={`x-small text-uppercase fw-normal ${getTypeColor(voucher.type)}`}>
-                        {voucher.type}
-                      </div>
-                    </td>
-                    <td className="text-nowrap text-muted small">{new Date(voucher.date).toLocaleDateString()}</td>
-                    <td className="text-nowrap text-muted small">
-                      <div className="fw-bold text-dark">{voucher.partyName}</div>
-                      <div className="x-small text-truncate" style={{ maxWidth: '150px' }}>{voucher.description}</div>
-                    </td>
-                    <td className="text-nowrap text-end fw-bold">
-                      <span className={voucher.type === 'payment' ? 'text-danger' : 'text-success'}>
-                        ₹{voucher.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </span>
-                    </td>
-                    <td className="text-nowrap text-muted small text-uppercase fw-bold">{voucher.paymentMode}</td>
-                    <td className="text-center">
-                      <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
-                        {voucher.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="text-center px-4 text-nowrap">
-                      <div className="d-flex justify-content-center gap-2">
-                        {checkActionPermission(user, 'mod_voucher', 'edit') && (
-                          <Link href={`/vouchers/${voucher.id}/edit`} className="btn-action-edit" title="Edit">
-                            <i className="bi bi-pencil-fill"></i>
-                          </Link>
-                        )}
-                        {checkActionPermission(user, 'mod_voucher', 'delete') && (
-                          <button 
-                            className="btn-action-delete"
-                            onClick={() => { if(confirm('Delete this voucher?')) (dispatch as any)(deleteVoucher(voucher.id)) }}
-                            title="Delete"
-                          >
-                            <i className="bi bi-x-lg"></i>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {paginatedItems.length === 0 && (
+                {loading ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-5 text-muted">
-                      No vouchers found matching your filters.
+                    <td colSpan={8}>
+                      <Loader text="Fetching Voucher Records..." />
                     </td>
                   </tr>
+                ) : (
+                  <>
+                    {paginatedItems.map((voucher, index) => (
+                      <tr key={voucher.id}>
+                        <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                        <td className="text-nowrap fw-bold text-dark">
+                          {voucher.voucherNo}
+                          <div className={`x-small text-uppercase fw-normal ${getTypeColor(voucher.type)}`}>
+                            {voucher.type}
+                          </div>
+                        </td>
+                        <td className="text-nowrap text-muted small">{new Date(voucher.date).toLocaleDateString()}</td>
+                        <td className="text-nowrap text-muted small">
+                          <div className="fw-bold text-dark">{voucher.partyName}</div>
+                          <div className="x-small text-truncate" style={{ maxWidth: '150px' }}>{voucher.description}</div>
+                        </td>
+                        <td className="text-nowrap text-end fw-bold">
+                          <span className={voucher.type === 'payment' ? 'text-danger' : 'text-success'}>
+                            ₹{voucher.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        </td>
+                        <td className="text-nowrap text-muted small text-uppercase fw-bold">{voucher.paymentMode}</td>
+                        <td className="text-center">
+                          <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
+                            {voucher.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="text-center px-4 text-nowrap">
+                          <div className="d-flex justify-content-center gap-2">
+                            {checkActionPermission(user, 'mod_voucher', 'edit') && (
+                              <Link href={`/vouchers/${voucher.id}/edit`} className="btn-action-edit" title="Edit">
+                                <i className="bi bi-pencil-fill"></i>
+                              </Link>
+                            )}
+                            {checkActionPermission(user, 'mod_voucher', 'delete') && (
+                              <button 
+                                className="btn-action-delete"
+                                onClick={() => { if(confirm('Delete this voucher?')) (dispatch as any)(deleteVoucher(voucher.id)) }}
+                                title="Delete"
+                              >
+                                <i className="bi bi-x-lg"></i>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {paginatedItems.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="text-center py-5 text-muted">
+                          No vouchers found matching your filters.
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )}
               </tbody>
             </table>

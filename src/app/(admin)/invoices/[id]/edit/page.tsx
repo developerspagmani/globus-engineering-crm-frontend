@@ -11,8 +11,8 @@ import Link from 'next/link';
 export default function EditInvoicePage() {
   const params = useParams();
   const id = params.id as string;
-  
-  const invoice = useSelector((state: RootState) => 
+
+  const invoice = useSelector((state: RootState) =>
     state.invoices.items.find(inv => inv.id === id)
   );
 
@@ -21,8 +21,8 @@ export default function EditInvoicePage() {
       <div className="container py-4">
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/invoices" className="text-decoration-none">Invoices</Link></li>
-            <li className="breadcrumb-item active">Edit {invoice?.invoiceNumber}</li>
+            <li className="breadcrumb-item"><Link href="/invoices" className="text-decoration-none text-muted small">Invoices</Link></li>
+            <li className="breadcrumb-item active text-muted small">Edit Invoice</li>
           </ol>
         </nav>
 
@@ -32,9 +32,8 @@ export default function EditInvoicePage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 border-bottom pb-4">
-              <h2 className="fw-bold mb-1">Edit Invoice: {invoice.invoiceNumber}</h2>
-              <p className="text-muted small mb-0">Modify billing details for {invoice.customerName}.</p>
+            <div className=" d-flex align-items-center">
+
             </div>
             <React.Suspense fallback={<div>Loading form...</div>}>
               <InvoiceForm mode="edit" initialData={invoice} />

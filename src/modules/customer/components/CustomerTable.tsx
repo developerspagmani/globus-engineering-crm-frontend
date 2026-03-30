@@ -7,6 +7,7 @@ import { deleteCustomer, setPage, fetchCustomers } from '@/redux/features/custom
 import Link from 'next/link';
 import { Customer } from '@/types/modules';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 const CustomerTable: React.FC = () => {
   const dispatch = useDispatch();
@@ -88,13 +89,8 @@ const CustomerTable: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-5">
-                    <div className="d-flex flex-column align-items-center gap-3">
-                      <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                      <span className="text-muted small fw-bold text-uppercase tracking-wider">Fetching Customers...</span>
-                    </div>
+                  <td colSpan={6} className="text-center">
+                    <Loader text="Fetching Customers..." />
                   </td>
                 </tr>
               ) : (
@@ -103,9 +99,9 @@ const CustomerTable: React.FC = () => {
                     <tr key={customer.id}>
                       <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td className="text-nowrap fw-bold text-dark">{customer.name || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.email || customer.emailId1 || '-'}</td>
-                      <td className="text-nowrap text-muted small">{customer.phone || customer.phoneNumber1 || '-'}</td>
-                      <td className="text-nowrap text-muted small"><span className="badge bg-light text-dark border-0 shadow-sm">{customer.gst || '-'}</span></td>
+                      <td className="text-nowrap text-muted">{customer.email || customer.emailId1 || '-'}</td>
+                      <td className="text-nowrap text-muted">{customer.phone || customer.phoneNumber1 || '-'}</td>
+                      <td className="text-nowrap text-muted"><span className="badge bg-light text-dark border-0 shadow-sm fw-semibold p-2" style={{ letterSpacing: '0.5px' }}>{customer.gst || '-'}</span></td>
                       
                       <td className="text-center px-4 text-nowrap">
                         <div className="d-flex justify-content-center gap-2">

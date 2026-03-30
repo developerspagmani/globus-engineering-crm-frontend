@@ -9,12 +9,13 @@ import { createCustomer } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import StatusModal from '@/components/StatusModal';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 const LeadsPage = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters } = useSelector((state: RootState) => state.leads);
+  const { items, filters, loading } = useSelector((state: RootState) => state.leads);
 
   const [modal, setModal] = useState<{ isOpen: boolean; title: string; message: string }>({
     isOpen: false,
@@ -61,17 +62,17 @@ const LeadsPage = () => {
       setModal({
         isOpen: true,
         title: 'Lead Converted!',
-        message: `${lead.company} is now an active customer. All logistics and invoicing modules are now enabled for this client.`
+        message: `${lead.company} is now an active customer. All logistics and invoicing modules are enabled for this client.`
       });
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'new': return <span className="badge bg-primary-soft text-primary px-2 py-1 rounded-pill x-small fw-800">NEW</span>;
-      case 'contacted': return <span className="badge bg-info-soft text-info px-2 py-1 rounded-pill x-small fw-800">CONTACTED</span>;
-      case 'qualified': return <span className="badge bg-warning-soft text-warning px-2 py-1 rounded-pill x-small fw-800">QUALIFIED</span>;
-      case 'converted': return <span className="badge bg-success-soft text-success px-2 py-1 rounded-pill x-small fw-800">CONVERTED</span>;
+      case 'new': return <span className="badge bg-primary-soft text-primary px-2 py-1 rounded-pill small fw-800">NEW</span>;
+      case 'contacted': return <span className="badge bg-info-soft text-info px-2 py-1 rounded-pill small fw-800">CONTACTED</span>;
+      case 'qualified': return <span className="badge bg-warning-soft text-warning px-2 py-1 rounded-pill small fw-800">QUALIFIED</span>;
+      case 'converted': return <span className="badge bg-success-soft text-success px-2 py-1 rounded-pill small fw-800">CONVERTED</span>;
       default: return null;
     }
   };
@@ -124,48 +125,55 @@ const LeadsPage = () => {
         <table className="table align-middle">
           <thead>
             <tr>
-              <th className="x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Prospect Info</th>
-              <th className="x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Source</th>
-              <th className="x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Status</th>
-              <th className="x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Industry</th>
-              <th className="x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0 text-end">Pipeline Move</th>
+              <th className="small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Prospect Info</th>
+              <th className="small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Source</th>
+              <th className="small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Status</th>
+              <th className="small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Industry</th>
+              <th className="small fw-800 text-muted text-uppercase tracking-widest border-bottom-0 text-end">Pipeline Move</th>
             </tr>
           </thead>
           <tbody>
-            {filteredItems.map(lead => (
-              <tr key={lead.id} className="border-bottom">
-                <td>
-                  <div className="fw-800 text-dark mb-0">{lead.name}</div>
-                  <div className="x-small text-muted fw-600">{lead.company}</div>
-                </td>
-                <td>
-                  <span className="x-small fw-700 text-muted"><i className="bi bi-box-arrow-in-right me-1"></i>{lead.source}</span>
-                </td>
-                <td>{getStatusBadge(lead.status)}</td>
-                <td><span className="small fw-600 text-muted">{lead.industry}</span></td>
-                <td className="text-end">
-                   <div className="d-flex justify-content-end gap-2">
-                      {checkActionPermission(user, 'mod_lead', 'edit') && (
-                        <button 
-                          onClick={() => handleConvertToCustomer(lead)}
-                          className="btn btn-outline-success btn-sm rounded-pill px-3 fw-800 x-small"
-                        >
-                          PROMOTE TO CUSTOMER
-                        </button>
-                      )}
-                       {checkActionPermission(user, 'mod_lead', 'edit') && (
-                         <Link href={`/leads/${lead.id}/edit`} className="btn-action-edit" title="Edit">
-                           <i className="bi bi-pencil-fill"></i>
-                         </Link>
-                       )}
-                   </div>
-                </td>
-              </tr>
-            ))}
-            {filteredItems.length === 0 && (
+            {loading ? (
               <tr>
-                <td colSpan={5} className="text-center py-5 text-muted small fw-600">No leads found in your current view.</td>
+                <td colSpan={5}>
+                  <Loader text="Fetching Leads..." />
+                </td>
               </tr>
+            ) : filteredItems.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-5 text-muted fw-600">No leads found in your current view.</td>
+              </tr>
+            ) : (
+              filteredItems.map(lead => (
+                <tr key={lead.id} className="border-bottom">
+                  <td>
+                    <div className="fw-800 text-dark mb-0 fs-6">{lead.name}</div>
+                    <div className="small text-muted fw-600">{lead.company}</div>
+                  </td>
+                  <td>
+                    <span className="small fw-700 text-muted"><i className="bi bi-box-arrow-in-right me-1"></i>{lead.source}</span>
+                  </td>
+                  <td>{getStatusBadge(lead.status)}</td>
+                  <td><span className="fw-600 text-muted" style={{ fontSize: '0.9rem' }}>{lead.industry}</span></td>
+                  <td className="text-end">
+                    <div className="d-flex justify-content-end gap-2">
+                        {checkActionPermission(user, 'mod_lead', 'edit') && (
+                          <button 
+                            onClick={() => handleConvertToCustomer(lead)}
+                            className="btn btn-outline-success btn-sm rounded-pill px-3 fw-800 small"
+                          >
+                            PROMOTE TO CUSTOMER
+                          </button>
+                        )}
+                        {checkActionPermission(user, 'mod_lead', 'edit') && (
+                          <Link href={`/leads/${lead.id}/edit`} className="btn-action-edit" title="Edit">
+                            <i className="bi bi-pencil-fill"></i>
+                          </Link>
+                        )}
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

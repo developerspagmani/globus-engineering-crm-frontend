@@ -7,12 +7,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { deleteOutward, setOutwardFilters, setOutwardPage, fetchOutwards } from '@/redux/features/outwardSlice';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 export default function OutwardListPage() {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination } = useSelector((state: RootState) => state.outward);
+  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.outward);
 
   React.useEffect(() => {
     setMounted(true);
@@ -86,57 +87,71 @@ export default function OutwardListPage() {
             <div className="table-responsive">
               <table className="table table-hover align-middle mb-0">
                 <thead>
-                  <tr>
-                    <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Outward No</th>
-                    <th className="py-3 border-0">Customer</th>
-                    <th className="py-3 border-0">Invoice Ref</th>
-                    <th className="py-3 border-0">Vehicle No</th>
-                    <th className="py-3 border-0">Date</th>
-                    <th className="py-3 border-0">Status</th>
-                    <th className="py-3 border-0 text-center px-4">Action</th>
+                  <tr className="bg-light">
+                    <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Outward No</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Customer</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Invoice Ref</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Vehicle No</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Date</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Status</th>
+                    <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedItems.map((item, index) => (
-                    <tr key={item.id}>
-                      <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                      <td className="text-nowrap fw-bold text-dark">{item.outwardNo}</td>
-                      <td className="text-nowrap text-muted small">{item.customerName}</td>
-                      <td className="text-nowrap text-muted small"><span className="badge bg-light text-dark border-0 shadow-sm">{item.invoiceReference}</span></td>
-                      <td className="text-nowrap text-muted small">{item.vehicleNo}</td>
-                      <td className="text-nowrap text-muted small">{item.date}</td>
-                      <td>
-                        <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
-                          {item.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="text-center px-4 text-nowrap">
-                        <div className="d-flex justify-content-center gap-2">
-                          {checkActionPermission(user, 'mod_outward', 'edit') && (
-                            <Link href={`/outward/${item.id}/edit`} className="btn-action-edit" title="Edit">
-                              <i className="bi bi-pencil-fill"></i>
-                            </Link>
-                          )}
-                          {checkActionPermission(user, 'mod_outward', 'delete') && (
-                            <button 
-                              className="btn-action-delete" 
-                              title="Delete"
-                              onClick={() => { if(confirm('Delete?')) (dispatch as any)(deleteOutward(item.id)) }}
-                            >
-                              <i className="bi bi-x-lg"></i>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {paginatedItems.length === 0 && (
+                  {loading ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-5 text-muted">
-                        No outward records found.
+                      <td colSpan={8}>
+                        <Loader text="Fetching Outward Records..." />
                       </td>
                     </tr>
+                  ) : (
+                    <>
+                      {paginatedItems.map((item, index) => (
+                        <tr key={item.id}>
+                          <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                          <td className="text-nowrap fw-bold text-dark">{item.outwardNo}</td>
+                          <td className="text-nowrap text-muted small">{item.customerName}</td>
+                          <td className="text-nowrap fw-bold text-dark fs-6">
+                            <span className="badge bg-light text-dark border-0 shadow-sm px-3 py-1 fs-6">
+                              {item.invoiceReference || '-'}
+                            </span>
+                          </td>
+                          <td className="text-nowrap text-muted small">{item.vehicleNo}</td>
+                          <td className="text-nowrap text-muted small">{item.date}</td>
+                          <td>
+                            <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
+                              {item.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="text-center px-4 text-nowrap">
+                            <div className="d-flex justify-content-center gap-2">
+                              {checkActionPermission(user, 'mod_outward', 'edit') && (
+                                <Link href={`/outward/${item.id}/edit`} className="btn-action-edit" title="Edit">
+                                  <i className="bi bi-pencil-fill"></i>
+                                </Link>
+                              )}
+                              {checkActionPermission(user, 'mod_outward', 'delete') && (
+                                <button 
+                                  className="btn-action-delete" 
+                                  title="Delete"
+                                  onClick={() => { if(confirm('Delete?')) (dispatch as any)(deleteOutward(item.id)) }}
+                                >
+                                  <i className="bi bi-x-lg"></i>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {paginatedItems.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="text-center py-5 text-muted">
+                            No outward records found.
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   )}
                 </tbody>
               </table>

@@ -26,7 +26,7 @@ const CustomerFilter: React.FC = () => {
               <input
                 type="text"
                 className="form-control border-start-0"
-                placeholder="Search customers, companies..."
+                placeholder="Search by Customer Name..."
                 name="search"
                 value={filters.search}
                 onChange={handleChange}

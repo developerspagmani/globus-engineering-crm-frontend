@@ -6,11 +6,12 @@ import { RootState } from '@/redux/store';
 import { deleteUserAsync } from '@/redux/features/companyUserSlice';
 import Link from 'next/link';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 const CompanyUserTable: React.FC = () => {
   const dispatch = useDispatch();
   const { user: currentUser, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters } = useSelector((state: RootState) => state.companyUsers);
+  const { items, filters, loading } = useSelector((state: RootState) => state.companyUsers);
 
   React.useEffect(() => {
     const { fetchUsers } = require('@/redux/features/companyUserSlice');
@@ -64,52 +65,59 @@ const CompanyUserTable: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredItems.map((user) => (
-                <tr key={user.id} className="border-bottom-0">
-                  <td className="px-4 py-3">
-                    <div className="d-flex align-items-center">
-                      <div className="flex-shrink-0">
-                        <div className="rounded-circle bg-primary bg-gradient text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '40px', height: '40px' }}>
-                          {user.name.charAt(0)}
-                        </div>
-                      </div>
-                      <div className="ms-3">
-                        <div className="fw-800 text-dark small">{user.name}</div>
-                        <div className="text-muted x-small">{user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-center">
-                    <span className="fw-800 text-primary small">
-                      {user.modulePermissions.filter(p => p.canRead).length} Modules
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    {getRoleBadge(user.role)}
-                  </td>
-                  <td className="text-end px-4">
-                    <div className="d-flex justify-content-end gap-2">
-                      <Link href={`/users/${user.id}/edit`} className="btn-action-edit" title="Edit">
-                        <i className="bi bi-pencil-fill"></i>
-                      </Link>
-                      <button 
-                        className="btn-action-delete"
-                        onClick={() => handleDelete(user.id)}
-                        disabled={user.id === currentUser?.id}
-                        title="Delete"
-                      >
-                        <i className="bi bi-x-lg"></i>
-                      </button>
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan={4}>
+                    <Loader text="Fetching Users..." />
                   </td>
                 </tr>
-              ))}
-              {filteredItems.length === 0 && (
+              ) : filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="text-center py-5 text-muted small fw-600">
                     No users found matching your request.
                   </td>
                 </tr>
+              ) : (
+                filteredItems.map((user) => (
+                  <tr key={user.id} className="border-bottom-0">
+                    <td className="px-4 py-3">
+                      <div className="d-flex align-items-center">
+                        <div className="flex-shrink-0">
+                          <div className="rounded-circle bg-primary bg-gradient text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '40px', height: '40px' }}>
+                            {user.name.charAt(0)}
+                          </div>
+                        </div>
+                        <div className="ms-3">
+                          <div className="fw-800 text-dark small">{user.name}</div>
+                          <div className="text-muted x-small">{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-center">
+                      <span className="fw-800 text-primary small">
+                        {user.modulePermissions.filter(p => (p as any).canRead).length} Modules
+                      </span>
+                    </td>
+                    <td className="text-center">
+                      {getRoleBadge(user.role)}
+                    </td>
+                    <td className="text-end px-4">
+                      <div className="d-flex justify-content-end gap-2">
+                        <Link href={`/users/${user.id}/edit`} className="btn-action-edit" title="Edit">
+                          <i className="bi bi-pencil-fill"></i>
+                        </Link>
+                        <button 
+                          className="btn-action-delete"
+                          onClick={() => handleDelete(user.id)}
+                          disabled={user.id === currentUser?.id}
+                          title="Delete"
+                        >
+                          <i className="bi bi-x-lg"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

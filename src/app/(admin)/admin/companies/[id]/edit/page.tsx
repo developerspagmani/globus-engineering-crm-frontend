@@ -54,15 +54,20 @@ export default function EditCompanyPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-4">
-        <nav aria-label="breadcrumb">
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/admin/companies" className="text-decoration-none text-muted">Ecosystem</Link></li>
-            <li className="breadcrumb-item active fw-bold">Modify Allocation</li>
-          </ol>
-        </nav>
-        <h2 className="fw-900 text-dark tracking-tight">Manage: {company.name}</h2>
-        <p className="text-muted small">Update organizational profile and module provisioning for this tenant.</p>
+      <div className="mb-4 d-flex align-items-center">
+        <Link href="/admin/companies" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Companies">
+          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+        </Link>
+        <div>
+          <nav aria-label="breadcrumb">
+            <ol className="breadcrumb">
+              <li className="breadcrumb-item"><Link href="/admin/companies" className="text-decoration-none text-muted">Ecosystem</Link></li>
+              <li className="breadcrumb-item active fw-bold">Modify Allocation</li>
+            </ol>
+          </nav>
+          <h2 className="fw-900 text-dark tracking-tight">Manage: {company.name}</h2>
+          <p className="text-muted small">Update organizational profile and module provisioning for this tenant.</p>
+        </div>
       </div>
 
       <CompanyForm mode="edit" initialData={company} />

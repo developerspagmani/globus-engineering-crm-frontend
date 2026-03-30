@@ -17,8 +17,8 @@ const NewEmployeePage = () => {
           ]} 
         />
         <div className="d-flex align-items-center">
-          <button type="button" className="btn btn-outline-secondary border-0 p-0 me-3" onClick={() => router.push('/employees')} title="Back to Employees">
-             <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+          <button type="button" className="back-btn-standard" onClick={() => router.push('/employees')} title="Back to Employees">
+             <i className="bi bi-arrow-left-circle fs-3 "></i>
           </button>
           <div>
             <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Register Employee</h3>
@@ -37,3 +37,4 @@ const NewEmployeePage = () => {
 };
 
 export default NewEmployeePage;
+

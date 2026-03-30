@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchInwards } from '@/redux/features/inwardSlice';
+import Loader from '@/components/Loader';
+import ReportActions from '@/components/ReportActions';
 
 const InwardReportPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -55,7 +57,7 @@ const InwardReportPage = () => {
                 <input
                   type="text"
                   className="form-control ps-5"
-                  placeholder="Search by inward no, customer name or DC no..."
+                  placeholder="Search by customer name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -67,6 +69,9 @@ const InwardReportPage = () => {
                  <input type="date" className="form-control form-control-sm" defaultValue="2024-03-01" />
                </div>
             </div>
+          </div>
+          <div className="d-flex justify-content-end mt-3 border-top pt-3">
+            <ReportActions />
           </div>
         </div>
       </div>
@@ -89,9 +94,8 @@ const InwardReportPage = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-5">
-                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
-                      <span className="text-muted small">Loading report data...</span>
+                    <td colSpan={6}>
+                      <Loader text="Fetching Inward Report..." />
                     </td>
                   </tr>
                 ) : filteredItems.map((item, index) => (

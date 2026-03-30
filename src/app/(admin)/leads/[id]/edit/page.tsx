@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import Breadcrumb from '@/components/Breadcrumb';
 import LeadForm from '@/modules/lead/components/LeadForm';
+import Link from 'next/link';
 
 export default function EditLeadPage() {
   const [mounted, setMounted] = useState(false);
@@ -34,15 +35,20 @@ export default function EditLeadPage() {
 
   return (
     <div className="content-area animate-fade-in">
-      <div className="mb-4">
-        <Breadcrumb 
-          items={[
-            { label: 'Lead Management', href: '/leads' },
-            { label: 'Edit Prospect', active: true }
-          ]} 
-        />
-        <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Edit: {lead.company}</h3>
-        <p className="text-muted small mb-0">Update contact logs or status for this prospect.</p>
+      <div className="mb-4 d-flex align-items-center">
+        <Link href="/leads" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Leads">
+          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+        </Link>
+        <div>
+          <Breadcrumb 
+            items={[
+              { label: 'Lead Management', href: '/leads' },
+              { label: 'Edit Prospect', active: true }
+            ]} 
+          />
+          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Edit: {lead.company}</h3>
+          <p className="text-muted small mb-0">Update contact logs or status for this prospect.</p>
+        </div>
       </div>
 
       <div className="row justify-content-center">

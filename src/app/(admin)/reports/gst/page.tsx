@@ -5,6 +5,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
+import Loader from '@/components/Loader';
+import ReportActions from '@/components/ReportActions';
 
 const GstReportPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -62,7 +64,7 @@ const GstReportPage = () => {
                 <input
                   type="text"
                   className="form-control ps-5"
-                  placeholder="Search by customer name, invoice or DC number..."
+                  placeholder="Search by Customer name or DC number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -74,6 +76,9 @@ const GstReportPage = () => {
                  <input type="date" className="form-control form-control-sm" defaultValue="2024-03-01" />
                </div>
             </div>
+          </div>
+          <div className="d-flex justify-content-end mt-3 border-top pt-3">
+            <ReportActions />
           </div>
         </div>
       </div>
@@ -99,40 +104,41 @@ const GstReportPage = () => {
               <tbody>
                 {(invLoading || custLoading) ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-5">
-                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
-                      <span className="text-muted small">Generating tax report...</span>
+                    <td colSpan={9}>
+                      <Loader text="Fetching GST Report..." />
                     </td>
                   </tr>
-                ) : filteredItems.map((inv, index) => {
-                  const selectedCustomer = customers.find(c => c.id === inv.customerId);
-                  const isLocal = !selectedCustomer || selectedCustomer.state?.toUpperCase() === 'TAMIL NADU' || selectedCustomer.stateCode === '33';
-                  
-                  const cgst = isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
-                  const sgst = isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
-                  const igst = !isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
+                ) : (
+                  filteredItems.map((inv, index) => {
+                    const selectedCustomer = customers.find(c => c.id === inv.customerId);
+                    const isLocal = !selectedCustomer || selectedCustomer.state?.toUpperCase() === 'TAMIL NADU' || selectedCustomer.stateCode === '33';
+                    
+                    const cgst = isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
+                    const sgst = isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
+                    const igst = !isLocal && (inv.taxTotal || 0) > 0 ? (inv.taxTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-';
 
-                  return (
-                    <tr key={inv.id}>
-                      <td className="px-4 small text-muted font-monospace text-center">{index + 1}</td>
-                      <td className="small text-center text-muted">{inv.date}</td>
-                      <td>
-                        <div className="fw-bold text-dark small text-uppercase mb-0">{inv.customerName}</div>
-                        <div className="x-small text-muted">{inv.dcNo ? `DC: ${inv.dcNo}` : ''}</div>
-                      </td>
-                      <td className="text-center">
-                        <span className="badge bg-light text-dark border-0 fw-600 px-3 py-1 rounded-pill small">
-                          {selectedCustomer?.gst || '-'}
-                        </span>
-                      </td>
-                      <td className="text-center small fw-bold text-dark font-monospace">{inv.invoiceNumber}</td>
-                      <td className="text-end fw-bold text-dark">₹{inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                      <td className="text-center small text-muted">{cgst}</td>
-                      <td className="text-center small text-muted">{sgst}</td>
-                      <td className="text-center small text-muted px-4">{igst}</td>
-                    </tr>
-                  );
-                })}
+                    return (
+                      <tr key={inv.id}>
+                        <td className="px-4 small text-muted font-monospace text-center">{index + 1}</td>
+                        <td className="small text-center text-muted">{inv.date}</td>
+                        <td>
+                          <div className="fw-bold text-dark small text-uppercase mb-0">{inv.customerName}</div>
+                          <div className="x-small text-muted">{inv.dcNo ? `DC: ${inv.dcNo}` : ''}</div>
+                        </td>
+                        <td className="text-center">
+                          <span className="badge bg-light text-dark border-0 fw-600 px-3 py-1 rounded-pill small">
+                            {selectedCustomer?.gst || '-'}
+                          </span>
+                        </td>
+                        <td className="text-center small fw-bold text-dark font-monospace">{inv.invoiceNumber}</td>
+                        <td className="text-end fw-bold text-dark">₹{inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="text-center small text-muted">{cgst}</td>
+                        <td className="text-center small text-muted">{sgst}</td>
+                        <td className="text-center small text-muted px-4">{igst}</td>
+                      </tr>
+                    );
+                  })
+                )}
                 {!invLoading && filteredItems.length === 0 && (
                   <tr>
                     <td colSpan={9} className="text-center py-5">

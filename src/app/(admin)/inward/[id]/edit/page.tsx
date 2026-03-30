@@ -8,6 +8,8 @@ import InwardForm from '@/modules/inward/components/InwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Breadcrumb from '@/components/Breadcrumb';
 
+import Link from 'next/link';
+
 export default function EditInwardPage() {
   const params = useParams();
   const id = params.id as string;
@@ -19,22 +21,20 @@ export default function EditInwardPage() {
   return (
     <ModuleGuard moduleId="mod_inward">
       <div className="container-fluid py-4">
-        <Breadcrumb 
-          items={[
-            { label: 'Inward', href: '/inward' },
-            { label: `Edit ${inward?.inwardNo || 'Entry'}`, active: true }
-          ]} 
-        />
-
         {!inward ? (
           <div className="alert alert-warning">
             Entry with ID: {id} not found.
           </div>
         ) : (
           <>
-            <div className="mb-4">
-              <h2 className="fw-bold mb-1">Edit Inward: {inward.inwardNo}</h2>
-              <p className="text-muted small mb-0">Modify receipt details for {inward.vendorName}.</p>
+            <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
+              <Link href="/inward" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Inward List">
+                <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+              </Link>
+              <div>
+                <h2 className="fw-bold mb-0">Edit Inward: {inward.inwardNo}</h2>
+                <p className="text-muted small mb-0">Modify receipt details for {inward.vendorName}.</p>
+              </div>
             </div>
             <InwardForm mode="edit" initialData={inward} />
           </>

@@ -6,19 +6,33 @@ import { RootState } from '@/redux/store';
 import { deleteInvoice, setInvoicePage, fetchNextNumbers } from '@/redux/features/invoiceSlice';
 import { deleteInward, fetchInwards } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import Loader from '@/components/Loader';
 
 const InvoiceTable: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: invoices, filters, pagination } = useSelector((state: RootState) => state.invoices);
+  const { items: invoices, filters, pagination, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
   const { items: inwards, loading: inwardLoading } = useSelector((state: RootState) => state.inward);
   
-  const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST'>('INVOICELIST');
+  const initialTab = searchParams.get('tab') as any || 'INVOICELIST';
+  const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST'>(initialTab);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [localFilter, setLocalFilter] = useState('');
+
+  const handleTabChange = (tab: any) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   // --- ACTIONS ---
   const handlePrint = () => {
@@ -131,9 +145,9 @@ const InvoiceTable: React.FC = () => {
     // Tab specific type filtering (Case-Insensitive)
     const itemType = String(item.type || 'INVOICE').toUpperCase();
     
-    if (activeTab === 'INVOICELIST' && (itemType !== 'INVOICE' && itemType !== 'BOTH' && itemType !== 'WITH PROCESS')) return false;
-    if (activeTab === 'WOP_LIST' && (itemType !== 'WOP' && itemType !== 'BOTH' && itemType !== 'WITHOUT PROCESS')) return false;
-    // BOTH_LIST shows everything (no filtering)
+    if (activeTab === 'INVOICELIST' && (itemType !== 'INVOICE' && itemType !== 'WITH PROCESS')) return false;
+    if (activeTab === 'WOP_LIST' && (itemType !== 'WOP' && itemType !== 'WITHOUT PROCESS')) return false;
+    if (activeTab === 'BOTH_LIST' && itemType !== 'BOTH') return false;
 
     const invNo = String(item.invoiceNumber || '').toLowerCase();
     const custName = String(item.customerName || '').toLowerCase();
@@ -164,28 +178,28 @@ const InvoiceTable: React.FC = () => {
       <button 
         className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'ADD_INVOICE' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
         style={activeTab === 'ADD_INVOICE' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => setActiveTab('ADD_INVOICE')}
+        onClick={() => handleTabChange('ADD_INVOICE')}
       >
         INVOICE SELECTION
       </button>
       <button 
         className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'INVOICELIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
         style={activeTab === 'INVOICELIST' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => setActiveTab('INVOICELIST')}
+        onClick={() => handleTabChange('INVOICELIST')}
       >
         WP LIST
       </button>
       <button 
         className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'WOP_LIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
         style={activeTab === 'WOP_LIST' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => setActiveTab('WOP_LIST')}
+        onClick={() => handleTabChange('WOP_LIST')}
       >
         WOP LIST
       </button>
       <button 
         className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'BOTH_LIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
         style={activeTab === 'BOTH_LIST' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => setActiveTab('BOTH_LIST')}
+        onClick={() => handleTabChange('BOTH_LIST')}
       >
         BOTH LIST
       </button>
@@ -195,14 +209,7 @@ const InvoiceTable: React.FC = () => {
   const renderToolbar = () => (
     <div className="d-flex justify-content-between px-4 align-items-center py-3 bg-white border-bottom flex-wrap gap-3">
        <div className="d-flex align-items-center gap-2">
-          <span className="small text-muted fw-semibold">Filter:</span>
-          <input type="text" className="form-control form-control-sm border-0 border-bottom rounded-0 shadow-none" placeholder="Type to filter..." style={{ width: '150px' }} />
-          <span className="ms-3 small text-muted fw-semibold">Show:</span>
-          <select className="form-select form-select-sm border-0 border-bottom rounded-0 shadow-none w-auto pe-4">
-             <option>10</option>
-             <option>25</option>
-             <option>50</option>
-          </select>
+          {/* Filter/Show removed by request */}
        </div>
        <div className="d-flex gap-1 flex-wrap hide-print">
           <button onClick={handlePrint} className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
@@ -226,35 +233,45 @@ const InvoiceTable: React.FC = () => {
         </tr>
       </thead>
       <tbody>
-        {paginatedItems.map((inward, index) => (
-          <tr key={inward.id} className="border-bottom">
-            <td className="px-4 text-muted">{index + 1}</td>
-            <td>
-               <div className="fw-bold text-dark small text-uppercase">{inward.customerName || inward.vendorName}</div>
-               <div className="small text-muted text-uppercase mt-1" style={{ fontSize: '0.75rem' }}>{inward.address || 'COMPANY ADDRESS'}</div>
-            </td>
-            <td className="text-muted small">{inward.poReference || '-'}</td>
-            <td className="text-muted small">{inward.dcNo || inward.challanNo || '-'}</td>
-            <td className="text-muted small">{inward.date}</td>
-            <td className="text-center pe-4">
-              <div className="d-flex justify-content-center gap-2">
-                <Link href={`/invoices/new?inwardId=${inward.id}`} className="btn-action-edit" style={{ backgroundColor: '#ff4081 !important' }} title="View/Create Invoice">
-                  <i className="bi bi-eye-fill"></i>
-                </Link>
-                {checkActionPermission(user, 'mod_invoice', 'delete') && (
-                  <button 
-                    className="btn-action-delete" 
-                    title="Delete Inward"
-                    onClick={() => { if(window.confirm('Are you sure you want to delete this inward entry?')) dispatch(deleteInward(inward.id) as any) }}
-                  >
-                    <i className="bi bi-x-lg"></i>
-                  </button>
-                )}
-              </div>
+        {inwardLoading ? (
+          <tr>
+            <td colSpan={6}>
+              <Loader text="Fetching Selection Data..." />
             </td>
           </tr>
-        ))}
-        {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No pending inwards available.</td></tr>}
+        ) : (
+          <>
+            {paginatedItems.map((inward, index) => (
+              <tr key={inward.id} className="border-bottom">
+                <td className="px-4 text-muted">{index + 1}</td>
+                <td>
+                  <div className="fw-bold text-dark small text-uppercase">{inward.customerName || inward.vendorName}</div>
+                  <div className="small text-muted text-uppercase mt-1" style={{ fontSize: '0.75rem' }}>{inward.address || 'COMPANY ADDRESS'}</div>
+                </td>
+                <td className="text-muted small">{inward.poReference || '-'}</td>
+                <td className="text-muted small">{inward.dcNo || inward.challanNo || '-'}</td>
+                <td className="text-muted small">{inward.date}</td>
+                <td className="text-center pe-4">
+                  <div className="d-flex justify-content-center gap-2">
+                    <Link href={`/invoices/new?inwardId=${inward.id}`} className="btn-action-edit" style={{ backgroundColor: '#ff4081 !important' }} title="View/Create Invoice">
+                      <i className="bi bi-eye-fill"></i>
+                    </Link>
+                    {checkActionPermission(user, 'mod_invoice', 'delete') && (
+                      <button 
+                        className="btn-action-delete" 
+                        title="Delete Inward"
+                        onClick={() => { if(window.confirm('Are you sure you want to delete this inward entry?')) dispatch(deleteInward(inward.id) as any) }}
+                      >
+                        <i className="bi bi-x-lg"></i>
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No pending inwards available.</td></tr>}
+          </>
+        )}
       </tbody>
     </table>
   );
@@ -272,28 +289,38 @@ const InvoiceTable: React.FC = () => {
         </tr>
       </thead>
       <tbody>
-        {paginatedItems.map((invoice, index) => (
-          <tr key={invoice.id} className="border-bottom">
-            <td className="px-4 text-muted">{index + 1}</td>
-            <td>
-               <div className="text-dark small text-uppercase py-2">{invoice.customerName}</div>
-            </td>
-            <td className="text-muted small">{invoice.invoiceNumber}</td>
-            <td className="text-muted small">{invoice.date}</td>
-            <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td className="text-center pe-4">
-              <div className="d-flex justify-content-center gap-2">
-                 <Link href={`/invoices/${invoice.id}/edit`} className="btn-action-edit" title="Edit">
-                   <i className="bi bi-pencil-fill"></i>
-                 </Link>
-                 <button className="btn-action-delete" onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}>
-                   <i className="bi bi-x-lg"></i>
-                 </button>
-              </div>
+        {invoiceLoading ? (
+          <tr>
+            <td colSpan={6}>
+              <Loader text="Fetching Invoice List..." />
             </td>
           </tr>
-        ))}
-        {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No invoices found.</td></tr>}
+        ) : (
+          <>
+            {paginatedItems.map((invoice, index) => (
+              <tr key={invoice.id} className="border-bottom">
+                <td className="px-4 text-muted">{index + 1}</td>
+                <td>
+                  <div className="text-dark fw-bold py-2">{invoice.customerName}</div>
+                </td>
+                <td className="text-muted small">{invoice.invoiceNumber}</td>
+                <td className="text-muted small">{invoice.date}</td>
+                <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <td className="text-center pe-4">
+                  <div className="d-flex justify-content-center gap-2">
+                    <Link href={`/invoices/${invoice.id}/edit?tab=${activeTab}`} className="btn-action-edit" title="Edit">
+                      <i className="bi bi-pencil-fill"></i>
+                    </Link>
+                    <button className="btn-action-delete" onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}>
+                      <i className="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No invoices found.</td></tr>}
+          </>
+        )}
       </tbody>
     </table>
   );
@@ -315,7 +342,7 @@ const InvoiceTable: React.FC = () => {
           <tr key={invoice.id} className="border-bottom">
             <td className="px-4 text-muted">{index + 1}</td>
             <td>
-               <div className="text-dark small text-uppercase py-2">{invoice.customerName}</div>
+               <div className="text-dark fw-bold py-2">{invoice.customerName}</div>
             </td>
             <td className="text-muted small">{invoice.invoiceNumber.replace('INV-', '')}</td>
             <td className="text-muted small">{invoice.date}</td>
@@ -323,7 +350,7 @@ const InvoiceTable: React.FC = () => {
             <td className="text-center pe-4">
                 <div className="d-flex justify-content-center gap-2">
                     {checkActionPermission(user, 'mod_invoice', 'edit') && (
-                        <Link href={`/invoices/${invoice.id}/edit`} className="btn-action-edit" title="Edit">
+                        <Link href={`/invoices/${invoice.id}/edit?tab=${activeTab}`} className="btn-action-edit" title="Edit">
                             <i className="bi bi-pencil-fill"></i>
                         </Link>
                     )}

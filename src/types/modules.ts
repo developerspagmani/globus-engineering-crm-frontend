@@ -299,3 +299,33 @@ export interface Vendor {
   hmc?: string;
   createdAt: string;
 }
+export interface DashboardStats {
+  summary: {
+    totalInvoiced: number;
+    totalPaid: number;
+    pendingAmount: number;
+    customerCount: number;
+    vendorCount: number;
+    overdueCount: number;
+  };
+  overdueInvoices: {
+    id: string;
+    invoice_no: number;
+    customer: string;
+    amount: number;
+    pending: number;
+    due_date: string;
+  }[];
+}
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  entity: string;
+  entity_id: string;
+  details?: string;
+  user_id: string;
+  user_name: string;
+  company_id: string;
+  created_at: string;
+}

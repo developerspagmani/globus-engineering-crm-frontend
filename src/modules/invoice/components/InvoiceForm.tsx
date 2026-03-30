@@ -79,9 +79,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
          // Fetch real-time next sequential numbers from database ONLY in create mode
          if (mode === 'create') {
-            import('@/lib/axios').then(async ({ default: api }) => {
+            import('@/redux/features/invoiceSlice').then(async ({ fetchNextNumbers }) => {
                try {
-                  const { data } = await api.get(`/invoices/next-numbers?companyId=${company.id}`);
+                  const data = await (dispatch as any)(fetchNextNumbers(company.id)).unwrap();
                   setFormData((prev: any) => ({
                      ...prev,
                      invoiceNumber: prev.invoiceNumber || String(data.nextInvoice || data.nextInvoiceNo || '').padStart(4, '0'),
@@ -140,7 +140,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             customerId: String(initialData.customerId || ''),
             invoiceNumber: initialData.invoiceNumber || (initialData as any).invoice_no,
             date: initialData.date || (initialData as any).invoice_date,
-            billType: initialData.billType || (initialData as any).bill_type || 'With Process',
+            billType: (initialData.billType || (initialData as any).bill_type || initialData.type || 'with_process').toLowerCase().includes('without') || 
+                      (initialData.billType || (initialData as any).bill_type || initialData.type) === 'WOP' ? 'Without Process' : 
+                      (initialData.billType || (initialData as any).bill_type || initialData.type || '').toLowerCase() === 'both' ? 'Both' : 'With Process',
             poNo: (initialData as any).po_no || initialData.poNo || '',
             po_no: (initialData as any).po_no || initialData.poNo || '',
             dcNo: (initialData as any).dc_no || initialData.dcNo || '',
@@ -151,6 +153,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             dc_date: initialData.dcDate || (initialData as any).dc_date || '',
             gstin: (initialData as any).gstin || '',
             state: (initialData as any).state || '',
+            challanNumber: (initialData as any).invoice_no || initialData.invoiceNumber || (initialData as any).challanNumber,
          };
          console.log('--- INVOICE EDIT: MAPPED FORM DATA ---', mappedData);
          setFormData(mappedData);
@@ -293,7 +296,19 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       <div className="container-fluid py-4 bg-white min-vh-100">
          <form onSubmit={e => e.preventDefault()}>
             <div className="d-flex align-items-center mb-5 pb-2">
-               <button type="button" className="btn btn-outline-secondary border-0 p-0 me-3" onClick={() => router.back()} title="Back to Invoices">
+               <button 
+                  type="button" 
+                  className="btn btn-outline-secondary border-0 p-0 me-3" 
+                  onClick={() => {
+                     const tab = searchParams.get('tab');
+                     if (tab) {
+                        router.push(`/invoices?tab=${tab}`);
+                     } else {
+                        router.back();
+                     }
+                  }} 
+                  title="Back to Invoices"
+               >
                   <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
                </button>
                <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
@@ -323,17 +338,23 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      <div className="row mb-3 align-items-center">
             <label className="col-sm-3 text-muted">Customer</label>
                         <div className="col-sm-9">
-                           <select
-                              className="form-select border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold"
-                              name="customerId"
-                              value={formData.customerId}
-                              onChange={handleInputChange}
-                           >
-                              <option value="">{customersLoading ? 'Loading Customers...' : 'Choose Customer...'}</option>
-                              {customers.map(c => (
-                                 <option key={c.id} value={c.id}>{c.name}</option>
-                              ))}
-                           </select>
+                           {mode === 'edit' ? (
+                              <div className="form-control border-0 border-bottom rounded-0 fw-bold px-0 shadow-none" style={{ backgroundColor: '#f4f4f4', cursor: 'not-allowed' }}>
+                                 {formData.customerName || 'N/A'}
+                              </div>
+                           ) : (
+                              <select
+                                 className="form-select border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold"
+                                 name="customerId"
+                                 value={formData.customerId}
+                                 onChange={handleInputChange}
+                              >
+                                 <option value="">{customersLoading ? 'Loading Customers...' : 'Choose Customer...'}</option>
+                                 {customers.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                 ))}
+                              </select>
+                           )}
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
@@ -399,11 +420,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             <div className="mb-5">
                <div className="row g-4">
                   <div className="col-md-6">
-                     {formData.billType === 'Without Process' ? (
+                     {(formData.billType === 'Without Process' || formData.billType === 'WOP' || String(formData.billType).toLowerCase().includes('without')) ? (
                         <div className="row mb-3 align-items-center">
                            <label className="col-sm-3 text-muted">Delivery Challan</label>
                            <div className="col-sm-9">
-                              <input type="text" className="form-control border-0 border-bottom rounded-0" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} />
+                                     <input type="text" className="form-control border-0 border-bottom rounded-0 px-2" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed' } : {}} />
                            </div>
                         </div>
                      ) : (
@@ -411,14 +432,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted">Invoice No</label>
                               <div className="col-sm-9">
-                                 <input type="text" className="form-control border-0 border-bottom rounded-0" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} />
+                                  <input type="text" className="form-control border-0 border-bottom rounded-0 px-2" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed' } : {}} />
                               </div>
                            </div>
                            {formData.billType === 'Both' && (
                               <div className="row mb-3 align-items-center">
                                  <label className="col-sm-3 text-muted">Delivery Challan</label>
                                  <div className="col-sm-9">
-                                    <input type="text" className="form-control border-0 border-bottom rounded-0" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} />
+                                    <input type="text" className="form-control border-0 border-bottom rounded-0 px-2" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed' } : {}} />
                                  </div>
                               </div>
                            )}
@@ -585,7 +606,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             isOpen={modal.isOpen}
             onClose={() => {
                setModal(prev => ({ ...prev, isOpen: false }));
-               if (modal.type === 'success') router.push('/invoices');
+               if (modal.type === 'success') {
+                  const tab = searchParams.get('tab');
+                  router.push(`/invoices${tab ? '?tab=' + tab : ''}`);
+               }
             }}
             type={modal.type}
             title={modal.title}

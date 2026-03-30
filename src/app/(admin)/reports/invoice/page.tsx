@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import Loader from '@/components/Loader';
+import ReportActions from '@/components/ReportActions';
 
 const InvoiceReportPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -73,6 +75,9 @@ const InvoiceReportPage = () => {
                </div>
             </div>
           </div>
+          <div className="d-flex justify-content-end mt-3 border-top pt-3">
+            <ReportActions />
+          </div>
         </div>
       </div>
 
@@ -95,22 +100,23 @@ const InvoiceReportPage = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-5">
-                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
-                      <span className="text-muted small">Loading invoice data...</span>
+                    <td colSpan={7}>
+                      <Loader text="Fetching Invoice Report..." />
                     </td>
                   </tr>
-                ) : filteredInvoices.map((inv, index) => (
-                  <tr key={inv.id}>
-                    <td className="px-4 small text-muted font-monospace">{index + 1}</td>
-                    <td className="small text-muted">{inv.date}</td>
-                    <td className="fw-bold text-dark">{inv.invoiceNumber}</td>
-                    <td className="text-uppercase small fw-600 text-dark">{inv.customerName}</td>
-                    <td className="text-end small">₹{inv.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="text-end small text-muted">₹{inv.taxTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                    <td className="text-end fw-bold text-dark px-4">₹{inv.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
+                ) : (
+                  filteredInvoices.map((inv, index) => (
+                    <tr key={inv.id}>
+                      <td className="px-4 small text-muted font-monospace">{index + 1}</td>
+                      <td className="small text-muted">{inv.date}</td>
+                      <td className="text-dark">{inv.invoiceNumber}</td>
+                      <td className="fw-bold text-dark">{inv.customerName}</td>
+                      <td className="text-end small">₹{inv.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="text-end small text-muted">₹{inv.taxTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="text-end fw-bold text-dark px-4">₹{inv.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))
+                )}
                 {!loading && filteredInvoices.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center py-5">

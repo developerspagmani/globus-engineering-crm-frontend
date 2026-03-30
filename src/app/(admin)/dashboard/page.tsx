@@ -1,13 +1,22 @@
 'use client';
 
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
+import { useSelector, useDispatch } from 'react-redux';
+import Link from 'next/link';
+import { RootState, AppDispatch } from '@/redux/store';
 import { checkActionPermission } from '@/config/permissions';
+import { fetchDashboardStats, fetchAuditLogs } from '@/redux/features/dashboardSlice';
 
 export default function DashboardPage() {
+  const dispatch = useDispatch<AppDispatch>();
   const { items: allModules } = useSelector((state: RootState) => state.modules);
   const { company, user } = useSelector((state: RootState) => state.auth);
+  const { stats: realStats, logs: auditLogs, loading } = useSelector((state: RootState) => state.dashboard);
+
+  React.useEffect(() => {
+    dispatch(fetchDashboardStats());
+    dispatch(fetchAuditLogs());
+  }, [dispatch]);
 
   // Determine if we should show the global super admin view or a specific tenant view
   const isViewingGlobal = user?.role === 'super_admin' && !company;
@@ -23,10 +32,10 @@ export default function DashboardPage() {
     { label: 'Monthly Revenue', value: '₹12,400', change: '+8%', icon: 'bi-bank', color: 'info' },
     { label: 'System Health', value: '99.9%', change: 'Stable', icon: 'bi-cpu', color: 'warning' },
   ] : [
-    { label: 'Total Invoiced', value: company?.id === 'comp_apex' ? '₹12,450' : '₹124,284', change: '+12%', icon: 'bi-currency-rupee', color: 'primary' },
-    { label: 'Pending Payments', value: company?.id === 'comp_apex' ? '₹1,200' : '₹24,500', change: '-3.2%', icon: 'bi-clock-history', color: 'warning' },
-    { label: 'Invoices Paid', value: company?.id === 'comp_apex' ? '8' : '45', change: '+5%', icon: 'bi-check-circle', color: 'success' },
-    { label: 'Raw Materials Cost', value: company?.id === 'comp_apex' ? '₹3,150' : '₹45,210', change: '+18%', icon: 'bi-tools', color: 'info' },
+    { label: 'Total Invoiced', value: `₹${realStats?.summary.totalInvoiced.toLocaleString() || '0'}`, change: '+0%', icon: 'bi-currency-rupee', color: 'primary' },
+    { label: 'Pending Payments', value: `₹${realStats?.summary.pendingAmount.toLocaleString() || '0'}`, change: 'Live', icon: 'bi-clock-history', color: 'warning' },
+    { label: 'Customer Count', value: realStats?.summary.customerCount.toString() || '0', change: 'Active', icon: 'bi-people', color: 'success' },
+    { label: 'Overdue Invoices', value: realStats?.summary.overdueCount.toString() || '0', change: '>30 Days', icon: 'bi-exclamation-triangle', color: 'danger' },
   ];
 
   return (
@@ -41,9 +50,11 @@ export default function DashboardPage() {
           </p>
         </div>
         {!isViewingGlobal && checkActionPermission(user, 'mod_invoice', 'create') && (
-          <button className="btn btn-primary d-flex align-items-center shadow-sm rounded-pill px-4">
-            <i className="bi bi-plus-lg me-2"></i> Create Invoice
-          </button>
+          <Link href="/invoices?tab=ADD_INVOICE" className="text-decoration-none">
+            <button className="btn btn-primary d-flex align-items-center shadow-sm rounded-pill px-4 py-2 border-0" style={{ backgroundColor: '#ff4081' }}>
+              <i className="bi bi-plus-lg me-2"></i> Create Invoice
+            </button>
+          </Link>
         )}
       </div>
 
@@ -113,22 +124,32 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <tr key={i}>
-                            <td>
-                              <div className="d-flex align-items-center">
-                                <img src={`https://i.pravatar.cc/150?u=${i}`} alt="" className="rounded-circle me-3" width="32" height="32" />
-                                <div>
-                                  <div className="fw-semibold">Client {i}</div>
-                                  <div className="text-muted x-small" style={{ fontSize: '0.75rem' }}>INV-2024-00{i}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td>Generated final invoice</td>
-                            <td><span className={`badge ${i % 2 === 0 ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${i % 2 === 0 ? 'success' : 'warning'} rounded-pill px-2 py-1`}>{i % 2 === 0 ? 'Paid' : 'Pending'}</span></td>
-                            <td className="text-muted small">March {12-i}, 2024</td>
-                          </tr>
-                        ))}
+                        {auditLogs.length > 0 ? auditLogs.map((log) => (
+                           <tr key={log.id}>
+                             <td>
+                               <div className="d-flex align-items-center">
+                                 <div className="bg-light rounded-circle me-3 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+                                   {log.user_name.charAt(0)}
+                                 </div>
+                                 <div className="fw-semibold small">{log.user_name}</div>
+                               </div>
+                             </td>
+                             <td className="small">
+                               <span className="text-primary fw-bold text-uppercase x-small me-1">{log.action}</span> 
+                               {(() => {
+                                 const details = log.details ? JSON.parse(log.details) : null;
+                                 const displayId = details?.invoice_no || details?.business_id || log.entity_id;
+                                 return `${log.entity} #${displayId}`;
+                               })()}
+                             </td>
+                             <td><span className="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">Success</span></td>
+                             <td className="text-muted x-small">{new Date(log.created_at).toLocaleDateString()}</td>
+                           </tr>
+                         )) : (
+                            <tr>
+                              <td colSpan={4} className="text-center py-4 text-muted small">No recent activities found</td>
+                           </tr>
+                         )}
                       </tbody>
                     </table>
                   </div>
@@ -138,33 +159,32 @@ export default function DashboardPage() {
             <div className="col-12 col-lg-4">
               <div className="card border-0 shadow-sm h-100">
                 <div className="card-header bg-white py-3 border-0">
-                  <h5 className="fw-bold mb-0">Invoice Distribution</h5>
+                  <h5 className="fw-bold mb-0 text-danger">Payment Reminders</h5>
+                  <p className="text-muted x-small mb-0">Invoices overdue by more than 30 days</p>
                 </div>
                 <div className="card-body">
-                  <div className="d-flex flex-column gap-4">
-                    {[
-                      { label: 'Direct Project', value: 45, color: 'primary' },
-                      { label: 'Sub-Contracting', value: 30, color: 'success' },
-                      { label: 'Maintenance', value: 15, color: 'warning' },
-                      { label: 'Consulting', value: 10, color: 'info' }
-                    ].map((item, idx) => (
-                      <div key={idx}>
-                        <div className="d-flex justify-content-between mb-2">
-                          <span className="small fw-semibold">{item.label}</span>
-                          <span className="small text-muted">{item.value}%</span>
+                  <div className="d-flex flex-column gap-3">
+                    {realStats?.overdueInvoices && realStats.overdueInvoices.length > 0 ? (
+                      realStats.overdueInvoices.map((inv, idx) => (
+                        <div key={idx} className="p-2 border rounded bg-danger bg-opacity-10 border-danger border-opacity-25">
+                          <div className="d-flex justify-content-between align-items-start">
+                            <div>
+                              <div className="fw-bold small text-danger">INV-#{inv.invoice_no}</div>
+                              <div className="text-muted extra-small">{inv.customer}</div>
+                            </div>
+                            <div className="text-end">
+                              <div className="fw-bold small">₹{inv.pending.toLocaleString()}</div>
+                              <div className="text-muted extra-small">{new Date(inv.due_date).toLocaleDateString()}</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="progress" style={{ height: '6px' }}>
-                          <div 
-                            className={`progress-bar bg-${item.color}`} 
-                            role="progressbar" 
-                            style={{ width: `${item.value}%` }} 
-                            aria-valuenow={item.value} 
-                            aria-valuemin={0} 
-                            aria-valuemax={100}
-                          ></div>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-muted small">
+                        <i className="bi bi-check2-circle text-success d-block fs-3 mb-2"></i>
+                        No overdue payments!
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>

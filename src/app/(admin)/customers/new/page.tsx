@@ -9,16 +9,14 @@ export default function NewCustomerPage() {
   return (
     <ModuleGuard moduleId="mod_customer">
       <div className="container-fluid py-4">
-        <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/customers" className="text-decoration-none">Customers</Link></li>
-            <li className="breadcrumb-item active" aria-current="page">New Customer</li>
-          </ol>
-        </nav>
-
-        <div className="mb-4">
-          <h2 className="fw-bold mb-1">Add New Customer</h2>
-          <p className="text-muted small mb-0">Register a new client or sales lead to the system.</p>
+        <div className="d-flex align-items-center mb-5 pb-2">
+          <Link href="/customers" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Customers">
+            <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+          </Link>
+          <div>
+            <h2 className="fw-bold mb-0">Add New Customer</h2>
+            <p className="text-muted small mb-0">Register a new client or sales lead to the system.</p>
+          </div>
         </div>
 
         <CustomerForm mode="create" />

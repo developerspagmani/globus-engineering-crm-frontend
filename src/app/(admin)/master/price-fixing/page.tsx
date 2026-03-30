@@ -7,21 +7,22 @@ import { fetchPriceFixings, createPriceFixingThunk, updatePriceFixingThunk, dele
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
+import Loader from '@/components/Loader';
 
 export default function PriceFixingPage() {
   const dispatch = useDispatch();
   const { priceFixings, items, processes, loading: masterLoading } = useSelector((state: RootState) => state.master);
   const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
   const { company } = useSelector((state: RootState) => state.auth);
-  
+
   const [view, setView] = useState<'add' | 'list'>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ 
-    customerId: '', 
-    itemId: '', 
-    processId: '', 
-    price: '' 
+  const [formData, setFormData] = useState({
+    customerId: '',
+    itemId: '',
+    processId: '',
+    price: ''
   });
 
   useEffect(() => {
@@ -38,12 +39,12 @@ export default function PriceFixingPage() {
       const item = items.find(i => String(i.id) === formData.itemId);
       const process = processes.find(p => String(p.id) === formData.processId);
 
-      const payload = { 
-        ...formData, 
+      const payload = {
+        ...formData,
         customerName: customer?.name || '',
         itemName: item?.itemName || '',
         processName: process?.processName || '',
-        company_id: company.id 
+        company_id: company.id
       };
 
       if (editingId) {
@@ -61,11 +62,11 @@ export default function PriceFixingPage() {
 
   const handleEdit = (pf: any) => {
     setEditingId(pf.id);
-    setFormData({ 
-      customerId: String(pf.customerId), 
-      itemId: String(pf.itemId), 
-      processId: String(pf.processId), 
-      price: String(pf.price) 
+    setFormData({
+      customerId: String(pf.customerId),
+      itemId: String(pf.itemId),
+      processId: String(pf.processId),
+      price: String(pf.price)
     });
     setView('add');
   };
@@ -76,7 +77,7 @@ export default function PriceFixingPage() {
     }
   };
 
-  const filteredPriceFixings = priceFixings.filter(pf => 
+  const filteredPriceFixings = priceFixings.filter(pf =>
     pf.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pf.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pf.processName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -86,9 +87,19 @@ export default function PriceFixingPage() {
     <ModuleGuard moduleId="mod_price_fixing">
       <div className="bg-white min-vh-100">
         {/* Header Section */}
-        <div className="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
-          <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>Price Fixing Details</h4>
-          <div className="d-flex gap-2">
+        <div className="px-4 py-3 border-bottom d-flex align-items-center">
+          {view === 'add' && (
+            <button 
+              type="button" 
+              className="back-btn-standard" 
+              onClick={() => setView('list')} 
+              title="Back to List"
+            >
+              <i className="bi bi-arrow-left-circle fs-3 "></i>
+            </button>
+          )}
+          <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? 'Edit Price Rule' : 'Add New Price Rule') : 'Price Fixing Details'}</h4>
+          <div className="ms-auto d-flex gap-2">
             <button
               onClick={() => { setView('add'); setEditingId(null); setFormData({ customerId: '', itemId: '', processId: '', price: '' }); }}
               className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' && !editingId ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
@@ -123,7 +134,7 @@ export default function PriceFixingPage() {
                     <select
                       required
                       className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.customerId}
                       onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
                     >
@@ -159,7 +170,7 @@ export default function PriceFixingPage() {
                     <select
                       required
                       className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.processId}
                       onChange={(e) => setFormData({ ...formData, processId: e.target.value })}
                     >
@@ -211,7 +222,7 @@ export default function PriceFixingPage() {
               <div className="d-flex justify-content-end mb-4">
                 <div className="input-group" style={{ maxWidth: '300px' }}>
                   <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search text-muted"></i>
+                    <i className="bi bi-search "></i>
                   </span>
                   <input
                     type="text"
@@ -238,8 +249,8 @@ export default function PriceFixingPage() {
                   <tbody>
                     {masterLoading || customersLoading ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-5">
-                          <div className="spinner-border spinner-border-sm text-primary"></div>
+                        <td colSpan={6}>
+                          <Loader text="Fetching Pricing Data..." />
                         </td>
                       </tr>
                     ) : filteredPriceFixings.length === 0 ? (
@@ -289,3 +300,4 @@ export default function PriceFixingPage() {
     </ModuleGuard>
   );
 }
+

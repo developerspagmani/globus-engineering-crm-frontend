@@ -5,6 +5,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchVouchers } from '@/redux/features/voucherSlice';
 import { fetchPendingPayments } from '@/redux/features/pendingPaymentSlice';
+import Loader from '@/components/Loader';
+
+import ReportActions from '@/components/ReportActions';
 
 const PaymentReportPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -97,7 +100,7 @@ const PaymentReportPage = () => {
                 <input
                   type="text"
                   className="form-control ps-5"
-                  placeholder="Search by customer name or reference..."
+                  placeholder="Search by customer name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -127,6 +130,9 @@ const PaymentReportPage = () => {
                </div>
             </div>
           </div>
+          <div className="d-flex justify-content-end mt-3 border-top pt-3">
+            <ReportActions />
+          </div>
         </div>
       </div>
 
@@ -135,9 +141,8 @@ const PaymentReportPage = () => {
         <div className="card-body p-0">
           <div className="table-responsive">
             {vLoading || pLoading ? (
-               <div className="text-center py-5">
-                 <div className="spinner-border spinner-border-sm text-primary me-2"></div>
-                 <span className="text-muted small">Loading records...</span>
+               <div className="py-2">
+                 <Loader text="Fetching Payment Records..." />
                </div>
             ) : activeTab === 'PAYMENT' ? (
               <table className="table table-hover align-middle mb-0">

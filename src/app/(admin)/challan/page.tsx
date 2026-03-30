@@ -7,6 +7,7 @@ import { RootState } from '@/redux/store';
 import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan } from '@/redux/features/challanSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 const ChallanPage = () => {
   const dispatch = useDispatch();
@@ -76,48 +77,53 @@ const ChallanPage = () => {
         )}
       </div>
 
-      {/* Filters Card */}
+      {/* Filters Row */}
       <div className="card shadow-sm border-0 mb-4 overflow-hidden">
         <div className="card-body p-3">
-          <div className="row g-3">
-            <div className="col-md-12">
+          <div className="row g-3 align-items-center">
+            {/* Search */}
+            <div className="col-md-5">
               <div className="input-group">
                 <span className="input-group-text bg-white border-end-0 text-muted ps-3">
                   <i className="bi bi-search"></i>
                 </span>
                 <input
                   type="text"
-                  className="form-control border-start-0 ps-0"
-                  placeholder="Search by challan # or party name..."
+                  className="form-control border-start-0 ps-0 shadow-none"
+                  placeholder="Search by challan or party..."
                   value={filters.search}
                   onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
+            
+            {/* Type Dropdown */}
             <div className="col-md-3">
               <select
-                className="form-select"
+                className="form-select shadow-none"
                 value={filters.type}
                 onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
               >
                 <option value="all">All Types</option>
-                <option value="delivery">Delivery Challan</option>
+                <option value="delivery">Delivery</option>
                 <option value="returnable">Returnable</option>
                 <option value="job_work">Job Work</option>
               </select>
             </div>
+            
+            {/* Status Tabs */}
             <div className="col-md-4">
-              <div className="btn-group w-100 p-1 bg-light rounded-3">
+              <div className="btn-group w-100 p-1 bg-light rounded-2 border">
                 <button
-                  className={`btn btn-sm rounded-2 flex-grow-1 ${filters.status === 'all' ? 'bg-white shadow-sm fw-700' : 'text-muted border-0'}`}
+                  className={`btn btn-sm rounded-1 flex-grow-1 ${filters.status === 'all' ? 'bg-white shadow-sm fw-bold' : 'text-muted border-0'}`}
                   onClick={() => dispatch(setChallanFilters({ status: 'all' }))}
                 >All</button>
                 <button
-                  className={`btn btn-sm rounded-2 flex-grow-1 ${filters.status === 'dispatched' ? 'bg-white shadow-sm fw-700 text-primary' : 'text-muted border-0'}`}
+                  className={`btn btn-sm rounded-1 flex-grow-1 ${filters.status === 'dispatched' ? 'bg-white shadow-sm fw-bold text-primary' : 'text-muted border-0'}`}
                   onClick={() => dispatch(setChallanFilters({ status: 'dispatched' }))}
                 >Dispatched</button>
                 <button
-                  className={`btn btn-sm rounded-2 flex-grow-1 ${filters.status === 'draft' ? 'bg-white shadow-sm fw-700 text-muted' : 'text-muted border-0'}`}
+                  className={`btn btn-sm rounded-1 flex-grow-1 ${filters.status === 'draft' ? 'bg-white shadow-sm fw-bold text-muted' : 'text-muted border-0'}`}
                   onClick={() => dispatch(setChallanFilters({ status: 'draft' }))}
                 >Draft</button>
               </div>
@@ -131,67 +137,77 @@ const ChallanPage = () => {
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
               <thead>
-                <tr>
-                  <th className="px-4 py-3 border-0">Sno</th>
-                  <th className="py-3 border-0">Challan No</th>
-                  <th className="py-3 border-0">Date</th>
-                  <th className="py-3 border-0">Party / Client</th>
-                  <th className="py-3 border-0">Items</th>
-                  <th className="py-3 border-0 text-center">Status</th>
-                  <th className="py-3 border-0 text-center px-4">Action</th>
+                <tr className="bg-light">
+                  <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Challan No</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Date</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Party / Client</th>
+                  <th className="py-3 border-0 small fw-bold text-muted">Items</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center">Status</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedItems.map((challan, index) => (
-                  <tr key={challan.id}>
-                    <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                    <td className="text-nowrap fw-bold text-dark">
-                      {challan.challanNo}
-                      <div className="text-muted x-small fw-normal text-uppercase">{challan.type.replace('_', ' ')}</div>
-                    </td>
-                    <td className="text-nowrap text-muted small">{new Date(challan.date).toLocaleDateString()}</td>
-                    <td className="text-nowrap text-muted small">
-                      <div className="fw-bold text-dark">{challan.partyName}</div>
-                      <div className="x-small text-uppercase">{challan.partyType}</div>
-                    </td>
-                    <td className="text-nowrap text-muted small">
-                      {challan.items[0]?.description}
-                      {challan.items.length > 1 && <span className="ms-1 text-primary x-small fw-bold">+{challan.items.length - 1} more</span>}
-                    </td>
-                    <td className="text-center">
-                      <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
-                        {challan.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="text-center px-4 text-nowrap">
-                      <div className="d-flex justify-content-center gap-2">
-                        {checkActionPermission(user, 'mod_challan', 'edit') && (
-                          <Link href={`/challan/${challan.id}/edit`} className="btn-action-edit" title="Edit">
-                            <i className="bi bi-pencil-fill"></i>
-                          </Link>
-                        )}
-                        <button className="btn-action-edit" title="Print" style={{ backgroundColor: '#f8f9fa', color: '#212529' }}>
-                          <i className="bi bi-printer"></i>
-                        </button>
-                        {checkActionPermission(user, 'mod_challan', 'delete') && (
-                          <button
-                            className="btn-action-delete"
-                            title="Delete"
-                            onClick={() => { if (confirm('Delete this challan?')) (dispatch as any)(deleteChallan(challan.id)) }}
-                          >
-                            <i className="bi bi-x-lg"></i>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {paginatedItems.length === 0 && (
+                {loading ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-5 text-muted">
-                      No challans found matching your filters.
+                    <td colSpan={7}>
+                      <Loader text="Fetching Challan Records..." />
                     </td>
                   </tr>
+                ) : (
+                  <>
+                    {paginatedItems.map((challan, index) => (
+                      <tr key={challan.id}>
+                        <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                        <td className="text-nowrap fw-bold text-dark">
+                          {challan.challanNo}
+                          <div className="text-muted x-small fw-normal text-uppercase">{challan.type.replace('_', ' ')}</div>
+                        </td>
+                        <td className="text-nowrap text-muted small">{new Date(challan.date).toLocaleDateString()}</td>
+                        <td className="text-nowrap text-muted small">
+                          <div className="fw-bold text-dark">{challan.partyName}</div>
+                          <div className="x-small text-uppercase">{challan.partyType}</div>
+                        </td>
+                        <td className="text-nowrap text-muted small">
+                          {challan.items[0]?.description}
+                          {challan.items.length > 1 && <span className="ms-1 text-primary x-small fw-bold">+{challan.items.length - 1} more</span>}
+                        </td>
+                        <td className="text-center">
+                          <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
+                            {challan.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="text-center px-4 text-nowrap">
+                          <div className="d-flex justify-content-center gap-2">
+                            {checkActionPermission(user, 'mod_challan', 'edit') && (
+                              <Link href={`/challan/${challan.id}/edit`} className="btn-action-edit" title="Edit">
+                                <i className="bi bi-pencil-fill"></i>
+                              </Link>
+                            )}
+                            <button className="btn-action-edit" title="Print" style={{ backgroundColor: '#f8f9fa', color: '#212529' }}>
+                              <i className="bi bi-printer"></i>
+                            </button>
+                            {checkActionPermission(user, 'mod_challan', 'delete') && (
+                              <button
+                                className="btn-action-delete"
+                                title="Delete"
+                                onClick={() => { if (confirm('Delete this challan?')) (dispatch as any)(deleteChallan(challan.id)) }}
+                              >
+                                <i className="bi bi-x-lg"></i>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {paginatedItems.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="text-center py-5 text-muted">
+                          No challans found matching your filters.
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )}
               </tbody>
             </table>

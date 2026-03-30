@@ -3,19 +3,19 @@
 import React from 'react';
 import ChallanForm from '@/modules/challan/components/ChallanForm';
 import Breadcrumb from '@/components/Breadcrumb';
+import Link from 'next/link';
 
 const NewChallanPage = () => {
   return (
     <div className="content-area animate-fade-in">
-      <div className="mb-4">
-        <Breadcrumb
-          items={[
-            { label: 'Challan System', href: '/challan' },
-            { label: 'New Challan', active: true }
-          ]}
-        />
-        <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Generate Delivery Challan</h3>
-        <p className="text-muted small mb-0">Create a new delivery/returnable challan for material movement.</p>
+      <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
+        <Link href="/challan" className="back-btn-standard" title="Back to Challan List">
+          <i className="bi bi-arrow-left-circle fs-3 "></i>
+        </Link>
+        <div>
+          <h2 className="fw-bold mb-0 text-dark">Generate Delivery Challan</h2>
+          <p className="text-muted small mb-0">Create a new delivery/returnable challan for material movement.</p>
+        </div>
       </div>
 
       <div className="row justify-content-center">
@@ -28,3 +28,4 @@ const NewChallanPage = () => {
 };
 
 export default NewChallanPage;
+

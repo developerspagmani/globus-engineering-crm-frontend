@@ -253,7 +253,8 @@ body {
 .table-responsive {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.05) transparent;
-  padding: 1px; /* Buffer to prevent accidental overflow triggers */
+  padding: 1px;
+  /* Buffer to prevent accidental overflow triggers */
   overflow-x: auto;
 }
 
@@ -317,7 +318,8 @@ body {
 .btn-action-edit {
   width: 32px;
   height: 32px;
-  background-color: #00a651 !important; /* Green from the image */
+  background-color: #00a651 !important;
+  /* Green from the image */
   color: white !important;
   border-radius: 50% !important;
   display: flex !important;
@@ -336,7 +338,8 @@ body {
 .btn-action-delete {
   width: 32px;
   height: 32px;
-  background-color: #ed1c24 !important; /* Red from the image */
+  background-color: #ed1c24 !important;
+  /* Red from the image */
   color: white !important;
   border-radius: 50% !important;
   display: flex !important;
@@ -676,3 +679,22 @@ body {
     transform: translateY(0) scale(1);
   }
 } */
+
+/* Print Utilities */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .main-wrapper {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .sidebar,
+  .navbar-custom,
+  .breadcrumb,
+  button {
+    display: none !important;
+  }
+}

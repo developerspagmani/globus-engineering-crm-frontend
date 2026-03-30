@@ -9,16 +9,16 @@ export default function NewVendorPage() {
   return (
     <ModuleGuard moduleId="mod_vendor" requiredRole="super_admin">
       <div className="container-fluid py-4">
-        <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/vendors" className="text-decoration-none">Vendors</Link></li>
-            <li className="breadcrumb-item active" aria-current="page">New Vendor</li>
-          </ol>
-        </nav>
+        
 
-        <div className="mb-4">
-          <h2 className="fw-bold mb-1">Add New Vendor</h2>
-          <p className="text-muted small mb-0">Register a new manufacturing partner to the system.</p>
+        <div className="mb-4 d-flex align-items-center">
+          <Link href="/vendors" className="back-btn-standard" title="Back to Vendors">
+            <i className="bi bi-arrow-left-circle fs-3 "></i>
+          </Link>
+          <div>
+            <h2 className="fw-bold mb-1">Add New Vendor</h2>
+            <p className="text-muted small mb-0">Register a new manufacturing partner to the system.</p>
+          </div>
         </div>
 
         <VendorForm mode="create" />
@@ -26,3 +26,5 @@ export default function NewVendorPage() {
     </ModuleGuard>
   );
 }
+
+

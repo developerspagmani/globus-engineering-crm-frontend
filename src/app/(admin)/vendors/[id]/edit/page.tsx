@@ -19,9 +19,9 @@ export default function EditVendorPage() {
   return (
     <ModuleGuard moduleId="mod_vendor" requiredRole="super_admin">
       <div className="container-fluid py-4">
-        <nav aria-label="breadcrumb" className="mb-4">
+        <nav aria-label="breadcrumb" className="mb-4 text-muted small">
           <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/vendors" className="text-decoration-none">Vendors</Link></li>
+            <li className="breadcrumb-item"><Link href="/vendors" className="text-decoration-none text-muted">Vendors</Link></li>
             <li className="breadcrumb-item active" aria-current="page">Edit Vendor</li>
           </ol>
         </nav>
@@ -32,9 +32,14 @@ export default function EditVendorPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4">
-              <h2 className="fw-bold mb-1">Edit: {vendor.name}</h2>
-              <p className="text-muted small mb-0">Update information for {vendor.company}.</p>
+            <div className="mb-4 d-flex align-items-center">
+              <Link href="/vendors" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Vendors">
+                <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+              </Link>
+              <div>
+                <h2 className="fw-bold mb-1">Edit: {vendor.name}</h2>
+                <p className="text-muted small mb-0">Update information for {vendor.company}.</p>
+              </div>
             </div>
             <VendorForm mode="edit" initialData={vendor} />
           </>

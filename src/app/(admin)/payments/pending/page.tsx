@@ -6,6 +6,7 @@ import { RootState } from '@/redux/store';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useRouter } from 'next/navigation';
+import Loader from '@/components/Loader';
 
 const PendingPaymentPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -55,7 +56,9 @@ const PendingPaymentPage = () => {
 
           <div className="table-responsive px-4 pb-4 mt-3">
             {loading ? (
-              <div className="text-center py-5"><div className="spinner-border text-primary"></div></div>
+              <div className="py-2">
+                <Loader text="Fetching Pending Payments..." />
+              </div>
             ) : (
               <table className="table align-middle mb-0 table-hover">
                 <thead className="bg-light">

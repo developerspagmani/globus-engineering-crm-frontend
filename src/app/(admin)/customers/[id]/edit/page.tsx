@@ -19,22 +19,20 @@ export default function EditCustomerPage() {
   return (
     <ModuleGuard moduleId="mod_customer">
       <div className="container-fluid py-4">
-        <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/customers" className="text-decoration-none">Customers</Link></li>
-            <li className="breadcrumb-item active" aria-current="page">Edit Profile</li>
-          </ol>
-        </nav>
-
         {!customer ? (
           <div className="alert alert-warning">
             Customer with ID: {id} not found.
           </div>
         ) : (
           <>
-            <div className="mb-4">
-              <h2 className="fw-bold mb-1">Edit: {customer.name}</h2>
-              <p className="text-muted small mb-0">Update account details for {customer.company}.</p>
+            <div className="d-flex align-items-center mb-5 pb-2">
+              <Link href="/customers" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Customers">
+                <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+              </Link>
+              <div>
+                <h2 className="fw-bold mb-0">Edit Customer :</h2>
+                <p className="text-muted small mb-0">Update account details for {customer.company}.</p>
+              </div>
             </div>
             <CustomerForm mode="edit" initialData={customer} />
           </>

@@ -7,6 +7,7 @@ import { RootState } from '@/redux/store';
 import { fetchLedgerEntries, addLedgerEntry } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import ModuleGuard from '@/components/ModuleGuard';
+import Loader from '@/components/Loader';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -201,18 +202,18 @@ export default function LedgerPage() {
         <div className="card border-0 mb-4">
            <div className="card-body p-0">
              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="d-flex align-items-center gap-3 w-50">
-                    <span className="text-muted small fw-bold">Filter:</span>
-                    <div className="input-group input-group-sm border rounded px-0 bg-light w-75 overflow-hidden">
-                        <span className="input-group-text border-0 bg-transparent text-muted"><i className="bi bi-search"></i></span>
-                        <input 
-                            type="text" 
-                            className="form-control border-0 bg-transparent shadow-none" 
-                            placeholder="Type to filter..." 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                <div className="d-flex align-items-center w-50 pe-3">
+                   <div className="position-relative w-100">
+                     <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                     <input 
+                         type="text" 
+                         className="form-control ps-5 py-2 border-0 bg-white shadow-sm" 
+                         placeholder="SEARCH FOR PARTY, CITY OR STATE..." 
+                         style={{ borderRadius: '4px', border: '1px solid #e0e0e0 !important' }}
+                         value={searchTerm}
+                         onChange={(e) => setSearchTerm(e.target.value)}
+                     />
+                   </div>
                 </div>
                 <div className="d-flex align-items-center gap-2">
                    {/* <span className="text-muted small fw-bold">Show:</span> */}
@@ -253,28 +254,35 @@ export default function LedgerPage() {
                 </tr>
               </thead>
               <tbody className="border-top-0">
-                {paginatedItems.map((party, index) => (
-                  <tr key={party.id} className="border-bottom">
-                    <td className="px-4 text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                    <td className="fw-bold text-dark text-uppercase">{party.name}</td>
-                    <td className="text-muted small">{party.street1 || '-'}</td>
-                    <td className="text-muted small">{party.street2 || '-'}</td>
-                    <td className="text-muted small">{party.city || '-'}</td>
-                    <td className="text-muted small">{party.state || '-'}</td>
-                    <td className="text-center px-4">
-                        <button className="btn btn-success p-1 px-2 border-0 shadow-sm rounded" style={{ height: '32px', width: '32px' }}>
-                            <i className="bi bi-search x-small"></i>
-                        </button>
+                {ledgerLoading ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <Loader text="Fetching Ledger Entries..." />
                     </td>
                   </tr>
-                ))}
-                {paginatedItems.length === 0 && !ledgerLoading && (
+                ) : paginatedItems.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-5">
                       <p className="text-muted fw-bold text-uppercase tracking-wider small">No dynamic ledger records found for this company.</p>
                       <span className="x-small text-muted">Create an Inward entry to start the ledger history.</span>
                     </td>
                   </tr>
+                ) : (
+                  paginatedItems.map((party, index) => (
+                    <tr key={party.id} className="border-bottom">
+                      <td className="px-4 text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="fw-bold text-dark text-uppercase">{party.name}</td>
+                      <td className="text-muted small">{party.street1 || '-'}</td>
+                      <td className="text-muted small">{party.street2 || '-'}</td>
+                      <td className="text-muted small">{party.city || '-'}</td>
+                      <td className="text-muted small">{party.state || '-'}</td>
+                      <td className="text-center px-4">
+                          <button className="btn btn-success p-1 px-2 border-0 shadow-sm rounded" style={{ height: '32px', width: '32px' }}>
+                              <i className="bi bi-search x-small"></i>
+                          </button>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

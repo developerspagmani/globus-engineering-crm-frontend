@@ -6,6 +6,7 @@ import { RootState } from '@/redux/store';
 import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
+import Loader from '@/components/Loader';
 
 export default function ItemDetailsPage() {
   const dispatch = useDispatch();
@@ -58,9 +59,19 @@ export default function ItemDetailsPage() {
     <ModuleGuard moduleId="mod_items">
       <div className="bg-white min-vh-100">
         {/* Header Section */}
-        <div className="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
-          <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>Item Details</h4>
-          <div className="d-flex gap-2">
+        <div className="px-4 py-3 border-bottom d-flex align-items-center">
+          {view === 'add' && (
+            <button 
+              type="button" 
+              className="back-btn-standard" 
+              onClick={() => setView('list')} 
+              title="Back to List"
+            >
+              <i className="bi bi-arrow-left-circle fs-3 "></i>
+            </button>
+          )}
+          <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? 'Edit Item' : 'Add New Item') : 'Item Details'}</h4>
+          <div className="ms-auto d-flex gap-2">
             <button
               onClick={() => { setView('add'); setEditingId(null); setFormData({ itemCode: '', itemName: '' }); }}
               className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' && !editingId ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
@@ -83,8 +94,8 @@ export default function ItemDetailsPage() {
         <div className="p-5">
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
-              <div className="mb-4">
-                <h5 className="fw-bold text-primary">{editingId ? 'Edit Item' : 'Add New Item'}</h5>
+              <div className="mb">
+                {/* <h5 className="fw-bold text-primary">{editingId ? 'Edit Item' : 'Add New Item'}</h5> */}
               </div>
               <form onSubmit={handleSubmit}>
                 {/* Item Code Field */}
@@ -98,7 +109,7 @@ export default function ItemDetailsPage() {
                       required
                       placeholder="Item Code"
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.itemCode}
                       onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
                     />
@@ -116,7 +127,7 @@ export default function ItemDetailsPage() {
                       required
                       placeholder="Item Name"
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.itemName}
                       onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
                     />
@@ -148,7 +159,7 @@ export default function ItemDetailsPage() {
               <div className="d-flex justify-content-end mb-4">
                 <div className="input-group" style={{ maxWidth: '300px' }}>
                   <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search text-muted"></i>
+                    <i className="bi bi-search "></i>
                   </span>
                   <input
                     type="text"
@@ -173,8 +184,8 @@ export default function ItemDetailsPage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={4} className="text-center py-5">
-                          <div className="spinner-border spinner-border-sm text-primary"></div>
+                        <td colSpan={4}>
+                          <Loader text="Fetching Items..." />
                         </td>
                       </tr>
                     ) : filteredItems.length === 0 ? (
@@ -222,3 +233,4 @@ export default function ItemDetailsPage() {
     </ModuleGuard>
   );
 }
+

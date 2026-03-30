@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchVouchers } from '@/redux/features/voucherSlice';
+import Loader from '@/components/Loader';
+import ReportActions from '@/components/ReportActions';
 
 const VoucherReportPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -58,7 +60,7 @@ const VoucherReportPage = () => {
                 <input
                   type="text"
                   className="form-control ps-5"
-                  placeholder="Search by customer name, voucher no or reference..."
+                  placeholder="Search by customer name, voucher no..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -74,6 +76,9 @@ const VoucherReportPage = () => {
                  </select>
                </div>
             </div>
+          </div>
+          <div className="d-flex justify-content-end mt-3 border-top pt-3">
+            <ReportActions />
           </div>
         </div>
       </div>
@@ -96,38 +101,39 @@ const VoucherReportPage = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-5">
-                      <div className="spinner-border spinner-border-sm text-primary me-2"></div>
-                      <span className="text-muted small">Loading vouchers...</span>
+                    <td colSpan={6}>
+                      <Loader text="Fetching Voucher Report..." />
                     </td>
                   </tr>
-                ) : filteredItems.map((voucher, index) => (
-                  <tr key={voucher.id}>
-                    <td className="px-4 small text-muted font-monospace">{index + 1}</td>
-                    <td>
-                      <div className="fw-bold text-dark small text-uppercase mb-0">{voucher.partyName}</div>
-                      <div className="text-muted x-small">
-                        {voucher.type === 'receipt' ? 
-                          <span className="text-success"><i className="bi bi-arrow-down-left me-1"></i>Receipt</span> : 
-                          <span className="text-danger"><i className="bi bi-arrow-up-right me-1"></i>Payment</span>
-                        }
-                      </div>
-                    </td>
-                    <td className="text-center small fw-bold text-dark font-monospace">{voucher.voucherNo}</td>
-                    <td className="text-center small text-muted">{voucher.date}</td>
-                    <td className="text-center">
-                      <div className="d-flex flex-column align-items-center">
-                        <span className="badge bg-light text-dark border-0 fw-600 px-3 py-1 rounded-pill small mb-1">
-                          {voucher.paymentMode}
-                        </span>
-                        <span className="x-small text-muted">{voucher.chequeNo || voucher.referenceNo || '-'}</span>
-                      </div>
-                    </td>
-                    <td className="text-end fw-bold text-dark px-4 fs-6">
-                      ₹{voucher.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                ))}
+                ) : (
+                  filteredItems.map((voucher, index) => (
+                    <tr key={voucher.id}>
+                      <td className="px-4 small text-muted font-monospace">{index + 1}</td>
+                      <td>
+                        <div className="fw-bold text-dark small text-uppercase mb-0">{voucher.partyName}</div>
+                        <div className="text-muted x-small">
+                          {voucher.type === 'receipt' ? 
+                            <span className="text-success"><i className="bi bi-arrow-down-left me-1"></i>Receipt</span> : 
+                            <span className="text-danger"><i className="bi bi-arrow-up-right me-1"></i>Payment</span>
+                          }
+                        </div>
+                      </td>
+                      <td className="text-center small fw-bold text-dark font-monospace">{voucher.voucherNo}</td>
+                      <td className="text-center small text-muted">{voucher.date}</td>
+                      <td className="text-center">
+                        <div className="d-flex flex-column align-items-center">
+                          <span className="badge bg-light text-dark border-0 fw-600 px-3 py-1 rounded-pill small mb-1">
+                            {voucher.paymentMode}
+                          </span>
+                          <span className="x-small text-muted">{voucher.chequeNo || voucher.referenceNo || '-'}</span>
+                        </div>
+                      </td>
+                      <td className="text-end fw-bold text-dark px-4 fs-6">
+                        ₹{voucher.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  ))
+                )}
                 {!loading && filteredItems.length === 0 && (
                   <tr>
                     <td colSpan={6} className="text-center py-5">

@@ -8,12 +8,13 @@ import { Employee } from '@/types/modules';
 import { setEmployeeFilters, setEmployeePage, deleteEmployee, fetchEmployees } from '@/redux/features/employeeSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 const EmployeesPage = () => {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination } = useSelector((state: RootState) => state.employee) as { 
+  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.employee) as { 
     items: Employee[]; 
     filters: {
       search: string;
@@ -23,7 +24,8 @@ const EmployeesPage = () => {
     pagination: {
       currentPage: number;
       itemsPerPage: number;
-    }
+    };
+    loading: boolean;
   };
 
   React.useEffect(() => {
@@ -166,65 +168,72 @@ const EmployeesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedItems.map((emp, index) => (
-                  <tr key={emp.id}>
-                    <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                    <td>
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="avatar bg-light text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>
-                          {emp.name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="fw-bold text-dark mb-0">{emp.name}</div>
-                          <div className="x-small text-muted fw-bold text-uppercase">{emp.employeeId}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-nowrap text-muted small">
-                      <div className={`fw-bold text-uppercase ${getDeptColor(emp.department)}`}>{emp.department}</div>
-                      <div className="fw-normal">{emp.designation}</div>
-                    </td>
-                    <td className="text-nowrap text-muted small">
-                      <div className="fw-bold text-dark">{emp.email}</div>
-                      <div className="fw-normal">{emp.phone}</div>
-                    </td>
-                    <td className="text-nowrap text-end fw-bold text-dark">
-                      ₹{emp.salary.toLocaleString('en-IN')}
-                    </td>
-                    <td className="text-nowrap text-muted small">
-                      {new Date(emp.joiningDate).toLocaleDateString()}
-                    </td>
-                    <td className="text-center">
-                      <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
-                        {emp.status.toUpperCase().replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="text-center px-4 text-nowrap">
-                      <div className="d-flex justify-content-center gap-2">
-                        {checkActionPermission(user, 'mod_employee', 'edit') && (
-                          <Link href={`/employees/${emp.id}/edit`} className="btn-action-edit" title="Edit">
-                            <i className="bi bi-pencil-fill"></i>
-                          </Link>
-                        )}
-                        {checkActionPermission(user, 'mod_employee', 'delete') && (
-                          <button 
-                            className="btn-action-delete"
-                            onClick={() => { if(confirm('Delete employee record?')) (dispatch as any)(deleteEmployee(emp.id)) }}
-                            title="Delete"
-                          >
-                            <i className="bi bi-x-lg"></i>
-                          </button>
-                        )}
-                      </div>
+                {loading ? (
+                  <tr>
+                    <td colSpan={8}>
+                      <Loader text="Fetching Workforce Data..." />
                     </td>
                   </tr>
-                ))}
-                {paginatedItems.length === 0 && (
+                ) : paginatedItems.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="text-center py-5 text-muted">
                       No employees found matching your filters.
                     </td>
                   </tr>
+                ) : (
+                  paginatedItems.map((emp, index) => (
+                    <tr key={emp.id}>
+                      <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                      <td>
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="avatar bg-light text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>
+                            {emp.name.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="fw-bold text-dark mb-0">{emp.name}</div>
+                            <div className="x-small text-muted fw-bold text-uppercase">{emp.employeeId}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="text-nowrap text-muted small">
+                        <div className={`fw-bold text-uppercase ${getDeptColor(emp.department)}`}>{emp.department}</div>
+                        <div className="fw-normal">{emp.designation}</div>
+                      </td>
+                      <td className="text-nowrap text-muted small">
+                        <div className="fw-bold text-dark">{emp.email}</div>
+                        <div className="fw-normal">{emp.phone}</div>
+                      </td>
+                      <td className="text-nowrap text-end fw-bold text-dark">
+                        ₹{emp.salary.toLocaleString('en-IN')}
+                      </td>
+                      <td className="text-nowrap text-muted small">
+                        {new Date(emp.joiningDate).toLocaleDateString()}
+                      </td>
+                      <td className="text-center">
+                        <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
+                          {emp.status.toUpperCase().replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="text-center px-4 text-nowrap">
+                        <div className="d-flex justify-content-center gap-2">
+                          {checkActionPermission(user, 'mod_employee', 'edit') && (
+                            <Link href={`/employees/${emp.id}/edit`} className="btn-action-edit" title="Edit">
+                              <i className="bi bi-pencil-fill"></i>
+                            </Link>
+                          )}
+                          {checkActionPermission(user, 'mod_employee', 'delete') && (
+                            <button 
+                              className="btn-action-delete"
+                              onClick={() => { if(confirm('Delete employee record?')) (dispatch as any)(deleteEmployee(emp.id)) }}
+                              title="Delete"
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

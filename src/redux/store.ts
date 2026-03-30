@@ -17,6 +17,7 @@ import companyUserReducer from './features/companyUserSlice';
 import companyReducer from './features/companySlice';
 
 import masterReducer from './features/masterSlice';
+import dashboardReducer from './features/dashboardSlice';
 
 export const store = configureStore({
   reducer: {
@@ -37,6 +38,7 @@ export const store = configureStore({
     companyUsers: companyUserReducer,
     companies: companyReducer,
     master: masterReducer,
+    dashboard: dashboardReducer,
   },
 });
 

@@ -182,10 +182,14 @@ const masterSlice = createSlice({
         state.loading = false;
         state.items = action.payload;
       })
+      .addCase(fetchProcesses.pending, (state) => { state.loading = true; })
       .addCase(fetchProcesses.fulfilled, (state, action) => {
+        state.loading = false;
         state.processes = action.payload;
       })
+      .addCase(fetchPriceFixings.pending, (state) => { state.loading = true; })
       .addCase(fetchPriceFixings.fulfilled, (state, action) => {
+        state.loading = false;
         state.priceFixings = action.payload;
       })
       .addCase(createItemThunk.fulfilled, (state, action) => {

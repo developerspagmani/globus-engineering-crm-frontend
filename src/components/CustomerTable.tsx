@@ -36,7 +36,7 @@ const CustomerTable = ({ customers, selectedRegion }: CustomerTableProps) => {
                         <input
                             type="text"
                             className="form-control form-control-sm ps-5 bg-light border-0"
-                            placeholder="Search customers..."
+                            placeholder="Search by Customer Name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />

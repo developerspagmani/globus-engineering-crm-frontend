@@ -36,18 +36,20 @@ export default function NewCompanyPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-4">
-        <nav aria-label="breadcrumb">
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/admin/companies" className="text-decoration-none text-muted">Ecosystem</Link></li>
-            <li className="breadcrumb-item active fw-bold">Provision New Company</li>
-          </ol>
-        </nav>
-        <h2 className="fw-900 text-dark tracking-tight">Tenant Onboarding</h2>
-        <p className="text-muted small">Configure a new workspace identity and resource allocation.</p>
+      <div className="mb-4 d-flex align-items-center">
+        <Link href="/admin/companies" className="back-btn-standard" title="Back to Companies">
+          <i className="bi bi-arrow-left-circle fs-3 "></i>
+        </Link>
+        <div>
+          
+          <h2 className="fw-900 text-dark tracking-tight">Tenant Onboarding</h2>
+          <p className="text-muted small">Configure a new workspace identity and resource allocation.</p>
+        </div>
       </div>
 
       <CompanyForm mode="create" />
     </div>
   );
 }
+
+

@@ -7,12 +7,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { deleteInward, setInwardFilters, setInwardPage, fetchInwards } from '@/redux/features/inwardSlice';
 import { checkActionPermission } from '@/config/permissions';
+import Loader from '@/components/Loader';
 
 export default function InwardListPage() {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination } = useSelector((state: RootState) => state.inward);
+  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.inward);
 
   React.useEffect(() => {
     setMounted(true);
@@ -67,7 +68,7 @@ export default function InwardListPage() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search by inward no, vendor..."
+                  placeholder="Search by Customer Name..."
                   value={filters.search}
                   onChange={(e) => dispatch(setInwardFilters({ search: e.target.value }))}
                 />
@@ -93,52 +94,66 @@ export default function InwardListPage() {
             <div className="table-responsive">
               <table className="table table-hover align-middle mb-0">
                 <thead>
-                  <tr>
-                    <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Customer</th>
-                    <th className="py-3 border-0">Po No</th>
-                    <th className="py-3 border-0">Dc No</th>
-                    <th className="py-3 border-0">Inward Date</th>
-                    <th className="py-3 border-0 text-center px-4">Action</th>
+                  <tr className="bg-light">
+                    <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Customer</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Po No</th>
+                    <th className="py-3 border-0 small fw-bold text-muted">Dc No</th>
+                    <th className="py-3 border-0 small fw-bold text-muted text-center">Inward Date</th>
+                    <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedItems.map((item, index) => (
-                    <tr key={item.id}>
-                      <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                      <td className="text-nowrap fw-bold text-dark">
-                        {item.customerName}
-                        <div className="text-muted x-small fw-normal">{item.address || '-'}</div>
-                      </td>
-                      <td className="text-nowrap text-muted small">{item.poReference || '-'}</td>
-                      <td className="text-nowrap text-muted small"><span className="badge bg-light text-dark border-0 shadow-sm">{item.dcNo || '-'}</span></td>
-                      <td className="text-nowrap text-muted small">{item.date}</td>
-                      <td className="text-center px-4 text-nowrap">
-                        <div className="d-flex justify-content-center gap-2">
-                          {checkActionPermission(user, 'mod_inward', 'edit') && (
-                            <Link href={`/inward/${item.id}/edit`} className="btn-action-edit" title="Edit">
-                              <i className="bi bi-pencil-fill"></i>
-                            </Link>
-                          )}
-                          {checkActionPermission(user, 'mod_inward', 'delete') && (
-                            <button 
-                              className="btn-action-delete"
-                              title="Delete"
-                              onClick={() => { if (confirm('Delete?')) (dispatch as any)(deleteInward(item.id)) }}
-                            >
-                              <i className="bi bi-x-lg"></i>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {paginatedItems.length === 0 && (
+                  {loading ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-5 text-muted">
-                        No inward records found matching your filters.
+                      <td colSpan={6}>
+                        <Loader text="Fetching Inward Records..." />
                       </td>
                     </tr>
+                  ) : (
+                    <>
+                      {paginatedItems.map((item, index) => (
+                        <tr key={item.id}>
+                          <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                          <td className="text-nowrap fw-bold text-dark">
+                            {item.customerName}
+                            <div className="text-muted x-small fw-normal">{item.address || '-'}</div>
+                          </td>
+                          <td className="text-nowrap text-dark fs-6">{item.poReference || '-'}</td>
+                          <td className="text-nowrap text-dark fs-6">
+                            <span className="badge bg-light text-dark border-0 shadow-sm px-3 py-1 fs-6">
+                              {item.dcNo || '-'}
+                            </span>
+                          </td>
+                          <td className="text-nowrap text-muted small">{item.date}</td>
+                          <td className="text-center px-4 text-nowrap">
+                            <div className="d-flex justify-content-center gap-2">
+                              {checkActionPermission(user, 'mod_inward', 'edit') && (
+                                <Link href={`/inward/${item.id}/edit`} className="btn-action-edit" title="Edit">
+                                  <i className="bi bi-pencil-fill"></i>
+                                </Link>
+                              )}
+                              {checkActionPermission(user, 'mod_inward', 'delete') && (
+                                <button 
+                                  className="btn-action-delete"
+                                  title="Delete"
+                                  onClick={() => { if (confirm('Delete?')) (dispatch as any)(deleteInward(item.id)) }}
+                                >
+                                  <i className="bi bi-x-lg"></i>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {paginatedItems.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="text-center py-5 text-muted">
+                            No inward records found matching your filters.
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   )}
                 </tbody>
               </table>

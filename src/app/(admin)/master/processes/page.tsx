@@ -6,6 +6,7 @@ import { RootState } from '@/redux/store';
 import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
+import Loader from '@/components/Loader';
 
 export default function ProcessDetailsPage() {
   const dispatch = useDispatch();
@@ -57,9 +58,19 @@ export default function ProcessDetailsPage() {
     <ModuleGuard moduleId="mod_processes">
       <div className="bg-white min-vh-100">
         {/* Header Section */}
-        <div className="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
-          <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>Process Details</h4>
-          <div className="d-flex gap-2">
+        <div className="px-4 py-3 border-bottom d-flex align-items-center">
+          {view === 'add' && (
+            <button 
+              type="button" 
+              className="btn btn-outline-secondary border-0 p-0 me-3" 
+              onClick={() => setView('list')} 
+              title="Back to List"
+            >
+              <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+            </button>
+          )}
+          <h4 className="mb-0 text-dark" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? 'Edit Process' : 'Add New Process') : 'Process Details'}</h4>
+          <div className="ms-auto d-flex gap-2">
             <button
               onClick={() => { setView('add'); setEditingId(null); setFormData({ processName: '' }); }}
               className={`btn d-flex align-items-center gap-1 text-white px-3 py-2 fw-bold rounded-1 transition-all ${view === 'add' && !editingId ? 'opacity-100 shadow-sm' : 'opacity-80'}`}
@@ -82,9 +93,9 @@ export default function ProcessDetailsPage() {
         <div className="p-5">
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
-              <div className="mb-4">
+              {/* <div className="mb-4">
                 <h5 className="fw-bold text-primary">{editingId ? 'Edit Process' : 'Add New Process'}</h5>
-              </div>
+              </div> */}
               <form onSubmit={handleSubmit}>
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
@@ -96,7 +107,7 @@ export default function ProcessDetailsPage() {
                       required
                       placeholder="Process"
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem'}}
+                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.processName}
                       onChange={(e) => setFormData({ ...formData, processName: e.target.value })}
                     />
@@ -151,8 +162,8 @@ export default function ProcessDetailsPage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={3} className="text-center py-5">
-                          <div className="spinner-border spinner-border-sm text-primary"></div>
+                        <td colSpan={3}>
+                          <Loader text="Fetching Processes..." />
                         </td>
                       </tr>
                     ) : filteredProcesses.length === 0 ? (
@@ -163,7 +174,7 @@ export default function ProcessDetailsPage() {
                       filteredProcesses.map((p, index) => (
                         <tr key={p.id}>
                           <td className="px-4 py-3 text-muted">{index + 1}</td>
-                          <td className="px-4 py-3 fw-bold">{p.processName}</td>
+                          <td className="px-4 py-3">{p.processName}</td>
                           <td className="px-4 py-3 text-end">
                             <div className="d-flex justify-content-end gap-2">
                               <button onClick={() => handleEdit(p)} className="btn-action-edit" title="Edit">

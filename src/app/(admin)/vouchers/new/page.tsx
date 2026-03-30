@@ -6,6 +6,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import { useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
+import Link from 'next/link';
 
 const NewVoucherPageContent = () => {
   const searchParams = useSearchParams();
@@ -32,15 +33,14 @@ const NewVoucherPageContent = () => {
 
   return (
     <div className="content-area animate-fade-in">
-      <div className="mb-4">
-        <Breadcrumb 
-          items={[
-            { label: 'Voucher System', href: '/vouchers' },
-            { label: 'New Voucher', active: true }
-          ]} 
-        />
-        <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Create New Voucher</h3>
-        <p className="text-muted small mb-0">Record a new payment, receipt, or journal entry.</p>
+      <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
+        <Link href="/vouchers" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Voucher List">
+          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+        </Link>
+        <div>
+          <h2 className="fw-bold mb-0 text-dark">Create New Voucher</h2>
+          <p className="text-muted small mb-0">Record a new payment, receipt, or journal entry.</p>
+        </div>
       </div>
 
       <div className="row justify-content-center">
