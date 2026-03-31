@@ -5,20 +5,21 @@ import api from '@/lib/axios';
 // Thunks
 export const fetchOutwards = createAsyncThunk(
   'outward/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (company_id: string | undefined, { rejectWithValue }) => {
     try {
-      const response = await api.get('/outward');
+      const url = company_id ? `/outward?company_id=${company_id}` : '/outward';
+      const response = await api.get(url);
       return response.data.map((item: any) => ({
-        id: item.id,
-        outwardNo: item.outward_no,
-        customerId: item.customer_id,
-        customerName: item.customer_name,
-        invoiceReference: item.invoice_reference,
-        challanNo: item.challan_no,
-        vehicleNo: item.vehicle_no,
-        company_id: item.company_id,
+        id: item.id.toString(),
+        outwardNo: item.outward_no || item.dc_no || '',
+        customerId: item.customer_id?.toString() || '',
+        customerName: item.customer_name || 'N/A',
+        invoiceReference: item.invoice_reference || item.invoice_no || '',
+        challanNo: item.challan_no || '',
+        vehicleNo: item.vehicle_no || '',
+        company_id: item.company_id?.toString() || '',
         date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
-        status: item.status,
+        status: item.status || 'pending',
         items: item.items || [],
         createdAt: item.created_at
       }));
@@ -40,7 +41,8 @@ export const createOutward = createAsyncThunk(
         challan_no: data.challanNo,
         vehicle_no: data.vehicleNo,
         status: data.status,
-        items: data.items
+        items: data.items,
+        company_id: data.company_id
       });
       return response.data;
     } catch (err: any) {
@@ -61,7 +63,8 @@ export const updateOutward = createAsyncThunk(
         challan_no: data.challanNo,
         vehicle_no: data.vehicleNo,
         status: data.status,
-        items: data.items
+        items: data.items,
+        company_id: data.company_id
       });
       return response.data;
     } catch (err: any) {
@@ -136,7 +139,6 @@ const outwardSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(createOutward.fulfilled, (state, action) => {
-        // Refresh items or push new one
         state.items.unshift(action.payload);
       })
       .addCase(deleteOutward.fulfilled, (state, action) => {

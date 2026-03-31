@@ -6,13 +6,12 @@ import { RootState } from '@/redux/store';
 import { useParams } from 'next/navigation';
 import InwardForm from '@/modules/inward/components/InwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
-import Breadcrumb from '@/components/Breadcrumb';
-
 import Link from 'next/link';
 
 export default function EditInwardPage() {
   const params = useParams();
   const id = params.id as string;
+  const [isEdit, setIsEdit] = React.useState(false);
   
   const inward = useSelector((state: RootState) => 
     state.inward.items.find(i => i.id === id)
@@ -32,11 +31,20 @@ export default function EditInwardPage() {
                 <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
               </Link>
               <div>
-                <h2 className="fw-bold mb-0">Edit Inward: {inward.inwardNo}</h2>
-                <p className="text-muted small mb-0">Modify receipt details for {inward.vendorName}.</p>
+                <h2 className="fw-bold mb-0">{isEdit ? 'Edit' : 'View'} Inward: {inward.inwardNo}</h2>
+                <p className="text-muted small mb-0">{isEdit ? `Modify receipt details for ${inward.customerName}.` : `Review receipt details for ${inward.customerName}.`}</p>
               </div>
+              {!isEdit && (
+                <button 
+                  className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
+                  onClick={() => setIsEdit(true)}
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  <span>Edit Entry</span>
+                </button>
+              )}
             </div>
-            <InwardForm mode="edit" initialData={inward} />
+            <InwardForm mode={isEdit ? 'edit' : 'view'} initialData={inward} />
           </>
         )}
       </div>

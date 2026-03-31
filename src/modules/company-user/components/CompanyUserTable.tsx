@@ -3,7 +3,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { deleteUserAsync } from '@/redux/features/companyUserSlice';
+import { deleteUserAsync, resetUserPasswordAsync } from '@/redux/features/companyUserSlice';
 import Link from 'next/link';
 import { checkActionPermission } from '@/config/permissions';
 import Loader from '@/components/Loader';
@@ -12,6 +12,10 @@ const CompanyUserTable: React.FC = () => {
   const dispatch = useDispatch();
   const { user: currentUser, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, loading } = useSelector((state: RootState) => state.companyUsers);
+
+  const [resetModalUser, setResetModalUser] = React.useState<string | null>(null);
+  const [newPassword, setNewPassword] = React.useState('');
+  const [resetting, setResetting] = React.useState(false);
 
   React.useEffect(() => {
     const { fetchUsers } = require('@/redux/features/companyUserSlice');
@@ -40,6 +44,23 @@ const CompanyUserTable: React.FC = () => {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetModalUser || !newPassword) return;
+
+    setResetting(true);
+    try {
+      await (dispatch as any)(resetUserPasswordAsync({ id: resetModalUser, password: newPassword })).unwrap();
+      alert('Password reset successfully.');
+      setResetModalUser(null);
+      setNewPassword('');
+    } catch (err: any) {
+      alert(err || 'Failed to reset password');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'super_admin': return <span className="badge bg-dark bg-gradient text-white rounded-pill px-3 py-1 fw-800 x-small shadow-sm">SUPER ADMIN</span>;
@@ -52,16 +73,17 @@ const CompanyUserTable: React.FC = () => {
   };
 
   return (
-    <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-      <div className="card-body p-0">
-        <div className="table-responsive">
+    <>
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div className="card-body p-0">
+          <div className="table-responsive" style={{ minHeight: '350px', paddingBottom: '100px' }}>
           <table className="table table-hover align-middle mb-0">
             <thead className="bg-light bg-opacity-50">
               <tr>
                 <th className="px-4 py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest">User Details</th>
                 <th className="py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest text-center">Modules</th>
                 <th className="py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest text-center">Role</th>
-                <th className="py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest text-end px-4">Actions</th>
+                <th className="py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest text-center px-4" style={{ width: '120px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -101,19 +123,40 @@ const CompanyUserTable: React.FC = () => {
                     <td className="text-center">
                       {getRoleBadge(user.role)}
                     </td>
-                    <td className="text-end px-4">
-                      <div className="d-flex justify-content-end gap-2">
-                        <Link href={`/users/${user.id}/edit`} className="btn-action-edit" title="Edit">
-                          <i className="bi bi-pencil-fill"></i>
+                    <td className="text-center px-4">
+                      <div className="d-flex justify-content-center align-items-center gap-1">
+                        <Link href={`/users/${user.id}`} className="btn-action-view" title="View Detail">
+                          <i className="bi bi-eye-fill"></i>
                         </Link>
-                        <button 
-                          className="btn-action-delete"
-                          onClick={() => handleDelete(user.id)}
-                          disabled={user.id === currentUser?.id}
-                          title="Delete"
-                        >
-                          <i className="bi bi-x-lg"></i>
-                        </button>
+                        <div className="dropdown">
+                          <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${user.id}`} data-bs-toggle="dropdown" aria-expanded="false" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
+                            <i className="bi bi-three-dots-vertical fs-5"></i>
+                          </button>
+                          <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${user.id}`}>
+                            <li>
+                              <button className="dropdown-item d-flex align-items-center gap-2 py-2 text-dark" onClick={() => setResetModalUser(user.id)}>
+                                <i className="bi bi-key-fill text-warning"></i> <span className="small fw-semibold">Reset Password</span>
+                              </button>
+                            </li>
+                            <li>
+                              <Link href={`/users/${user.id}/edit`} className="dropdown-item d-flex align-items-center gap-2 py-2 text-dark">
+                                <i className="bi bi-pencil-fill text-primary"></i> <span className="small fw-semibold">Edit Permissions</span>
+                              </Link>
+                            </li>
+                            <li>
+                              <hr className="dropdown-divider my-1 border-light" />
+                            </li>
+                            <li>
+                              <button 
+                                className={`dropdown-item d-flex align-items-center gap-2 py-2 ${user.id === currentUser?.id ? 'text-muted' : 'text-danger'}`} 
+                                onClick={() => handleDelete(user.id)}
+                                disabled={user.id === currentUser?.id}
+                              >
+                                <i className="bi bi-trash-fill"></i> <span className="small fw-semibold">Revoke Access</span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -124,6 +167,44 @@ const CompanyUserTable: React.FC = () => {
         </div>
       </div>
     </div>
+
+      {/* Reset Password Modal */}
+      {resetModalUser && (
+        <div className="modal fade show" style={{ display: 'block', position: 'fixed', inset: 0, zIndex: 1055, backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex={-1}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow-lg rounded-4">
+              <div className="modal-header border-bottom-0 pb-0">
+                <h5 className="modal-title fw-bold">Reset Password</h5>
+                <button type="button" className="btn-close" onClick={() => setResetModalUser(null)}></button>
+              </div>
+              <form onSubmit={handleResetPassword}>
+                <div className="modal-body">
+                  <p className="text-muted small">Enter a new secure password for this user. They will be able to log in with this new password immediately.</p>
+                  <div className="mb-3">
+                    <label className="form-label text-muted small fw-bold">New Password</label>
+                    <input 
+                      type="password" 
+                      className="form-control"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer border-top-0 pt-0">
+                  <button type="button" className="btn btn-light rounded-pill px-4" onClick={() => setResetModalUser(null)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary rounded-pill px-4 shadow-accent" disabled={resetting || !newPassword}>
+                    {resetting ? 'Saving...' : 'Save Password'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

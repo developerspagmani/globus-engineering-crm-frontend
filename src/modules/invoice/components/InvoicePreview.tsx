@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { Invoice, Company } from '@/data/mockModules';
+import Link from 'next/link';
 
 interface InvoicePreviewProps {
   invoice: Invoice;
@@ -24,13 +25,21 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   return (
     <div>
       {!hideControls && (
-        <div className="d-flex justify-content-end gap-2 mb-4 no-print">
-          <button className="btn btn-outline-primary" onClick={handlePrint}>
-            <i className="bi bi-printer me-2"></i> Print Invoice
-          </button>
-          <button className="btn btn-primary" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handlePrint}>
-            <i className="bi bi-file-earmark-pdf me-2"></i> Export as PDF
-          </button>
+        <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+          <Link href="/invoices" className="btn btn-outline-secondary border shadow-sm d-flex align-items-center gap-2 px-3 fw-bold">
+            <i className="bi bi-arrow-left"></i> Back to List
+          </Link>
+          <div className="d-flex gap-2">
+            <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-light border shadow-sm d-flex align-items-center gap-2 px-3 fw-bold">
+              <i className="bi bi-pencil-square text-primary"></i> Edit Invoice
+            </Link>
+            <button className="btn btn-outline-primary" onClick={handlePrint}>
+              <i className="bi bi-printer me-2"></i> Print Invoice
+            </button>
+            <button className="btn btn-primary" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handlePrint}>
+              <i className="bi bi-file-earmark-pdf me-2"></i> Export as PDF
+            </button>
+          </div>
         </div>
       )}
 

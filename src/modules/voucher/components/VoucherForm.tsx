@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { createVoucher, updateVoucher } from '@/redux/features/voucherSlice';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
@@ -12,12 +12,14 @@ import StatusModal from '@/components/StatusModal';
 
 interface VoucherFormProps {
   initialData?: Voucher;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get('redirect') || '/vouchers';
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -175,6 +177,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               style={{ borderBottomStyle: 'dotted' as any }}
               value={formData.date}
               onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+              disabled={mode === 'view'}
             />
           </div>
           <div className="col-md-6 d-flex align-items-center gap-3">
@@ -185,6 +188,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               placeholder="Cheque No"
               value={formData.chequeNo}
               onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value }))}
+              disabled={mode === 'view'}
             />
           </div>
           <div className="col-md-12 d-flex align-items-center gap-3">
@@ -229,6 +233,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                       className="form-check-input shadow-none border-secondary-subtle"
                       checked={formData.selectedInvoices.includes(inv.id)}
                       onChange={() => toggleInvoice(inv.id, inv.grandTotal - (inv.paidAmount || 0))}
+                      disabled={mode === 'view'}
                     />
                   </td>
                   <td className="small text-muted">{new Date(inv.date).toLocaleDateString()}</td>
@@ -259,8 +264,14 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         </div>
 
         <div className="d-flex justify-content-center gap-3 mt-5">
-          <button type="submit" className="btn btn-success px-5 rounded-1 fw-bold border-0" style={{ backgroundColor: '#00a65a' }}>ADD</button>
-          <button type="button" className="btn btn-danger px-4 rounded-1 fw-bold border-0" style={{ backgroundColor: '#dd4b39' }} onClick={() => router.push('/vouchers')}>RESET</button>
+          {mode !== 'view' ? (
+            <>
+              <button type="submit" className="btn btn-success px-5 rounded-1 fw-bold border-0" style={{ backgroundColor: '#00a65a' }}>{mode === 'create' ? 'ADD' : 'SAVE'}</button>
+              <button type="button" className="btn btn-danger px-4 rounded-1 fw-bold border-0" style={{ backgroundColor: '#dd4b39' }} onClick={() => router.push(redirectPath)}>CANCEL</button>
+            </>
+          ) : (
+            <button type="button" className="btn btn-secondary px-5 rounded-1 fw-bold border-0" onClick={() => router.push(redirectPath)}>BACK</button>
+          )}
         </div>
       </form>
 
@@ -278,7 +289,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               selectedInvoices: [],
               totalAmount: 0
             });
-            router.push('/payments/pending');
+            router.push(redirectPath);
           }
         }}
         type={modal.type}

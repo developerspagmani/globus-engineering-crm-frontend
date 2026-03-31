@@ -113,21 +113,52 @@ export default function CompaniesPage() {
                       </div>
                     </td>
                     <td className="text-end px-4">
-                      <div className="d-flex justify-content-end gap-2">
+                      <div className="d-flex justify-content-end gap-1">
                         <Link
                           href={`/admin/companies/${company.id}/edit`}
-                          className="btn-action-edit"
-                          title="Edit"
+                          className="btn-action-view"
+                          title="View Profile"
                         >
-                          <i className="bi bi-pencil-fill"></i>
+                          <i className="bi bi-eye-fill"></i>
                         </Link>
-                        <button
-                          onClick={() => handleDeleteTrigger(company.id)}
-                          className="btn-action-delete"
-                          title="Delete"
-                        >
-                          <i className="bi bi-x-lg"></i>
-                        </button>
+                        
+                        <div className="dropdown">
+                          <button 
+                            className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
+                            type="button" 
+                            id={`actions-${company.id}`} 
+                            data-bs-toggle="dropdown" 
+                            aria-expanded="false"
+                            style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+                          >
+                            <i className="bi bi-three-dots-vertical fs-5"></i>
+                          </button>
+                          <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${company.id}`}>
+                            <li>
+                              <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button">
+                                <i className="bi bi-printer text-primary"></i>
+                                <span className="small fw-semibold">Quick Print</span>
+                              </button>
+                            </li>
+                            <li>
+                              <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button">
+                                <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                <span className="small fw-semibold">Export PDF</span>
+                              </button>
+                            </li>
+                            <li><hr className="dropdown-divider opacity-50" /></li>
+                            <li>
+                              <button 
+                                className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
+                                type="button"
+                                onClick={() => handleDeleteTrigger(company.id)}
+                              >
+                                <i className="bi bi-trash3"></i>
+                                <span className="small fw-semibold">Decommission</span>
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </td>
                   </tr>

@@ -4,6 +4,8 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { setFilters } from '@/redux/features/customerSlice';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const CustomerFilter: React.FC = () => {
   const dispatch = useDispatch();
@@ -14,18 +16,77 @@ const CustomerFilter: React.FC = () => {
     dispatch(setFilters({ [name]: value }));
   };
 
+  const handleCopyTable = () => {
+    const table = document.querySelector('table');
+    if (!table) return;
+
+    let text = "";
+    const rows = table.querySelectorAll('tr');
+    rows.forEach(row => {
+      const cols = Array.from(row.querySelectorAll('th, td'));
+      // Exclude the last column (Action)
+      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
+      text += rowData + "\n";
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Table data copied to clipboard!");
+    });
+  };
+
+  const handleExportExcel = () => {
+    const rows = document.querySelectorAll('table tr');
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    rows.forEach(row => {
+      const cols = Array.from(row.querySelectorAll('th, td'));
+      // Exclude the last column (Action)
+      const rowData = cols.slice(0, -1)
+        .map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`)
+        .join(",");
+      csvContent += rowData + "\r\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `customers_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const table = document.querySelector('table');
+    if (!table) return;
+    const allHeaders = Array.from(table.querySelectorAll('thead th')).map(h => (h as HTMLElement).innerText.trim());
+    const actionIndex = allHeaders.map(h => h.toLowerCase()).indexOf('action');
+    const headers = actionIndex !== -1 ? allHeaders.filter((_, idx) => idx !== actionIndex) : allHeaders;
+    const data = Array.from(table.querySelectorAll('tbody tr')).map(row => {
+      let cells = Array.from(row.querySelectorAll('td'));
+      if (actionIndex !== -1) cells = cells.filter((_, idx) => idx !== actionIndex);
+      return cells.map(td => (td as HTMLElement).innerText.trim());
+    });
+    doc.setFontSize(16); doc.text("Customer List Report", 14, 15);
+    doc.setFontSize(10); doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+    autoTable(doc, { head: [headers], body: data, startY: 30, theme: 'grid', styles: { fontSize: 8 } });
+    doc.save(`customers_report_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="card border-0 shadow-sm mb-4">
-      <div className="card-body">
-        <div className="row g-3">
-          <div className="col-md-6 col-lg-8">
+      <div className="card-body py-2">
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          {/* Search Bar */}
+          <div className="flex-grow-1" style={{ minWidth: '250px' }}>
             <div className="input-group">
-              <span className="input-group-text bg-white border-end-0">
+              <span className="input-group-text bg-white border-end-0 py-2">
                 <i className="bi bi-search text-muted"></i>
               </span>
               <input
                 type="text"
-                className="form-control border-start-0"
+                className="form-control border-start-0 py-2"
                 placeholder="Search by Customer Name..."
                 name="search"
                 value={filters.search}
@@ -33,9 +94,11 @@ const CustomerFilter: React.FC = () => {
               />
             </div>
           </div>
-          <div className="col-md-3 col-lg-2">
+
+          {/* Status Dropdown */}
+          <div style={{ width: '150px' }}>
             <select
-              className="form-select"
+              className="form-select py-2"
               name="status"
               value={filters.status}
               onChange={handleChange}
@@ -46,9 +109,11 @@ const CustomerFilter: React.FC = () => {
               <option value="inactive">Inactive</option>
             </select>
           </div>
-          <div className="col-md-3 col-lg-2">
+
+          {/* Industry Dropdown */}
+          <div style={{ width: '160px' }}>
             <select
-              className="form-select"
+              className="form-select py-2"
               name="industry"
               value={filters.industry}
               onChange={handleChange}
@@ -59,6 +124,19 @@ const CustomerFilter: React.FC = () => {
               <option value="Construction">Construction</option>
               <option value="Machinery">Machinery</option>
             </select>
+          </div>
+
+          {/* Export Buttons */}
+          <div className="d-flex gap-2 ms-auto">
+              <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
+              <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
+            </button>
+            <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
+              <i className="bi bi-files"></i> COPY
+            </button>
+            {/* <button onClick={handleExportPDF} className="btn shadow-sm btn-warning text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth rounded-pill" style={{ backgroundColor: '#ff9800', height: '42px', fontSize: '0.85rem' }}>
+              <i className="bi bi-file-earmark-pdf"></i> PDF
+            </button> */}
           </div>
         </div>
       </div>

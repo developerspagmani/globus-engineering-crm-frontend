@@ -1,18 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan } from '@/redux/features/challanSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 const ChallanPage = () => {
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.challan);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   React.useEffect(() => {
     (dispatch as any)(fetchChallans());
@@ -57,6 +61,86 @@ const ChallanPage = () => {
     }
   };
 
+  const handleCopyTable = () => {
+    const table = document.querySelector('table');
+    if (!table) return;
+    let text = "";
+    const rows = table.querySelectorAll('tr');
+    rows.forEach(row => {
+      const cols = Array.from(row.querySelectorAll('th, td'));
+      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
+      text += rowData + "\n";
+    });
+    navigator.clipboard.writeText(text).then(() => alert("Table data copied to clipboard!"));
+  };
+
+  const handleExportExcel = () => {
+    const rows = document.querySelectorAll('table tr');
+    let csvContent = "data:text/csv;charset=utf-8,";
+    rows.forEach(row => {
+      const cols = Array.from(row.querySelectorAll('th, td'));
+      const rowData = cols.slice(0, -1).map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`).join(",");
+      csvContent += rowData + "\r\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `challans_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrintChallanRecord = (challan: any) => {
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (!printWindow) return;
+    printWindow.document.write('<html><head><title>Challan Summary</title>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Challan Summary Record</p></div>');
+    printWindow.document.write('<div class="grid">');
+    printWindow.document.write(`<div><div class="label">Challan No</div><div class="value">${challan.challanNo}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${new Date(challan.date).toLocaleDateString()}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Party / Client</div><div class="value">${challan.partyName}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Challan Type</div><div class="value">${challan.type.toUpperCase()}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Items Count</div><div class="value">${challan.items.length}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Current Status</div><div class="value">${challan.status.toUpperCase()}</div></div>`);
+    printWindow.document.write('</div>');
+    printWindow.document.write('<div style="margin-top: 50px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px;">System Generated Challan Record on ' + new Date().toLocaleString() + '</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const handleExportPDFChallanRecord = (challan: any) => {
+    const doc = new jsPDF();
+    doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
+    doc.setFontSize(10); doc.text("CHALLAN SUMMARY RECORD", 14, 32);
+    doc.setTextColor(33, 33, 33); doc.setFontSize(12); doc.text("MOVEMENT DETAILS", 14, 55);
+    autoTable(doc, {
+      startY: 60,
+      body: [
+        ['Challan Number', challan.challanNo], ['Date', new Date(challan.date).toLocaleDateString()],
+        ['Party Name', challan.partyName], ['Type', challan.type.toUpperCase()],
+        ['Items Count', challan.items.length], ['Status', challan.status.toUpperCase()]
+      ],
+      theme: 'grid', styles: { cellPadding: 8, fontSize: 10 },
+      columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } },
+    });
+    doc.save(`challan_${challan.challanNo}.pdf`);
+  };
+
+  const handleDeleteParams = (id: string) => {
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = () => {
+    if (deleteModal.id) {
+      (dispatch as any)(deleteChallan(deleteModal.id));
+    }
+  };
+
   return (
     <div className="content-area animate-fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -77,19 +161,17 @@ const ChallanPage = () => {
         )}
       </div>
 
-      {/* Filters Row */}
       <div className="card shadow-sm border-0 mb-4 overflow-hidden">
         <div className="card-body p-3">
-          <div className="row g-3 align-items-center">
-            {/* Search */}
-            <div className="col-md-5">
+          <div className="d-flex flex-wrap align-items-center gap-2">
+            <div className="flex-grow-1" style={{ minWidth: '300px' }}>
               <div className="input-group">
-                <span className="input-group-text bg-white border-end-0 text-muted ps-3">
+                <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
                   <i className="bi bi-search"></i>
                 </span>
                 <input
                   type="text"
-                  className="form-control border-start-0 ps-0 shadow-none"
+                  className="form-control border-start-0 ps-0 py-2"
                   placeholder="Search by challan or party..."
                   value={filters.search}
                   onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
@@ -97,10 +179,9 @@ const ChallanPage = () => {
               </div>
             </div>
             
-            {/* Type Dropdown */}
-            <div className="col-md-3">
+            <div style={{ width: '180px' }}>
               <select
-                className="form-select shadow-none"
+                className="form-select py-2"
                 value={filters.type}
                 onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
               >
@@ -110,23 +191,14 @@ const ChallanPage = () => {
                 <option value="job_work">Job Work</option>
               </select>
             </div>
-            
-            {/* Status Tabs */}
-            <div className="col-md-4">
-              <div className="btn-group w-100 p-1 bg-light rounded-2 border">
-                <button
-                  className={`btn btn-sm rounded-1 flex-grow-1 ${filters.status === 'all' ? 'bg-white shadow-sm fw-bold' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setChallanFilters({ status: 'all' }))}
-                >All</button>
-                <button
-                  className={`btn btn-sm rounded-1 flex-grow-1 ${filters.status === 'dispatched' ? 'bg-white shadow-sm fw-bold text-primary' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setChallanFilters({ status: 'dispatched' }))}
-                >Dispatched</button>
-                <button
-                  className={`btn btn-sm rounded-1 flex-grow-1 ${filters.status === 'draft' ? 'bg-white shadow-sm fw-bold text-muted' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setChallanFilters({ status: 'draft' }))}
-                >Draft</button>
-              </div>
+
+            <div className="ms-auto d-flex gap-2 align-items-center">
+              <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
+                <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
+              </button>
+              <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
+                <i className="bi bi-files"></i> COPY
+              </button>
             </div>
           </div>
         </div>
@@ -178,24 +250,54 @@ const ChallanPage = () => {
                           </span>
                         </td>
                         <td className="text-center px-4 text-nowrap">
-                          <div className="d-flex justify-content-center gap-2">
+                          <div className="d-flex justify-content-center gap-1">
                             {checkActionPermission(user, 'mod_challan', 'edit') && (
-                              <Link href={`/challan/${challan.id}/edit`} className="btn-action-edit" title="Edit">
-                                <i className="bi bi-pencil-fill"></i>
+                              <Link href={`/challan/${challan.id}/edit`} className="btn-action-view" title="View Profile">
+                                <i className="bi bi-eye-fill"></i>
                               </Link>
                             )}
-                            <button className="btn-action-edit" title="Print" style={{ backgroundColor: '#f8f9fa', color: '#212529' }}>
-                              <i className="bi bi-printer"></i>
-                            </button>
-                            {checkActionPermission(user, 'mod_challan', 'delete') && (
-                              <button
-                                className="btn-action-delete"
-                                title="Delete"
-                                onClick={() => { if (confirm('Delete this challan?')) (dispatch as any)(deleteChallan(challan.id)) }}
+                            
+                            <div className="dropdown">
+                              <button 
+                                className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
+                                type="button" 
+                                id={`actions-${challan.id}`} 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false"
+                                style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                               >
-                                <i className="bi bi-x-lg"></i>
+                                <i className="bi bi-three-dots-vertical fs-5"></i>
                               </button>
-                            )}
+                              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${challan.id}`}>
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintChallanRecord(challan)}>
+                                    <i className="bi bi-printer text-primary"></i>
+                                    <span className="small fw-semibold">Quick Print</span>
+                                  </button>
+                                </li>
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFChallanRecord(challan)}>
+                                    <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                    <span className="small fw-semibold">Export PDF</span>
+                                  </button>
+                                </li>
+                                {checkActionPermission(user, 'mod_challan', 'delete') && (
+                                  <>
+                                    <li><hr className="dropdown-divider opacity-50" /></li>
+                                    <li>
+                                      <button 
+                                        className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
+                                        type="button"
+                                        onClick={() => handleDeleteParams(challan.id)}
+                                      >
+                                        <i className="bi bi-trash3"></i>
+                                        <span className="small fw-semibold">Remove Record</span>
+                                      </button>
+                                    </li>
+                                  </>
+                                )}
+                              </ul>
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -244,6 +346,28 @@ const ChallanPage = () => {
         </div>
       </div>
 
+      <ConfirmationModal 
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+        title="Delete Challan Record"
+        message="Are you sure you want to remove this challan? This action may affect linked stock levels and movement history. This cannot be undone."
+      />
+
+      <style jsx>{`
+        .table-responsive {
+          min-height: 400px;
+          padding-bottom: 80px;
+        }
+        @media print {
+          :global(body *) { visibility: hidden; }
+          .table-responsive, .table-responsive * { visibility: visible; }
+          .table-responsive { position: absolute; left: 0; top: 0; width: 100%; }
+          .table th:last-child, .table td:last-child { display: none !important; }
+          .table { border: 1px solid #dee2e6 !important; width: 100% !important; }
+          :global(.sidebar), :global(.header), :global(.breadcrumb), .card-header, .pagination, .border-bottom { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };

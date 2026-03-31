@@ -10,7 +10,7 @@ import { OutwardEntry } from '@/types/modules';
 
 interface OutwardFormProps {
   initialData?: OutwardEntry;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
@@ -114,13 +114,13 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                    <div className="row mb-3 align-items-center">
                       <label className="col-sm-3 text-muted fw-bold">Outward No</label>
                       <div className="col-sm-9">
-                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold" name="outwardNo" value={formData.outwardNo} onChange={handleChange} required />
+                          <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold" name="outwardNo" value={formData.outwardNo} onChange={handleChange} required disabled={mode === 'view'} />
                       </div>
                    </div>
                    <div className="row mb-3 align-items-center">
                       <label className="col-sm-3 text-muted fw-bold">Customer</label>
                       <div className="col-sm-9">
-                         <select className="form-select border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required>
+                          <select className="form-select border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required disabled={mode === 'view'}>
                             <option value="">Select Customer</option>
                             {customers.map(c => (
                                <option key={c.id} value={c.id}>{c.company || c.name}</option>
@@ -131,7 +131,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                    <div className="row mb-3 align-items-center">
                       <label className="col-sm-3 text-muted fw-bold">Dispatch Challan</label>
                       <div className="col-sm-9">
-                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="challanNo" value={formData.challanNo} onChange={handleChange} required />
+                          <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="challanNo" value={formData.challanNo} onChange={handleChange} required disabled={mode === 'view'} />
                       </div>
                    </div>
                 </div>
@@ -140,19 +140,19 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                    <div className="row mb-3 align-items-center">
                       <label className="col-sm-3 text-muted fw-bold">Dispatch Date</label>
                       <div className="col-sm-9">
-                         <input type="date" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="date" value={formData.date} onChange={handleChange} required />
+                          <input type="date" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
                       </div>
                    </div>
                    <div className="row mb-3 align-items-center">
                       <label className="col-sm-3 text-muted fw-bold">Invoice Ref</label>
                       <div className="col-sm-9">
-                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="invoiceReference" value={formData.invoiceReference} onChange={handleChange} placeholder="Ex. INV-2024-001" required />
+                          <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="invoiceReference" value={formData.invoiceReference} onChange={handleChange} placeholder="Ex. INV-2024-001" required disabled={mode === 'view'} />
                       </div>
                    </div>
                    <div className="row mb-3 align-items-center">
                       <label className="col-sm-3 text-muted fw-bold">Vehicle No</label>
                       <div className="col-sm-9">
-                         <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="Ex. GA-01-AB-1234" required />
+                          <input type="text" className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="Ex. GA-01-AB-1234" required disabled={mode === 'view'} />
                       </div>
                    </div>
                 </div>
@@ -165,15 +165,15 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
               <div className="row g-2 mb-2 align-items-end" key={index}>
                 <div className="col-md-6">
                   <label className="small text-muted">Description</label>
-                  <input type="text" className="form-control" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required />
+                  <input type="text" className="form-control" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required disabled={mode === 'view'} />
                 </div>
                 <div className="col-md-2">
                   <label className="small text-muted">Quantity</label>
-                  <input type="number" className="form-control" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required />
+                  <input type="number" className="form-control" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required disabled={mode === 'view'} />
                 </div>
                 <div className="col-md-2">
                   <label className="small text-muted">Unit</label>
-                  <select className="form-select" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)}>
+                  <select className="form-select" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} disabled={mode === 'view'}>
                     <option value="pcs">Pcs</option>
                     <option value="kg">Kg</option>
                     <option value="mtr">Meters</option>
@@ -181,20 +181,30 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                   </select>
                 </div>
                 <div className="col-md-2">
-                  <button type="button" className="btn btn-outline-danger w-100" onClick={() => removeItem(index)} disabled={formData.items.length === 1}>
-                    <i className="bi bi-trash"></i>
-                  </button>
+                  {mode !== 'view' && (
+                    <button type="button" className="btn btn-outline-danger w-100" onClick={() => removeItem(index)} disabled={formData.items.length === 1}>
+                      <i className="bi bi-trash"></i>
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
-            <button type="button" className="btn btn-sm btn-outline-primary mt-2" onClick={addItem}>
-              <i className="bi bi-plus"></i> Add Goods
-            </button>
+            {mode !== 'view' && (
+              <button type="button" className="btn btn-sm btn-outline-primary mt-2" onClick={addItem}>
+                <i className="bi bi-plus"></i> Add Goods
+              </button>
+            )}
           </div>
 
           <div className="mt-5 pt-4 border-top d-flex gap-2">
-            <button type="submit" className="btn btn-primary px-4">{mode === 'create' ? 'Create' : 'Save'} Outward Entry</button>
-            <button type="button" className="btn btn-outline-secondary px-4" onClick={() => router.push('/outward')}>Cancel</button>
+            {mode !== 'view' ? (
+              <>
+                <button type="submit" className="btn btn-primary px-4">{mode === 'create' ? 'Create' : 'Save'} Outward Entry</button>
+                <button type="button" className="btn btn-outline-secondary px-4" onClick={() => router.push('/outward')}>Cancel</button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-secondary px-4" onClick={() => router.push('/outward')}>Back</button>
+            )}
           </div>
         </form>
       </div>

@@ -36,9 +36,9 @@ export default function NewCompanyPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-4 d-flex align-items-center">
-        <Link href="/admin/companies" className="back-btn-standard" title="Back to Companies">
-          <i className="bi bi-arrow-left-circle fs-3 "></i>
+      <div className="mb-5 d-flex align-items-center pb-2 border-bottom">
+        <Link href="/admin/companies" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Companies">
+          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
         </Link>
         <div>
           

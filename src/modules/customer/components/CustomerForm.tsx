@@ -9,7 +9,7 @@ import { Customer } from '@/types/modules';
 
 interface CustomerFormProps {
   initialData?: Customer;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
@@ -203,6 +203,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         onChange={handleChange}
         placeholder={label}
         required={required}
+        disabled={mode === 'view'}
       />
     </div>
   );
@@ -223,7 +224,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
           <div className="row g-3 mb-4">
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Customer Type</label>
-              <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} required>
+              <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="Customer">Customer</option>
                 <option value="Dealer">Dealer</option>
                 <option value="Distributor">Distributor</option>
@@ -232,7 +233,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
             {renderInput('Customer Name', 'name', 'text', true)}
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status</label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required>
+              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="active">Active</option>
                 <option value="lead">Lead</option>
                 <option value="inactive">Inactive</option>
@@ -288,16 +289,28 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
           </div>
 
           <div className="mt-5 pt-4 border-top d-flex gap-3">
-            <button type="submit" className="btn btn-primary px-4">
-              {mode === 'create' ? 'Register Customer' : 'Update Profile'}
-            </button>
-            <button 
-              type="button" 
-              className="btn btn-outline-secondary px-4"
-              onClick={() => router.push('/customers')}
-            >
-              Cancel
-            </button>
+            {mode !== 'view' ? (
+              <>
+                <button type="submit" className="btn btn-primary px-4 shadow-accent fw-bold rounded-pill">
+                  {mode === 'create' ? 'Register Customer' : 'Update Profile'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-outline-secondary px-4 fw-bold rounded-pill"
+                  onClick={() => router.push('/customers')}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button 
+                type="button" 
+                className="btn btn-secondary px-4 fw-bold rounded-pill"
+                onClick={() => router.push('/customers')}
+              >
+                Back To Hub
+              </button>
+            )}
           </div>
         </form>
       </div>

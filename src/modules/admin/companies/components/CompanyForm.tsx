@@ -9,7 +9,7 @@ import { addCompany, updateCompany } from '@/redux/features/companySlice';
 
 interface CompanyFormProps {
   initialData?: Company;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
@@ -76,6 +76,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ex. Industrial Solutions Ltd"
                 required
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-6">
@@ -87,6 +88,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
                 placeholder="ex-industrial-solutions"
                 required
+                disabled={mode === 'view'}
               />
             </div>
           </div>
@@ -107,6 +109,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
                       name="plan"
                       checked={formData.plan === plan}
                       onChange={() => setFormData({ ...formData, plan: plan as any })}
+                      disabled={mode === 'view'}
                     />
                     <label className={`btn btn-outline-${plan === 'enterprise' ? 'dark' : plan === 'premium' ? 'info' : 'primary'} w-100 py-3 text-uppercase fw-bold small rounded-3`} htmlFor={`plan-${plan}`}>
                       <div className="mb-1">{plan}</div>
@@ -127,8 +130,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
                     className={`p-3 rounded-3 border cursor-pointer transition-all h-100 ${formData.activeModules.includes(module.id)
                       ? 'border-primary bg-primary bg-opacity-10 shadow-sm'
                       : 'bg-light bg-opacity-25'
-                      }`}
-                    onClick={() => handleToggleModule(module.id)}
+                      } ${mode === 'view' ? 'pe-none opacity-75' : ''}`}
+                    onClick={() => mode !== 'view' && handleToggleModule(module.id)}
                   >
                     <div className="form-check p-0 m-0 d-flex align-items-center gap-3">
                       <input
@@ -137,6 +140,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
                         checked={formData.activeModules.includes(module.id)}
                         onChange={() => { }}
                         style={{ width: '1.25rem', height: '1.25rem' }}
+                        disabled={mode === 'view'}
                       />
                       <div>
                         <div className="small fw-bold text-dark">{module.name}</div>
@@ -150,16 +154,28 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
           </div>
 
           <div className="mt-5 pt-4 border-top d-flex gap-3">
-            <button type="submit" className="btn btn-primary px-5 py-2 fw-bold shadow-accent rounded-pill">
-              {mode === 'create' ? 'Provision Tenant' : 'Save Configuration'}
-            </button>
-            <button
-              type="button"
-              className="btn btn-outline-secondary px-5 py-2 fw-bold rounded-pill"
-              onClick={() => router.push('/admin/companies')}
-            >
-              Cancel
-            </button>
+            {mode !== 'view' ? (
+              <>
+                <button type="submit" className="btn btn-primary px-5 py-2 fw-bold shadow-accent rounded-pill">
+                  {mode === 'create' ? 'Provision Tenant' : 'Save Configuration'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary px-5 py-2 fw-bold rounded-pill"
+                  onClick={() => router.push('/admin/companies')}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-secondary px-5 py-2 fw-bold rounded-pill"
+                onClick={() => router.push('/admin/companies')}
+              >
+                Back
+              </button>
+            )}
           </div>
         </form>
       </div>

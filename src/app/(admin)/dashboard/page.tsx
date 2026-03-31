@@ -50,7 +50,7 @@ export default function DashboardPage() {
           </p>
         </div>
         {!isViewingGlobal && checkActionPermission(user, 'mod_invoice', 'create') && (
-          <Link href="/invoices?tab=ADD_INVOICE" className="text-decoration-none">
+          <Link href="/invoices/new" className="text-decoration-none">
             <button className="btn btn-primary d-flex align-items-center shadow-sm rounded-pill px-4 py-2 border-0" style={{ backgroundColor: '#ff4081' }}>
               <i className="bi bi-plus-lg me-2"></i> Create Invoice
             </button>

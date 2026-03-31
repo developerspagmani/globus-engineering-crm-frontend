@@ -11,6 +11,7 @@ const EditEmployeePage = () => {
   const [mounted, setMounted] = useState(false);
   const { id } = useParams();
   const router = useRouter();
+  const [isEdit, setIsEdit] = useState(false);
 
   const { items } = useSelector((state: RootState) => state.employee);
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -47,23 +48,32 @@ const EditEmployeePage = () => {
         <Breadcrumb 
           items={[
             { label: 'Employee Hub', href: '/employees' },
-            { label: 'Edit Profile', active: true }
+            { label: isEdit ? 'Edit Profile' : 'View Profile', active: true }
           ]} 
         />
       </div>
-      <div className="mb-4 d-flex align-items-center">
+      <div className="mb-4 d-flex align-items-center border-bottom pb-3">
         <button type="button" className="btn btn-outline-secondary border-0 p-0 me-3" onClick={() => router.push('/employees')} title="Back to Employees">
            <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
         </button>
         <div>
-          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Edit Employee Profile</h3>
-          <p className="text-muted small mb-0">Update personal or professional details for {employee?.name || 'staff member'}.</p>
+          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">{isEdit ? 'Edit' : 'View'} Employee Profile</h3>
+          <p className="text-muted small mb-0">{isEdit ? 'Update personal or professional details for' : 'Review employee details for'} {employee?.name || 'staff member'}.</p>
         </div>
+        {!isEdit && (
+          <button 
+            className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
+            onClick={() => setIsEdit(true)}
+          >
+            <i className="bi bi-person-gear"></i>
+            <span>Edit Profile</span>
+          </button>
+        )}
       </div>
 
       <div className="row justify-content-center">
         <div className="col-xl-12">
-          <EmployeeForm mode="edit" initialData={employee} />
+          <EmployeeForm mode={isEdit ? 'edit' : 'view'} initialData={employee} />
         </div>
       </div>
     </div>

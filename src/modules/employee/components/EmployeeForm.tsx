@@ -10,7 +10,7 @@ import StatusModal from '@/components/StatusModal';
 
 interface EmployeeFormProps {
   initialData?: Employee;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
@@ -110,6 +110,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                 value={formData.employeeId} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-8">
@@ -121,6 +122,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                 value={formData.name} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
           </div>
@@ -135,6 +137,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                 value={formData.email} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-6">
@@ -146,6 +149,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                 value={formData.phone} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
           </div>
@@ -153,7 +157,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
           <div className="row g-4 mb-4">
             <div className="col-md-4">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Department</label>
-              <select className="form-select" name="department" value={formData.department} onChange={handleInputChange}>
+              <select className="form-select" name="department" value={formData.department} onChange={handleInputChange} disabled={mode === 'view'}>
                 <option value="Engineering">Engineering</option>
                 <option value="Production">Production</option>
                 <option value="Logistics">Logistics</option>
@@ -171,6 +175,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                 value={formData.designation} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-4">
@@ -184,6 +189,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                   value={formData.salary} 
                   onChange={handleInputChange} 
                   required 
+                  disabled={mode === 'view'}
                 />
               </div>
             </div>
@@ -199,11 +205,12 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                 value={formData.joiningDate} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-6">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Employement Status</label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleInputChange}>
+              <select className="form-select" name="status" value={formData.status} onChange={handleInputChange} disabled={mode === 'view'}>
                 <option value="active">Active</option>
                 <option value="on_leave">On Leave</option>
                 <option value="terminated">Terminated</option>
@@ -213,11 +220,13 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
 
           <div className="text-end pt-4 border-top">
             <button type="button" className="btn btn-link text-muted me-3 fw-700 text-decoration-none" onClick={() => router.push('/employees')}>
-              Cancel
+              {mode === 'view' ? 'Back' : 'Cancel'}
             </button>
-            <button type="submit" className="btn btn-primary px-5">
-              {mode === 'create' ? 'Register Employee' : 'Save Changes'}
-            </button>
+            {mode !== 'view' && (
+              <button type="submit" className="btn btn-primary px-5">
+                {mode === 'create' ? 'Register Employee' : 'Save Changes'}
+              </button>
+            )}
           </div>
         </form>
       </div>

@@ -12,6 +12,7 @@ export default function EditLeadPage() {
   const [mounted, setMounted] = useState(false);
   const { id } = useParams();
   const router = useRouter();
+  const [isEdit, setIsEdit] = useState(false);
 
   const { items } = useSelector((state: RootState) => state.leads);
   const lead = items.find(item => item.id === id);
@@ -35,7 +36,7 @@ export default function EditLeadPage() {
 
   return (
     <div className="content-area animate-fade-in">
-      <div className="mb-4 d-flex align-items-center">
+      <div className="mb-4 d-flex align-items-center border-bottom pb-3">
         <Link href="/leads" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Leads">
           <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
         </Link>
@@ -43,17 +44,26 @@ export default function EditLeadPage() {
           <Breadcrumb 
             items={[
               { label: 'Lead Management', href: '/leads' },
-              { label: 'Edit Prospect', active: true }
+              { label: isEdit ? 'Edit Prospect' : 'View Prospect', active: true }
             ]} 
           />
-          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Edit: {lead.company}</h3>
-          <p className="text-muted small mb-0">Update contact logs or status for this prospect.</p>
+          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">{isEdit ? 'Edit' : 'View'}: {lead.company}</h3>
+          <p className="text-muted small mb-0">{isEdit ? 'Update contact logs or status for this prospect.' : 'Review contact logs or status for this prospect.'}</p>
         </div>
+        {!isEdit && (
+          <button 
+            className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
+            onClick={() => setIsEdit(true)}
+          >
+            <i className="bi bi-pencil-square"></i>
+            <span>Edit Prospect</span>
+          </button>
+        )}
       </div>
 
       <div className="row justify-content-center">
         <div className="col-xl-12">
-          <LeadForm mode="edit" initialData={lead} />
+          <LeadForm mode={isEdit ? 'edit' : 'view'} initialData={lead} />
         </div>
       </div>
     </div>

@@ -28,23 +28,23 @@ const ReportActions = () => {
     if (!printWindow) return;
 
     // Build print document with basic styling
-    printWindow.document.write('<html><head><title>Print Records</title>');
+    printWindow.document.write('<html><head><title>Print Report Records</title>');
     printWindow.document.write('<style>');
-    printWindow.document.write('table {width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px;}');
-    printWindow.document.write('th, td {border: 1px solid #ddd; padding: 8px; text-align: left;}');
-    printWindow.document.write('th {background-color: #f8f9fa; color: #333; text-transform: uppercase; font-weight: bold;}');
-    printWindow.document.write('.text-uppercase {text-transform: uppercase;}');
-    printWindow.document.write('h2 {font-family: Arial, sans-serif; margin-bottom: 20px;}');
+    printWindow.document.write('body { font-family: sans-serif; padding: 20px; }');
+    printWindow.document.write('table {width:100%; border-collapse: collapse; font-size: 11px;}');
+    printWindow.document.write('th, td {border: 1px solid #ddd; padding: 8px; text-align: left; text-transform: uppercase;}');
+    printWindow.document.write('th {background-color: #f8f9fa; color: #333; font-weight: bold;}');
+    printWindow.document.write('h2 { color: #2563eb; margin-bottom: 20px; }');
     printWindow.document.write('</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div style="text-align: center;">');
-    printWindow.document.write('<h2>Globus Engineering - Report Export</h2>');
+    printWindow.document.write('<h2>Globus Engineering - Official Report Export</h2>');
+    printWindow.document.write('<p style="font-size: 10px; color: #666;">Generated on ' + new Date().toLocaleString() + '</p>');
     printWindow.document.write('</div>');
     printWindow.document.write(printTable.outerHTML);
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     
-    // Slight delay to ensure contents are loaded before printing
     setTimeout(() => {
         printWindow.print();
     }, 500);
@@ -64,7 +64,6 @@ const ReportActions = () => {
     rows.forEach(row => {
       let cols = Array.from(row.querySelectorAll('th, td'));
       
-      // Exclude action column if present
       if (actionIndex !== -1) {
           cols = cols.filter((_, idx) => idx !== actionIndex);
       }
@@ -85,14 +84,12 @@ const ReportActions = () => {
     const rows = table.querySelectorAll('tr');
     let csvContent = "data:text/csv;charset=utf-8,";
     
-    // Find Action column index to exclude it
     const headerNames = Array.from(table.querySelectorAll('thead th')).map(h => (h as HTMLElement).innerText.toLowerCase());
     const actionIndex = headerNames.indexOf('action');
 
     rows.forEach(row => {
       let cols = Array.from(row.querySelectorAll('th, td'));
       
-      // Exclude action column if present
       if (actionIndex !== -1) {
           cols = cols.filter((_, idx) => idx !== actionIndex);
       }
@@ -121,7 +118,6 @@ const ReportActions = () => {
     const allHeaders = Array.from(table.querySelectorAll('thead th')).map(h => (h as HTMLElement).innerText.trim());
     const actionIndex = allHeaders.map(h => h.toLowerCase()).indexOf('action');
 
-    // Filter out Action column if present
     const headers = actionIndex !== -1 ? allHeaders.filter((_, idx) => idx !== actionIndex) : allHeaders;
     
     const data = Array.from(table.querySelectorAll('tbody tr')).map(row => {
@@ -132,52 +128,46 @@ const ReportActions = () => {
       return cells.map(td => (td as HTMLElement).innerText.trim());
     });
 
-    doc.setFontSize(16);
-    doc.text("Globus Engineering - Generated Report", 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+    doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
+    doc.setFontSize(10); doc.text("OFFICIAL REPORT EXPORT STATEMENTS", 14, 32);
 
     autoTable(doc, {
       head: [headers],
       body: data,
-      startY: 30,
+      startY: 50,
       theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246] }, // #3B82F6 (Blue)
-      styles: { fontSize: 8 }
+      headStyles: { fillColor: [59, 130, 246] },
+      styles: { fontSize: 8, cellPadding: 3 }
     });
 
     doc.save(`report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   return (
-    <div className="d-flex gap-1 flex-wrap hide-print">
-      <button 
+    <div className="d-flex gap-2">
+      {/* <button 
         onClick={handlePrint} 
-        className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" 
-        style={{ backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}
+        className="btn btn-primary fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth shadow-sm" 
+        style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}
       >
-        <i className="bi bi-printer fw-bold"></i> PRINT
+        <i className="bi bi-printer"></i> PRINT
+      </button> */}
+                    <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
+
+        <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
       </button>
-      <button 
-        onClick={handleExportExcel} 
-        className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" 
-        style={{ backgroundColor: '#da3e00', borderColor: '#da3e00' }}
-      >
-        <i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL
+                  <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
+
+        <i className="bi bi-files"></i> COPY
       </button>
-      <button 
-        onClick={handleCopyTable} 
-        className="btn btn-success btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm"
-      >
-        <i className="bi bi-files fw-bold"></i> COPY
-      </button>
-      <button 
+      {/* <button 
         onClick={handleExportPDF} 
-        className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" 
-        style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}
+        className="btn btn-warning text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth shadow-sm" 
+        style={{ backgroundColor: '#ff9800', height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}
       >
-        <i className="bi bi-file-earmark-pdf fw-bold"></i> PDF
-      </button>
+        <i className="bi bi-file-earmark-pdf"></i> PDF
+      </button> */}
     </div>
   );
 };

@@ -72,6 +72,18 @@ export const deleteUserAsync = createAsyncThunk(
   }
 );
 
+export const resetUserPasswordAsync = createAsyncThunk(
+  'companyUsers/resetPassword',
+  async ({ id, password }: { id: string, password: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/users/${id}/reset-password`, { password });
+      return response.data.user;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to reset password');
+    }
+  }
+);
+
 interface UserFilters {
   search: string;
   role: string | 'all';

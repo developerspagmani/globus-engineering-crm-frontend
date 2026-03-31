@@ -6,12 +6,12 @@ import { RootState } from '@/redux/store';
 import { useParams } from 'next/navigation';
 import OutwardForm from '@/modules/outward/components/OutwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
-import Breadcrumb from '@/components/Breadcrumb';
 import Link from 'next/link';
 
 export default function EditOutwardPage() {
   const params = useParams();
   const id = params.id as string;
+  const [isEdit, setIsEdit] = React.useState(false);
   
   const outward = useSelector((state: RootState) => 
     state.outward.items.find(o => o.id === id)
@@ -31,11 +31,20 @@ export default function EditOutwardPage() {
                 <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
               </Link>
               <div>
-                <h2 className="fw-bold mb-0">Edit Outward: {outward.outwardNo}</h2>
-                <p className="text-muted small mb-0">Modify dispatch details for {outward.customerName}.</p>
+                <h2 className="fw-bold mb-0">{isEdit ? 'Edit' : 'View'} Outward: {outward.outwardNo}</h2>
+                <p className="text-muted small mb-0">{isEdit ? `Modify dispatch details for ${outward.customerName}.` : `Review dispatch details for ${outward.customerName}.`}</p>
               </div>
+              {!isEdit && (
+                <button 
+                  className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
+                  onClick={() => setIsEdit(true)}
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  <span>Edit Entry</span>
+                </button>
+              )}
             </div>
-            <OutwardForm mode="edit" initialData={outward} />
+            <OutwardForm mode={isEdit ? 'edit' : 'view'} initialData={outward} />
           </>
         )}
       </div>

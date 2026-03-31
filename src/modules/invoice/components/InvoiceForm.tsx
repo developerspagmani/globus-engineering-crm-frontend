@@ -55,10 +55,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       subTotal: 0,
       taxTotal: 0,
       discount: 0,
+      otherCharges: 0,
+      taxRate: 12,
       grandTotal: 0,
       paidAmount: 0,
       notes: '',
    });
+
+   const [selectionMode, setSelectionMode] = useState<'CUSTOMER' | 'GSTN'>('CUSTOMER');
 
    const [gstLoading, setGstLoading] = useState(false);
    const [gstError, setGstError] = useState<string | null>(null);
@@ -77,7 +81,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          (dispatch as any)(fetchPriceFixings(company.id));
          (dispatch as any)(fetchCustomers(company.id));
 
-         // Fetch real-time next sequential numbers from database ONLY in create mode
          if (mode === 'create') {
             import('@/redux/features/invoiceSlice').then(async ({ fetchNextNumbers }) => {
                try {
@@ -97,22 +100,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
    }, [dispatch, company?.id]);
 
-   // Separate effect for company ID initialization
    useEffect(() => {
       if (company?.id && !formData.company_id) {
          setFormData((prev: any) => ({ ...prev, company_id: company.id }));
       }
    }, [company?.id, formData.company_id]);
 
-   // Helper to find fixed price with robust matching
    const findPrice = (compId: string, custId: string, itemName: string, procName: string) => {
       if (!custId || !itemName) return 0;
 
-      // Find price fixing matching customer, item, and process
       const pf = priceFixings.find(pf => {
          const matchCust = String(pf.customerId) === String(custId);
          const matchItem = String(pf.itemName).toLowerCase() === String(itemName).toLowerCase();
-         // Only match process if one is selected/expected
          const matchProc = !procName || String(pf.processName).toLowerCase() === String(procName).toLowerCase();
 
          return matchCust && matchItem && (procName ? matchProc : true);
@@ -121,7 +120,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       return pf ? pf.price : 0;
    };
 
-   // Sync pre-fetched sequential numbers from Redux to Form
    useEffect(() => {
       if (mode === 'create' && !formData.invoiceNumber && settings.nextInvoice) {
          setFormData((prev: any) => ({
@@ -134,15 +132,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    useEffect(() => {
       if (initialData) {
-         console.log('--- INVOICE EDIT: LOADED INITIAL DATA ---', initialData);
          const mappedData = {
             ...initialData,
             customerId: String(initialData.customerId || ''),
             invoiceNumber: initialData.invoiceNumber || (initialData as any).invoice_no,
             date: initialData.date || (initialData as any).invoice_date,
-            billType: (initialData.billType || (initialData as any).bill_type || initialData.type || 'with_process').toLowerCase().includes('without') || 
-                      (initialData.billType || (initialData as any).bill_type || initialData.type) === 'WOP' ? 'Without Process' : 
-                      (initialData.billType || (initialData as any).bill_type || initialData.type || '').toLowerCase() === 'both' ? 'Both' : 'With Process',
+            billType: (initialData.billType || (initialData as any).bill_type || initialData.type || 'with_process').toLowerCase().includes('without') ||
+               (initialData.billType || (initialData as any).bill_type || initialData.type) === 'WOP' ? 'Without Process' :
+               (initialData.billType || (initialData as any).bill_type || initialData.type || '').toLowerCase() === 'both' ? 'Both' : 'With Process',
             poNo: (initialData as any).po_no || initialData.poNo || '',
             po_no: (initialData as any).po_no || initialData.poNo || '',
             dcNo: (initialData as any).dc_no || initialData.dcNo || '',
@@ -151,11 +148,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             po_date: initialData.poDate || (initialData as any).po_date || '',
             dcDate: initialData.dcDate || (initialData as any).dc_date || '',
             dc_date: initialData.dcDate || (initialData as any).dc_date || '',
-            gstin: (initialData as any).gstin || '',
             state: (initialData as any).state || '',
             challanNumber: (initialData as any).invoice_no || initialData.invoiceNumber || (initialData as any).challanNumber,
+            otherCharges: initialData.otherCharges || (initialData as any).other_charges || 0,
+            taxRate: initialData.taxRate || (initialData as any).tax_rate || 12,
+            discount: initialData.discount || 0,
          };
-         console.log('--- INVOICE EDIT: MAPPED FORM DATA ---', mappedData);
          setFormData(mappedData);
       } else if (inwardId && priceFixings.length > 0) {
          const inward = inwards.find(i => i.id === inwardId);
@@ -204,11 +202,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
    }, [initialData, inwardId, inwards, priceFixings, customers]);
 
-   // Recalculate totals
    useEffect(() => {
       const subTotal = formData.items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
-      const taxTotal = formData.items.reduce((sum: number, item: any) => sum + (item.tax || 0), 0);
-      const grandTotal = subTotal + taxTotal - (formData.discount || 0);
+      const taxableAmount = subTotal - (formData.discount || 0) + (formData.otherCharges || 0);
+      const taxTotal = (taxableAmount * (formData.taxRate || 0)) / 100;
+      const grandTotal = taxableAmount + taxTotal;
 
       if (formData.subTotal !== subTotal || formData.taxTotal !== taxTotal || formData.grandTotal !== grandTotal) {
          setFormData((prev: any) => ({
@@ -218,7 +216,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             grandTotal
          }));
       }
-   }, [formData.items, formData.discount, formData.subTotal, formData.taxTotal, formData.grandTotal]);
+   }, [formData.items, formData.discount, formData.otherCharges, formData.taxRate, formData.subTotal, formData.taxTotal, formData.grandTotal]);
 
    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
@@ -243,8 +241,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
    };
 
-   const handleGstLookup = async () => {
-      if (!formData.gstin || formData.gstin.length !== 15) {
+   const handleGstLookup = async (gstinOverride?: string) => {
+      const gstinToVerify = gstinOverride || formData.gstin;
+      if (!gstinToVerify || gstinToVerify.length !== 15) {
          setGstError('Enter 15-digit GSTIN');
          return;
       }
@@ -252,7 +251,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       try {
          setGstLoading(true);
          setGstError(null);
-         const response = await fetch(`/api/gst-lookup?gstin=${formData.gstin.toUpperCase()}`);
+         const response = await fetch(`/api/gst-lookup?gstin=${gstinToVerify.toUpperCase()}`);
          if (!response.ok) throw new Error('Lookup failed');
          const result = await response.json();
          const data = result.data;
@@ -262,7 +261,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                ...prev,
                customerName: data.legal_name || prev.customerName,
                address: data.address || prev.address,
-               state: data.state_jurisdiction || prev.state
+               state: data.state_jurisdiction || prev.state,
+               gstin: gstinToVerify.toUpperCase()
             }));
          }
       } catch (err) {
@@ -284,7 +284,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
       if (field === 'quantity' || field === 'unitPrice' || field === 'description' || field === 'process') {
          item.amount = (item.quantity || 0) * (item.unitPrice || 0);
-         item.tax = item.amount * 0.12;
+         item.tax = item.amount * (formData.taxRate / 100);
          item.total = item.amount + item.tax;
       }
 
@@ -295,23 +295,154 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    return (
       <div className="container-fluid py-4 bg-white min-vh-100">
          <form onSubmit={e => e.preventDefault()}>
-            <div className="d-flex align-items-center mb-5 pb-2">
-               <button 
-                  type="button" 
-                  className="btn btn-outline-secondary border-0 p-0 me-3" 
-                  onClick={() => {
-                     const tab = searchParams.get('tab');
-                     if (tab) {
-                        router.push(`/invoices?tab=${tab}`);
-                     } else {
-                        router.back();
-                     }
-                  }} 
-                  title="Back to Invoices"
-               >
-                  <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
-               </button>
-               <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
+            <div className="d-flex align-items-center justify-content-between mb-5 pb-2 gap-4 flex-wrap">
+               <div className="d-flex align-items-center">
+                  <button
+                     type="button"
+                     className="btn btn-outline-secondary border-0 p-0 me-3"
+                     onClick={() => {
+                        const tab = searchParams.get('tab');
+                        if (tab) {
+                           router.push(`/invoices?tab=${tab}`);
+                        } else {
+                           router.back();
+                        }
+                     }}
+                     title="Back to Invoices"
+                  >
+                     <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+                  </button>
+                  <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
+               </div>
+
+               {mode === 'create' && (
+  <div className="d-flex align-items-center gap-3 ms-auto">
+    {/* Toggle pill */}
+    <div
+      className="d-flex align-items-center p-1"
+      style={{
+        background: 'var(--bs-secondary-bg, #f1f3f5)',
+        borderRadius: '999px',
+        border: '0.5px solid rgba(0,0,0,0.08)',
+        gap: '2px',
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setSelectionMode('CUSTOMER')}
+        style={{
+          padding: '6px 18px',
+          borderRadius: '999px',
+          border: 'none',
+          fontSize: '13px',
+          fontWeight: 500,
+          cursor: 'pointer',
+          background: selectionMode === 'CUSTOMER' ? '#f97316' : 'transparent',
+          color: selectionMode === 'CUSTOMER' ? '#fff' : '#6c757d',
+          transition: 'all 0.15s',
+        }}
+      >
+        By Customer
+      </button>
+      <button
+        type="button"
+        onClick={() => setSelectionMode('GSTN')}
+        style={{
+          padding: '6px 18px',
+          borderRadius: '999px',
+          border: 'none',
+          fontSize: '13px',
+          fontWeight: 500,
+          cursor: 'pointer',
+          background: selectionMode === 'GSTN' ? '#f97316' : 'transparent',
+          color: selectionMode === 'GSTN' ? '#fff' : '#6c757d',
+          transition: 'all 0.15s',
+        }}
+      >
+        By GSTIN
+      </button>
+    </div>
+
+    {/* Divider */}
+    <div style={{ width: '1px', height: '28px', background: 'rgba(0,0,0,0.12)' }} />
+
+    {selectionMode === 'CUSTOMER' ? (
+  <div
+    className="d-flex align-items-center gap-2"
+    style={{
+      border: '1px solid #dee2e6',
+      borderRadius: '8px',
+      padding: '6px 12px',
+      minWidth: '200px',
+      maxWidth: '240px',
+      background: '#fff',
+      cursor: 'pointer',
+    }}
+  >
+    <i className="bi bi-person" style={{ fontSize: '15px', color: '#6c757d', flexShrink: 0 }}></i>
+    <select
+      name="customerId"
+      value={formData.customerId}
+      onChange={handleInputChange}
+      style={{
+        border: 'none',
+        outline: 'none',
+        fontSize: '13px',
+        fontWeight: 500,
+        color: formData.customerId ? '#212529' : '#6c757d',
+        flex: 1,
+        appearance: 'none',
+        WebkitAppearance: 'none',
+        cursor: 'pointer',
+        background: 'transparent',
+        width: '100%',
+        padding: 0,
+      }}
+    >
+      <option value="">Choose Customer</option>
+      {customers.map(c => (
+        <option key={c.id} value={c.id}>{c.name}</option>
+      ))}
+    </select>
+    <i className="bi bi-chevron-down" style={{ fontSize: '11px', color: '#6c757d', flexShrink: 0 }}></i>
+  </div>
+) : (
+      <div
+        className="d-flex align-items-center gap-2"
+        style={{
+          borderBottom: '1.5px solid #dee2e6',
+          paddingBottom: '4px',
+          minWidth: '220px',
+        }}
+      >
+        <i className="bi bi-hash" style={{ fontSize: '16px', color: '#6c757d' }}></i>
+        <input
+          type="text"
+          className="bg-transparent fw-bold text-uppercase"
+          placeholder="Enter GSTIN"
+          name="gstin"
+          value={formData.gstin}
+          onChange={(e) => {
+            const val = e.target.value.toUpperCase();
+            handleInputChange(e);
+            if (val.length === 15) {
+              setTimeout(() => handleGstLookup(val), 100);
+            }
+          }}
+          maxLength={15}
+          style={{
+            border: 'none',
+            outline: 'none',
+            fontSize: '14px',
+            flex: 1,
+            letterSpacing: '0.04em',
+          }}
+        />
+        {gstLoading && <span className="spinner-border spinner-border-sm text-primary"></span>}
+      </div>
+    )}
+  </div>
+)}
             </div>
 
             {mode === 'create' && (
@@ -336,147 +467,127 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                <div className="row g-4">
                   <div className="col-md-6">
                      <div className="row mb-3 align-items-center">
-            <label className="col-sm-3 text-muted">Customer</label>
-                        <div className="col-sm-9">
-                           {mode === 'edit' ? (
-                              <div className="form-control border-0 border-bottom rounded-0 fw-bold px-0 shadow-none" style={{ backgroundColor: '#f4f4f4', cursor: 'not-allowed' }}>
-                                 {formData.customerName || 'N/A'}
-                              </div>
-                           ) : (
-                              <select
-                                 className="form-select border-0 border-bottom rounded-0 bg-transparent shadow-none fw-bold"
-                                 name="customerId"
-                                 value={formData.customerId}
-                                 onChange={handleInputChange}
-                              >
-                                 <option value="">{customersLoading ? 'Loading Customers...' : 'Choose Customer...'}</option>
-                                 {customers.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                 ))}
-                              </select>
-                           )}
-                        </div>
-                     </div>
-                     <div className="row mb-3 align-items-center">
-            <label className="col-sm-3 text-muted">Address</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Customer</label>
                         <div className="col-sm-9">
                            <input
                               type="text"
-                              className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none"
+                              className="form-control border-0 border-bottom rounded-0 fw-bold px-2 bg-light bg-opacity-50 text-uppercase"
+                              style={{ height: '42px', cursor: 'not-allowed' }}
+                              value={formData.customerName || ''}
+                              readOnly
+                              placeholder="Select customer to view name..."
+                           />
+                        </div>
+                     </div>
+                     <div className="row mb-3 align-items-center">
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Address</label>
+                        <div className="col-sm-9">
+                           <input
+                              type="text"
+                              className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none px-2"
                               name="address"
                               value={formData.address}
                               onChange={handleInputChange}
                               placeholder="Physical address..."
+                              style={{ height: '42px' }}
                            />
                         </div>
                      </div>
-      </div>
+                  </div>
 
-      <div className="col-md-6">
-         <div className="row mb-3 align-items-center">
-            <label className="col-sm-3 text-muted">GSTIN</label>
-            <div className="col-sm-9">
-               <div className="d-flex align-items-center gap-2">
-                  <input
-                     type="text"
-                     className="form-control border-0 border-bottom rounded-0 bg-transparent text-uppercase fw-bold shadow-none"
-                     name="gstin"
-                     placeholder="Enter GSTIN"
-                     value={formData.gstin}
-                     onChange={handleInputChange}
-                     maxLength={15}
-                  />
-                  <button
-                     className="btn btn-dark px-2 fw-bold rounded-1 shadow-sm d-flex align-items-center flex-shrink-0"
-                     type="button"
-                     onClick={handleGstLookup}
-                     disabled={gstLoading}
-                     style={{ height: '28px', fontSize: '0.62rem', whiteSpace: 'nowrap' }}
-                  >
-                     {gstLoading ? <span className="spinner-border spinner-border-sm me-1"></span> : <i className="bi bi-shield-check me-1"></i>}
-                     {gstLoading ? 'WAIT' : 'VERIFY'}
-                  </button>
+                  <div className="col-md-6">
+                     <div className="row mb-3 align-items-center">
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">GSTIN</label>
+                        <div className="col-sm-9">
+                           <input
+                              type="text"
+                              className="form-control border-0 border-bottom rounded-0 bg-light bg-opacity-50 text-uppercase fw-bold shadow-none px-2"
+                              name="gstin"
+                              placeholder="GSTIN"
+                              value={formData.gstin}
+                              readOnly
+                              style={{ height: '42px', cursor: 'not-allowed' }}
+                           />
+                           {gstError && <div className="text-danger small mt-1">{gstError}</div>}
+                        </div>
+                     </div>
+                     <div className="row mb-3 align-items-center">
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">State</label>
+                        <div className="col-sm-9">
+                           <input
+                              type="text"
+                              className="form-control border-0 border-bottom rounded-0 bg-transparent fw-bold shadow-none px-2"
+                              name="state"
+                              placeholder="e.g. KARNATAKA"
+                              value={formData.state}
+                              onChange={handleInputChange}
+                              style={{ height: '42px' }}
+                           />
+                        </div>
+                     </div>
+                  </div>
                </div>
-               {gstError && <div className="text-danger small mt-1">{gstError}</div>}
             </div>
-         </div>
-         <div className="row mb-3 align-items-center">
-            <label className="col-sm-3 text-muted">State</label>
-            <div className="col-sm-9">
-               <input
-                  type="text"
-                  className="form-control border-0 border-bottom rounded-0 bg-transparent fw-bold shadow-none"
-                  name="state"
-                  placeholder="e.g. KARNATAKA"
-                  value={formData.state}
-                  onChange={handleInputChange}
-               />
-            </div>
-         </div>
-      </div>
-   </div>
-</div>
 
             <div className="mb-5">
                <div className="row g-4">
                   <div className="col-md-6">
                      {(formData.billType === 'Without Process' || formData.billType === 'WOP' || String(formData.billType).toLowerCase().includes('without')) ? (
                         <div className="row mb-3 align-items-center">
-                           <label className="col-sm-3 text-muted">Delivery Challan</label>
+                           <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Delivery Challan</label>
                            <div className="col-sm-9">
-                                     <input type="text" className="form-control border-0 border-bottom rounded-0 px-2" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed' } : {}} />
+                              <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
                            </div>
                         </div>
                      ) : (
                         <>
                            <div className="row mb-3 align-items-center">
-                              <label className="col-sm-3 text-muted">Invoice No</label>
+                              <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Invoice No</label>
                               <div className="col-sm-9">
-                                  <input type="text" className="form-control border-0 border-bottom rounded-0 px-2" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed' } : {}} />
+                                 <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 fw-bold shadow-none" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
                               </div>
                            </div>
                            {formData.billType === 'Both' && (
                               <div className="row mb-3 align-items-center">
-                                 <label className="col-sm-3 text-muted">Delivery Challan</label>
+                                 <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Delivery Challan</label>
                                  <div className="col-sm-9">
-                                    <input type="text" className="form-control border-0 border-bottom rounded-0 px-2" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed' } : {}} />
+                                    <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
                                  </div>
                               </div>
                            )}
                         </>
                      )}
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted">Po No</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po No</label>
                         <div className="col-sm-9">
-                           <input type="text" className="form-control border-0 border-bottom rounded-0" name="poNo" value={formData.poNo} onChange={handleInputChange} placeholder="Po No" />
+                           <input type="text" className="form-control border-0 border-bottom rounded-0 shadow-none px-2" name="poNo" value={formData.poNo} onChange={handleInputChange} placeholder="Po No" style={{ height: '42px' }} />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted">Dc No</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc No</label>
                         <div className="col-sm-9">
-                           <input type="text" className="form-control border-0 border-bottom rounded-0" name="dcNo" value={formData.dcNo} onChange={handleInputChange} placeholder="Dc No" />
+                           <input type="text" className="form-control border-0 border-bottom rounded-0 shadow-none px-2" name="dcNo" value={formData.dcNo} onChange={handleInputChange} placeholder="Dc No" style={{ height: '42px' }} />
                         </div>
                      </div>
                   </div>
 
                   <div className="col-md-6">
-                     
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted">Date</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Date</label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control border-0 border-bottom rounded-0" name="date" value={formData.date} onChange={handleInputChange} />
+                           <input type="date" className="form-control border-0 border-bottom rounded-0 shadow-none px-2 bg-transparent" name="date" value={formData.date} onChange={handleInputChange} style={{ height: '42px' }} />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted">Po Date</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po Date</label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control border-0 border-bottom rounded-0" name="poDate" value={formData.poDate} onChange={handleInputChange} />
+                           <input type="date" className="form-control border-0 border-bottom rounded-0 shadow-none px-2 bg-transparent" name="poDate" value={formData.poDate} onChange={handleInputChange} style={{ height: '42px' }} />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted">Dc Date</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc Date</label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control border-0 border-bottom rounded-0" name="dcDate" value={formData.dcDate} onChange={handleInputChange} />
+                           <input type="date" className="form-control border-0 border-bottom rounded-0 shadow-none px-2 bg-transparent" name="dcDate" value={formData.dcDate} onChange={handleInputChange} style={{ height: '42px' }} />
                         </div>
                      </div>
                   </div>
@@ -556,32 +667,81 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             {formData.billType !== 'Without Process' && (
                <div className="row justify-content-end mt-4">
                   <div className="col-md-4">
-                     <div className="d-flex justify-content-between mb-3 text-muted">
-                        <span>Sub Total</span>
-                        <span className="text-dark">₹ {formData.subTotal?.toFixed(2)}</span>
-                     </div>
-                     <div className="d-flex justify-content-between mb-3 text-muted align-items-center">
-                        <span>(-) Discount</span>
-                        <div style={{ width: '100px' }}>
-                           <input type="number" className="form-control form-control-sm border-0 border-bottom text-end rounded-0" value={formData.discount} onChange={e => setFormData((prev: any) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))} />
+                     <div className="row mb-3 align-items-center">
+                        <div className="col-7 text-muted fw-bold small text-uppercase">Sub Total</div>
+                        <div className="col-5 d-flex justify-content-end align-items-center gap-2 text-dark fw-bold">
+                           <span className="small">₹</span>
+                           <span className="text-end" style={{ width: '80px' }}>{formData.subTotal?.toFixed(2)}</span>
                         </div>
                      </div>
-                     <div className="d-flex justify-content-between mb-3 text-muted">
-                        <span>(+) Other Charges</span>
-                        <span className="text-dark">00.00</span>
+                     <div className="row mb-3 align-items-center">
+                        <div className="col-7 text-muted fw-bold small text-uppercase">(-) Discount</div>
+                        <div className="col-5">
+                           <div className="d-flex align-items-center justify-content-end gap-2 border-bottom border-secondary border-opacity-25 pb-1">
+                              <span className="text-dark fw-bold small">₹</span>
+                              <input
+                                 type="number"
+                                 step="0.01"
+                                 className="border-0 bg-transparent text-end fw-bold text-dark p-0 no-spinner"
+                                 style={{ width: '80px', outline: 'none' }}
+                                 value={formData.discount || '0.00'}
+                                 onChange={e => setFormData((prev: any) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                              />
+                           </div>
+                        </div>
                      </div>
-                     <div className="d-flex justify-content-between mb-4 text-muted align-items-center">
-                        <div className="d-flex align-items-center">
+                     <div className="row mb-3 align-items-center">
+                        <div className="col-7 text-muted fw-bold small text-uppercase">(+) Other Charges</div>
+                        <div className="col-5">
+                           <div className="d-flex align-items-center justify-content-end gap-2 border-bottom border-secondary border-opacity-25 pb-1">
+                              <span className="text-dark fw-bold small">₹</span>
+                              <input
+                                 type="number"
+                                 step="0.01"
+                                 className="border-0 bg-transparent text-end fw-bold text-dark p-0 no-spinner"
+                                 style={{ width: '80px', outline: 'none' }}
+                                 value={formData.otherCharges || '0.00'}
+                                 onChange={e => setFormData((prev: any) => ({ ...prev, otherCharges: parseFloat(e.target.value) || 0 }))}
+                              />
+                           </div>
+                        </div>
+                     </div>
+                     <div className="row mb-4 align-items-center pb-2 border-bottom">
+                        <div className="col-7 text-muted fw-bold small text-uppercase d-flex align-items-center gap-2">
                            <span>(+) IGST</span>
-                           <input type="number" className="form-control form-control-sm mx-2 border-0 border-bottom rounded-0 text-center" style={{ width: '40px' }} value={12} readOnly />
-                           <span>%</span>
+                           <div className="d-flex align-items-center bg-light px-2 py-1 rounded shadow-inner" style={{ width: '70px' }}>
+                              <input
+                                 type="number"
+                                 className="border-0 bg-transparent text-center fw-bold no-spinner p-0"
+                                 style={{ width: '30px', fontSize: '0.75rem', outline: 'none' }}
+                                 value={formData.taxRate ?? 12}
+                                 onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseInt(e.target.value) || 0 }))}
+                              />
+                              <span className="small text-muted fw-bold">%</span>
+                           </div>
                         </div>
-                        <span className="text-dark">₹ {formData.taxTotal?.toFixed(2)}</span>
+                        <div className="col-5 d-flex justify-content-end align-items-center gap-2 text-dark fw-bold">
+                           <span className="small">₹</span>
+                           <span className="text-end" style={{ width: '80px' }}>{formData.taxTotal?.toFixed(2)}</span>
+                        </div>
                      </div>
-                     <div className="border-top pt-3 d-flex justify-content-between align-items-center">
-                        <h5 className="fw-bold mb-0">Grand Total</h5>
-                        <h4 className="fw-bold mb-0">₹ {formData.grandTotal?.toFixed(2)}</h4>
+                     <div className="pt-3 row align-items-center">
+                        <div className="col-7 h5 fw-black text-uppercase mb-0">Grand Total</div>
+                        <div className="col-5 d-flex justify-content-end align-items-center gap-2 h4 fw-black text-danger mb-0">
+                           <span className="h5 mb-0">₹</span>
+                           <span className="text-end" style={{ width: '80px' }}>{formData.grandTotal?.toFixed(2)}</span>
+                        </div>
                      </div>
+                     <style jsx>{`
+                        .no-spinner::-webkit-inner-spin-button, 
+                        .no-spinner::-webkit-outer-spin-button { 
+                           -webkit-appearance: none; 
+                           margin: 0; 
+                        }
+                        .no-spinner {
+                           -moz-appearance: textfield;
+                        }
+                     `}</style>
                   </div>
                </div>
             )}

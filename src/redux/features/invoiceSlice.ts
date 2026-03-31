@@ -28,7 +28,9 @@ const mapInvoice = (inv: any): Invoice => ({
   notes: inv.notes || '',
   gstin: inv.gstin || '',
   state: inv.state || '',
-  paidAmount: parseFloat(inv.paid_amount || '0')
+  paidAmount: parseFloat(inv.paid_amount || '0'),
+  otherCharges: parseFloat(inv.other_charges || '0'),
+  taxRate: parseFloat(inv.tax_rate || '12')
 });
 
 // Thunks
@@ -71,7 +73,9 @@ export const createInvoice = createAsyncThunk(
         dcDate: (data as any).dcDate,
         address: (data as any).address,
         gstin: (data as any).gstin,
-        state: (data as any).state
+        state: (data as any).state,
+        other_charges: data.otherCharges,
+        tax_rate: data.taxRate
       });
       return mapInvoice(response.data);
     } catch (err: any) {
@@ -104,7 +108,9 @@ export const updateInvoice = createAsyncThunk(
         dcDate: data.dcDate,
         address: (data as any).address,
         gstin: (data as any).gstin,
-        state: (data as any).state
+        state: (data as any).state,
+        other_charges: data.otherCharges,
+        tax_rate: data.taxRate
       });
       return mapInvoice(response.data);
     } catch (err: any) {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import CompanyForm from '@/modules/admin/companies/components/CompanyForm';
 import Link from 'next/link';
@@ -10,6 +10,9 @@ import Link from 'next/link';
 export default function EditCompanyPage() {
   const [mounted, setMounted] = React.useState(false);
   const { id } = useParams();
+  const router = useRouter();
+  const [isEdit, setIsEdit] = React.useState(false);
+
   const { user } = useSelector((state: RootState) => state.auth);
   const company = useSelector((state: RootState) => 
     state.companies.items.find(c => c.id === id)
@@ -54,23 +57,32 @@ export default function EditCompanyPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-4 d-flex align-items-center">
+      <div className="mb-4 d-flex align-items-center border-bottom pb-3">
         <Link href="/admin/companies" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Companies">
           <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
         </Link>
         <div>
           <nav aria-label="breadcrumb">
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item"><Link href="/admin/companies" className="text-decoration-none text-muted">Ecosystem</Link></li>
-              <li className="breadcrumb-item active fw-bold">Modify Allocation</li>
+            <ol className="breadcrumb mb-1">
+              <li className="breadcrumb-item"><Link href="/admin/companies" className="text-decoration-none text-muted small">Ecosystem</Link></li>
+              <li className="breadcrumb-item active fw-bold small">{isEdit ? 'Modify Allocation' : 'View Allocation'}</li>
             </ol>
           </nav>
-          <h2 className="fw-900 text-dark tracking-tight">Manage: {company.name}</h2>
-          <p className="text-muted small">Update organizational profile and module provisioning for this tenant.</p>
+          <h2 className="fw-900 text-dark tracking-tight mb-0">{isEdit ? 'Manage' : 'View'}: {company.name}</h2>
+          <p className="text-muted small mb-0">{isEdit ? 'Update organizational profile and module provisioning for this tenant.' : 'Review organizational profile and module provisioning for this tenant.'}</p>
         </div>
+        {!isEdit && (
+          <button 
+            className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
+            onClick={() => setIsEdit(true)}
+          >
+            <i className="bi bi-building-gear"></i>
+            <span>Edit Configuration</span>
+          </button>
+        )}
       </div>
 
-      <CompanyForm mode="edit" initialData={company} />
+      <CompanyForm mode={isEdit ? 'edit' : 'view'} initialData={company} />
     </div>
   );
 }

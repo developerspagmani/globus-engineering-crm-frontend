@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { deleteInvoice, setInvoicePage, fetchNextNumbers } from '@/redux/features/invoiceSlice';
+import { deleteInvoice, setInvoicePage, fetchNextNumbers, fetchInvoices } from '@/redux/features/invoiceSlice';
 import { deleteInward, fetchInwards } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -11,407 +11,138 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 const InvoiceTable: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: invoices, filters, pagination, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
   const { items: inwards, loading: inwardLoading } = useSelector((state: RootState) => state.inward);
-  
   const initialTab = searchParams.get('tab') as any || 'INVOICELIST';
   const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST'>(initialTab);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [localFilter, setLocalFilter] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null; type: 'invoice' | 'inward' | null }>({ isOpen: false, id: null, type: null });
 
-  const handleTabChange = (tab: any) => {
-    setActiveTab(tab);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', tab);
-    router.push(`${pathname}?${params.toString()}`);
-  };
+  const handleTabChange = (tab: any) => { setActiveTab(tab); const params = new URLSearchParams(searchParams.toString()); params.set('tab', tab); router.push(`${pathname}?${params.toString()}`); };
 
-  // --- ACTIONS ---
-  const handlePrint = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-
-    // Clone table and remove action column
-    const printTable = table.cloneNode(true) as HTMLTableElement;
-    const headerRow = printTable.querySelector('thead tr');
-    if (headerRow) {
-      const lastTh = headerRow.querySelector('th:last-child');
-      if (lastTh) lastTh.remove();
-    }
-    const bodyRows = printTable.querySelectorAll('tbody tr');
-    bodyRows.forEach(row => {
-      const lastTd = row.querySelector('td:last-child');
-      if (lastTd) lastTd.remove();
-    });
-
+  const handlePrintRecord = (invoice: any) => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
-
-    printWindow.document.write('<html><head><title>Print Records</title>');
-    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: Arial;} th, td {border: 1px solid #ddd; padding: 10px; text-align: left;} th {background-color: #f2f2f2;} .text-uppercase {text-transform: uppercase;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write('<h2 style="text-align: center;">Globus Engineering CRM - Record Export</h2>');
-    printWindow.document.write(printTable.outerHTML);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+    printWindow.document.write('<html><head><title>Invoice</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
+    printWindow.document.write('<div class="header"><h1>Globus Engineering</h1><p>Invoice Record</p></div>');
+    printWindow.document.write('<div class="grid">');
+    printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${invoice.customerName}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Invoice No</div><div class="value">${invoice.invoiceNumber}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${invoice.date}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Total Amount</div><div class="value">INR ${invoice.grandTotal.toLocaleString()}</div></div>`);
+    printWindow.document.write('</div>');
+    printWindow.document.close(); printWindow.print();
   };
 
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      // Exclude the last column (Action)
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Table data copied to clipboard!");
-    });
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      // Exclude the last column (Action)
-      const rowData = cols.slice(0, -1)
-        .map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`)
-        .join(",");
-      csvContent += rowData + "\r\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `invoices_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleExportPDF = () => {
+  const handleExportPDFRecord = (invoice: any) => {
     const doc = new jsPDF();
-    const table = document.querySelector('table');
-    if (!table) return;
-
-    const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(h => (h as HTMLElement).innerText.trim());
-    const data = Array.from(table.querySelectorAll('tbody tr')).map(row => {
-      return Array.from(row.querySelectorAll('td')).slice(0, -1).map(td => (td as HTMLElement).innerText.trim());
-    });
-
-    doc.text("Globus Engineering CRM - Invoice Records", 14, 15);
-    autoTable(doc, {
-      head: [headers],
-      body: data,
-      startY: 20,
-      theme: 'striped',
-      headStyles: { fillColor: [0, 188, 212] }, // Match Cyan
-    });
-
-    doc.save(`invoices_export_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
+    autoTable(doc, { startY: 55, body: [['Customer', invoice.customerName], ['Invoice Number', invoice.invoiceNumber], ['Billing Date', invoice.date], ['Grand Total', `INR ${invoice.grandTotal.toLocaleString()}`]], theme: 'grid', styles: { cellPadding: 8, fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } } });
+    doc.save(`invoice_${invoice.invoiceNumber}.pdf`);
   };
 
+  const handleDeleteParams = (id: string, type: 'invoice' | 'inward') => { setDeleteModal({ isOpen: true, id, type }); };
+  const confirmDelete = () => { if (deleteModal.id && deleteModal.type) { if (deleteModal.type === 'invoice') dispatch(deleteInvoice(deleteModal.id) as any); else dispatch(deleteInward(deleteModal.id) as any); } };
 
-  // Automatically fetch inwards if not already loaded when viewing Add Invoice tab
-  React.useEffect(() => {
-    if (activeCompany?.id) {
-      (dispatch as any)(fetchInwards(activeCompany.id));
-      (dispatch as any)(fetchNextNumbers(activeCompany.id));
-    }
-  }, [dispatch, activeCompany?.id]);
+  React.useEffect(() => { if (activeCompany?.id) { (dispatch as any)(fetchInwards(activeCompany.id)); (dispatch as any)(fetchInvoices(activeCompany.id)); (dispatch as any)(fetchNextNumbers(activeCompany.id)); } }, [dispatch, activeCompany?.id]);
 
-  // Filter invoices for regular invoice list and WOP list
   const filteredInvoices = invoices.filter(item => {
-    // Super Admin Bypass: If no activeCompany is selected and role is super_admin, show all
-    if (user?.role !== 'super_admin' && activeCompany && item.company_id !== activeCompany.id) return false;
-    if (user?.role === 'super_admin' && activeCompany && item.company_id !== activeCompany.id) return false;
-    
-    // Tab specific type filtering (Case-Insensitive)
+    if (user?.role !== 'super_admin' && activeCompany && (item.company_id || (item as any).companyId) !== activeCompany.id) return false;
     const itemType = String(item.type || 'INVOICE').toUpperCase();
-    
     if (activeTab === 'INVOICELIST' && (itemType !== 'INVOICE' && itemType !== 'WITH PROCESS')) return false;
     if (activeTab === 'WOP_LIST' && (itemType !== 'WOP' && itemType !== 'WITHOUT PROCESS')) return false;
     if (activeTab === 'BOTH_LIST' && itemType !== 'BOTH') return false;
-
     const invNo = String(item.invoiceNumber || '').toLowerCase();
     const custName = String(item.customerName || '').toLowerCase();
     const search = String(filters.search || '').toLowerCase();
-    
-    const matchesSearch = invNo.includes(search) || custName.includes(search);
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    return matchesSearch && matchesStatus;
+    return (invNo.includes(search) || custName.includes(search)) && (filters.status === 'all' || item.status === filters.status);
   });
 
-  // Filter inwards for ADD INVOICE tab
-  const filteredInwards = inwards.filter(item => {
-    if (user?.role !== 'super_admin' && activeCompany && item.company_id !== activeCompany.id) return false;
-    if (user?.role === 'super_admin' && activeCompany && item.company_id !== activeCompany.id) return false;
-    // Only show entries that are strictly 'pending'
-    return item.status === 'pending';
-  });
-
+  const filteredInwards = inwards.filter(item => (user?.role === 'super_admin' || !activeCompany || (item.company_id || (item as any).companyId) === activeCompany.id) && item.status === 'pending');
   const displayItems: any[] = activeTab === 'ADD_INVOICE' ? filteredInwards : filteredInvoices;
   const totalPages = Math.ceil(displayItems.length / pagination.itemsPerPage);
-  const paginatedItems = displayItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const paginatedItems = displayItems.slice((pagination.currentPage - 1) * pagination.itemsPerPage, pagination.currentPage * pagination.itemsPerPage);
 
   const renderTabs = () => (
     <div className="d-flex text-uppercase pt-3 mb-0 px-3 bg-white border-bottom">
-      <button 
-        className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'ADD_INVOICE' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
-        style={activeTab === 'ADD_INVOICE' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => handleTabChange('ADD_INVOICE')}
-      >
-        INVOICE SELECTION
-      </button>
-      <button 
-        className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'INVOICELIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
-        style={activeTab === 'INVOICELIST' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => handleTabChange('INVOICELIST')}
-      >
-        WP LIST
-      </button>
-      <button 
-        className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'WOP_LIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
-        style={activeTab === 'WOP_LIST' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => handleTabChange('WOP_LIST')}
-      >
-        WOP LIST
-      </button>
-      <button 
-        className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === 'BOTH_LIST' ? 'border-bottom border-danger text-danger' : 'text-muted'}`}
-        style={activeTab === 'BOTH_LIST' ? { borderBottomWidth: '2px !important' } : {}}
-        onClick={() => handleTabChange('BOTH_LIST')}
-      >
-        BOTH LIST
-      </button>
+      {['ADD_INVOICE', 'INVOICELIST', 'WOP_LIST', 'BOTH_LIST'].map(tab => (
+        <button key={tab} className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === tab ? 'border-bottom border-danger text-danger' : 'text-muted'}`} style={activeTab === tab ? { borderBottom: '2px solid #ff4081' } : {}} onClick={() => handleTabChange(tab)}>
+          {tab === 'ADD_INVOICE' ? 'Invoice Selection' : tab === 'INVOICELIST' ? 'WP List' : tab === 'WOP_LIST' ? 'WOP List' : 'Both List'}
+        </button>
+      ))}
     </div>
-  );
-
-  const renderToolbar = () => (
-    <div className="d-flex justify-content-between px-4 align-items-center py-3 bg-white border-bottom flex-wrap gap-3">
-       <div className="d-flex align-items-center gap-2">
-          {/* Filter/Show removed by request */}
-       </div>
-       <div className="d-flex gap-1 flex-wrap hide-print">
-          <button onClick={handlePrint} className="btn btn-info text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
-          <button onClick={handleExportExcel} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#da3e00', borderColor: '#da3e00' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
-          <button onClick={handleCopyTable} className="btn btn-success btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm"><i className="bi bi-files fw-bold"></i> COPY</button>
-          <button onClick={handleExportPDF} className="btn btn-warning text-white btn-sm fw-bold px-3 py-2 rounded-0 shadow-sm" style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}><i className="bi bi-file-earmark-pdf fw-bold"></i> PDF</button>
-       </div>
-    </div>
-  );
-
-  const renderAddInvoiceTable = () => (
-    <table className="table align-middle mb-0 table-hover bg-white mb-0">
-      <thead className="table-light text-muted small">
-        <tr className="border-bottom">
-          <th className="fw-semibold px-4 py-3">Sno <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Customer <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Po No <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Dc No <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Inward Date <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="text-center fw-semibold pe-4">Action <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-        </tr>
-      </thead>
-      <tbody>
-        {inwardLoading ? (
-          <tr>
-            <td colSpan={6}>
-              <Loader text="Fetching Selection Data..." />
-            </td>
-          </tr>
-        ) : (
-          <>
-            {paginatedItems.map((inward, index) => (
-              <tr key={inward.id} className="border-bottom">
-                <td className="px-4 text-muted">{index + 1}</td>
-                <td>
-                  <div className="fw-bold text-dark small text-uppercase">{inward.customerName || inward.vendorName}</div>
-                  <div className="small text-muted text-uppercase mt-1" style={{ fontSize: '0.75rem' }}>{inward.address || 'COMPANY ADDRESS'}</div>
-                </td>
-                <td className="text-muted small">{inward.poReference || '-'}</td>
-                <td className="text-muted small">{inward.dcNo || inward.challanNo || '-'}</td>
-                <td className="text-muted small">{inward.date}</td>
-                <td className="text-center pe-4">
-                  <div className="d-flex justify-content-center gap-2">
-                    <Link href={`/invoices/new?inwardId=${inward.id}`} className="btn-action-edit" style={{ backgroundColor: '#ff4081 !important' }} title="View/Create Invoice">
-                      <i className="bi bi-eye-fill"></i>
-                    </Link>
-                    {checkActionPermission(user, 'mod_invoice', 'delete') && (
-                      <button 
-                        className="btn-action-delete" 
-                        title="Delete Inward"
-                        onClick={() => { if(window.confirm('Are you sure you want to delete this inward entry?')) dispatch(deleteInward(inward.id) as any) }}
-                      >
-                        <i className="bi bi-x-lg"></i>
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No pending inwards available.</td></tr>}
-          </>
-        )}
-      </tbody>
-    </table>
-  );
-
-  const renderInvoiceTable = () => (
-    <table className="table align-middle mb-0 table-hover bg-white mb-0">
-      <thead className="table-light text-muted small">
-        <tr className="border-bottom">
-          <th className="fw-semibold px-4 py-3">Sno <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Customer <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Invoice No <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Invoice Date <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Grand Total <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="text-center fw-semibold pe-4">Action <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-        </tr>
-      </thead>
-      <tbody>
-        {invoiceLoading ? (
-          <tr>
-            <td colSpan={6}>
-              <Loader text="Fetching Invoice List..." />
-            </td>
-          </tr>
-        ) : (
-          <>
-            {paginatedItems.map((invoice, index) => (
-              <tr key={invoice.id} className="border-bottom">
-                <td className="px-4 text-muted">{index + 1}</td>
-                <td>
-                  <div className="text-dark fw-bold py-2">{invoice.customerName}</div>
-                </td>
-                <td className="text-muted small">{invoice.invoiceNumber}</td>
-                <td className="text-muted small">{invoice.date}</td>
-                <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td className="text-center pe-4">
-                  <div className="d-flex justify-content-center gap-2">
-                    <Link href={`/invoices/${invoice.id}/edit?tab=${activeTab}`} className="btn-action-edit" title="Edit">
-                      <i className="bi bi-pencil-fill"></i>
-                    </Link>
-                    <button className="btn-action-delete" onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}>
-                      <i className="bi bi-x-lg"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No invoices found.</td></tr>}
-          </>
-        )}
-      </tbody>
-    </table>
-  );
-
-  const renderWopTable = () => (
-    <table className="table align-middle mb-0 table-hover bg-white mb-0">
-      <thead className="table-light text-muted small">
-        <tr className="border-bottom">
-          <th className="fw-semibold px-4 py-3">Sno <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Customer <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Dc No <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Dc Date <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="fw-semibold">Grand Total <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-          <th className="text-center fw-semibold pe-4">Action <i className="bi bi-chevron-expand ms-1 opacity-50"></i></th>
-        </tr>
-      </thead>
-      <tbody>
-        {paginatedItems.map((invoice, index) => (
-          <tr key={invoice.id} className="border-bottom">
-            <td className="px-4 text-muted">{index + 1}</td>
-            <td>
-               <div className="text-dark fw-bold py-2">{invoice.customerName}</div>
-            </td>
-            <td className="text-muted small">{invoice.invoiceNumber.replace('INV-', '')}</td>
-            <td className="text-muted small">{invoice.date}</td>
-            <td className="text-muted small">{invoice.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-            <td className="text-center pe-4">
-                <div className="d-flex justify-content-center gap-2">
-                    {checkActionPermission(user, 'mod_invoice', 'edit') && (
-                        <Link href={`/invoices/${invoice.id}/edit?tab=${activeTab}`} className="btn-action-edit" title="Edit">
-                            <i className="bi bi-pencil-fill"></i>
-                        </Link>
-                    )}
-                    {checkActionPermission(user, 'mod_invoice', 'delete') && (
-                        <button 
-                            className="btn-action-delete" 
-                            title="Delete"
-                            onClick={() => { if(confirm('Delete?')) dispatch(deleteInvoice(invoice.id) as any) }}
-                        >
-                            <i className="bi bi-x-lg"></i>
-                        </button>
-                    )}
-                </div>
-            </td>
-          </tr>
-        ))}
-        {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-4 text-muted">No WOP entries found.</td></tr>}
-      </tbody>
-    </table>
   );
 
   return (
-    <div className="card shadow-sm border-0 bg-white overflow-hidden rounded-0">
+    <div className="card shadow-sm border-0 bg-white rounded-4 overflow-hidden">
       {renderTabs()}
-      {renderToolbar()}
-      <div className="table-responsive">
-        {activeTab === 'ADD_INVOICE' && renderAddInvoiceTable()}
-        {activeTab === 'INVOICELIST' && renderInvoiceTable()}
-        {(activeTab === 'WOP_LIST' || activeTab === 'BOTH_LIST') && renderWopTable()}
+      <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
+        <table className="table align-middle mb-0 table-hover bg-white mb-0">
+          <thead className="table-light text-muted small">
+            <tr className="border-bottom">
+              <th className="fw-semibold px-4 py-3">Sno</th>
+              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'Customer' : 'Customer Name'}</th>
+              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'Dc No' : 'Invoice No'}</th>
+              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'}</th>
+              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
+              <th className="text-center fw-semibold pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(activeTab === 'ADD_INVOICE' ? inwardLoading : invoiceLoading) ? <tr><td colSpan={6}><Loader text="Loading..." /></td></tr> : (
+              paginatedItems.map((item, index) => (
+                <tr key={item.id} className="border-bottom text-uppercase">
+                  <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                  <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
+                  <td className="text-muted small">{activeTab === 'ADD_INVOICE' ? (item.dcNo || item.challanNo || '-') : item.invoiceNumber}</td>
+                  <td className="text-muted small">{item.date}</td>
+                  <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>{activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : `₹${item.grandTotal.toLocaleString()}`}</td>
+                  <td className="text-center pe-4">
+                    <div className="d-flex justify-content-center gap-1">
+                      <Link href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}` : `/invoices/${item.id}`} className="btn-action-view"><i className="bi bi-eye-fill"></i></Link>
+                      {activeTab !== 'ADD_INVOICE' && (
+                        <div className="dropdown">
+                          <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px' }}><i className="bi bi-three-dots-vertical fs-5"></i></button>
+                          <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
+                             <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
+                             <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
+                             {checkActionPermission(user, 'mod_invoice', 'delete') && (
+                              <><li><hr className="dropdown-divider opacity-50" /></li><li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={() => handleDeleteParams(item.id, 'invoice')}><i className="bi bi-trash3"></i> Remove Record</button></li></>
+                             )}
+                          </ul>
+                        </div>
+                      )}
+                      {activeTab === 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'delete') && (
+                        <button className="btn btn-sm btn-outline-danger border-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px', borderRadius: '8px' }} onClick={() => handleDeleteParams(item.id, 'inward')}><i className="bi bi-trash3 fs-6"></i></button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+            {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-5 text-muted small">No records found.</td></tr>}
+          </tbody>
+        </table>
       </div>
       {totalPages > 1 && (
-        <div className="p-3 border-top bg-white d-flex justify-content-between align-items-center">
-          <span className="text-muted small">Showing {paginatedItems.length} of {displayItems.length} entries</span>
-          <nav>
-            <ul className="pagination pagination-sm mb-0">
-              {[...Array(totalPages)].map((_, i) => (
-                <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
-                  <button className="page-link" onClick={() => dispatch(setInvoicePage(i + 1))}>{i + 1}</button>
-                </li>
-              ))}
-            </ul>
-          </nav>
+        <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4 small text-muted">
+          <span>Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, displayItems.length)} of {displayItems.length}</span>
+          <nav><ul className="pagination pagination-sm mb-0">
+            <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}><button className="page-link" onClick={() => dispatch(setInvoicePage(pagination.currentPage - 1))}><i className="bi bi-chevron-left"></i></button></li>
+            {[...Array(totalPages)].map((_, i) => (<li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}><button className="page-link" onClick={() => dispatch(setInvoicePage(i + 1))}>{i + 1}</button></li>))}
+            <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}><button className="page-link" onClick={() => dispatch(setInvoicePage(pagination.currentPage + 1))}><i className="bi bi-chevron-right"></i></button></li>
+          </ul></nav>
         </div>
       )}
-      <style jsx>{`
-        .table th { border-bottom: 2px solid #eee !important; font-size: 0.8rem; }
-        .table td { border-bottom: 1px solid #f5f5f5; }
-        .btn:hover { opacity: 0.9; }
-        .border-danger { border-color: #ff4081 !important; color: #ff4081 !important; }
-        .text-danger { color: #ff4081 !important; }
-        
-        @media print {
-          :global(body *) { visibility: hidden; }
-          .table-responsive, .table-responsive * { visibility: visible; }
-          .table-responsive { position: absolute; left: 0; top: 0; width: 100%; }
-          .table th:last-child, .table td:last-child { display: none !important; }
-          .table { border: 1px solid #dee2e6 !important; width: 100% !important; }
-          .hide-print { display: none !important; }
-          :global(.sidebar), :global(.header), :global(.breadcrumb), .card-header, .pagination, .border-bottom { display: none !important; }
-        }
-      `}</style>
+      <ConfirmationModal isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, id: null, type: null })} onConfirm={confirmDelete} title={deleteModal.type === 'invoice' ? "Remove Invoice Record" : "Remove Inward Selection"} message="Are you sure you want to delete this record? This action is permanent and cannot be undone." />
     </div>
   );
 };

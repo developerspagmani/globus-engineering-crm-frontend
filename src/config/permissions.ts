@@ -24,7 +24,7 @@ export const navigationConfig: NavItem[] = [
   { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
   { name: 'Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
   { name: 'Invoice', icon: 'bi-file-earmark-spreadsheet', path: '/invoices', moduleId: 'mod_invoice' },
-  { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
+  // { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
   { name: 'Active Sales Area', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_hub' },
   { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
@@ -44,7 +44,7 @@ export const navigationConfig: NavItem[] = [
       { name: 'Payment Report', icon: 'bi-cash-stack', path: '/reports/payment', moduleId: 'mod_voucher' },
       { name: 'Invoice Report', icon: 'bi-file-earmark-bar-graph', path: '/reports/invoice', moduleId: 'mod_invoice' },
       { name: 'Inward Report', icon: 'bi-box-arrow-in-left', path: '/reports/inward', moduleId: 'mod_inward' },
-      { name: 'Voucher', icon: 'bi-receipt-cutoff', path: '/reports/voucher', moduleId: 'mod_voucher' },
+      // { name: 'Voucher', icon: 'bi-receipt-cutoff', path: '/reports/voucher', moduleId: 'mod_voucher' },
       { name: 'GST Report', icon: 'bi-file-text', path: '/reports/gst', moduleId: 'mod_invoice' },
     ]
   },

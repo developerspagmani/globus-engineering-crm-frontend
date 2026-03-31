@@ -5,17 +5,24 @@ import Link from 'next/link';
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Mock reset
-    setTimeout(() => {
-      setLoading(false);
+    setError('');
+    try {
+      const api = (await import('@/lib/axios')).default;
+      await api.post('/auth/reset-password', { email, password });
       setSubmitted(true);
-    }, 1000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,16 +42,21 @@ export default function ResetPasswordPage() {
               <div className="p-4 p-md-5 bg-white">
                 {/* Header Section */}
                 <div className="text-center mb-5">
-                  <h2 className="fw-900 text-dark tracking-tight mb-2">Reset Access</h2>
-                  <p className="text-muted small px-3">Restore your secure link to the ecosystem</p>
+                  <h2 className="fw-900 text-dark tracking-tight mb-2">Reset Password</h2>
+                  <p className="text-muted small px-3">Update your access key directly</p>
                 </div>
+
+                {error && (
+                  <div className="error-badge mb-4 animate-shake">
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span>{error}</span>
+                  </div>
+                )}
                 
                 {!submitted ? (
                   <form onSubmit={handleSubmit} className="px-md-2">
-                    <p className="small text-muted mb-4 opacity-75">Enter your identity email and we'll transmit a secure restoration link.</p>
-                    
                     <div className="mb-4">
-                      <label className="field-label">Recovery Email</label>
+                      <label className="field-label">Account Email</label>
                       <div className="premium-input-wrapper">
                         <div className="input-icon">
                           <i className="bi bi-envelope-at"></i>
@@ -60,6 +72,24 @@ export default function ResetPasswordPage() {
                       </div>
                     </div>
 
+                    <div className="mb-5">
+                      <label className="field-label">New Password</label>
+                      <div className="premium-input-wrapper">
+                        <div className="input-icon">
+                          <i className="bi bi-key"></i>
+                        </div>
+                        <input
+                          type="password"
+                          className="premium-input"
+                          placeholder="Enter new password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                    </div>
+
                     <button
                       type="submit"
                       className="btn-auth-primary d-flex align-items-center justify-content-center gap-2 mb-3"
@@ -68,19 +98,19 @@ export default function ResetPasswordPage() {
                       {loading ? (
                         <>
                           <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          <span>Transmitting...</span>
+                          <span>Saving...</span>
                         </>
                       ) : (
                         <>
-                          <span>Send Link</span>
-                          <i className="bi bi-send-fill fs-6"></i>
+                          <span>Save Password</span>
+                          <i className="bi bi-check-circle-fill fs-6"></i>
                         </>
                       )}
                     </button>
                     
                     <div className="text-center mt-4">
                       <Link href="/login" className="x-small text-accent fw-800 text-decoration-none text-uppercase tracking-wider">
-                        Return to Origin
+                        Return to Login
                       </Link>
                     </div>
                   </form>
@@ -91,8 +121,8 @@ export default function ResetPasswordPage() {
                         <i className="bi bi-shield-check fs-1"></i>
                       </div>
                     </div>
-                    <h4 className="fw-900 text-dark mb-2">Transmission Sent</h4>
-                    <p className="small text-muted mb-5">We've transmitted a secure recovery link to <strong>{email}</strong>. Please check your terminal.</p>
+                    <h4 className="fw-900 text-dark mb-2">Password Updated</h4>
+                    <p className="small text-muted mb-5">Your password has been successfully updated in the database. You can now use it to log in.</p>
                     <Link href="/login" className="btn btn-outline-primary rounded-pill px-5 fw-800 tracking-wider text-uppercase small">
                       Return to Login
                     </Link>

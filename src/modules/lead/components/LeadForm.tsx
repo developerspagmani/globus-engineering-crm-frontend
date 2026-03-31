@@ -9,7 +9,7 @@ import { addLead, updateLead } from '@/redux/features/leadSlice';
 
 interface LeadFormProps {
   initialData?: Lead;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
@@ -78,6 +78,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
                 onChange={handleChange} 
                 placeholder="Ex. Michael Scott"
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-6">
@@ -90,6 +91,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
                 onChange={handleChange} 
                 placeholder="Ex. Dunder Mifflin"
                 required 
+                disabled={mode === 'view'}
               />
             </div>
           </div>
@@ -104,6 +106,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
                 value={formData.email} 
                 onChange={handleChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-6">
@@ -115,6 +118,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
                 value={formData.phone} 
                 onChange={handleChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
           </div>
@@ -122,7 +126,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           <div className="row g-4 mb-4">
             <div className="col-md-4">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Industry</label>
-              <select className="form-select" name="industry" value={formData.industry} onChange={handleChange}>
+              <select className="form-select" name="industry" value={formData.industry} onChange={handleChange} disabled={mode === 'view'}>
                 <option value="Automotive">Automotive</option>
                 <option value="Electronics">Electronics</option>
                 <option value="Construction">Construction</option>
@@ -131,7 +135,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
             </div>
             <div className="col-md-4">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Lead Source</label>
-              <select className="form-select" name="source" value={formData.source} onChange={handleChange}>
+              <select className="form-select" name="source" value={formData.source} onChange={handleChange} disabled={mode === 'view'}>
                 <option value="Web">Website / Organic</option>
                 <option value="Exhibition">Engineering Exhibition</option>
                 <option value="Referral">Client Referral</option>
@@ -140,7 +144,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
             </div>
             <div className="col-md-4">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Current Status</label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleChange}>
+              <select className="form-select" name="status" value={formData.status} onChange={handleChange} disabled={mode === 'view'}>
                 <option value="new">New Entry</option>
                 <option value="contacted">Attempted Contact</option>
                 <option value="qualified">Qualified Lead</option>
@@ -158,16 +162,19 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
               value={formData.notes} 
               onChange={handleChange}
               placeholder="Record initial interest, machine requirements, or procurement timelines..."
+              disabled={mode === 'view'}
             ></textarea>
           </div>
 
           <div className="text-end pt-4 border-top">
             <button type="button" className="btn btn-link text-muted me-3 fw-700 text-decoration-none" onClick={() => router.push('/leads')}>
-              Dismiss
+              {mode === 'view' ? 'Back' : 'Dismiss'}
             </button>
-            <button type="submit" className="btn btn-primary px-5 shadow-accent">
-              {mode === 'create' ? 'Incorporate Lead' : 'Update Prospect'}
-            </button>
+            {mode !== 'view' && (
+              <button type="submit" className="btn btn-primary px-5 shadow-accent">
+                {mode === 'create' ? 'Incorporate Lead' : 'Update Prospect'}
+              </button>
+            )}
           </div>
         </form>
       </div>

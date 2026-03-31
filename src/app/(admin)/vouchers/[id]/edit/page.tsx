@@ -5,13 +5,13 @@ import { useSelector } from 'react-redux';
 import { useParams, useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import VoucherForm from '@/modules/voucher/components/VoucherForm';
-import Breadcrumb from '@/components/Breadcrumb';
 import Link from 'next/link';
 
 const EditVoucherPage = () => {
   const [mounted, setMounted] = useState(false);
   const { id } = useParams();
   const router = useRouter();
+  const [isEdit, setIsEdit] = useState(false);
 
   const { items } = useSelector((state: RootState) => state.voucher);
   const voucher = items.find(item => item.id === id);
@@ -41,14 +41,23 @@ const EditVoucherPage = () => {
           <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
         </Link>
         <div>
-          <h2 className="fw-bold mb-0 text-dark">Edit Voucher: {voucher.voucherNo}</h2>
-          <p className="text-muted small mb-0">Update transaction details and narration.</p>
+          <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Voucher: {voucher.voucherNo}</h2>
+          <p className="text-muted small mb-0">{isEdit ? 'Update transaction details and narration.' : 'Review transaction details and narration.'}</p>
         </div>
+        {!isEdit && (
+          <button 
+            className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
+            onClick={() => setIsEdit(true)}
+          >
+            <i className="bi bi-pencil-square"></i>
+            <span>Edit Voucher</span>
+          </button>
+        )}
       </div>
 
       <div className="row justify-content-center">
         <div className="col-xl-12">
-          <VoucherForm mode="edit" initialData={voucher} />
+          <VoucherForm mode={isEdit ? 'edit' : 'view'} initialData={voucher} />
         </div>
       </div>
     </div>

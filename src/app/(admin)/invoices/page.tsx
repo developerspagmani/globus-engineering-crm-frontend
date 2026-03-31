@@ -24,7 +24,7 @@ export default function InvoiceHistoryPage() {
   if (!mounted) return null;
 
   // Filter items based on active company context
-  const filteredInvoices = activeCompany 
+  const filteredInvoices = activeCompany
     ? items.filter(inv => inv.company_id === activeCompany.id)
     : items;
 
@@ -44,20 +44,9 @@ export default function InvoiceHistoryPage() {
             <p className="text-muted small mb-0">Generate and manage industrial billing records • {filteredInvoices.length} total</p>
           </div>
           <div className="d-flex gap-2">
-            {checkActionPermission(user, 'mod_invoice', 'edit') && (
-              <Link 
-                href="/invoices/customize" 
-                className="btn btn-light d-flex align-items-center gap-2 px-4 shadow-sm bg-white rounded-4 fw-bold border"
-                style={{ height: '48px', color: '#212529' }}
-              >
-                <i className="bi bi-palette text-primary"></i>
-                <span>Customize Template</span>
-                <i className="bi bi-chevron-right small opacity-50 ms-1"></i>
-              </Link>
-            )}
             {checkActionPermission(user, 'mod_invoice', 'create') && (
-              <Link 
-                href="/invoices/new" 
+              <Link
+                href="/invoices/new"
                 className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm rounded-4 fw-bold"
                 style={{ height: '48px' }}
               >
@@ -72,26 +61,26 @@ export default function InvoiceHistoryPage() {
         <div className="row g-4 mb-4">
           <div className="col-md-4">
             <div className="card border-0 shadow-sm rounded-4 h-100">
-               <div className="card-body p-4">
-                  <div className="x-small text-uppercase tracking-widest text-muted fw-bold mb-2">Total Billed</div>
-                  <div className="h3 fw-900 mb-0 font-monospace">₹{totalBilled.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-               </div>
+              <div className="card-body p-4">
+                <div className="x-small text-uppercase tracking-widest text-muted fw-bold mb-2">Total Billed</div>
+                <div className="h2 fw-bold mb-0 font-monospace">₹{totalBilled.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+              </div>
             </div>
           </div>
           <div className="col-md-4">
             <div className="card border-0 shadow-sm rounded-4 h-100">
-               <div className="card-body p-4">
-                  <div className="x-small text-uppercase tracking-widest text-success fw-bold mb-2">Total Paid</div>
-                  <div className="h3 fw-900 mb-0 font-monospace text-success">₹{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-               </div>
+              <div className="card-body p-4">
+                <div className="x-small text-uppercase tracking-widest text-success fw-bold mb-2">Total Paid</div>
+                <div className="h2 fw-bold mb-0 font-monospace text-success">₹{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+              </div>
             </div>
           </div>
           <div className="col-md-4">
             <div className="card border-0 shadow-sm rounded-4 h-100 border-start border-4 border-warning">
-               <div className="card-body p-4">
-                  <div className="x-small text-uppercase tracking-widest text-warning fw-bold mb-2">Outstanding Balance</div>
-                  <div className="h3 fw-900 mb-0 font-monospace text-warning">₹{totalUnpaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-               </div>
+              <div className="card-body p-4">
+                <div className="x-small text-uppercase tracking-widest text-warning fw-bold mb-2">Outstanding Balance</div>
+                <div className="h2 fw-bold mb-0 font-monospace text-warning">₹{totalUnpaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+              </div>
             </div>
           </div>
         </div>

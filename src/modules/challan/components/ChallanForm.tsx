@@ -10,7 +10,7 @@ import StatusModal from '@/components/StatusModal';
 
 interface ChallanFormProps {
   initialData?: Challan;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
@@ -138,6 +138,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 value={formData.challanNo} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-3">
@@ -147,6 +148,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 name="partyType" 
                 value={formData.partyType} 
                 onChange={(e) => setFormData(prev => ({ ...prev, partyType: e.target.value as any, partyId: '', partyName: '' }))}
+                disabled={mode === 'view'}
               >
                 <option value="customer">Customer (Dispatch)</option>
                 <option value="vendor">Vendor (Returnable/Job Work)</option>
@@ -160,6 +162,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 value={formData.partyId} 
                 onChange={handleInputChange} 
                 required
+                disabled={mode === 'view'}
               >
                 <option value="">Select {formData.partyType === 'customer' ? 'Customer' : 'Vendor'}</option>
                 {formData.partyType === 'customer' 
@@ -177,6 +180,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 value={formData.date} 
                 onChange={handleInputChange} 
                 required 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-3">
@@ -186,6 +190,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 name="type" 
                 value={formData.type} 
                 onChange={handleInputChange}
+                disabled={mode === 'view'}
               >
                 <option value="delivery">Standard Delivery</option>
                 <option value="returnable">Returnable</option>
@@ -199,6 +204,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 name="status" 
                 value={formData.status} 
                 onChange={handleInputChange}
+                disabled={mode === 'view'}
               >
                 <option value="draft">Draft</option>
                 <option value="dispatched">Dispatched</option>
@@ -233,6 +239,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           value={item.description} 
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                           required 
+                          disabled={mode === 'view'}
                         />
                       </td>
                       <td className="p-0 border-0">
@@ -242,6 +249,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           value={item.quantity} 
                           onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))}
                           required 
+                          disabled={mode === 'view'}
                         />
                       </td>
                       <td className="p-0 border-0">
@@ -251,6 +259,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           value={item.unit} 
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                           required 
+                          disabled={mode === 'view'}
                         />
                       </td>
                       <td className="p-0 border-0">
@@ -259,6 +268,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           className="form-control border-0 rounded-0" 
                           value={item.hsnCode} 
                           onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
+                          disabled={mode === 'view'}
                         />
                       </td>
                       <td className="text-center">
@@ -276,9 +286,11 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 </tbody>
               </table>
             </div>
-            <button type="button" className="btn btn-outline-accent btn-sm fw-700" onClick={addItem}>
-              <i className="bi bi-plus-lg me-2"></i>Add Line Item
-            </button>
+            {mode !== 'view' && (
+              <button type="button" className="btn btn-outline-accent btn-sm fw-700" onClick={addItem}>
+                <i className="bi bi-plus-lg me-2"></i>Add Line Item
+              </button>
+            )}
           </div>
 
           {/* Transport Info */}
@@ -295,6 +307,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 placeholder="MH-12-XX-0000"
                 value={formData.vehicleNo} 
                 onChange={handleInputChange} 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-4">
@@ -305,6 +318,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 name="driverName" 
                 value={formData.driverName} 
                 onChange={handleInputChange} 
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-4">
@@ -315,17 +329,20 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                  rows={1}
                  value={formData.notes} 
                  onChange={handleInputChange}
+                 disabled={mode === 'view'}
                ></textarea>
             </div>
           </div>
 
           <div className="text-end pt-4 border-top">
             <button type="button" className="btn btn-link text-muted me-3 fw-700 text-decoration-none" onClick={() => router.push('/challan')}>
-              Cancel
+              {mode === 'view' ? 'Back' : 'Cancel'}
             </button>
-            <button type="submit" className="btn btn-primary px-5">
-              {mode === 'create' ? 'Generate Challan' : 'Save Changes'}
-            </button>
+            {mode !== 'view' && (
+              <button type="submit" className="btn btn-primary px-5">
+                {mode === 'create' ? 'Generate Challan' : 'Save Changes'}
+              </button>
+            )}
           </div>
         </form>
       </div>

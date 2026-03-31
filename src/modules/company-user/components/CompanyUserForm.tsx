@@ -9,7 +9,7 @@ import { addUser, updateUser } from '@/redux/features/companyUserSlice';
 
 interface CompanyUserFormProps {
   initialData?: User;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) => {
@@ -124,6 +124,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                 value={formData.name}
                 onChange={handleFormChange}
                 required
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-4">
@@ -135,6 +136,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                 value={formData.email}
                 onChange={handleFormChange}
                 required
+                disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-4">
@@ -145,6 +147,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                 value={formData.role}
                 onChange={handleFormChange}
                 required
+                disabled={mode === 'view'}
               >
                 {currentUser?.role === 'super_admin' && (
                   <option value="super_admin">Super Admin</option>
@@ -197,6 +200,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                               type="checkbox" 
                               checked={perm.canRead}
                               onChange={() => handleModuleToggle(module.id)}
+                              disabled={mode === 'view'}
                             />
                           </div>
                         </td>
@@ -205,7 +209,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                             type="checkbox" 
                             className="form-check-input shadow-none cursor-pointer"
                             checked={perm.canCreate}
-                            disabled={!perm.canRead}
+                            disabled={!perm.canRead || mode === 'view'}
                             onChange={() => handlePermissionToggle(module.id, 'canCreate')}
                           />
                         </td>
@@ -214,7 +218,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                             type="checkbox" 
                             className="form-check-input shadow-none cursor-pointer"
                             checked={perm.canEdit}
-                            disabled={!perm.canRead}
+                            disabled={!perm.canRead || mode === 'view'}
                             onChange={() => handlePermissionToggle(module.id, 'canEdit')}
                           />
                         </td>
@@ -223,7 +227,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                             type="checkbox" 
                             className="form-check-input shadow-none cursor-pointer"
                             checked={perm.canDelete}
-                            disabled={!perm.canRead}
+                            disabled={!perm.canRead || mode === 'view'}
                             onChange={() => handlePermissionToggle(module.id, 'canDelete')}
                           />
                         </td>
@@ -236,15 +240,17 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
           </div>
 
           <div className="mt-5 pt-4 border-top d-flex gap-3">
-            <button type="submit" className="btn btn-primary px-5 py-2 fw-bold shadow-accent rounded-pill">
-              {mode === 'create' ? 'Create User Account' : 'Save Changes'}
-            </button>
+            {mode !== 'view' && (
+              <button type="submit" className="btn btn-primary px-5 py-2 fw-bold shadow-accent rounded-pill">
+                {mode === 'create' ? 'Create User Account' : 'Save Changes'}
+              </button>
+            )}
             <button 
               type="button" 
               className="btn btn-outline-secondary px-5 py-2 fw-bold rounded-pill"
               onClick={() => router.push('/users')}
             >
-              Cancel
+              Back to Users
             </button>
           </div>
         </form>
