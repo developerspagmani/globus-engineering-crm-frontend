@@ -35,6 +35,11 @@ const VoucherPage = () => {
       (item.description || '').toLowerCase().includes((filters.search || '').toLowerCase());
     const matchesType = filters.type === 'all' || item.type === filters.type;
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
+    
+    // Date range filtering
+    if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) return false;
+    if (filters.toDate && item.date && new Date(item.date) > new Date(filters.toDate)) return false;
+
     return matchesSearch && matchesType && matchesStatus;
   });
 
@@ -62,36 +67,6 @@ const VoucherPage = () => {
       case 'contra': return 'text-warning';
       default: return 'text-dark';
     }
-  };
-
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-    navigator.clipboard.writeText(text).then(() => alert("Table data copied to clipboard!"));
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`).join(",");
-      csvContent += rowData + "\r\n";
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `vouchers_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handlePrintVoucherRecord = (voucher: any) => {
@@ -197,6 +172,27 @@ const VoucherPage = () => {
               </select>
             </div>
 
+            {/* Date Filters Moved to Right Corner */}
+            <div className="col-auto ms-auto d-flex align-items-center gap-2">
+               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+                 <input 
+                   type="date" 
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                   value={filters.fromDate}
+                   onChange={(e) => dispatch(setVoucherFilters({ fromDate: e.target.value }))}
+                   style={{ width: '135px', fontSize: '0.85rem' }}
+                 />
+                 <span className="text-muted small fw-bold mx-1">TO</span>
+                 <input 
+                   type="date" 
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                   value={filters.toDate}
+                   onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))}
+                   style={{ width: '135px', fontSize: '0.85rem' }}
+                 />
+               </div>
+            </div>
+{/* 
             <div className="ms-auto d-flex gap-2 align-items-center">
               <div className="btn-group p-1 bg-light rounded-3 shadow-none me-2 d-none d-sm-flex" style={{ height: '42px' }}>
                 <button 
@@ -208,13 +204,7 @@ const VoucherPage = () => {
                   onClick={() => dispatch(setVoucherFilters({ status: 'posted' }))}
                 >Posted</button>
               </div>
-              <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
-                <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-              </button>
-              <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
-                <i className="bi bi-files"></i> COPY
-              </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

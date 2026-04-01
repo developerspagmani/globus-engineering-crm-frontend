@@ -92,6 +92,8 @@ interface OutwardState {
   filters: {
     search: string;
     status: 'all' | 'pending' | 'completed' | 'cancelled';
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -106,6 +108,8 @@ const initialState: OutwardState = {
   filters: {
     search: '',
     status: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,

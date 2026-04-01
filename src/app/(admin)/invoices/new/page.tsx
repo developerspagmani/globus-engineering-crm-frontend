@@ -8,7 +8,7 @@ import Link from 'next/link';
 export default function CreateInvoicePage() {
   return (
     <ModuleGuard moduleId="mod_invoice">
-      <div className="container py-4">
+      <div className="container-fluid py-4">
         <nav aria-label="breadcrumb" className="mb-4">
           <ol className="breadcrumb">
             <li className="breadcrumb-item"><Link href="/invoices" className="text-decoration-none text-muted small">Invoices</Link></li>

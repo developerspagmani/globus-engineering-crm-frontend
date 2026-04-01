@@ -28,6 +28,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    const { settings } = useSelector((state: RootState) => state.invoices);
    const { items: masterItems, processes: masterProcesses, priceFixings } = useSelector((state: RootState) => state.master);
 
+   const typeParam = searchParams.get('type');
+   const defaultBillType = typeParam === 'wp' ? 'With Process' : typeParam === 'wop' ? 'Without Process' : typeParam === 'both' ? 'Both' : 'With Process';
+
    const [formData, setFormData] = useState<any>({
       invoiceNumber: settings.nextInvoice || '',
       challanNumber: settings.nextChallan || '',
@@ -37,7 +40,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       date: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'INVOICE',
-      billType: 'With Process',
+      billType: defaultBillType,
       inwardId: inwardId || undefined,
       status: 'draft',
       poNo: '',
@@ -155,14 +158,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             discount: initialData.discount || 0,
          };
          setFormData(mappedData);
-      } else if (inwardId && priceFixings.length > 0) {
+      } else if (inwardId && priceFixings.length > 0 && customers.length > 0) {
          const inward = inwards.find(i => i.id === inwardId);
          if (inward) {
+            const customer = customers.find(c => String(c.id) === String(inward.customerId));
+            const formattedAddress = [customer?.street1, customer?.city, customer?.state].filter(Boolean).join(', ');
+            
             setFormData((prev: any) => ({
                ...prev,
                customerId: inward.customerId || '',
                customerName: inward.customerName || '',
-               address: inward.address || '',
+               address: inward.address || formattedAddress || '',
                poNo: inward.poReference || '',
                po_no: inward.poReference || '',
                poDate: inward.poDate || '',
@@ -171,8 +177,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                dc_no: inward.dcNo || '',
                dcDate: inward.dcDate || '',
                dc_date: inward.dcDate || '',
-               gstin: (inward as any).gstin || '',
-               state: (inward as any).state || '',
+               gstin: (inward as any).gstin || customer?.gst || '',
+               state: (inward as any).state || customer?.state || '',
                inwardId: inward.id,
                items: inward.items.map((item, idx) => {
                   const unitPrice = findPrice(
@@ -293,8 +299,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    };
 
    return (
-      <div className="container-fluid py-4 bg-white min-vh-100">
-         <form onSubmit={e => e.preventDefault()}>
+      <>
+         <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
+            <div className="card-body p-4 p-lg-5">
+               <form onSubmit={e => e.preventDefault()}>
             <div className="d-flex align-items-center justify-content-between mb-5 pb-2 gap-4 flex-wrap">
                <div className="d-flex align-items-center">
                   <button
@@ -316,141 +324,142 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                </div>
 
                {mode === 'create' && (
-  <div className="d-flex align-items-center gap-3 ms-auto">
-    {/* Toggle pill */}
-    <div
-      className="d-flex align-items-center p-1"
-      style={{
-        background: 'var(--bs-secondary-bg, #f1f3f5)',
-        borderRadius: '999px',
-        border: '0.5px solid rgba(0,0,0,0.08)',
-        gap: '2px',
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => setSelectionMode('CUSTOMER')}
-        style={{
-          padding: '6px 18px',
-          borderRadius: '999px',
-          border: 'none',
-          fontSize: '13px',
-          fontWeight: 500,
-          cursor: 'pointer',
-          background: selectionMode === 'CUSTOMER' ? '#f97316' : 'transparent',
-          color: selectionMode === 'CUSTOMER' ? '#fff' : '#6c757d',
-          transition: 'all 0.15s',
-        }}
-      >
-        By Customer
-      </button>
-      <button
-        type="button"
-        onClick={() => setSelectionMode('GSTN')}
-        style={{
-          padding: '6px 18px',
-          borderRadius: '999px',
-          border: 'none',
-          fontSize: '13px',
-          fontWeight: 500,
-          cursor: 'pointer',
-          background: selectionMode === 'GSTN' ? '#f97316' : 'transparent',
-          color: selectionMode === 'GSTN' ? '#fff' : '#6c757d',
-          transition: 'all 0.15s',
-        }}
-      >
-        By GSTIN
-      </button>
-    </div>
+                  <div className="d-flex align-items-center gap-3 ms-auto">
+                     {/* Toggle pill */}
+                     <div
+                        className="d-flex align-items-center p-1"
+                        style={{
+                           background: 'var(--bs-secondary-bg, #f1f3f5)',
+                           borderRadius: '999px',
+                           border: '0.5px solid rgba(0,0,0,0.08)',
+                           gap: '2px',
+                        }}
+                     >
+                        <button
+                           type="button"
+                           onClick={() => setSelectionMode('CUSTOMER')}
+                           style={{
+                              padding: '6px 18px',
+                              borderRadius: '999px',
+                              border: 'none',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              background: selectionMode === 'CUSTOMER' ? '#f97316' : 'transparent',
+                              color: selectionMode === 'CUSTOMER' ? '#fff' : '#6c757d',
+                              transition: 'all 0.15s',
+                           }}
+                        >
+                           By Customer
+                        </button>
+                        <button
+                           type="button"
+                           onClick={() => setSelectionMode('GSTN')}
+                           style={{
+                              padding: '6px 18px',
+                              borderRadius: '999px',
+                              border: 'none',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              background: selectionMode === 'GSTN' ? '#f97316' : 'transparent',
+                              color: selectionMode === 'GSTN' ? '#fff' : '#6c757d',
+                              transition: 'all 0.15s',
+                           }}
+                        >
+                           By GSTIN
+                        </button>
+                     </div>
 
-    {/* Divider */}
-    <div style={{ width: '1px', height: '28px', background: 'rgba(0,0,0,0.12)' }} />
+                     {/* Divider */}
+                     <div style={{ width: '1px', height: '28px', background: 'rgba(0,0,0,0.12)' }} />
 
-    {selectionMode === 'CUSTOMER' ? (
-  <div
-    className="d-flex align-items-center gap-2"
-    style={{
-      border: '1px solid #dee2e6',
-      borderRadius: '8px',
-      padding: '6px 12px',
-      minWidth: '200px',
-      maxWidth: '240px',
-      background: '#fff',
-      cursor: 'pointer',
-    }}
-  >
-    <i className="bi bi-person" style={{ fontSize: '15px', color: '#6c757d', flexShrink: 0 }}></i>
-    <select
-      name="customerId"
-      value={formData.customerId}
-      onChange={handleInputChange}
-      style={{
-        border: 'none',
-        outline: 'none',
-        fontSize: '13px',
-        fontWeight: 500,
-        color: formData.customerId ? '#212529' : '#6c757d',
-        flex: 1,
-        appearance: 'none',
-        WebkitAppearance: 'none',
-        cursor: 'pointer',
-        background: 'transparent',
-        width: '100%',
-        padding: 0,
-      }}
-    >
-      <option value="">Choose Customer</option>
-      {customers.map(c => (
-        <option key={c.id} value={c.id}>{c.name}</option>
-      ))}
-    </select>
-    <i className="bi bi-chevron-down" style={{ fontSize: '11px', color: '#6c757d', flexShrink: 0 }}></i>
-  </div>
-) : (
-      <div
-        className="d-flex align-items-center gap-2"
-        style={{
-          borderBottom: '1.5px solid #dee2e6',
-          paddingBottom: '4px',
-          minWidth: '220px',
-        }}
-      >
-        <i className="bi bi-hash" style={{ fontSize: '16px', color: '#6c757d' }}></i>
-        <input
-          type="text"
-          className="bg-transparent fw-bold text-uppercase"
-          placeholder="Enter GSTIN"
-          name="gstin"
-          value={formData.gstin}
-          onChange={(e) => {
-            const val = e.target.value.toUpperCase();
-            handleInputChange(e);
-            if (val.length === 15) {
-              setTimeout(() => handleGstLookup(val), 100);
-            }
-          }}
-          maxLength={15}
-          style={{
-            border: 'none',
-            outline: 'none',
-            fontSize: '14px',
-            flex: 1,
-            letterSpacing: '0.04em',
-          }}
-        />
-        {gstLoading && <span className="spinner-border spinner-border-sm text-primary"></span>}
-      </div>
-    )}
-  </div>
-)}
+                     {selectionMode === 'CUSTOMER' ? (
+                        <div
+                           className="d-flex align-items-center gap-2"
+                           style={{
+                              border: '1px solid #dee2e6',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              minWidth: '200px',
+                              maxWidth: '240px',
+                              background: '#fff',
+                              cursor: 'pointer',
+                           }}
+                        >
+                           <i className="bi bi-person" style={{ fontSize: '15px', color: '#6c757d', flexShrink: 0 }}></i>
+                           <select
+                              name="customerId"
+                              value={formData.customerId}
+                              onChange={handleInputChange}
+                              style={{
+                                 border: 'none',
+                                 outline: 'none',
+                                 fontSize: '13px',
+                                 fontWeight: 500,
+                                 color: formData.customerId ? '#212529' : '#6c757d',
+                                 flex: 1,
+                                 appearance: 'none',
+                                 WebkitAppearance: 'none',
+                                 cursor: 'pointer',
+                                 background: 'transparent',
+                                 width: '100%',
+                                 padding: 0,
+                              }}
+                           >
+                              <option value="">Choose Customer</option>
+                              {customers.map(c => (
+                                 <option key={c.id} value={c.id}>{c.name}</option>
+                              ))}
+                           </select>
+                           <i className="bi bi-chevron-down" style={{ fontSize: '11px', color: '#6c757d', flexShrink: 0 }}></i>
+                        </div>
+                     ) : (
+                        <div
+                           className="d-flex align-items-center gap-2"
+                           style={{
+                              borderBottom: '1.5px solid #dee2e6',
+                              paddingBottom: '4px',
+                              minWidth: '220px',
+                           }}
+                        >
+                           <i className="bi bi-hash" style={{ fontSize: '16px', color: '#6c757d' }}></i>
+                           <input
+                              type="text"
+                              className="bg-transparent fw-bold text-uppercase"
+                              placeholder="Enter GSTIN"
+                              name="gstin"
+                              value={formData.gstin}
+                              onChange={(e) => {
+                                 const val = e.target.value.toUpperCase();
+                                 handleInputChange(e);
+                                 if (val.length === 15) {
+                                    setTimeout(() => handleGstLookup(val), 100);
+                                 }
+                              }}
+                              maxLength={15}
+                              style={{
+                                 border: 'none',
+                                 outline: 'none',
+                                 fontSize: '14px',
+                                 flex: 1,
+                                 letterSpacing: '0.04em',
+                              }}
+                           />
+                           {gstLoading && <span className="spinner-border spinner-border-sm text-primary"></span>}
+                        </div>
+                     )}
+                  </div>
+               )}
             </div>
 
             {mode === 'create' && (
                <div className="d-flex align-items-center mb-5 pb-4 border-bottom">
-                  <h4 className="text-danger fw-bold mb-0 me-4">Select the Bill Type</h4>
+                  <h5 className="text-danger fw-bold mb-0 me-4">Select the Bill Type</h5>
                   <div style={{ width: '300px' }}>
                      <select
-                        className="form-select border-0 border-bottom rounded-0 py-2 fs-5"
+                        className="form-select border-0 border-bottom rounded-0 py-2"
+                        style={{ fontSize: '0.85rem' }}
                         name="billType"
                         value={formData.billType}
                         onChange={handleInputChange}
@@ -471,7 +480,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         <div className="col-sm-9">
                            <input
                               type="text"
-                              className="form-control border-0 border-bottom rounded-0 fw-bold px-2 bg-light bg-opacity-50 text-uppercase"
+                              className="form-control border-0 border-bottom rounded-0 fw-bold px-2 bg-light bg-opacity-50"
                               style={{ height: '42px', cursor: 'not-allowed' }}
                               value={formData.customerName || ''}
                               readOnly
@@ -733,6 +742,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </div>
                      </div>
                      <style jsx>{`
+                        .form-control, .form-select {
+                           font-size: 0.85rem !important;
+                        }
                         .no-spinner::-webkit-inner-spin-button, 
                         .no-spinner::-webkit-outer-spin-button { 
                            -webkit-appearance: none; 
@@ -761,6 +773,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                <button type="button" className="btn btn-danger px-5 py-2 fw-bold text-uppercase">Reset</button>
             </div>
          </form>
+      </div>
+   </div>
 
          <StatusModal
             isOpen={modal.isOpen}
@@ -775,7 +789,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             title={modal.title}
             message={modal.message}
          />
-      </div>
+      </>
    );
 };
 

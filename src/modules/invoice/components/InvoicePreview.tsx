@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { Invoice, Company } from '@/data/mockModules';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 interface InvoicePreviewProps {
   invoice: Invoice;
@@ -15,6 +16,8 @@ interface InvoicePreviewProps {
 const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideControls = false }) => {
   const invoiceRef = useRef<HTMLDivElement>(null);
   const { settings } = useSelector((state: RootState) => state.invoices);
+  const searchParams = useSearchParams();
+  const isReadOnly = searchParams.get('readonly') === 'true';
 
   const handlePrint = () => {
     window.print();
@@ -30,9 +33,11 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
             <i className="bi bi-arrow-left"></i> Back to List
           </Link>
           <div className="d-flex gap-2">
-            <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-light border shadow-sm d-flex align-items-center gap-2 px-3 fw-bold">
-              <i className="bi bi-pencil-square text-primary"></i> Edit Invoice
-            </Link>
+            {!isReadOnly && (
+              <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-light border shadow-sm d-flex align-items-center gap-2 px-3 fw-bold">
+                <i className="bi bi-pencil-square text-primary"></i> Edit Invoice
+              </Link>
+            )}
             <button className="btn btn-outline-primary" onClick={handlePrint}>
               <i className="bi bi-printer me-2"></i> Print Invoice
             </button>
@@ -121,8 +126,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
                   <td style={{ padding: '1rem 0', fontWeight: 600, color: '#111827' }}>{item.description}</td>
                   <td style={{ padding: '1rem 0', color: '#4b5563 italic' }}>{item.process || '-'}</td>
                   <td style={{ padding: '1rem 0', textAlign: 'center', color: '#111827', fontWeight: 600 }}>{item.quantity}</td>
-                  <td style={{ padding: '1rem 0', textAlign: 'right', color: '#374151' }}>₹{item.unitPrice.toFixed(2)}</td>
-                  <td style={{ padding: '1rem 0', textAlign: 'right', fontWeight: 700, color: '#111827' }}>₹{item.amount.toFixed(2)}</td>
+                  <td style={{ padding: '1rem 0', textAlign: 'right', color: '#374151' }}>₹{(item.unitPrice || 0).toFixed(2)}</td>
+                  <td style={{ padding: '1rem 0', textAlign: 'right', fontWeight: 700, color: '#111827' }}>₹{(item.amount || 0).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -140,22 +145,22 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               <div className="d-flex flex-column gap-2">
                 <div className="d-flex justify-content-between">
                   <span style={{ color: '#6b7280', fontWeight: 500 }}>Taxable Value</span>
-                  <span style={{ fontWeight: 700 }}>₹{invoice.subTotal.toFixed(2)}</span>
+                  <span style={{ fontWeight: 700 }}>₹{(invoice.subTotal || 0).toFixed(2)}</span>
                 </div>
                 {/* CGST/SGST vs IGST Logic Placeholder */}
                 <div className="d-flex justify-content-between">
                   <span style={{ color: '#6b7280', fontWeight: 500 }}>CGST (9%)</span>
-                  <span style={{ fontWeight: 600 }}>₹{(invoice.taxTotal / 2).toFixed(2)}</span>
+                  <span style={{ fontWeight: 600 }}>₹{((invoice.taxTotal || 0) / 2).toFixed(2)}</span>
                 </div>
                 <div className="d-flex justify-content-between">
                   <span style={{ color: '#6b7280', fontWeight: 500 }}>SGST (9%)</span>
-                  <span style={{ fontWeight: 600 }}>₹{(invoice.taxTotal / 2).toFixed(2)}</span>
+                  <span style={{ fontWeight: 600 }}>₹{((invoice.taxTotal || 0) / 2).toFixed(2)}</span>
                 </div>
                 <div style={{ height: '1px', background: '#374151', margin: '0.25rem 0' }} />
                 <div className="d-flex justify-content-between align-items-center">
                   <span style={{ fontSize: '1rem', fontWeight: 800, color: '#111827' }}>Total Amount</span>
                   <span style={{ fontSize: '1.5rem', fontWeight: 900, color: accentColor }}>
-                    ₹{invoice.grandTotal.toFixed(2)}
+                    ₹{(invoice.grandTotal || 0).toFixed(2)}
                   </span>
                 </div>
               </div>

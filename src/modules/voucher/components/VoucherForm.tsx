@@ -58,25 +58,23 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
       const name = initialData.partyName || foundCustomer?.company || foundCustomer?.name || '';
 
-      if (name) {
-        setFormData(prev => ({
-          ...prev,
-          date: initialData.date,
-          chequeNo: initialData.chequeNo || '',
-          customerId: targetId,
-          customerName: name,
-          selectedInvoices: initialData.referenceNo 
-            ? initialData.referenceNo.split(',').map(s => s.trim()) 
-            : [],
-          totalAmount: initialData.amount
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        date: initialData.date,
+        chequeNo: initialData.chequeNo || '',
+        customerId: targetId,
+        customerName: name,
+        selectedInvoices: initialData.referenceNo 
+          ? initialData.referenceNo.split(',').map(s => s.trim()) 
+          : [],
+        totalAmount: initialData.amount
+      }));
     }
   }, [initialData, customers, customers.length]); // Dependency on customers.length ensures it re-runs when list size changes
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
-    const customer = customers.find(c => c.id === id);
+    const customer = customers.find(c => String(c.id) === String(id));
     setFormData(prev => ({
       ...prev,
       customerId: id,
@@ -160,143 +158,166 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   };
 
   // Filter invoices for selected customer
-  const customerInvoices = allInvoices.filter(inv =>
-    inv.customerId === formData.customerId &&
-    inv.status?.toLowerCase() !== 'paid'
-  );
+  const customerInvoices = allInvoices.filter(inv => {
+    const isMatched = String(inv.customerId) === String(formData.customerId);
+    const isSelected = formData.selectedInvoices.includes(String(inv.id));
+    const isNotPaid = inv.status?.toLowerCase() !== 'paid';
+    
+    // Show if it belongs to customer AND (is not paid OR was already selected for this voucher)
+    return isMatched && (isNotPaid || isSelected);
+  });
 
   return (
-    <div className="card shadow-sm border-0 bg-white p-4">
-      <form onSubmit={handleSubmit}>
-        <div className="row g-4 mb-5">
-          <div className="col-md-6 d-flex align-items-center gap-3">
-            <label className="text-muted small fw-bold col-2">Date</label>
-            <input
-              type="date"
-              className="form-control border-0 border-bottom rounded-0 shadow-none px-0"
-              style={{ borderBottomStyle: 'dotted' as any }}
-              value={formData.date}
-              onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              disabled={mode === 'view'}
-            />
-          </div>
-          <div className="col-md-6 d-flex align-items-center gap-3">
-            <label className="text-muted small fw-bold col-3">Cheque No</label>
-            <input
-              type="text"
-              className="form-control border-0 border-bottom rounded-0 shadow-none px-2"
-              placeholder="Cheque No"
-              value={formData.chequeNo}
-              onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value }))}
-              disabled={mode === 'view'}
-            />
-          </div>
-          <div className="col-md-12 d-flex align-items-center gap-3">
-            <label className="text-muted small fw-bold col-1">Customer</label>
-            {initialData ? (
-              <div className="w-100 text-center fw-900 text-uppercase fs-3 tracking-tighter" style={{ borderBottom: '2px dotted #ddd', paddingBottom: '5px', color: '#000' }}>
-                {formData.customerName || 'LOADING CUSTOMER...'}
-              </div>
-            ) : (
-              <select
-                className="form-select border-0 border-bottom rounded-0 shadow-none px-0 text-center fw-bold text-uppercase fs-5"
+    <>
+      <div className="card shadow-sm border-0 bg-white p-4">
+        {/* form content ... */}
+        <form onSubmit={handleSubmit}>
+          <div className="row g-4 mb-5">
+            <div className="col-md-6 d-flex align-items-center gap-3">
+              <label className="text-muted small fw-bold col-2">Date</label>
+              <input
+                type="date"
+                className="form-control border-0 border-bottom rounded-0 shadow-none px-0"
                 style={{ borderBottomStyle: 'dotted' as any }}
-                value={formData.customerId}
-                onChange={handleCustomerChange}
-                required
-              >
-                <option value="">Select Customer</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                value={formData.date}
+                onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                disabled={mode === 'view'}
+              />
+            </div>
+            <div className="col-md-6 d-flex align-items-center gap-3">
+              <label className="text-muted small fw-bold col-3">Cheque No</label>
+              <input
+                type="text"
+                className="form-control border-0 border-bottom rounded-0 shadow-none px-2"
+                placeholder="Cheque No"
+                value={formData.chequeNo}
+                onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value }))}
+                disabled={mode === 'view'}
+              />
+            </div>
+            <div className="col-md-12 d-flex align-items-center gap-3">
+              <label className="text-muted small fw-bold col-1">Customer</label>
+              {initialData ? (
+                <div className="w-100 text-center fw-900 text-uppercase fs-3 tracking-tighter" style={{ borderBottom: '2px dotted #ddd', paddingBottom: '5px', color: '#000' }}>
+                  {formData.customerName || 'LOADING CUSTOMER...'}
+                </div>
+              ) : (
+                <select
+                  className="form-select border-0 border-bottom rounded-0 shadow-none px-0 text-center fw-bold text-uppercase fs-5"
+                  style={{ borderBottomStyle: 'dotted' as any }}
+                  value={formData.customerId}
+                  onChange={handleCustomerChange}
+                  required
+                >
+                  <option value="">Select Customer</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+  
+          <div className="table-responsive mb-4 mt-2">
+            <table className="table align-middle border-top border-light">
+              <thead className="bg-light-subtle">
+                <tr className="border-bottom border-light">
+                  <th className="small fw-bold py-3 text-muted" style={{ width: '80px' }}>SELECT</th>
+                  <th className="small fw-bold py-3 text-muted">INVOICE DATE</th>
+                  <th className="small fw-bold py-3 text-muted text-center">INVOICE NO</th>
+                  <th className="small fw-bold py-3 text-muted text-end">AMOUNT</th>
+                </tr>
+              </thead>
+              <tbody className="border-0">
+                {customerInvoices.map(inv => (
+                  <tr key={inv.id} className="border-bottom border-light">
+                    <td className="text-center">
+                      <input
+                        type="checkbox"
+                        className="form-check-input shadow-none border-secondary-subtle"
+                        checked={formData.selectedInvoices.includes(inv.id)}
+                        onChange={() => toggleInvoice(inv.id, inv.grandTotal - (inv.paidAmount || 0))}
+                        disabled={mode === 'view'}
+                      />
+                    </td>
+                    <td className="small text-muted">{new Date(inv.date).toLocaleDateString()}</td>
+                    <td className="small fw-bold text-center text-dark">{inv.invoiceNumber}</td>
+                    <td className="small fw-bold text-end text-dark">
+                      {(formData.selectedInvoices.includes(String(inv.id)) || mode === 'view') 
+                        ? inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 }) 
+                        : (inv.grandTotal - (inv.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
                 ))}
-              </select>
+                {formData.customerId && customerInvoices.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="text-center py-5 text-muted small">
+                      {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
+                        ? "All invoices for this customer are fully paid" 
+                        : "No invoices found for this customer"}
+                    </td>
+                  </tr>
+                )}
+                {!formData.customerId && (
+                  <tr>
+                    <td colSpan={4} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot className="border-0">
+                <tr>
+                  <td colSpan={3}></td>
+                  <td className="fw-bold text-end py-4 fs-4 text-dark border-top border-dark border-2">
+                    {formData.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+  
+          <div className="d-flex justify-content-center gap-3 mt-5">
+            {mode !== 'view' ? (
+              <>
+                <button type="submit" className="btn btn-success px-5 rounded-1 fw-bold border-0" style={{ backgroundColor: '#00a65a' }}>{mode === 'create' ? 'ADD' : 'SAVE'}</button>
+                <button type="button" className="btn btn-danger px-4 rounded-1 fw-bold border-0" style={{ backgroundColor: '#dd4b39' }} onClick={() => router.push(redirectPath)}>CANCEL</button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-secondary px-5 rounded-1 fw-bold border-0" onClick={() => router.push(redirectPath)}>BACK</button>
             )}
           </div>
-        </div>
-
-        <div className="table-responsive mb-4 mt-2">
-          <table className="table align-middle border-top border-light">
-            <thead className="bg-light-subtle">
-              <tr className="border-bottom border-light">
-                <th className="small fw-bold py-3 text-muted" style={{ width: '80px' }}>SELECT</th>
-                <th className="small fw-bold py-3 text-muted">INVOICE DATE</th>
-                <th className="small fw-bold py-3 text-muted text-center">INVOICE NO</th>
-                <th className="small fw-bold py-3 text-muted text-end">AMOUNT</th>
-              </tr>
-            </thead>
-            <tbody className="border-0">
-              {customerInvoices.map(inv => (
-                <tr key={inv.id} className="border-bottom border-light">
-                  <td className="text-center">
-                    <input
-                      type="checkbox"
-                      className="form-check-input shadow-none border-secondary-subtle"
-                      checked={formData.selectedInvoices.includes(inv.id)}
-                      onChange={() => toggleInvoice(inv.id, inv.grandTotal - (inv.paidAmount || 0))}
-                      disabled={mode === 'view'}
-                    />
-                  </td>
-                  <td className="small text-muted">{new Date(inv.date).toLocaleDateString()}</td>
-                  <td className="small fw-bold text-center text-dark">{inv.invoiceNumber}</td>
-                  <td className="small fw-bold text-end text-dark">{(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                </tr>
-              ))}
-              {formData.customerId && customerInvoices.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="text-center py-5 text-muted small">No pending invoices for this customer</td>
-                </tr>
-              )}
-              {!formData.customerId && (
-                <tr>
-                  <td colSpan={4} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
-                </tr>
-              )}
-            </tbody>
-            <tfoot className="border-0">
-              <tr>
-                <td colSpan={3}></td>
-                <td className="fw-bold text-end py-4 fs-4 text-dark border-top border-dark border-2">
-                  {formData.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        <div className="d-flex justify-content-center gap-3 mt-5">
-          {mode !== 'view' ? (
-            <>
-              <button type="submit" className="btn btn-success px-5 rounded-1 fw-bold border-0" style={{ backgroundColor: '#00a65a' }}>{mode === 'create' ? 'ADD' : 'SAVE'}</button>
-              <button type="button" className="btn btn-danger px-4 rounded-1 fw-bold border-0" style={{ backgroundColor: '#dd4b39' }} onClick={() => router.push(redirectPath)}>CANCEL</button>
-            </>
-          ) : (
-            <button type="button" className="btn btn-secondary px-5 rounded-1 fw-bold border-0" onClick={() => router.push(redirectPath)}>BACK</button>
-          )}
-        </div>
-      </form>
-
-      <StatusModal
-        isOpen={modal.isOpen}
-        onClose={() => {
-          setModal(prev => ({ ...prev, isOpen: false }));
-          if (modal.type === 'success') {
-            // Reset local state if successful
-            setFormData({
-              date: new Date().toISOString().split('T')[0],
-              chequeNo: '',
-              customerId: '',
-              customerName: '',
-              selectedInvoices: [],
-              totalAmount: 0
-            });
-            router.push(redirectPath);
-          }
-        }}
-        type={modal.type}
-        title={modal.title}
-        message={modal.message}
-      />
-    </div>
+        </form>
+  
+        <StatusModal
+          isOpen={modal.isOpen}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') {
+              // Reset local state if successful
+              setFormData({
+                date: new Date().toISOString().split('T')[0],
+                chequeNo: '',
+                customerId: '',
+                customerName: '',
+                selectedInvoices: [],
+                totalAmount: 0
+              });
+              router.push(redirectPath);
+            }
+          }}
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+        />
+      </div>
+      <style jsx>{`
+        .form-control {
+          font-size: 0.85rem !important;
+        }
+        .form-select {
+          font-size: 0.85rem !important;
+      }
+      `}</style>
+    </>
   );
 };
 

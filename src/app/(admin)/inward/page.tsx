@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInwards, deleteInward } from '@/redux/features/inwardSlice';
+import { fetchInwards, deleteInward, setInwardFilters } from '@/redux/features/inwardSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -14,11 +14,9 @@ import Link from 'next/link';
 
 export default function InwardListPage() {
   const dispatch = useDispatch();
-  const { items: inwards, loading } = useSelector((state: RootState) => state.inward);
+  const { items: inwards, filters, loading } = useSelector((state: RootState) => state.inward);
   const { company } = useSelector((state: RootState) => state.auth);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   useEffect(() => {
@@ -29,10 +27,15 @@ export default function InwardListPage() {
     // Company data isolation
     if (company?.id && item.company_id !== company.id.toString()) return false;
 
-    const matchesSearch = (item.customerName || item.vendorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (item.dcNo || item.challanNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (item.poReference || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesSearch = (item.customerName || item.vendorName || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+                         (item.dcNo || item.challanNo || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+                         (item.poReference || '').toLowerCase().includes(filters.search.toLowerCase());
+    const matchesStatus = filters.status === 'all' || item.status === filters.status;
+    
+    // Date range filtering
+    if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) return false;
+    if (filters.toDate && item.date && new Date(item.date) > new Date(filters.toDate)) return false;
+
     return matchesSearch && matchesStatus;
   });
 
@@ -44,36 +47,6 @@ export default function InwardListPage() {
     if (deleteModal.id) {
       (dispatch as any)(deleteInward(deleteModal.id));
     }
-  };
-
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-    navigator.clipboard.writeText(text);
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`).join(",");
-      csvContent += rowData + "\r\n";
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "inward_list.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handlePrintInward = (item: any) => {
@@ -121,33 +94,48 @@ export default function InwardListPage() {
         {/* Filter Section - Aligned in one row */}
         <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 p-3 bg-white">
           <div className="row g-3 align-items-center">
-            <div className="col-lg-5 col-md-6">
+            <div className="col-lg-4 col-md-6">
               <div className="position-relative">
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input
                   type="text"
                   placeholder="Search by Customer Name..."
-                  className="form-control ps-5 border-light bg-light-soft"
-                  style={{ height: '54px', borderRadius: '15px', fontSize: '1.1rem' }}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control ps-5 border-light"
+                  style={{ height: '54px', borderRadius: '15px'}}
+                  value={filters.search}
+                  onChange={(e) => dispatch(setInwardFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
-            <div className="col-lg-3 col-md-6">
-              <select className="form-select border-light bg-light-soft text-dark fw-bold" 
-                style={{ height: '54px', borderRadius: '15px', fontSize: '1.1rem' }}
-                value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <div className="col-lg-2 col-md-6">
+              <select className="form-select border-light text-dark" 
+                style={{ height: '54px', borderRadius: '15px' }}
+                value={filters.status} onChange={(e) => dispatch(setInwardFilters({ status: e.target.value as any }))}>
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
               </select>
             </div>
-            <div className="col-lg-4 col-md-12 d-flex justify-content-end gap-2">
-<button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>                <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-              </button>
-<button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>                <i className="bi bi-files"></i> COPY
-              </button>
+            <div className="col-auto ms-auto d-flex align-items-center gap-2">
+              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '15px' }}>
+                <input 
+                  type="date" 
+                  className="form-control border-0 bg-transparent p-0" 
+                  style={{ width: '150px' }}
+                  value={filters.fromDate}
+                  onChange={(e) => dispatch(setInwardFilters({ fromDate: e.target.value }))}
+                />
+                </div>
+                <span className="text-muted small fw-bold mx-1">TO</span>
+                              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
+                <input 
+                  type="date" 
+                  className="form-control border-0 bg-transparent p-0" 
+                  style={{ width: '150px'}}
+                  value={filters.toDate}
+                  onChange={(e) => dispatch(setInwardFilters({ toDate: e.target.value }))}
+                />
+              </div>
             </div>
           </div>
         </div>

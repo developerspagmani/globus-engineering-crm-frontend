@@ -288,14 +288,6 @@ export default function ItemDetailsPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="ms-auto d-flex gap-2">
-                  <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
-                    <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-                  </button>
-                  <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
-                    <i className="bi bi-files"></i> COPY
-                  </button>
-                </div>
               </div>
 
               <div className="card shadow-sm border-0 overflow-hidden">

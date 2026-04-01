@@ -74,6 +74,8 @@ interface EmployeeState {
     search: string;
     department: string;
     status: string;
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -89,6 +91,8 @@ const initialState: EmployeeState = {
     search: '',
     department: 'all',
     status: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,

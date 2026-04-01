@@ -200,11 +200,11 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
           
           <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
             <h5 className="text-primary mb-0">Basic Details</h5>
-            {mode === 'create' && (
+            {/* {mode === 'create' && (
               <button type="button" onClick={fillMockData} className="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 rounded-pill px-3">
                 <i className="bi bi-magic"></i> Auto-Fill Test Data
               </button>
-            )}
+            )} */}
           </div>
           <div className="row g-3 mb-4">
             {user?.role === 'super_admin' && (

@@ -18,24 +18,24 @@ const CompanySettings: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeCompany) return;
-
+    
     setSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      const updatedCompany = {
-        ...activeCompany,
-        name: formData.name,
-        slug: formData.slug,
-      };
-      dispatch(updateCompany(updatedCompany) as any);
-      // Note: In a real app, we'd also update the context in authSlice if needed
-      setSaving(false);
+    const result = await (dispatch as any)(updateCompany({
+      ...activeCompany,
+      name: formData.name,
+      slug: formData.slug,
+    }));
+
+    setSaving(false);
+    if (updateCompany.fulfilled.match(result)) {
       setMessage('Company details updated successfully!');
       setTimeout(() => setMessage(''), 3000);
-    }, 1000);
+    } else {
+      setMessage('Failed to update company: ' + (result.payload || 'Unknown error'));
+    }
   };
 
   if (!activeCompany) {

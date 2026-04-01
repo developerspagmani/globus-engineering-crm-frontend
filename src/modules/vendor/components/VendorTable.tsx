@@ -31,7 +31,12 @@ const VendorTable: React.FC = () => {
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
     const matchesCategory = filters.category === 'all' || item.category === filters.category;
     
-    return matchesSearch && matchesStatus && matchesCategory;
+    // 4. Date Filter
+    let matchesDate = true;
+    if (filters.fromDate && item.createdAt && new Date(item.createdAt) < new Date(filters.fromDate)) matchesDate = false;
+    if (filters.toDate && item.createdAt && new Date(item.createdAt) > new Date(filters.toDate)) matchesDate = false;
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesDate;
   });
 
   // Pagination logic

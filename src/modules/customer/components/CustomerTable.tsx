@@ -29,7 +29,13 @@ const CustomerTable: React.FC = () => {
     const matchesSearch = String(item.name || '').toLowerCase().includes(filters.search.toLowerCase()) || 
                          String(item.company || '').toLowerCase().includes(filters.search.toLowerCase());
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    return matchesSearch && matchesStatus;
+
+    // Date range filtering
+    let matchesDate = true;
+    if (filters.fromDate && item.createdAt && new Date(item.createdAt) < new Date(filters.fromDate)) matchesDate = false;
+    if (filters.toDate && item.createdAt && new Date(item.createdAt) > new Date(filters.toDate)) matchesDate = false;
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);

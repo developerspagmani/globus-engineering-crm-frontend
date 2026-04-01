@@ -50,66 +50,6 @@ const ReportActions = () => {
     }, 500);
   };
 
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    
-    // Find Action column index to exclude it
-    const headerNames = Array.from(table.querySelectorAll('thead th')).map(h => (h as HTMLElement).innerText.toLowerCase());
-    const actionIndex = headerNames.indexOf('action');
-
-    rows.forEach(row => {
-      let cols = Array.from(row.querySelectorAll('th, td'));
-      
-      if (actionIndex !== -1) {
-          cols = cols.filter((_, idx) => idx !== actionIndex);
-      }
-      
-      const rowData = cols.map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Report data copied to clipboard!");
-    });
-  };
-
-  const handleExportExcel = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-
-    const rows = table.querySelectorAll('tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    const headerNames = Array.from(table.querySelectorAll('thead th')).map(h => (h as HTMLElement).innerText.toLowerCase());
-    const actionIndex = headerNames.indexOf('action');
-
-    rows.forEach(row => {
-      let cols = Array.from(row.querySelectorAll('th, td'));
-      
-      if (actionIndex !== -1) {
-          cols = cols.filter((_, idx) => idx !== actionIndex);
-      }
-
-      const rowData = cols
-        .map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`)
-        .join(",");
-      csvContent += rowData + "\r\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    const fileName = `report_${new Date().toISOString().split('T')[0]}.csv`;
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleExportPDF = () => {
     const doc = new jsPDF();
     const table = document.querySelector('table');
@@ -145,30 +85,24 @@ const ReportActions = () => {
   };
 
   return (
-    <div className="d-flex gap-2">
-      {/* <button 
-        onClick={handlePrint} 
-        className="btn btn-primary fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth shadow-sm" 
-        style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}
-      >
-        <i className="bi bi-printer"></i> PRINT
-      </button> */}
-                    <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
-
-        <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-      </button>
-                  <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
-
-        <i className="bi bi-files"></i> COPY
-      </button>
-      {/* <button 
-        onClick={handleExportPDF} 
-        className="btn btn-warning text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth shadow-sm" 
-        style={{ backgroundColor: '#ff9800', height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}
-      >
-        <i className="bi bi-file-earmark-pdf"></i> PDF
-      </button> */}
-    </div>
+    // <div className="d-flex gap-2">
+    //   <button 
+    //     onClick={handlePrint} 
+    //     className="btn btn-primary fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth shadow-sm" 
+    //     style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}
+    //   >
+    //     <i className="bi bi-printer"></i> PRINT
+    //   </button>
+    //   <button 
+    //     onClick={handleExportPDF} 
+    //     className="btn btn-warning text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth shadow-sm" 
+    //     style={{ backgroundColor: '#ff9800', height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}
+    //   >
+    //     <i className="bi bi-file-earmark-pdf"></i> PDF
+    //   </button>
+    // </div>
+    <>
+    </>
   );
 };
 

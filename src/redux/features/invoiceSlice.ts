@@ -2,36 +2,58 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Invoice } from '@/types/modules';
 import api from '@/lib/axios';
 
-const mapInvoice = (inv: any): Invoice => ({
-  id: inv.id.toString(),
-  invoiceNumber: String(inv.invoice_no || `INV-${inv.id}`),
-  customerId: inv.customer_id?.toString() || '',
-  customerName: inv.customer_name || 'N/A',
-  address: inv.address || '',
-  company_id: inv.company_id?.toString() || '',
-  date: inv.invoice_date ? new Date(inv.invoice_date).toISOString().split('T')[0] : '',
-  dueDate: inv.due_date ? new Date(inv.due_date).toISOString().split('T')[0] : '',
-  poNo: inv.po_no || inv.poNo || '',
-  poDate: inv.po_date || inv.poDate ? new Date(inv.po_date || inv.poDate).toISOString().split('T')[0] : '',
-  dcNo: inv.dc_no || inv.dcNo || '',
-  dcDate: inv.dc_date || inv.dcDate ? new Date(inv.dc_date || inv.dcDate).toISOString().split('T')[0] : '',
-  grandTotal: parseFloat(inv.grand_total || '0'),
-  status: inv.status?.toLowerCase() || 'draft',
-  items: Array.isArray(inv.items_json) ? inv.items_json : JSON.parse(inv.items_json || '[]'),
-  subTotal: parseFloat(inv.total || '0'),
-  taxTotal: (parseFloat(inv.grand_total || '0')) - (parseFloat(inv.total || '0')),
-  discount: parseFloat(inv.discount || '0'), 
-  type: inv.type || 'INVOICE',
-  billType: inv.bill_type || 'Regular',
-  inwardId: inv.inward_id?.toString(),
-  createdAt: inv.app_created_at || inv.created_at,
-  notes: inv.notes || '',
-  gstin: inv.gstin || '',
-  state: inv.state || '',
-  paidAmount: parseFloat(inv.paid_amount || '0'),
-  otherCharges: parseFloat(inv.other_charges || '0'),
-  taxRate: parseFloat(inv.tax_rate || '12')
-});
+const mapInvoice = (inv: any): Invoice => {
+  const items = Array.isArray(inv.items_json) 
+    ? inv.items_json 
+    : JSON.parse(inv.items_json || '[]');
+
+  return {
+    id: inv.id.toString(),
+    invoiceNumber: String(inv.invoice_no || inv.invoiceNumber || `INV-${inv.id}`),
+    customerId: inv.customer_id?.toString() || inv.customerId?.toString() || '',
+    customerName: inv.customer_name || inv.customerName || 'N/A',
+    address: inv.address || '',
+    company_id: inv.company_id?.toString() || inv.companyId?.toString() || '',
+    date: inv.invoice_date || inv.date ? new Date(inv.invoice_date || inv.date).toISOString().split('T')[0] : '',
+    dueDate: inv.due_date || inv.dueDate ? new Date(inv.due_date || inv.dueDate).toISOString().split('T')[0] : '',
+    poNo: inv.po_no || inv.poNo || '',
+    poDate: inv.po_date || inv.poDate ? new Date(inv.po_date || inv.poDate).toISOString().split('T')[0] : '',
+    dcNo: inv.dc_no || inv.dcNo || '',
+    dcDate: inv.dc_date || inv.dcDate ? new Date(inv.dc_date || inv.dcDate).toISOString().split('T')[0] : '',
+    grandTotal: parseFloat(inv.grand_total || inv.grandTotal || '0'),
+    status: inv.status?.toLowerCase() || 'draft',
+    items: items.map((it: any) => ({
+      id: it.id || Math.random().toString(36).substr(2, 9),
+      description: it.description || '',
+      process: it.process || '',
+      quantity: parseFloat(it.quantity || '0'),
+      unitPrice: parseFloat(it.unitPrice || it.unit_price || it.price || '0'),
+      amount: parseFloat(it.amount || '0'),
+      tax: parseFloat(it.tax || '0'),
+      total: parseFloat(it.total || '0')
+    })),
+    subTotal: parseFloat(inv.total || inv.subTotal || '0'),
+    taxTotal: (parseFloat(inv.grand_total || inv.grandTotal || '0')) - (parseFloat(inv.total || inv.subTotal || '0')),
+    discount: parseFloat(inv.discount || '0'), 
+    type: inv.type || (
+      (inv.billType || inv.bill_type) === 'Without Process' || (inv.billType || inv.bill_type) === 'without_process' ? 'WOP' :
+      (inv.billType || inv.bill_type) === 'Both' || (inv.billType || inv.bill_type) === 'both' ? 'BOTH' : 'INVOICE'
+    ),
+    billType: inv.billType || (
+      inv.bill_type === 'with_process' ? 'With Process' :
+      inv.bill_type === 'without_process' ? 'Without Process' :
+      inv.bill_type === 'both' ? 'Both' : (inv.bill_type || 'With Process')
+    ),
+    inwardId: inv.inward_id?.toString() || inv.inwardId?.toString(),
+    createdAt: inv.app_created_at || inv.created_at || inv.createdAt,
+    notes: inv.notes || '',
+    gstin: inv.gstin || '',
+    state: inv.state || '',
+    paidAmount: parseFloat(inv.paid_amount || inv.paidAmount || '0'),
+    otherCharges: parseFloat(inv.other_charges || inv.otherCharges || '0'),
+    taxRate: parseFloat(inv.tax_rate || inv.taxRate || '12')
+  };
+};
 
 // Thunks
 export const fetchInvoices = createAsyncThunk(
@@ -150,6 +172,8 @@ interface InvoiceState {
   filters: {
     search: string;
     status: string;
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -175,6 +199,8 @@ const initialState: InvoiceState = {
   filters: {
     search: '',
     status: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,

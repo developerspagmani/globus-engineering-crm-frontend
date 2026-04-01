@@ -59,6 +59,8 @@ interface VendorState {
     search: string;
     status: string;
     category: string;
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -74,6 +76,8 @@ const initialState: VendorState = {
     search: '',
     status: 'all',
     category: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,

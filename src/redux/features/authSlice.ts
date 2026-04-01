@@ -1,6 +1,31 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { User, Company } from '@/types/modules';
 import { setCookie, deleteCookie } from '@/lib/cookies';
+import api from '@/lib/axios';
+
+export const updatePassword = createAsyncThunk(
+  'auth/updatePassword',
+  async ({ id, password }: any, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/users/${id}/reset-password`, { password });
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to update password');
+    }
+  }
+);
+
+export const updateProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (userData: Partial<User>, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/users/${userData.id}`, userData);
+      return response.data.user;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to update profile');
+    }
+  }
+);
 
 interface AuthState {
   user: User | null;
@@ -142,6 +167,41 @@ const authSlice = createSlice({
         }
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(updateProfile.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        const user = action.payload;
+        const processedUser: User = {
+          ...user,
+          company_id: user.company_id,
+          modulePermissions: user.modulePermissions || (typeof user.module_permissions === 'string' ? JSON.parse(user.module_permissions) : user.module_permissions) || []
+        };
+        
+        state.loading = false;
+        state.user = processedUser;
+        if (typeof window !== 'undefined') {
+          const savedAuth = localStorage.getItem('globus_auth');
+          if (savedAuth) {
+            try {
+              const parsed = JSON.parse(savedAuth);
+              localStorage.setItem('globus_auth', JSON.stringify({
+                ...parsed,
+                user: processedUser
+              }));
+            } catch (e) {
+              console.error('Failed to update persisted user profile', e);
+            }
+          }
+        }
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 

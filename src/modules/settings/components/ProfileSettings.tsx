@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { updateUser } from '@/redux/features/authSlice';
+import { updateProfile } from '@/redux/features/authSlice';
 
 const ProfileSettings: React.FC = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, loading } = useSelector((state: RootState) => state.auth);
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -16,26 +16,25 @@ const ProfileSettings: React.FC = () => {
     avatar: '',
   });
 
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    setSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      dispatch(updateUser({
-        ...user,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-      }));
-      setSaving(false);
+    const result = await (dispatch as any)(updateProfile({
+      id: user.id,
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+    }));
+
+    if (updateProfile.fulfilled.match(result)) {
       setMessage('Profile updated successfully!');
       setTimeout(() => setMessage(''), 3000);
-    }, 1000);
+    } else {
+      setMessage('Failed to update profile: ' + (result.payload || 'Unknown error'));
+    }
   };
 
   return (
@@ -101,9 +100,9 @@ const ProfileSettings: React.FC = () => {
               <button 
                 type="submit" 
                 className="btn btn-primary px-5 rounded-pill shadow-accent"
-                disabled={saving}
+                disabled={loading}
               >
-                {saving ? (
+                {loading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2"></span>
                     Saving...

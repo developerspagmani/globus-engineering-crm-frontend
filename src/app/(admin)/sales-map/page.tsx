@@ -52,6 +52,9 @@ const SalesMapPage = () => {
         const thisYear = now.getFullYear();
 
         return customers.filter(customer => {
+            // Company data isolation - Ensure we only show data for the active company context
+            if (activeCompany?.id && String(customer.company_id) !== String(activeCompany.id)) return false;
+
             const customerState = customer.state || '';
             const customerDistrict = customer.district || '';
 
@@ -78,7 +81,7 @@ const SalesMapPage = () => {
 
             return matchesRegion && matchesSearch && matchesTime;
         });
-    }, [customers, selectedRegion, searchQuery, timeFilter]);
+    }, [customers, selectedRegion, searchQuery, timeFilter, activeCompany?.id]);
 
     const stats = useMemo(() => {
         const uniqueStates = [...new Set(filteredCustomers.map(c => c.state || 'Unknown'))].length;
@@ -109,6 +112,12 @@ const SalesMapPage = () => {
         dispatch(setCompanyContext(selectedCompany));
         router.refresh();
     };
+
+    // Correct isolation of data to only the active company
+    const companyCustomers = useMemo(() => {
+        if (!activeCompany) return [];
+        return customers.filter(c => String(c.company_id) === String(activeCompany.id));
+    }, [customers, activeCompany?.id]);
 
     return (
         <div className={`dashboard-layout ${isDarkMode ? 'dark-mode' : ''} bg-white min-vh-100 position-relative`}>
@@ -228,8 +237,8 @@ const SalesMapPage = () => {
                                     <IndiaMap
                                         onRegionSelect={handleRegionSelect}
                                         selectedRegion={selectedRegion}
-                                        activeDistricts={useMemo(() => [...new Set(customers.map(c => c.district || ''))], [customers])}
-                                        activeStates={useMemo(() => [...new Set(customers.map(c => c.state || ''))], [customers])}
+                                        activeDistricts={useMemo(() => [...new Set(companyCustomers.map((c: any) => c.district || ''))], [companyCustomers]) as string[]}
+                                        activeStates={useMemo(() => [...new Set(companyCustomers.map((c: any) => c.state || ''))], [companyCustomers]) as string[]}
                                         searchTerm={debouncedSearchQuery}
                                         onViewModeChange={(mode) => setViewMode(mode as any)}
                                     />

@@ -110,6 +110,8 @@ interface InwardState {
   filters: {
     search: string;
     status: 'all' | 'pending' | 'completed' | 'cancelled';
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -124,6 +126,8 @@ const initialState: InwardState = {
   filters: {
     search: '',
     status: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,

@@ -4,9 +4,10 @@ import api from '@/lib/axios';
 
 export const fetchChallans = createAsyncThunk(
   'challan/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (company_id: string | undefined, { rejectWithValue }) => {
     try {
-      const response = await api.get('/challans');
+      const url = company_id ? `/challans?company_id=${company_id}` : '/challans';
+      const response = await api.get(url);
       return response.data.map((c: any) => ({
         ...c,
         id: c.id.toString(),
@@ -24,6 +25,7 @@ export const createChallan = createAsyncThunk(
   async (data: Omit<Challan, 'id' | 'createdAt'>, { rejectWithValue }) => {
     try {
       const response = await api.post('/challans', {
+        id: (data as any).id,
         challan_no: data.challanNo,
         party_id: data.partyId,
         party_name: data.partyName,
@@ -32,7 +34,8 @@ export const createChallan = createAsyncThunk(
         status: data.status,
         items: data.items,
         vehicle_no: data.vehicleNo,
-        driver_name: data.driverName
+        driver_name: data.driverName,
+        company_id: data.company_id
       });
       return response.data;
     } catch (err: any) {
@@ -54,7 +57,8 @@ export const updateChallan = createAsyncThunk(
         status: data.status,
         items: data.items,
         vehicle_no: data.vehicleNo,
-        driver_name: data.driverName
+        driver_name: data.driverName,
+        company_id: data.company_id
       });
       return response.data;
     } catch (err: any) {
@@ -83,6 +87,8 @@ interface ChallanState {
     search: string;
     type: 'all' | 'delivery' | 'returnable' | 'job_work';
     status: 'all' | 'draft' | 'dispatched' | 'received' | 'cancelled';
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -98,6 +104,8 @@ const initialState: ChallanState = {
     search: '',
     type: 'all',
     status: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,

@@ -53,7 +53,13 @@ const LeadsPage = () => {
     const matchesSearch = item.name.toLowerCase().includes(filters.search.toLowerCase()) || 
                           item.company.toLowerCase().includes(filters.search.toLowerCase());
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    return matchesSearch && matchesStatus;
+
+    // Date range filtering (Inquiry Date uses createdAt)
+    let matchesDate = true;
+    if (filters.fromDate && item.createdAt && new Date(item.createdAt) < new Date(filters.fromDate)) matchesDate = false;
+    if (filters.toDate && item.createdAt && new Date(item.createdAt) > new Date(filters.toDate)) matchesDate = false;
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const handlePromoteParams = (lead: any) => {
@@ -98,36 +104,6 @@ const LeadsPage = () => {
       case 'converted': return <span className="badge bg-success-soft text-success px-2 py-1 rounded-pill small fw-800">CONVERTED</span>;
       default: return null;
     }
-  };
-
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-    navigator.clipboard.writeText(text).then(() => alert("Table data copied to clipboard!"));
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`).join(",");
-      csvContent += rowData + "\r\n";
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handlePrintLeadRecord = (lead: any) => {
@@ -188,7 +164,7 @@ const LeadsPage = () => {
       <div className="card shadow-sm border-0 mb-4 overflow-hidden">
         <div className="card-body p-3">
           <div className="d-flex flex-wrap align-items-center gap-2">
-            <div className="flex-grow-1" style={{ minWidth: '300px' }}>
+            <div className="col-lg-3 col-md-4">
               <div className="input-group">
                 <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
                   <i className="bi bi-search"></i>
@@ -202,28 +178,38 @@ const LeadsPage = () => {
                 />
               </div>
             </div>
-            
-            <div style={{ width: '180px' }}>
+            <div className="col-lg-2 col-md-3">
               <select
                 className="form-select py-2"
                 value={filters.status}
                 onChange={(e) => dispatch(setLeadFilters({ status: e.target.value as any }))}
               >
-                <option value="all">All Statuses</option>
+                <option value="all">Statuses</option>
                 <option value="new">New</option>
                 <option value="contacted">Contacted</option>
                 <option value="qualified">Qualified</option>
               </select>
             </div>
-
-            <div className="ms-auto d-flex gap-2 align-items-center">
-              <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
-                <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-              </button>
-              <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
-                <i className="bi bi-files"></i> COPY
-              </button>
+            <div className="col-lg-2 col-md-3">
+              <input 
+                type="date" 
+                className="form-control py-2" 
+                value={filters.fromDate}
+                onChange={(e) => dispatch(setLeadFilters({ fromDate: e.target.value }))}
+              />
             </div>
+                        <span className="text-muted small fw-bold">TO</span>
+
+            <div className="col-lg-2 col-md-3">
+              <input 
+                type="date" 
+                className="form-control py-2" 
+                value={filters.toDate}
+                onChange={(e) => dispatch(setLeadFilters({ toDate: e.target.value }))}
+              />
+            </div>
+
+            
           </div>
         </div>
       </div>
@@ -256,14 +242,14 @@ const LeadsPage = () => {
               filteredItems.map(lead => (
                 <tr key={lead.id}>
                   <td className="px-4 py-3">
-                    <div className="fw-800 text-dark mb-0 fs-6 text-uppercase">{lead.name}</div>
-                    <div className="small text-muted fw-600 text-uppercase">{lead.company}</div>
+                    <div className="fw-800 text-dark mb-0 fs-6 ">{lead.name}</div>
+                    <div className="small text-muted fw-600">{lead.company}</div>
                   </td>
                   <td>
-                    <span className="small fw-700 text-muted text-uppercase"><i className="bi bi-box-arrow-in-right me-1"></i>{lead.source}</span>
+                    <span className="small fw-700 text-muted "><i className="bi bi-box-arrow-in-right me-1"></i>{lead.source}</span>
                   </td>
                   <td>{getStatusBadge(lead.status)}</td>
-                  <td><span className="fw-600 text-muted text-uppercase" style={{ fontSize: '0.9rem' }}>{lead.industry}</span></td>
+                  <td><span className="fw-600 text-muted" style={{ fontSize: '0.9rem' }}>{lead.industry}</span></td>
                   <td className="text-center px-4">
                     <div className="d-flex justify-content-center gap-1">
                         {checkActionPermission(user, 'mod_lead', 'edit') && (

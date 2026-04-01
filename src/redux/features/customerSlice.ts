@@ -58,6 +58,8 @@ interface CustomerState {
     search: string;
     status: string;
     industry: string;
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -73,6 +75,8 @@ const initialState: CustomerState = {
     search: '',
     status: 'all',
     industry: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,
@@ -99,11 +103,7 @@ const customerSlice = createSlice({
       })
       .addCase(fetchCustomers.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(createCustomer.fulfilled, (state, action: PayloadAction<any>) => {
-        const c = action.payload;
-        state.items.unshift({
+        state.items = action.payload.map((c: any) => ({
           id: c.id?.toString() || '',
           name: c.name || c.customer_name || '',
           email: c.email || '',
@@ -115,11 +115,123 @@ const customerSlice = createSlice({
           street2: c.street2,
           city: c.city,
           state: c.state,
-          stateCode: c.state_code,
-          pinCode: c.pin_code,
+          stateCode: c.stateCode || c.state_code,
+          pinCode: c.pinCode || c.pin_code,
+          contactPerson1: c.contactPerson1 || c.contact_person1,
+          designation1: c.designation1 || c.designation1,
+          emailId1: c.emailId1 || c.email_id1,
+          phoneNumber1: c.phoneNumber1 || c.phone_number1,
+          contactPerson2: c.contactPerson2 || c.contact_person2,
+          designation2: c.designation2 || c.designation2,
+          emailId2: c.emailId2 || c.email_id2,
+          phoneNumber2: c.phoneNumber2 || c.phone_number2,
+          contactPerson3: c.contactPerson3 || c.contact_person3,
+          designation3: c.designation3 || c.designation3,
+          emailId3: c.emailId3 || c.email_id3,
+          phoneNumber3: c.phoneNumber3 || c.phone_number3,
+          landline: c.landline || c.land_line,
+          fax: c.fax,
+          gst: c.gst,
+          tin: c.tin,
+          cst: c.cst,
+          tc: c.tc,
+          vmc: c.vmc,
+          hmc: c.hmc,
+          paymentTerms: c.paymentTerms || c.payment_terms,
+          company_id: c.company_id,
+          createdAt: c.createdAt || c.app_created_at
+        }));
+        state.error = null;
+      })
+      .addCase(fetchCustomers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(createCustomer.fulfilled, (state, action: PayloadAction<any>) => {
+        const c = action.payload;
+        state.items.unshift({
+          id: c.id?.toString() || '',
+          name: c.name || c.customer_name || '',
+          email: c.email || '',
+          phone: c.phone || '',
+          company: c.company || c.name || c.customer_name || '',
+          industry: c.industry || '',
+          status: c.status || 'active',
+          street1: c.street1,
+          street2: c.street2,
+          city: c.city,
+          state: c.state,
+          stateCode: c.stateCode || c.state_code,
+          pinCode: c.pinCode || c.pin_code,
+          contactPerson1: c.contactPerson1 || c.contact_person1,
+          designation1: c.designation1 || c.designation1,
+          emailId1: c.emailId1 || c.email_id1,
+          phoneNumber1: c.phoneNumber1 || c.phone_number1,
+          contactPerson2: c.contactPerson2 || c.contact_person2,
+          designation2: c.designation2 || c.designation2,
+          emailId2: c.emailId2 || c.email_id2,
+          phoneNumber2: c.phoneNumber2 || c.phone_number2,
+          contactPerson3: c.contactPerson3 || c.contact_person3,
+          designation3: c.designation3 || c.designation3,
+          emailId3: c.emailId3 || c.email_id3,
+          phoneNumber3: c.phoneNumber3 || c.phone_number3,
+          landline: c.landline || c.land_line,
+          fax: c.fax,
+          gst: c.gst,
+          tin: c.tin,
+          cst: c.cst,
+          tc: c.tc,
+          vmc: c.vmc,
+          hmc: c.hmc,
+          paymentTerms: c.paymentTerms || c.payment_terms,
           company_id: c.company_id,
           createdAt: c.createdAt || c.app_created_at
         });
+      })
+      .addCase(updateCustomer.fulfilled, (state, action) => {
+        const c = action.payload;
+        const index = state.items.findIndex(item => item.id === c.id.toString());
+        if (index !== -1) {
+          state.items[index] = {
+            ...state.items[index],
+            id: c.id?.toString() || '',
+            name: c.name || c.customer_name || '',
+            email: c.email || '',
+            phone: c.phone || '',
+            company: c.company || c.name || c.customer_name || '',
+            industry: c.industry || '',
+            status: c.status || 'active',
+            street1: c.street1,
+            street2: c.street2,
+            city: c.city,
+            state: c.state,
+            stateCode: c.stateCode || c.state_code,
+            pinCode: c.pinCode || c.pin_code,
+            contactPerson1: c.contactPerson1 || c.contact_person1,
+            designation1: c.designation1 || c.designation1,
+            emailId1: c.emailId1 || c.email_id1,
+            phoneNumber1: c.phoneNumber1 || c.phone_number1,
+            contactPerson2: c.contactPerson2 || c.contact_person2,
+            designation2: c.designation2 || c.designation2,
+            emailId2: c.emailId2 || c.email_id2,
+            phoneNumber2: c.phoneNumber2 || c.phone_number2,
+            contactPerson3: c.contactPerson3 || c.contact_person3,
+            designation3: c.designation3 || c.designation3,
+            emailId3: c.emailId3 || c.email_id3,
+            phoneNumber3: c.phoneNumber3 || c.phone_number3,
+            landline: c.landline || c.land_line,
+            fax: c.fax,
+            gst: c.gst,
+            tin: c.tin,
+            cst: c.cst,
+            tc: c.tc,
+            vmc: c.vmc,
+            hmc: c.hmc,
+            paymentTerms: c.paymentTerms || c.payment_terms,
+            company_id: c.company_id,
+            createdAt: c.createdAt || c.app_created_at
+          };
+        }
       })
       .addCase(deleteCustomer.fulfilled, (state, action) => {
         state.items = state.items.filter(c => c.id !== action.payload);

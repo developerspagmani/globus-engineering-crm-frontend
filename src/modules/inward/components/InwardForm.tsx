@@ -47,7 +47,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
     type: 'success',
     title: '',
     message: '',
-    confirmLabel: 'Understand'
+    confirmLabel: 'Success'
   });
 
   useEffect(() => {
@@ -202,130 +202,138 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
     }));
   };
 
-  return (
-    <div className="card border-0 shadow-sm bg-white pb-5">
-      <div className="card-body p-4 p-md-5">
-        <form onSubmit={handleSubmit}>
-
-          {/* <div className="d-flex justify-content-between align-items-center mb-5 pb-3"> */}
-            <div></div> {/* placeholder for flex */}
-            {/* <h4 className="m-0 text-dark fw-normal" style={{ marginLeft: '120px' }}>Globus Engineering Tools</h4> */}
-            
-          {/* </div> */}
-
-          <div className="row g-4 mb-5 align-items-center">
-            <div className="col-md-6 d-flex">
-              <label className="form-label mb-0 align-self-center text-muted col-3">Customer</label>
-              <select className="form-select border-0 border-bottom rounded-0 px-2 shadow-none" name="customerId" value={formData.customerId} onChange={handleChange} required disabled={mode === 'view'}>
-                <option value="">{customersLoading ? 'Loading Customers...' : ''}</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-6 d-flex">
-              <label className="form-label mb-0 align-self-center text-muted col-3">Date</label>
-              <input type="date" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
-            </div>
-
-            <div className="col-md-6 d-flex">
-              <label className="form-label mb-0 align-self-center text-muted col-3">Po No</label>
-              <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="poReference" value={formData.poReference} onChange={handleChange} placeholder="Po No" disabled={mode === 'view'} />
-            </div>
-            <div className="col-md-6 d-flex">
-              <label className="form-label mb-0 align-self-center text-muted col-3">Po Date</label>
-              <input type="date" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="poDate" value={formData.poDate} onChange={handleChange} disabled={mode === 'view'} />
-            </div>
-
-            <div className="col-md-6 d-flex">
-              <label className="form-label mb-0 align-self-center text-muted col-3">Dc No</label>
-              <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="dcNo" value={formData.dcNo} onChange={handleChange} placeholder="Dc No" disabled={mode === 'view'} />
-            </div>
-            <div className="col-md-6 d-flex">
-              <label className="form-label mb-0 align-self-center text-muted col-3">Dc Date</label>
-              <input type="date" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="dcDate" value={formData.dcDate} onChange={handleChange} disabled={mode === 'view'} />
-            </div>
-          </div>
-
-          <div className="mt-5 border-top pt-4 border-bottom pb-4 mb-4">
-            <div className="row g-2 mb-3 fw-bold text-muted small">
-              <div className="col-md-5">Item</div>
-              <div className="col-md-4">Process</div>
-              <div className="col-md-2">Qty</div>
-              <div className="col-md-1 text-center">Action</div>
-            </div>
-
-            {formData.items.map((item, index) => (
-              <div className="row g-2 mb-3 align-items-center" key={index}>
-                <div className="col-md-5">
-                  <select className="form-select border-0 border-bottom rounded-0 px-2 shadow-none text-muted" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required disabled={mode === 'view'}>
-                    <option value="">Select Item</option>
-                    {masterItems.map(mi => (
-                      <option key={mi.id} value={mi.itemName}>{mi.itemName} ({mi.itemCode})</option>
-                    ))}
-                    {item.description && !masterItems.some(mi => mi.itemName === item.description) && (
-                      <option value={item.description}>{item.description} (Legacy)</option>
-                    )}
-                  </select>
-                </div>
-                <div className="col-md-4">
-                  <select className="form-select border-0 border-bottom rounded-0 px-2 shadow-none text-muted" value={item.process} onChange={e => handleItemChange(index, 'process', e.target.value)} required disabled={mode === 'view'}>
-                    <option value="">Select Process</option>
-                    {masterProcesses.map(mp => (
-                      <option key={mp.id} value={mp.processName}>{mp.processName}</option>
-                    ))}
-                    {item.process && !masterProcesses.some(mp => mp.processName === item.process) && (
-                      <option value={item.process}>{item.process} (Legacy)</option>
-                    )}
-                  </select>
-                </div>
-                <div className="col-md-2">
-                  <input type="number" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', parseFloat(e.target.value))} required disabled={mode === 'view'} />
-                </div>
-                <div className="col-md-1 text-center">
-                  {mode !== 'view' && (
-                    <button type="button" className="btn btn-link text-danger p-0 border-0 fs-5 text-decoration-none shadow-none" onClick={() => removeItem(index)} disabled={formData.items.length === 1}>
-                      <i className="bi bi-x"></i>
-                    </button>
-                  )}
-                </div>
+   return (
+    <>
+      <div className="card border-0 shadow-sm bg-white pb-5">
+        <div className="card-body p-4 p-md-5">
+          <form onSubmit={handleSubmit}>
+  
+            {/* <div className="d-flex justify-content-between align-items-center mb-5 pb-3"> */}
+              <div></div> {/* placeholder for flex */}
+              {/* <h4 className="m-0 text-dark fw-normal" style={{ marginLeft: '120px' }}>Globus Engineering Tools</h4> */}
+              
+            {/* </div> */}
+  
+            <div className="row g-4 mb-5 align-items-center">
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Customer</label>
+                <select className="form-select border-0 border-bottom rounded-0 px-2 shadow-none" name="customerId" value={formData.customerId} onChange={handleChange} required disabled={mode === 'view'}>
+                  <option value="">{customersLoading ? 'Loading Customers...' : 'Choose Customer'}</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                  ))}
+                </select>
               </div>
-            ))}
-
-            {mode !== 'view' && (
-              <div className="text-end mt-4">
-                <button type="button" className="btn btn-link text-success text-decoration-none fw-semibold p-0 shadow-none" onClick={addItem}>
-                  <i className="bi bi-plus fs-5 align-middle"></i> Add New Row
-                </button>
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Date</label>
+                <input type="date" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
               </div>
-            )}
-          </div>
-
-          <div className="mt-5 text-center d-flex justify-content-center gap-3">
-            {mode !== 'view' && (
-              <>
-                <button type="submit" className="btn btn-success px-4 rounded-1" style={{ minWidth: '100px' }}>{mode === 'create' ? 'ADD' : 'SAVE'}</button>
-                <button type="button" className="btn btn-danger px-4 rounded-1" style={{ minWidth: '100px' }} onClick={() => mode === 'create' ? setFormData({ ...formData, poReference: '', dcNo: '', poDate: '', dcDate: '', items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }] } as any) : router.push('/inward')}>RESET</button>
-              </>
-            )}
-            {mode === 'view' && (
-              <button type="button" className="btn btn-secondary px-4 rounded-1" onClick={() => router.push('/inward')}>BACK</button>
-            )}
-          </div>
-        </form>
+  
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Po No</label>
+                <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="poReference" value={formData.poReference} onChange={handleChange} placeholder="Po No" disabled={mode === 'view'} />
+              </div>
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Po Date</label>
+                <input type="date" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="poDate" value={formData.poDate} onChange={handleChange} disabled={mode === 'view'} />
+              </div>
+  
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Dc No</label>
+                <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="dcNo" value={formData.dcNo} onChange={handleChange} placeholder="Dc No" disabled={mode === 'view'} />
+              </div>
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Dc Date</label>
+                <input type="date" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="dcDate" value={formData.dcDate} onChange={handleChange} disabled={mode === 'view'} />
+              </div>
+            </div>
+  
+            <div className="mt-5 border-top pt-4 border-bottom pb-4 mb-4">
+              <div className="row g-2 mb-3 fw-bold text-muted small">
+                <div className="col-md-5">Item</div>
+                <div className="col-md-4">Process</div>
+                <div className="col-md-2">Qty</div>
+                <div className="col-md-1 text-center">Action</div>
+              </div>
+  
+              {formData.items.map((item, index) => (
+                <div className="row g-2 mb-3 align-items-center" key={index}>
+                  <div className="col-md-5">
+                    <select className="form-select border-0 border-bottom rounded-0 px-2 shadow-none text-muted" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required disabled={mode === 'view'}>
+                      <option value="">Select Item</option>
+                      {masterItems.map(mi => (
+                        <option key={mi.id} value={mi.itemName}>{mi.itemName} ({mi.itemCode})</option>
+                      ))}
+                      {item.description && !masterItems.some(mi => mi.itemName === item.description) && (
+                        <option value={item.description}>{item.description} (Legacy)</option>
+                      )}
+                    </select>
+                  </div>
+                  <div className="col-md-4">
+                    <select className="form-select border-0 border-bottom rounded-0 px-2 shadow-none text-muted" value={item.process} onChange={e => handleItemChange(index, 'process', e.target.value)} required disabled={mode === 'view'}>
+                      <option value="">Select Process</option>
+                      {masterProcesses.map(mp => (
+                        <option key={mp.id} value={mp.processName}>{mp.processName}</option>
+                      ))}
+                      {item.process && !masterProcesses.some(mp => mp.processName === item.process) && (
+                        <option value={item.process}>{item.process} (Legacy)</option>
+                      )}
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <input type="number" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', parseFloat(e.target.value))} required disabled={mode === 'view'} />
+                  </div>
+                  <div className="col-md-1 text-center">
+                    {mode !== 'view' && (
+                      <button type="button" className="btn btn-link text-danger p-0 border-0 fs-5 text-decoration-none shadow-none" onClick={() => removeItem(index)} disabled={formData.items.length === 1}>
+                        <i className="bi bi-x"></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+  
+              {mode !== 'view' && (
+                <div className="text-end mt-4">
+                  <button type="button" className="btn btn-link text-success text-decoration-none fw-semibold p-0 shadow-none" onClick={addItem}>
+                    <i className="bi bi-plus fs-5 align-middle"></i> Add New Row
+                  </button>
+                </div>
+              )}
+            </div>
+  
+            <div className="mt-5 text-center d-flex justify-content-center gap-3">
+              {mode !== 'view' && (
+                <>
+                  <button type="submit" className="btn btn-success px-4 rounded-1" style={{ minWidth: '100px' }}>{mode === 'create' ? 'ADD' : 'SAVE'}</button>
+                  <button type="button" className="btn btn-danger px-4 rounded-1" style={{ minWidth: '100px' }} onClick={() => mode === 'create' ? setFormData({ ...formData, poReference: '', dcNo: '', poDate: '', dcDate: '', items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }] } as any) : router.push('/inward')}>RESET</button>
+                </>
+              )}
+              {mode === 'view' && (
+                <button type="button" className="btn btn-secondary px-4 rounded-1" onClick={() => router.push('/inward')}>BACK</button>
+              )}
+            </div>
+          </form>
+        </div>
+  
+        <StatusModal
+          isOpen={modal.isOpen}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/inward');
+          }}
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+        />
       </div>
-
-      <StatusModal
-        isOpen={modal.isOpen}
-        onClose={() => {
-          setModal(prev => ({ ...prev, isOpen: false }));
-          if (modal.type === 'success') router.push('/inward');
-        }}
-        type={modal.type}
-        title={modal.title}
-        message={modal.message}
-      />
-    </div>
+      <style jsx>{`
+        .form-control, .form-select {
+          font-size: 0.85rem !important;
+        }
+          
+      `}</style>
+    </>
   );
 };
 

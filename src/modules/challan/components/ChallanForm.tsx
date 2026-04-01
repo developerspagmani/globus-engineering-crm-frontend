@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
+import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
 import { createChallan, updateChallan } from '@/redux/features/challanSlice';
-import { Challan, Customer, Vendor } from '@/data/mockModules';
+import { Challan } from '@/types/modules';
 import StatusModal from '@/components/StatusModal';
 
 interface ChallanFormProps {
@@ -16,9 +18,21 @@ interface ChallanFormProps {
 const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
-  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
+
+  // Use String comparison to handle both numeric and string IDs correctly
+  const companyCustomers = customers.filter(c => !activeCompany || String(c.company_id || (c as any).companyId) === String(activeCompany.id));
+  const companyVendors = vendors.filter(v => !activeCompany || String(v.company_id || (v as any).companyId) === String(activeCompany.id));
+
+  // Ensure data is fetched if not present
+  useEffect(() => {
+    if (activeCompany?.id) {
+       if (customers.length === 0) dispatch(fetchCustomers(activeCompany.id) as any);
+       if (vendors.length === 0) dispatch(fetchVendors(activeCompany.id) as any);
+    }
+  }, [activeCompany?.id, dispatch, customers.length, vendors.length]);
 
   const [formData, setFormData] = useState<Omit<Challan, 'id' | 'createdAt'>>({
     challanNo: `DC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -93,19 +107,22 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (mode === 'create') {
-        dispatch(createChallan(formData) as any);
-        setModal({
-          isOpen: true,
-          type: 'success',
-          title: 'Challan Created!',
-          message: `Delivery challan ${formData.challanNo} has been successfully generated.`
-        });
+        const uniqueId = `dc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const result = await dispatch(createChallan({ ...formData, id: uniqueId, company_id: activeCompany?.id || '' } as any) as any).unwrap();
+        if (result) {
+          setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Challan Created!',
+            message: `Delivery challan ${formData.challanNo} has been successfully generated.`
+          });
+        }
       } else {
-        dispatch(updateChallan({ ...initialData!, ...formData }) as any);
+        await dispatch(updateChallan({ ...initialData!, ...formData, company_id: activeCompany?.id || initialData?.company_id || '' }) as any).unwrap();
         setModal({
           isOpen: true,
           type: 'success',
@@ -113,12 +130,12 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
           message: 'The challan details have been updated.'
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       setModal({
         isOpen: true,
         type: 'error',
-        title: 'Error',
-        message: 'Something went wrong while saving the challan.'
+        title: 'Error Saving Challan',
+        message: err || 'Something went wrong while saving the challan.'
       });
     }
   };
@@ -166,8 +183,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               >
                 <option value="">Select {formData.partyType === 'customer' ? 'Customer' : 'Vendor'}</option>
                 {formData.partyType === 'customer' 
-                  ? customers.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)
-                  : vendors.map(v => <option key={v.id} value={v.id}>{v.company || v.name}</option>)
+                  ? companyCustomers.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)
+                  : companyVendors.map(v => <option key={v.id} value={v.id}>{v.company || v.name}</option>)
                 }
               </select>
             </div>

@@ -23,6 +23,8 @@ const EmployeesPage = () => {
       search: string;
       department: string;
       status: string;
+      fromDate: string;
+      toDate: string;
     }; 
     pagination: {
       currentPage: number;
@@ -53,7 +55,13 @@ const EmployeesPage = () => {
       item.designation.toLowerCase().includes(filters.search.toLowerCase());
     const matchesDept = filters.department === 'all' || item.department === filters.department;
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    return matchesSearch && matchesStatus && matchesDept;
+
+    // Date range filtering (Joining Date)
+    let matchesDate = true;
+    if (filters.fromDate && item.joiningDate && new Date(item.joiningDate) < new Date(filters.fromDate)) matchesDate = false;
+    if (filters.toDate && item.joiningDate && new Date(item.joiningDate) > new Date(filters.toDate)) matchesDate = false;
+
+    return matchesSearch && matchesStatus && matchesDept && matchesDate;
   });
 
   // Pagination logic
@@ -72,36 +80,6 @@ const EmployeesPage = () => {
       case 'HR': return 'text-secondary';
       default: return 'text-dark';
     }
-  };
-
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-    navigator.clipboard.writeText(text).then(() => alert("Table data copied to clipboard!"));
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`).join(",");
-      csvContent += rowData + "\r\n";
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `employees_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handlePrintEmployee = (emp: Employee) => {
@@ -152,7 +130,7 @@ const EmployeesPage = () => {
 
   const confirmDelete = () => {
     if (deleteModal.id) {
-      (dispatch as any)(deleteEmployee(deleteModal.id));
+       (dispatch as any)(deleteEmployee(deleteModal.id));
     }
   };
 
@@ -180,7 +158,7 @@ const EmployeesPage = () => {
       <div className="card shadow-sm border-0 mb-4 overflow-hidden">
         <div className="card-body p-3">
           <div className="d-flex flex-wrap align-items-center gap-2">
-            <div className="flex-grow-1" style={{ minWidth: '300px' }}>
+            <div className="col-lg-3 col-md-4">
               <div className="input-group">
                 <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
                   <i className="bi bi-search"></i>
@@ -188,19 +166,32 @@ const EmployeesPage = () => {
                 <input 
                   type="text" 
                   className="form-control border-start-0 ps-0 py-2" 
-                  placeholder="Search by name, ID, or designation..." 
+                  placeholder="Search employees..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setEmployeeFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
-            <div style={{ width: '200px' }}>
+            
+            <div className="ms-auto d-flex gap-2 align-items-center">
+              <div className="btn-group p-1 bg-light rounded-3 shadow-none d-none d-sm-flex" style={{ height: '42px' }}>
+                {/* <button 
+                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'all' ? 'bg-white shadow-sm fw-700' : 'text-muted border-0'}`}
+                  onClick={() => dispatch(setEmployeeFilters({ status: 'all' }))}
+                >All</button>
+                <button 
+                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'active' ? 'bg-white shadow-sm fw-700 text-success' : 'text-muted border-0'}`}
+                  onClick={() => dispatch(setEmployeeFilters({ status: 'active' }))}
+                >Active</button> */}
+              </div>
+            </div>
+            <div className="col-lg-2 col-md-3">
               <select 
                 className="form-select py-2" 
                 value={filters.department}
                 onChange={(e) => dispatch(setEmployeeFilters({ department: e.target.value as any }))}
               >
-                <option value="all">All Departments</option>
+                <option value="all">Departments</option>
                 <option value="Engineering">Engineering</option>
                 <option value="Production">Production</option>
                 <option value="Logistics">Logistics</option>
@@ -208,24 +199,30 @@ const EmployeesPage = () => {
                 <option value="HR">HR</option>
               </select>
             </div>
-            <div className="ms-auto d-flex gap-2 align-items-center">
-              <div className="btn-group p-1 bg-light rounded-3 shadow-none me-2 d-none d-sm-flex" style={{ height: '42px' }}>
-                <button 
-                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'all' ? 'bg-white shadow-sm fw-700' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setEmployeeFilters({ status: 'all' }))}
-                >All</button>
-                <button 
-                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'active' ? 'bg-white shadow-sm fw-700 text-success' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setEmployeeFilters({ status: 'active' }))}
-                >Active</button>
-              </div>
-              <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
-                <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-              </button>
-              <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
-                <i className="bi bi-files"></i> COPY
-              </button>
+
+          
+
+            <div className="col-lg-2 col-md-3">
+              <input 
+                type="date" 
+                className="form-control py-2" 
+                value={filters.fromDate}
+                onChange={(e) => dispatch(setEmployeeFilters({ fromDate: e.target.value }))}
+              />
             </div>
+                        <span className="text-muted small fw-bold">TO</span>
+
+            <div className="col-lg-2 col-md-3">
+              <input 
+                type="date" 
+                className="form-control py-2" 
+                value={filters.toDate}
+                onChange={(e) => dispatch(setEmployeeFilters({ toDate: e.target.value }))}
+              />
+            </div>
+
+            
+            
           </div>
         </div>
       </div>

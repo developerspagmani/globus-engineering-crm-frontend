@@ -64,36 +64,6 @@ export default function ProcessDetailsPage() {
     p.processName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-    navigator.clipboard.writeText(text).then(() => alert("Table data copied to clipboard!"));
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`).join(",");
-      csvContent += rowData + "\r\n";
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `processes_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handlePrintProcess = (p: any) => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
@@ -264,14 +234,6 @@ export default function ProcessDetailsPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                </div>
-                <div className="ms-auto d-flex gap-2">
-                  <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
-                    <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-                  </button>
-                  <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
-                    <i className="bi bi-files"></i> COPY
-                  </button>
                 </div>
               </div>
 

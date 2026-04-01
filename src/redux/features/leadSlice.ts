@@ -63,6 +63,8 @@ interface LeadState {
     search: string;
     status: 'all' | 'new' | 'contacted' | 'qualified' | 'converted';
     source: 'all' | 'Web' | 'Referral' | 'Cold Call' | 'Exhibition';
+    fromDate: string;
+    toDate: string;
   };
 }
 
@@ -74,6 +76,8 @@ const initialState: LeadState = {
     search: '',
     status: 'all',
     source: 'all',
+    fromDate: '',
+    toDate: '',
   },
 };
 

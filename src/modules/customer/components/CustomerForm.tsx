@@ -208,113 +208,118 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
     </div>
   );
 
-  return (
-    <div className="card border-0 shadow-sm">
-      <div className="card-body p-4">
-        <form onSubmit={handleSubmit}>
-          
-          <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-            <h5 className="text-primary mb-0">Basic Details</h5>
-            {mode === 'create' && (
-              <button type="button" onClick={fillMockData} className="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 rounded-pill px-3">
-                <i className="bi bi-magic"></i> Auto-Fill Test Data
-              </button>
-            )}
-          </div>
-          <div className="row g-3 mb-4">
-            <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Customer Type</label>
-              <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} required disabled={mode === 'view'}>
-                <option value="Customer">Customer</option>
-                <option value="Dealer">Dealer</option>
-                <option value="Distributor">Distributor</option>
-              </select>
+   return (
+    <>
+      <div className="card border-0 shadow-sm">
+        <div className="card-body p-4">
+          <form onSubmit={handleSubmit}>
+            
+            <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+              <h5 className="text-primary mb-0">Basic Details</h5>
             </div>
-            {renderInput('Customer Name', 'name', 'text', true)}
-            <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status</label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
-                <option value="active">Active</option>
-                <option value="lead">Lead</option>
-                <option value="inactive">Inactive</option>
-              </select>
+            <div className="row g-3 mb-4">
+              <div className="col-md-6 mb-3">
+                <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Customer Type</label>
+                <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} required disabled={mode === 'view'}>
+                  <option value="Customer">Customer</option>
+                  <option value="Dealer">Dealer</option>
+                  <option value="Distributor">Distributor</option>
+                </select>
+              </div>
+              {renderInput('Customer Name', 'name', 'text', true)}
+              <div className="col-md-6 mb-3">
+                <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status</label>
+                <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
+                  <option value="active">Active</option>
+                  <option value="lead">Lead</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
             </div>
-          </div>
-
-          <h5 className="mb-4 text-primary border-bottom pb-2">Address Details</h5>
-          <div className="row g-3 mb-4">
-            {renderInput('Street 1', 'street1')}
-            {renderInput('Street 2', 'street2')}
-            {renderInput('City', 'city')}
-            {renderInput('Area', 'area')}
-            {renderInput('State', 'state')}
-            {renderInput('State Code', 'stateCode')}
-            {renderInput('Pin code', 'pinCode')}
-          </div>
-
-          <h5 className="mb-4 text-primary border-bottom pb-2">Contact Persons</h5>
-          <div className="row g-3 mb-4">
-            {renderInput('Contact Person 1', 'contactPerson1')}
-            {renderInput('Designation 1', 'designation1')}
-            {renderInput('Email Id 1', 'emailId1', 'email')}
-            {renderInput('Phone Number 1', 'phoneNumber1')}
-            
-            {renderInput('Contact Person 2', 'contactPerson2')}
-            {renderInput('Designation 2', 'designation2')}
-            {renderInput('Email Id 2', 'emailId2', 'email')}
-            {renderInput('Phone Number 2', 'phoneNumber2')}
-            
-            {renderInput('Contact Person 3', 'contactPerson3')}
-            {renderInput('Designation 3', 'designation3')}
-            {renderInput('Email Id 3', 'emailId3', 'email')}
-            {renderInput('Phone Number 3', 'phoneNumber3')}
-            
-            {renderInput('Landline', 'landline')}
-            {renderInput('Fax', 'fax')}
-          </div>
-
-          <h5 className="mb-4 text-primary border-bottom pb-2">Tax Details</h5>
-          <div className="row g-3 mb-4">
-            {renderInput('GST', 'gst')}
-            {renderInput('TIN', 'tin')}
-            {renderInput('CST', 'cst')}
-          </div>
-
-          <h5 className="mb-4 text-primary border-bottom pb-2">Machine Details</h5>
-          <div className="row g-3 mb-4">
-            {renderInput('T/C', 'tc')}
-            {renderInput('VMC', 'vmc')}
-            {renderInput('HMC', 'hmc')}
-            {renderInput('Payment Terms', 'paymentTerms')}
-          </div>
-
-          <div className="mt-5 pt-4 border-top d-flex gap-3">
-            {mode !== 'view' ? (
-              <>
-                <button type="submit" className="btn btn-primary px-4 shadow-accent fw-bold rounded-pill">
-                  {mode === 'create' ? 'Register Customer' : 'Update Profile'}
-                </button>
+  
+            <h5 className="mb-4 text-primary border-bottom pb-2">Address Details</h5>
+            <div className="row g-3 mb-4">
+              {renderInput('Street 1', 'street1')}
+              {renderInput('Street 2', 'street2')}
+              {renderInput('City', 'city')}
+              {renderInput('Area', 'area')}
+              {renderInput('State', 'state')}
+              {renderInput('State Code', 'stateCode')}
+              {renderInput('Pin code', 'pinCode')}
+            </div>
+  
+            <h5 className="mb-4 text-primary border-bottom pb-2">Contact Persons</h5>
+            <div className="row g-3 mb-4">
+              {renderInput('Contact Person 1', 'contactPerson1')}
+              {renderInput('Designation 1', 'designation1')}
+              {renderInput('Email Id 1', 'emailId1', 'email')}
+              {renderInput('Phone Number 1', 'phoneNumber1')}
+              
+              {renderInput('Contact Person 2', 'contactPerson2')}
+              {renderInput('Designation 2', 'designation2')}
+              {renderInput('Email Id 2', 'emailId2', 'email')}
+              {renderInput('Phone Number 2', 'phoneNumber2')}
+              
+              {renderInput('Contact Person 3', 'contactPerson3')}
+              {renderInput('Designation 3', 'designation3')}
+              {renderInput('Email Id 3', 'emailId3', 'email')}
+              {renderInput('Phone Number 3', 'phoneNumber3')}
+              
+              {renderInput('Landline', 'landline')}
+              {renderInput('Fax', 'fax')}
+            </div>
+  
+            <h5 className="mb-4 text-primary border-bottom pb-2">Tax Details</h5>
+            <div className="row g-3 mb-4">
+              {renderInput('GST', 'gst')}
+              {renderInput('TIN', 'tin')}
+              {renderInput('CST', 'cst')}
+            </div>
+  
+            <h5 className="mb-4 text-primary border-bottom pb-2">Machine Details</h5>
+            <div className="row g-3 mb-4">
+              {renderInput('T/C', 'tc')}
+              {renderInput('VMC', 'vmc')}
+              {renderInput('HMC', 'hmc')}
+              {renderInput('Payment Terms', 'paymentTerms')}
+            </div>
+  
+            <div className="mt-5 pt-4 border-top d-flex gap-3">
+              {mode !== 'view' ? (
+                <>
+                  <button type="submit" className="btn btn-primary px-4 shadow-accent fw-bold rounded-pill">
+                    {mode === 'create' ? 'Register Customer' : 'Update Profile'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-secondary px-4 fw-bold rounded-pill"
+                    onClick={() => router.push('/customers')}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
                 <button 
                   type="button" 
-                  className="btn btn-outline-secondary px-4 fw-bold rounded-pill"
+                  className="btn btn-secondary px-4 fw-bold rounded-pill"
                   onClick={() => router.push('/customers')}
                 >
-                  Cancel
+                  Back To Hub
                 </button>
-              </>
-            ) : (
-              <button 
-                type="button" 
-                className="btn btn-secondary px-4 fw-bold rounded-pill"
-                onClick={() => router.push('/customers')}
-              >
-                Back To Hub
-              </button>
-            )}
-          </div>
-        </form>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+      <style jsx>{`
+        .form-control {
+          font-size: 0.85rem !important;
+        }
+          .form-select {
+          font-size: 0.85rem !important;
+      }
+      `}</style>
+    </>
   );
 };
 

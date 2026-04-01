@@ -18,7 +18,7 @@ const StatusModal: React.FC<StatusModalProps> = ({
   type,
   title,
   message,
-  confirmLabel = 'Understand',
+  confirmLabel = 'Success',
   onConfirm
 }) => {
   if (!isOpen) return null;

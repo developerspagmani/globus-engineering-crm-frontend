@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -14,7 +14,14 @@ import { mockInvoices } from '@/data/mockModules';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  const [mounted, setMounted] = useState(false);
   const { user, company } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   const canManageCompany = user?.role === 'company_admin' || user?.role === 'super_admin';
 

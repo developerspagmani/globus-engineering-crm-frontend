@@ -109,6 +109,8 @@ interface VoucherState {
     search: string;
     type: 'all' | 'payment' | 'receipt' | 'journal' | 'contra';
     status: 'all' | 'draft' | 'posted' | 'cancelled';
+    fromDate: string;
+    toDate: string;
   };
   pagination: {
     currentPage: number;
@@ -124,6 +126,8 @@ const initialState: VoucherState = {
     search: '',
     type: 'all',
     status: 'all',
+    fromDate: '',
+    toDate: '',
   },
   pagination: {
     currentPage: 1,

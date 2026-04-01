@@ -46,6 +46,27 @@ const VendorFilter: React.FC = () => {
               <option value="inactive">Inactive</option>
             </select>
           </div>
+          <div className="col-lg-4 col-md-12 d-flex align-items-center gap-2">
+            <div style={{ width: '170px' }}>
+              <input 
+                type="date" 
+                className="form-control" 
+                name="fromDate"
+                value={filters.fromDate}
+                onChange={handleChange}
+              />
+            </div>
+            <span className="text-muted small fw-bold">TO</span>
+            <div style={{ width: '170px' }}>
+              <input 
+                type="date" 
+                className="form-control"
+                name="toDate"
+                value={filters.toDate}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
           <div className="col-md-3 col-lg-2">
             <select
               className="form-select"
@@ -53,20 +74,12 @@ const VendorFilter: React.FC = () => {
               value={filters.category}
               onChange={handleChange}
             >
-              <option value="all">All Categories</option>
+              <option value="all">Categories</option>
               <option value="Raw Materials">Raw Materials</option>
               <option value="Logistics">Logistics</option>
               <option value="Machinery">Machinery</option>
               <option value="Electrical">Electrical</option>
             </select>
-          </div>
-          <div className="col-md-12 col-lg-4 d-flex gap-2">
-            <button className="btn btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center">
-              <i className="bi bi-file-earmark-arrow-down me-2"></i> Import
-            </button>
-            <button className="btn btn-outline-secondary flex-grow-1 d-flex align-items-center justify-content-center">
-              <i className="bi bi-file-earmark-arrow-up me-2"></i> Export
-            </button>
           </div>
         </div>
       </div>

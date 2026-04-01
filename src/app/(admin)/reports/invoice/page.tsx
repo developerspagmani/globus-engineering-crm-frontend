@@ -14,6 +14,8 @@ import autoTable from 'jspdf-autotable';
 const InvoiceReportPage = () => {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: invoices, loading } = useSelector((state: RootState) => state.invoices);
@@ -29,10 +31,17 @@ const InvoiceReportPage = () => {
 
   const filteredInvoices = invoices.filter(inv => {
     const searchTerm = search.toLowerCase();
-    return (
+    const matchesSearch = (
       (inv.customerName?.toLowerCase() ?? '').includes(searchTerm) ||
       (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm)
     );
+    
+    // Date range filtering
+    let matchesDate = true;
+    if (fromDate && inv.date && new Date(inv.date) < new Date(fromDate)) matchesDate = false;
+    if (toDate && inv.date && new Date(inv.date) > new Date(toDate)) matchesDate = false;
+
+    return matchesSearch && matchesDate;
   });
 
   const handlePrintRecord = (inv: any) => {
@@ -82,7 +91,7 @@ const InvoiceReportPage = () => {
         </div>
         <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}>
           <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
-          <span className="small fw-800 text-muted">REFRESH</span>
+          <span className="small fw-800 text-muted">Refresh</span>
         </button>
       </div>
 
@@ -95,12 +104,15 @@ const InvoiceReportPage = () => {
                 <input type="text" className="form-control ps-5 border-0 bg-light-soft" placeholder="Search customer or invoice..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ height: '42px', borderRadius: '10px' }} />
               </div>
             </div>
-            <div className="col-lg-2 col-md-3">
-              <select className="form-select border-0 bg-light-soft" style={{ height: '42px', borderRadius: '10px' }}>
-                <option>All Transactions</option>
-              </select>
-            </div>
-            <div className="col-auto ms-auto d-flex justify-content-end">
+            <div className="col-auto ms-auto d-flex align-items-center gap-1">
+              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
+                <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                </div>
+                <span className="text-muted small fw-bold mx-1">TO</span>
+              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
+          
+                <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+              </div>
               <ReportActions />
             </div>
           </div>
@@ -109,52 +121,58 @@ const InvoiceReportPage = () => {
 
       <div className="card border-0 shadow-sm overflow-hidden rounded-4">
         <div className="card-body p-0">
-          <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
-            <table className="table table-hover align-middle mb-0">
-              <thead className="bg-light">
-                <tr className="text-uppercase small fw-bold text-muted">
-                  <th className="px-4 py-3 border-0">Sno</th>
-                  <th className="py-3 border-0">Date</th>
-                  <th className="py-3 border-0">Invoice No</th>
-                  <th className="py-3 border-0">Customer Name</th>
-                  <th className="py-3 border-0 text-end">Subtotal</th>
-                  <th className="py-3 border-0 text-end">Taxes</th>
-                  <th className="py-3 border-0 text-end">Grand Total</th>
-                  <th className="py-3 border-0 text-center px-4" style={{ width: '120px' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={8}><Loader text="Compiling Data..." /></td></tr>
-                ) : filteredInvoices.map((inv, index) => (
-                  <tr key={inv.id} className="border-bottom border-light">
-                    <td className="px-4 small text-muted font-monospace">{index + 1}</td>
-                    <td className="small text-muted">{inv.date}</td>
-                    <td className="text-dark fw-bold">{inv.invoiceNumber}</td>
-                    <td className="text-dark fw-800 text-uppercase" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
-                    <td className="text-end small">₹{inv.subTotal?.toLocaleString()}</td>
-                    <td className="text-end small text-muted">₹{inv.taxTotal?.toLocaleString()}</td>
-                    <td className="text-end fw-900 text-dark px-2">₹{inv.grandTotal?.toLocaleString()}</td>
-                    <td className="text-center px-4">
-                      <div className="d-flex justify-content-center align-items-center gap-1">
-                        <Link href={`/invoices/${inv.id}`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
-                        <div className="dropdown">
-                          <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${inv.id}`} data-bs-toggle="dropdown" aria-expanded="false" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
-                            <i className="bi bi-three-dots-vertical fs-5"></i>
-                          </button>
-                          <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${inv.id}`}>
-                            <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintRecord(inv)}><i className="bi bi-printer text-primary"></i> <span className="small fw-semibold">Quick Print</span></button></li>
-                            <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFRecord(inv)}><i className="bi bi-file-earmark-pdf text-danger"></i> <span className="small fw-semibold">Export PDF</span></button></li>
-                          </ul>
-                        </div>
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '400px' }}>
+              <Loader text="Compiling Data..." />
+            </div>
+          ) : (
+            <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
+              <table className="table table-hover align-middle mb-0">
+                <thead className="bg-light">
+                  <tr className="text-uppercase small fw-bold text-muted">
+                    <th className="px-4 py-3 border-0">Sno</th>
+                    <th className="py-3 border-0">Date</th>
+                    <th className="py-3 border-0">Invoice No</th>
+                    <th className="py-3 border-0">Customer Name</th>
+                    <th className="py-3 border-0 text-end">Subtotal</th>
+                    <th className="py-3 border-0 text-end">Taxes</th>
+                    <th className="py-3 border-0 text-end">Grand Total</th>
+                    <th className="py-3 border-0 text-center px-4" style={{ width: '120px' }}>Action</th>
                   </tr>
-                ))
-                }
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredInvoices.map((inv, index) => (
+                    <tr key={inv.id} className="border-bottom border-light">
+                      <td className="px-4 small text-muted font-monospace">{index + 1}</td>
+                      <td className="small text-muted">{inv.date}</td>
+                      <td className="text-dark fw-bold">{inv.invoiceNumber}</td>
+                      <td className="text-dark fw-800 text-uppercase" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
+                      <td className="text-end small">₹{inv.subTotal?.toLocaleString()}</td>
+                      <td className="text-end small text-muted">₹{inv.taxTotal?.toLocaleString()}</td>
+                      <td className="text-end fw-900 text-dark px-2">₹{inv.grandTotal?.toLocaleString()}</td>
+                      <td className="text-center px-4">
+                        <div className="d-flex justify-content-center align-items-center gap-1">
+                          <Link href={`/invoices/${inv.id}?readonly=true`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
+                          <div className="dropdown">
+                            <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${inv.id}`} data-bs-toggle="dropdown" aria-expanded="false" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
+                              <i className="bi bi-three-dots-vertical fs-5"></i>
+                            </button>
+                            <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${inv.id}`}>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintRecord(inv)}><i className="bi bi-printer text-primary"></i> <span className="small fw-semibold">Quick Print</span></button></li>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFRecord(inv)}><i className="bi bi-file-earmark-pdf text-danger"></i> <span className="small fw-semibold">Export PDF</span></button></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredInvoices.length === 0 && (
+                    <tr><td colSpan={8} className="text-center py-5 text-muted small">No invoices found matching filters.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
       <style jsx>{` .fw-900 { font-weight: 900; } .bg-light-soft { background-color: #f7f9fc; } .table-responsive { padding-bottom: 80px; } `}</style>

@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
-import { fetchLedgerEntries, addLedgerEntry } from '@/redux/features/ledgerSlice';
+import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -15,9 +15,8 @@ export default function LedgerPage() {
   const dispatch = useDispatch();
   const { company: activeCompany, user: currentUser } = useSelector((state: RootState) => state.auth);
   console.log('[LEDGER FRONTEND DEBUG] Current Auth State (User/Company):', { currentUser, activeCompany });
-  const { items: ledgerEntries, loading: ledgerLoading } = useSelector((state: RootState) => state.ledger);
+  const { items: ledgerEntries, loading: ledgerLoading, filters } = useSelector((state: RootState) => state.ledger);
   const { items: customers } = useSelector((state: RootState) => state.customers);
-  const [searchTerm, setSearchTerm] = React.useState('');
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
@@ -29,22 +28,21 @@ export default function LedgerPage() {
     }
   }, [dispatch, activeCompany?.id]);
 
-  useEffect(() => {
-    console.log('[LEDGER FRONTEND DEBUG] Redux ledgerEntries state changed:', ledgerEntries);
-    if (ledgerEntries.length > 0) {
-      console.log('[LEDGER FRONTEND DEBUG] Fetched Entries Detail:', ledgerEntries.map(e => ({ partyId: e.partyId, compId: e.company_id })));
-    }
-  }, [ledgerEntries]);
-
   // DERIVE UNIQUE PARTIES FROM LEDGER ENTRIES
   const uniqueParties = React.useMemo(() => {
     const partyMap = new Map();
     const currentCompId = String(activeCompany?.id || '').toLowerCase();
 
-    // 1. Filter ledger entries that belong to this company ID (Case Insensitive)
-    const companyLedger = ledgerEntries.filter(e => 
-      String(e.company_id || (e as any).companyId || '').toLowerCase() === currentCompId
-    );
+    // 1. Filter ledger entries that belong to this company ID (Case Insensitive) and match date filters
+    const companyLedger = ledgerEntries.filter(e => {
+        const matchesCompany = String(e.company_id || (e as any).companyId || '').toLowerCase() === currentCompId;
+        if (!matchesCompany) return false;
+
+        if (filters.dateFrom && e.date && new Date(e.date) < new Date(filters.dateFrom)) return false;
+        if (filters.dateTo && e.date && new Date(e.date) > new Date(filters.dateTo)) return false;
+        
+        return true;
+    });
 
     companyLedger.forEach(entry => {
       const entryPartyId = String(entry.partyId || '').toLowerCase();
@@ -70,12 +68,12 @@ export default function LedgerPage() {
     const result = Array.from(partyMap.values());
     console.log('[LEDGER FRONTEND DEBUG] Unique Parties Calculated:', result);
     return result;
-  }, [ledgerEntries, customers, activeCompany?.id]);
+  }, [ledgerEntries, customers, activeCompany?.id, filters.dateFrom, filters.dateTo]);
 
   const filteredItems = uniqueParties.filter(item => {
-    return (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (item.city || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (item.state || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return (item.name || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+           (item.city || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+           (item.state || '').toLowerCase().includes(filters.search.toLowerCase());
   });
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
@@ -113,46 +111,6 @@ export default function LedgerPage() {
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.print();
-  };
-
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      // Exclude last column (Action)
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Table data copied to clipboard!");
-    });
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      // Exclude last column (Action)
-      const rowData = cols.slice(0, -1)
-        .map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`)
-        .join(",");
-      csvContent += rowData + "\r\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `ledger_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handleExportPDF = () => {
@@ -202,35 +160,42 @@ export default function LedgerPage() {
         <div className="card border-0 mb-4">
            <div className="card-body p-0">
              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="d-flex align-items-center w-50 pe-3">
-                   <div className="position-relative w-100">
+                <div className="d-flex align-items-center flex-grow-1">
+                   <div className="position-relative" style={{ minWidth: '350px' }}>
                      <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                      <input 
                          type="text" 
                          className="form-control ps-5 py-2 border-0 bg-white shadow-sm" 
                          placeholder="SEARCH FOR PARTY, CITY OR STATE..." 
                          style={{ borderRadius: '4px', border: '1px solid #e0e0e0 !important' }}
-                         value={searchTerm}
-                         onChange={(e) => setSearchTerm(e.target.value)}
+                         value={filters.search}
+                         onChange={(e) => dispatch(setLedgerFilters({ search: e.target.value }))}
                      />
                    </div>
                 </div>
-                <div className="d-flex align-items-center gap-2">
-                   {/* <span className="text-muted small fw-bold">Show:</span> */}
-                   {/* <select 
-                     className="form-select form-select-sm border-0 bg-light fw-bold shadow-none" 
-                     style={{ width: '70px' }}
-                     value={itemsPerPage}
-                     onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
-                   >
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                   </select> */}
-                   <div className="d-flex gap-1 ms-3 hide-print flex-wrap">
+                
+                <div className="d-flex align-items-center gap-3">
+                   {/* Date Filters Moved to Right Corner */}
+                   <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '4px', borderColor: '#e0e0e0' }}>
+                     <input 
+                       type="date" 
+                       className="form-control py-1 border-0 shadow-none bg-transparent" 
+                       value={filters.dateFrom}
+                       onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
+                       style={{ width: '135px', fontSize: '0.85rem' }}
+                     />
+                     <span className="text-muted small fw-bold mx-1">TO</span>
+                     <input 
+                       type="date" 
+                       className="form-control py-1 border-0 shadow-none bg-transparent" 
+                       value={filters.dateTo}
+                       onChange={(e) => dispatch(setLedgerFilters({ dateTo: e.target.value }))}
+                       style={{ width: '135px', fontSize: '0.85rem' }}
+                     />
+                   </div>
+
+                   <div className="d-flex gap-1 hide-print flex-wrap">
                       <button onClick={handlePrint} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
-                      <button onClick={handleExportExcel} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#da3e00', borderColor: '#da3e00' }}><i className="bi bi-file-earmark-spreadsheet fw-bold"></i> EXCEL</button>
-                      <button onClick={handleCopyTable} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#4caf50', borderColor: '#4caf50' }}><i className="bi bi-files fw-bold"></i> COPY</button>
                       <button onClick={handleExportPDF} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}><i className="bi bi-file-earmark-pdf fw-bold"></i> PDF</button>
                    </div>
                 </div>
@@ -277,9 +242,38 @@ export default function LedgerPage() {
                       <td className="text-muted small">{party.city || '-'}</td>
                       <td className="text-muted small">{party.state || '-'}</td>
                       <td className="text-center px-4">
-                          <button className="btn btn-success p-1 px-2 border-0 shadow-sm rounded" style={{ height: '32px', width: '32px' }}>
+                        <div className="d-flex justify-content-center align-items-center gap-1">
+                          <button className="btn btn-success p-1 px-2 border-0 shadow-sm rounded" style={{ height: '32px', width: '32px' }} title="View Ledger Details">
                               <i className="bi bi-search x-small"></i>
                           </button>
+                          
+                          <div className="dropdown">
+                            <button 
+                              className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
+                              type="button" 
+                              id={`actions-${party.id}`} 
+                              data-bs-toggle="dropdown" 
+                              aria-expanded="false"
+                              style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+                            >
+                              <i className="bi bi-three-dots-vertical fs-5"></i>
+                            </button>
+                            <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${party.id}`}>
+                              <li>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={handlePrint}>
+                                  <i className="bi bi-printer text-primary"></i>
+                                  <span className="small fw-semibold">Quick Print</span>
+                                </button>
+                              </li>
+                              <li>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={handleExportPDF}>
+                                  <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                  <span className="small fw-semibold">Export PDF</span>
+                                </button>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   ))

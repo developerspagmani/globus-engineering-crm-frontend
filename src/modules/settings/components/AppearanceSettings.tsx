@@ -9,11 +9,28 @@ const AppearanceSettings: React.FC = () => {
     browser: false,
     whatsapp: true,
   });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleUpdatePreferences = () => {
+    setSaving(true);
+    setTimeout(() => {
+      setSaving(false);
+      setMessage('Preferences updated successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    }, 1000);
+  };
 
   return (
     <div className="card border-0 shadow-sm rounded-4">
       <div className="card-body p-4">
         <h5 className="fw-bold mb-4">Application Preferences</h5>
+        
+        {message && (
+          <div className="alert alert-info border-0 shadow-sm mb-4">
+            {message}
+          </div>
+        )}
         
         <div className="mb-5">
           <label className="form-label small text-muted text-uppercase fw-bold mb-3">System Theme</label>
@@ -106,7 +123,14 @@ const AppearanceSettings: React.FC = () => {
         </div>
 
         <div className="mt-5">
-           <button type="button" className="btn btn-primary px-5 rounded-pill shadow-sm">Update Preferences</button>
+           <button 
+             type="button" 
+             className="btn btn-primary px-5 rounded-pill shadow-sm"
+             onClick={handleUpdatePreferences}
+             disabled={saving}
+            >
+              {saving ? 'Updating...' : 'Update Preferences'}
+            </button>
         </div>
       </div>
     </div>

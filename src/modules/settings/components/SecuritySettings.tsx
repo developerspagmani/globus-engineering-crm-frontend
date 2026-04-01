@@ -1,8 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { updatePassword } from '@/redux/features/authSlice';
 
 const SecuritySettings: React.FC = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.auth);
+  
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -12,20 +18,29 @@ const SecuritySettings: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+    
     if (formData.newPassword !== formData.confirmPassword) {
       alert("New passwords don't match!");
       return;
     }
 
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+    const result = await (dispatch as any)(updatePassword({
+      id: user.id,
+      password: formData.newPassword
+    }));
+
+    setSaving(false);
+    if (updatePassword.fulfilled.match(result)) {
       setMessage('Password changed successfully!');
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => setMessage(''), 3000);
-    }, 1500);
+    } else {
+      setMessage('Failed to update password: ' + (result.payload || 'Unknown error'));
+    }
   };
 
   return (

@@ -17,21 +17,30 @@ const ChallanPage = () => {
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.challan);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    (dispatch as any)(fetchChallans());
-  }, [dispatch]);
+    setMounted(true);
+    (dispatch as any)(fetchChallans(activeCompany?.id));
+  }, [dispatch, activeCompany?.id]);
+
+  if (!mounted) return <Loader text="Initializing..." />;
 
   // Filter logic
   const filteredItems = items.filter(item => {
     // Company context filtering
-    if (activeCompany && item.company_id !== activeCompany.id) return false;
+    if (activeCompany && String(item.company_id) !== String(activeCompany.id)) return false;
 
     const matchesSearch =
       (item.challanNo?.toLowerCase() ?? '').includes(filters.search.toLowerCase()) ||
       (item.partyName?.toLowerCase() ?? '').includes(filters.search.toLowerCase());
     const matchesType = filters.type === 'all' || item.type === filters.type;
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
+    
+    // Date range filtering
+    if (filters.fromDate && new Date(item.date) < new Date(filters.fromDate)) return false;
+    if (filters.toDate && new Date(item.date) > new Date(filters.toDate)) return false;
+
     return matchesSearch && matchesType && matchesStatus;
   });
 
@@ -59,36 +68,6 @@ const ChallanPage = () => {
       case 'job_work': return <i className="bi bi-tools text-dark me-2"></i>;
       default: return null;
     }
-  };
-
-  const handleCopyTable = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-    let text = "";
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
-      text += rowData + "\n";
-    });
-    navigator.clipboard.writeText(text).then(() => alert("Table data copied to clipboard!"));
-  };
-
-  const handleExportExcel = () => {
-    const rows = document.querySelectorAll('table tr');
-    let csvContent = "data:text/csv;charset=utf-8,";
-    rows.forEach(row => {
-      const cols = Array.from(row.querySelectorAll('th, td'));
-      const rowData = cols.slice(0, -1).map(col => `"${(col as HTMLElement).innerText.replace(/"/g, '""').trim()}"`).join(",");
-      csvContent += rowData + "\r\n";
-    });
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `challans_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handlePrintChallanRecord = (challan: any) => {
@@ -161,10 +140,10 @@ const ChallanPage = () => {
         )}
       </div>
 
-      <div className="card shadow-sm border-0 mb-4 overflow-hidden">
+        <div className="card shadow-sm border-0 mb-4 overflow-hidden">
         <div className="card-body p-3">
           <div className="d-flex flex-wrap align-items-center gap-2">
-            <div className="flex-grow-1" style={{ minWidth: '300px' }}>
+            <div className="flex-grow-1" style={{ minWidth: '250px' }}>
               <div className="input-group">
                 <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
                   <i className="bi bi-search"></i>
@@ -179,7 +158,7 @@ const ChallanPage = () => {
               </div>
             </div>
             
-            <div style={{ width: '180px' }}>
+            <div style={{ width: '150px' }}>
               <select
                 className="form-select py-2"
                 value={filters.type}
@@ -192,13 +171,24 @@ const ChallanPage = () => {
               </select>
             </div>
 
-            <div className="ms-auto d-flex gap-2 align-items-center">
-              <button onClick={handleExportExcel} className="btn shadow-sm text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ backgroundColor: '#da3e00', borderRadius: 'var(--radius-lg)', height: '42px', fontSize: '0.8rem' }}>
-                <i className="bi bi-file-earmark-spreadsheet"></i> EXCEL
-              </button>
-              <button onClick={handleCopyTable} className="btn shadow-sm btn-success fw-bold d-flex align-items-center gap-2 px-3 border-0 transition-smooth" style={{ height: '42px', fontSize: '0.8rem', borderRadius: 'var(--radius-lg)' }}>
-                <i className="bi bi-files"></i> COPY
-              </button>
+            <div className="col-auto ms-auto d-flex align-items-center gap-2">
+               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+                 <input 
+                   type="date" 
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                   value={filters.fromDate}
+                   onChange={(e) => dispatch(setChallanFilters({ fromDate: e.target.value }))}
+                   style={{ width: '135px', fontSize: '0.85rem' }}
+                 />
+                 <span className="text-muted small fw-bold mx-1">TO</span>
+                 <input 
+                   type="date" 
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                   value={filters.toDate}
+                   onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
+                   style={{ width: '135px', fontSize: '0.85rem' }}
+                 />
+               </div>
             </div>
           </div>
         </div>

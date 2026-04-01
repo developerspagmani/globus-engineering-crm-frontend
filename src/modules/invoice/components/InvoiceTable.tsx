@@ -27,26 +27,45 @@ const InvoiceTable: React.FC = () => {
 
   const handleTabChange = (tab: any) => { setActiveTab(tab); const params = new URLSearchParams(searchParams.toString()); params.set('tab', tab); router.push(`${pathname}?${params.toString()}`); };
 
-  const handlePrintRecord = (invoice: any) => {
+  const handlePrintRecord = (item: any) => {
+    const isInvoice = !!item.invoiceNumber;
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Invoice</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
-    printWindow.document.write('<div class="header"><h1>Globus Engineering</h1><p>Invoice Record</p></div>');
+    printWindow.document.write('<html><head><title>Record</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
+    printWindow.document.write(`<div class="header"><h1>Globus Engineering</h1><p>${isInvoice ? 'Invoice' : 'Inward'} Record</p></div>`);
     printWindow.document.write('<div class="grid">');
-    printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${invoice.customerName}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Invoice No</div><div class="value">${invoice.invoiceNumber}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${invoice.date}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Total Amount</div><div class="value">INR ${invoice.grandTotal.toLocaleString()}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${item.customerName}</div></div>`);
+    printWindow.document.write(`<div><div class="label">${isInvoice ? 'Invoice No' : 'DC No'}</div><div class="value">${isInvoice ? item.invoiceNumber : (item.dcNo || item.challanNo)}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${item.date}</div></div>`);
+    if (isInvoice) {
+      printWindow.document.write(`<div><div class="label">Total Amount</div><div class="value">INR ${item.grandTotal.toLocaleString()}</div></div>`);
+    } else {
+      printWindow.document.write(`<div><div class="label">PO Ref</div><div class="value">${item.poReference || '-'}</div></div>`);
+    }
     printWindow.document.write('</div>');
     printWindow.document.close(); printWindow.print();
   };
 
-  const handleExportPDFRecord = (invoice: any) => {
+  const handleExportPDFRecord = (item: any) => {
+    const isInvoice = !!item.invoiceNumber;
     const doc = new jsPDF();
     doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
-    autoTable(doc, { startY: 55, body: [['Customer', invoice.customerName], ['Invoice Number', invoice.invoiceNumber], ['Billing Date', invoice.date], ['Grand Total', `INR ${invoice.grandTotal.toLocaleString()}`]], theme: 'grid', styles: { cellPadding: 8, fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } } });
-    doc.save(`invoice_${invoice.invoiceNumber}.pdf`);
+    
+    const body = [
+      ['Customer', item.customerName],
+      [isInvoice ? 'Invoice Number' : 'DC Number', isInvoice ? item.invoiceNumber : (item.dcNo || item.challanNo)],
+      ['Date', item.date]
+    ];
+    
+    if (isInvoice) {
+      body.push(['Grand Total', `INR ${item.grandTotal.toLocaleString()}`]);
+    } else {
+      body.push(['PO Reference', item.poReference || '-']);
+    }
+
+    autoTable(doc, { startY: 55, body, theme: 'grid', styles: { cellPadding: 8, fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } } });
+    doc.save(`${isInvoice ? 'invoice' : 'inward'}_${isInvoice ? item.invoiceNumber : item.id}.pdf`);
   };
 
   const handleDeleteParams = (id: string, type: 'invoice' | 'inward') => { setDeleteModal({ isOpen: true, id, type }); };
@@ -63,7 +82,15 @@ const InvoiceTable: React.FC = () => {
     const invNo = String(item.invoiceNumber || '').toLowerCase();
     const custName = String(item.customerName || '').toLowerCase();
     const search = String(filters.search || '').toLowerCase();
-    return (invNo.includes(search) || custName.includes(search)) && (filters.status === 'all' || item.status === filters.status);
+    const matchesSearch = invNo.includes(search) || custName.includes(search);
+    const matchesStatus = (filters.status === 'all' || item.status === filters.status);
+    
+    // Date range filtering
+    let matchesDate = true;
+    if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) matchesDate = false;
+    if (filters.toDate && item.date && new Date(item.date) > new Date(filters.toDate)) matchesDate = false;
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const filteredInwards = inwards.filter(item => (user?.role === 'super_admin' || !activeCompany || (item.company_id || (item as any).companyId) === activeCompany.id) && item.status === 'pending');
@@ -99,7 +126,7 @@ const InvoiceTable: React.FC = () => {
           <tbody>
             {(activeTab === 'ADD_INVOICE' ? inwardLoading : invoiceLoading) ? <tr><td colSpan={6}><Loader text="Loading..." /></td></tr> : (
               paginatedItems.map((item, index) => (
-                <tr key={item.id} className="border-bottom text-uppercase">
+                <tr key={`${activeTab}-${item.id}`} className="border-bottom text-uppercase">
                   <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                   <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
                   <td className="text-muted small">{activeTab === 'ADD_INVOICE' ? (item.dcNo || item.challanNo || '-') : item.invoiceNumber}</td>
@@ -107,22 +134,33 @@ const InvoiceTable: React.FC = () => {
                   <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>{activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : `₹${item.grandTotal.toLocaleString()}`}</td>
                   <td className="text-center pe-4">
                     <div className="d-flex justify-content-center gap-1">
-                      <Link href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}` : `/invoices/${item.id}`} className="btn-action-view"><i className="bi bi-eye-fill"></i></Link>
-                      {activeTab !== 'ADD_INVOICE' && (
-                        <div className="dropdown">
-                          <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px' }}><i className="bi bi-three-dots-vertical fs-5"></i></button>
-                          <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                             <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
-                             <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
-                             {checkActionPermission(user, 'mod_invoice', 'delete') && (
-                              <><li><hr className="dropdown-divider opacity-50" /></li><li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={() => handleDeleteParams(item.id, 'invoice')}><i className="bi bi-trash3"></i> Remove Record</button></li></>
-                             )}
-                          </ul>
-                        </div>
-                      )}
-                      {activeTab === 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'delete') && (
-                        <button className="btn btn-sm btn-outline-danger border-0 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px', borderRadius: '8px' }} onClick={() => handleDeleteParams(item.id, 'inward')}><i className="bi bi-trash3 fs-6"></i></button>
-                      )}
+                      <Link 
+                        href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}` : `/invoices/${item.id}`} 
+                        className="btn-action-view"
+                        title={activeTab === 'ADD_INVOICE' ? "Create Invoice" : "View Invoice"}
+                      >
+                        <i className="bi bi-eye-fill"></i>
+                      </Link>
+
+                      <div className="dropdown">
+                        <button 
+                          className="btn btn-sm btn-outline-secondary border-0 text-muted p-0" 
+                          data-bs-toggle="dropdown" 
+                          style={{ width: '32px', height: '32px' }}
+                        >
+                          <i className="bi bi-three-dots-vertical fs-5"></i>
+                        </button>
+                        <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
+                           <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
+                           <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
+                           {checkActionPermission(user, 'mod_invoice', 'delete') && (
+                             <>
+                               <li><hr className="dropdown-divider opacity-50" /></li>
+                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={() => handleDeleteParams(item.id, activeTab === 'ADD_INVOICE' ? 'inward' : 'invoice')}><i className="bi bi-trash3"></i> Remove Record</button></li>
+                             </>
+                           )}
+                        </ul>
+                      </div>
                     </div>
                   </td>
                 </tr>
