@@ -742,9 +742,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </div>
                      </div>
                      <style jsx>{`
-                        .form-control, .form-select {
-                           font-size: 0.85rem !important;
-                        }
                         .no-spinner::-webkit-inner-spin-button, 
                         .no-spinner::-webkit-outer-spin-button { 
                            -webkit-appearance: none; 

@@ -150,7 +150,7 @@ const VoucherPage = () => {
                 </span>
                 <input 
                   type="text" 
-                  className="form-control border-start-0 ps-0 py-2" 
+                  className="form-control border-start-0 ps-0 py-2 search-bar" 
                   placeholder="Search by voucher no, party..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setVoucherFilters({ search: e.target.value }))}
@@ -182,7 +182,10 @@ const VoucherPage = () => {
                    onChange={(e) => dispatch(setVoucherFilters({ fromDate: e.target.value }))}
                    style={{ width: '135px', fontSize: '0.85rem' }}
                  />
+                 </div>
                  <span className="text-muted small fw-bold mx-1">TO</span>
+                                <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+
                  <input 
                    type="date" 
                    className="form-control py-1 border-0 shadow-none bg-transparent" 

@@ -76,7 +76,7 @@ const GstReportPage = () => {
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input 
                   type="text" 
-                  className="form-control border-0 bg-light-soft ps-5" 
+                  className="form-control border-0 bg-light-soft ps-5 search-bar" 
                   placeholder="Search customer or invoice..." 
                   value={search} 
                   onChange={(e) => setSearch(e.target.value)} 

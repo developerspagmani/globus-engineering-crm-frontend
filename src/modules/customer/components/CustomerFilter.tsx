@@ -18,7 +18,7 @@ const CustomerFilter: React.FC = () => {
 
   return (
     <div className="card border-0 shadow-sm mb-4">
-      <div className="card-body py-2">
+      <div className="card-body">
         <div className="d-flex flex-wrap align-items-center gap-2">
           {/* Search Bar */}
           <div className="flex-grow-1" style={{ minWidth: '250px' }}>
@@ -28,7 +28,7 @@ const CustomerFilter: React.FC = () => {
               </span>
               <input
                 type="text"
-                className="form-control border-start-0 py-2"
+                className="form-control border-start-0 py-2 search-bar"
                 placeholder="Search by Customer Name..."
                 name="search"
                 value={filters.search}
@@ -69,26 +69,26 @@ const CustomerFilter: React.FC = () => {
           </div>
 
           {/* Date Filters */}
-          <div className="d-flex align-items-center gap-2">
-            <div style={{ width: '150px' }}>
+               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
               <input 
                 type="date" 
-                className="form-control py-2" 
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
                 name="fromDate"
                 value={filters.fromDate}
                 onChange={handleChange}
               />
             </div>
             <span className="text-muted small fw-bold">TO</span>
-            <div style={{ width: '150px' }}>
+                             <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+
               <input 
                 type="date" 
-                className="form-control py-2"
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
                 name="toDate"
                 value={filters.toDate}
                 onChange={handleChange}
               />
-            </div>
+          
           </div>
         </div>
       </div>

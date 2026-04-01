@@ -283,7 +283,7 @@ export default function ItemDetailsPage() {
                   <input
                     type="text"
                     placeholder="Search items..."
-                    className="form-control border-start-0 shadow-none"
+                    className="form-control border-start-0 shadow-none search-bar"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />

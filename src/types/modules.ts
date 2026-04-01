@@ -318,6 +318,22 @@ export interface DashboardStats {
     pending: number;
     due_date: string;
   }[];
+  latestInvoices?: {
+    id: number;
+    invoice_no: number;
+    invoice_date: string;
+    customer_name: string;
+    grand_total: string;
+    status: string;
+  }[];
+  latestInwards?: {
+    id: string;
+    inward_no: string;
+    date: string;
+    vendor_name?: string;
+    customer_name?: string;
+    status: string;
+  }[];
 }
 
 export interface AuditLog {

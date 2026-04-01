@@ -232,12 +232,29 @@ body {
 /* Premium Form Styles */
 .form-control,
 .form-select {
-  padding: 0.8rem 1.1rem;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.8rem;
   border-radius: var(--radius-lg);
   border: 1.5px solid var(--border-color);
   background-color: #ffffff;
   transition: var(--transition-smooth);
   font-weight: 500;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.form-control::placeholder {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
 .form-control:focus,
@@ -763,4 +780,9 @@ body {
   button {
     display: none !important;
   }
+}
+
+.search-bar,
+.search-bar::placeholder {
+  font-size: 0.9rem !important;
 }

@@ -328,9 +328,6 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         />
       </div>
       <style jsx>{`
-        .form-control, .form-select {
-          font-size: 0.85rem !important;
-        }
           
       `}</style>
     </>

@@ -77,7 +77,7 @@ const InwardReportPage = () => {
         <div className="card-body p-3">
           <div className="row g-3 align-items-center">
             <div className="col-lg-4 col-md-4">
-              <div className="position-relative"><i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i><input type="text" className="form-control ps-5 border-0 bg-light-soft px-3" placeholder="Search customer or DC..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ height: '42px', borderRadius: '10px' }} /></div>
+              <div className="position-relative"><i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i><input type="text" className="form-control ps-5 border-0 bg-light-soft px-3 search-bar" placeholder="Search customer or DC..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ height: '42px', borderRadius: '10px' }} /></div>
             </div>
             <div className="col-auto ms-auto d-flex align-items-center gap-1">
               <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>

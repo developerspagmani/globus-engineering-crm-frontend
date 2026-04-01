@@ -92,7 +92,7 @@ export default function OutwardListPage() {
                 <input
                   type="text"
                   placeholder="Search by outward no, customer..."
-                  className="form-control ps-5 border-light"
+                  className="form-control ps-5 border-light search-bar"
                   style={{ height: '54px', borderRadius: '15px'}}
                   value={filters.search}
                   onChange={(e) => dispatch(setOutwardFilters({ search: e.target.value }))}
@@ -109,21 +109,21 @@ export default function OutwardListPage() {
               </select>
             </div>
             <div className="col-auto ms-auto d-flex align-items-center gap-2">
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
+               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
                 <input 
                   type="date" 
-                  className="form-control border-0 bg-transparent p-0" 
-                  style={{ width: '150px'}}
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                  style={{ fontSize: '16px' }}
                   value={filters.fromDate}
                   onChange={(e) => dispatch(setOutwardFilters({ fromDate: e.target.value }))}
                 />
                 </div>
                 <span className="text-muted small fw-bold mx-1">TO</span>
-                              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
+               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
                 <input 
                   type="date" 
-                  className="form-control border-0 bg-transparent p-0" 
-                  style={{ width: '150px'}}
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                  style={{ fontSize: '16px' }}
                   value={filters.toDate}
                   onChange={(e) => dispatch(setOutwardFilters({ toDate: e.target.value }))}
                 />

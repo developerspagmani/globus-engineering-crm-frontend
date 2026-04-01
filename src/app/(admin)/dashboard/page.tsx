@@ -9,7 +9,6 @@ import { fetchDashboardStats, fetchAuditLogs } from '@/redux/features/dashboardS
 
 export default function DashboardPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { items: allModules } = useSelector((state: RootState) => state.modules);
   const { company, user } = useSelector((state: RootState) => state.auth);
   const { stats: realStats, logs: auditLogs, loading } = useSelector((state: RootState) => state.dashboard);
 
@@ -21,10 +20,6 @@ export default function DashboardPage() {
   // Determine if we should show the global super admin view or a specific tenant view
   const isViewingGlobal = user?.role === 'super_admin' && !company;
 
-  // Filter modules if user is part of a company (Tenant logic)
-  const modules = company 
-    ? allModules.filter(m => (company.activeModules || []).includes(m.id))
-    : allModules;
 
   const stats = isViewingGlobal ? [
     { label: 'Active Tenants', value: '12', change: '+2', icon: 'bi-building', color: 'primary' },
@@ -82,25 +77,87 @@ export default function DashboardPage() {
       {!isViewingGlobal ? (
         <>
           <div className="row g-4 mb-5">
-            <div className="col-12">
-              <h5 className="fw-bold mb-3">Company Modules</h5>
-              <div className="row g-3">
-                {modules.map((module) => (
-                  <div key={module.id} className="col-12 col-md-6 col-lg-3">
-                    <div className="card h-100 border-0 shadow-sm hover-shadow transition">
-                      <div className="card-body">
-                        <div className="d-flex align-items-center mb-2">
-                          <i className={`bi ${module.icon} text-primary fs-4 me-2`}></i>
-                          <h6 className="mb-0 fw-bold">{module.name}</h6>
-                        </div>
-                        <p className="text-muted small mb-2">{module.description}</p>
-                        <span className={`badge bg-success bg-opacity-10 text-success rounded-pill`}>
-                          Active
-                        </span>
-                      </div>
-                    </div>
+            {/* Latest Invoices */}
+            <div className="col-12 col-lg-6">
+              <div className="card border-0 shadow-sm h-100">
+                <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                  <h5 className="fw-bold mb-0">Latest Invoices</h5>
+                  <Link href="/invoices" className="btn btn-link link-primary p-0 text-decoration-none small">View All</Link>
+                </div>
+                <div className="card-body p-0">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th className="border-0 ps-3 small fw-bold">Invoice #</th>
+                          <th className="border-0 small fw-bold">Customer</th>
+                          <th className="border-0 small fw-bold text-end">Amount</th>
+                          <th className="border-0 pe-3 small fw-bold text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {realStats?.latestInvoices && realStats.latestInvoices.length > 0 ? realStats.latestInvoices.map((inv) => (
+                          <tr key={inv.id}>
+                            <td className="ps-3 small fw-medium text-primary">#{inv.invoice_no}</td>
+                            <td className="small text-truncate" style={{ maxWidth: '150px' }}>{inv.customer_name}</td>
+                            <td className="small text-end fw-bold">₹{parseFloat(inv.grand_total || '0').toLocaleString()}</td>
+                            <td className="pe-3 text-center">
+                              <span className={`badge ${inv.status === 'PAID' ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${inv.status === 'PAID' ? 'success' : 'warning'} rounded-pill extra-small px-2`}>
+                                {inv.status}
+                              </span>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan={4} className="text-center py-4 text-muted small">No recent invoices</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Latest Inward Entries */}
+            <div className="col-12 col-lg-6">
+              <div className="card border-0 shadow-sm h-100">
+                <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                  <h5 className="fw-bold mb-0">Latest Inward Entries</h5>
+                  <Link href="/inward" className="btn btn-link link-primary p-0 text-decoration-none small">View All</Link>
+                </div>
+                <div className="card-body p-0">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th className="border-0 ps-3 small fw-bold">Inward #</th>
+                          <th className="border-0 small fw-bold">Party</th>
+                          <th className="border-0 small fw-bold">Date</th>
+                          <th className="border-0 pe-3 small fw-bold text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {realStats?.latestInwards && realStats.latestInwards.length > 0 ? realStats.latestInwards.map((inw) => (
+                          <tr key={inw.id}>
+                            <td className="ps-3 small fw-medium text-primary">{inw.inward_no}</td>
+                            <td className="small text-truncate" style={{ maxWidth: '150px' }}>{inw.vendor_name || inw.customer_name || 'N/A'}</td>
+                            <td className="small text-muted">{inw.date ? new Date(inw.date).toLocaleDateString() : 'N/A'}</td>
+                            <td className="pe-3 text-center">
+                              <span className="badge bg-info bg-opacity-10 text-info rounded-pill extra-small px-2">
+                                {inw.status || 'Received'}
+                              </span>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan={4} className="text-center py-4 text-muted small">No recent inward entries</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

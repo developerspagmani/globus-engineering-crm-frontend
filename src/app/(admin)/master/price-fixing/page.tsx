@@ -332,7 +332,7 @@ export default function PriceFixingPage() {
                   <input
                     type="text"
                     placeholder="Search pricing..."
-                    className="form-control border-start-0 shadow-none"
+                    className="form-control border-start-0 shadow-none search-bar"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />

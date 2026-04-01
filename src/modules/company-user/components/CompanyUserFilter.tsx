@@ -20,7 +20,7 @@ const CompanyUserFilter: React.FC = () => {
               </span>
               <input 
                 type="text" 
-                className="form-control bg-transparent border-0 shadow-none ps-0" 
+                className="form-control bg-transparent border-0 shadow-none ps-0 search-bar" 
                 placeholder="Search users by name, email..." 
                 value={filters.search}
                 onChange={(e) => dispatch(setUserFilters({ search: e.target.value }))}

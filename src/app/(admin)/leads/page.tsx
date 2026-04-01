@@ -171,7 +171,7 @@ const LeadsPage = () => {
                 </span>
                 <input
                   type="text"
-                  className="form-control border-start-0 ps-0 py-2"
+                  className="form-control border-start-0 ps-0 py-2 search-bar"
                   placeholder="Search prospects..."
                   value={filters.search}
                   onChange={(e) => dispatch(setLeadFilters({ search: e.target.value }))}
@@ -190,20 +190,20 @@ const LeadsPage = () => {
                 <option value="qualified">Qualified</option>
               </select>
             </div>
-            <div className="col-lg-2 col-md-3">
+               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
               <input 
                 type="date" 
-                className="form-control py-2" 
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
                 value={filters.fromDate}
                 onChange={(e) => dispatch(setLeadFilters({ fromDate: e.target.value }))}
               />
             </div>
                         <span className="text-muted small fw-bold">TO</span>
 
-            <div className="col-lg-2 col-md-3">
+               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
               <input 
                 type="date" 
-                className="form-control py-2" 
+                   className="form-control py-1 border-0 shadow-none bg-transparent" 
                 value={filters.toDate}
                 onChange={(e) => dispatch(setLeadFilters({ toDate: e.target.value }))}
               />

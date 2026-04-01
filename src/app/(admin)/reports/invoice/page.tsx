@@ -101,7 +101,7 @@ const InvoiceReportPage = () => {
             <div className="col-lg-5 col-md-4">
               <div className="position-relative">
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                <input type="text" className="form-control ps-5 border-0 bg-light-soft" placeholder="Search customer or invoice..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ height: '42px', borderRadius: '10px' }} />
+                <input type="text" className="form-control ps-5 border-0 bg-light-soft search-bar" placeholder="Search customer or invoice..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ height: '42px', borderRadius: '10px' }} />
               </div>
             </div>
             <div className="col-auto ms-auto d-flex align-items-center gap-1">

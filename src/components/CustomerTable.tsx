@@ -35,7 +35,7 @@ const CustomerTable = ({ customers, selectedRegion }: CustomerTableProps) => {
                         <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style={{ fontSize: '0.9rem' }}></i>
                         <input
                             type="text"
-                            className="form-control form-control-sm ps-5 bg-light border-0"
+                            className="form-control form-control-sm ps-5 bg-light border-0 search-bar"
                             placeholder="Search by Customer Name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
