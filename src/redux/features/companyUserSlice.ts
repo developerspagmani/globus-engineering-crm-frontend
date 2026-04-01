@@ -30,16 +30,20 @@ export const addUserAsync = createAsyncThunk(
   async (userData: any, { rejectWithValue }) => {
     try {
       const response = await api.post('/users', userData);
-      const u = response.data.user;
+      // Robust mapping: Check for .user OR root
+      const u = response.data.user || response.data;
+      
       return {
         ...u,
         company_id: u.company_id,
-        modulePermissions: typeof u.module_permissions === 'string' 
-            ? JSON.parse(u.module_permissions) 
-            : (u.module_permissions || []),
-        permissions: typeof u.permissions === 'string'
-            ? JSON.parse(u.permissions)
-            : (u.permissions || [])
+        modulePermissions: u.modulePermissions || u.module_permissions 
+            ? (typeof (u.modulePermissions || u.module_permissions) === 'string' 
+                ? JSON.parse(u.modulePermissions || u.module_permissions) 
+                : (u.modulePermissions || u.module_permissions))
+            : [],
+        permissions: u.permissions 
+            ? (typeof u.permissions === 'string' ? JSON.parse(u.permissions) : u.permissions)
+            : []
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to create user');

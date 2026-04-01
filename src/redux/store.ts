@@ -15,6 +15,7 @@ import leadReducer from './features/leadSlice';
 import pendingPaymentReducer from './features/pendingPaymentSlice';
 import companyUserReducer from './features/companyUserSlice';
 import companyReducer from './features/companySlice';
+import storeReducer from './features/storeSlice';
 
 import masterReducer from './features/masterSlice';
 import dashboardReducer from './features/dashboardSlice';
@@ -39,6 +40,7 @@ export const store = configureStore({
     companies: companyReducer,
     master: masterReducer,
     dashboard: dashboardReducer,
+    stores: storeReducer,
   },
 });
 

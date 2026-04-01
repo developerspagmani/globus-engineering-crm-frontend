@@ -113,7 +113,7 @@ export default function OutwardListPage() {
                 <input 
                   type="date" 
                    className="form-control py-1 border-0 shadow-none bg-transparent" 
-                  style={{ fontSize: '16px' }}
+                  style={{ fontSize: '0.85rem' }}
                   value={filters.fromDate}
                   onChange={(e) => dispatch(setOutwardFilters({ fromDate: e.target.value }))}
                 />
@@ -123,7 +123,7 @@ export default function OutwardListPage() {
                 <input 
                   type="date" 
                    className="form-control py-1 border-0 shadow-none bg-transparent" 
-                  style={{ fontSize: '16px' }}
+                  style={{ fontSize: '0.85rem' }}
                   value={filters.toDate}
                   onChange={(e) => dispatch(setOutwardFilters({ toDate: e.target.value }))}
                 />

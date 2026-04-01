@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { User, ModulePermission } from '@/data/mockModules';
+import { User, ModulePermission } from '@/types/modules';
 import { addUser, updateUser } from '@/redux/features/companyUserSlice';
 
 interface CompanyUserFormProps {
@@ -28,7 +28,9 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '', // New password field
     role: 'staff' as User['role'],
+    assignedArea: '',
   });
 
   const [modulePermissions, setModulePermissions] = useState<ModulePermission[]>([]);
@@ -39,8 +41,10 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
         name: initialData.name,
         email: initialData.email,
         role: initialData.role,
+        assignedArea: initialData.assignedArea || '',
+        password: '', // Initialize password as empty for edit mode
       });
-      setModulePermissions(initialData.modulePermissions);
+      setModulePermissions(initialData.modulePermissions || []);
     } else {
       // Default permissions for new user: access to all current company modules with read-only
       const defaultPerms: ModulePermission[] = companyModules.map(m => ({
@@ -86,11 +90,27 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
     e.preventDefault();
     
     try {
+      // Generate legacy permissions from the new module permissions for compatibility
+      const legacyPermissions = modulePermissions
+        .filter(p => p.canRead)
+        .map(p => {
+          const modName = p.moduleId.replace('mod_', '');
+          return `view_${modName}`;
+        });
+        
+      if (formData.role === 'company_admin' || formData.role === 'super_admin') {
+        legacyPermissions.push('all');
+      }
+
       const userData = {
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        assigned_area: formData.assignedArea,
         company_id: company?.id || currentUser?.company_id,
-        modulePermissions: modulePermissions,
-        password: 'password123' 
+        permissions: legacyPermissions, // Legacy column
+        modulePermissions: modulePermissions, // New detailed column
+        password: formData.password || 'password123'
       };
 
       console.log('CLIENT: Saving User with Payload:', userData);
@@ -139,7 +159,21 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                 disabled={mode === 'view'}
               />
             </div>
-            <div className="col-md-4">
+            {mode === 'create' && (
+              <div className="col-md-4">
+                <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Default Password</label>
+                <input
+                  type="password"
+                  className="form-control shadow-none"
+                  name="password"
+                  placeholder="Set login password"
+                  value={formData.password}
+                  onChange={handleFormChange}
+                  required={mode === 'create'}
+                />
+              </div>
+            )}
+            <div className="col-md-3">
               <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">System Role</label>
               <select
                 className="form-select shadow-none"
@@ -154,9 +188,21 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                 )}
                 <option value="company_admin">Company Admin</option>
                 <option value="manager">Manager</option>
-                <option value="sales_agent">Sales Agent</option>
-                <option value="staff">Staff</option>
+                <option value="sales">Sales (Field Staff)</option>
+                <option value="staff">Staff / Operations</option>
               </select>
+            </div>
+            <div className="col-md-3">
+              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Assigned Area</label>
+              <input
+                type="text"
+                className="form-control shadow-none"
+                name="assignedArea"
+                value={formData.assignedArea}
+                onChange={handleFormChange}
+                placeholder="Ex. North Zone"
+                disabled={mode === 'view' || formData.role !== 'sales'}
+              />
             </div>
           </div>
 

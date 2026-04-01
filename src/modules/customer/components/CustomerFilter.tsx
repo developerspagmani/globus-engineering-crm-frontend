@@ -69,7 +69,7 @@ const CustomerFilter: React.FC = () => {
           </div>
 
           {/* Date Filters */}
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+               <div className="d-flex align-items-center gap-2 bg-white px-1  py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
               <input 
                 type="date" 
                    className="form-control py-1 border-0 shadow-none bg-transparent" 
@@ -79,7 +79,7 @@ const CustomerFilter: React.FC = () => {
               />
             </div>
             <span className="text-muted small fw-bold">TO</span>
-                             <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+                             <div className="d-flex align-items-center gap-2 bg-white px-1 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
 
               <input 
                 type="date" 

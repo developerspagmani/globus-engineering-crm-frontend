@@ -28,6 +28,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
     agentId: user?.id || '',
     company_id: user?.company_id || 'comp_globus',
     notes: '',
+    assignedArea: '',
   });
 
   useEffect(() => {
@@ -42,7 +43,8 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
         status: initialData.status,
         agentId: initialData.agentId,
         company_id: initialData.company_id,
-        notes: initialData.notes,
+        notes: initialData.notes || '',
+        assignedArea: initialData.assignedArea || '',
       });
     }
   }, [initialData]);
@@ -54,10 +56,14 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      ...formData,
+      assigned_area: formData.assignedArea,
+    };
     if (mode === 'create') {
-      (dispatch as any)(addLead(formData));
+      (dispatch as any)(addLead(payload));
     } else if (mode === 'edit' && initialData) {
-      (dispatch as any)(updateLead({ ...initialData, ...formData }));
+      (dispatch as any)(updateLead({ ...initialData, ...payload }));
     }
     router.push('/leads');
   };
@@ -152,6 +158,22 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
           </div>
+
+          <div className="row g-4 mb-4">
+            <div className="col-md-12">
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Geographic Area / Cluster</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                name="assignedArea" 
+                value={formData.assignedArea} 
+                onChange={handleChange} 
+                placeholder="Ex. Coimbatore Industrial Area"
+                disabled={mode === 'view'}
+              />
+            </div>
+          </div>
+
 
           <div className="mb-4">
             <label className="form-label small fw-800 text-uppercase tracking-wider">Engagement Notes</label>

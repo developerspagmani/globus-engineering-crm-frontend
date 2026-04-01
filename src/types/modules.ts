@@ -168,8 +168,9 @@ export interface User {
   email: string;
   password?: string;
   phone?: string;
-  role: 'super_admin' | 'company_admin' | 'manager' | 'staff' | 'sales_agent';
+  role: 'super_admin' | 'company_admin' | 'manager' | 'staff' | 'sales_agent' | 'sales';
   company_id: string | null;
+  assignedArea?: string; // New field for Sprint 2
   permissions: string[];
   modulePermissions: ModulePermission[]; // Granular CRUD permissions
 }
@@ -228,7 +229,8 @@ export interface Lead {
   status: 'new' | 'contacted' | 'qualified' | 'converted';
   agentId: string;
   company_id: string;
-  notes: string;
+  assignedArea?: string; // New field for Sprint 2
+  notes?: string;
   createdAt: string;
 }
 
@@ -334,6 +336,31 @@ export interface DashboardStats {
     customer_name?: string;
     status: string;
   }[];
+}
+
+export interface Store {
+  id: string;
+  name: string;
+  ownerName?: string;
+  phone?: string;
+  address?: string;
+  area?: string;
+  city?: string;
+  assignedAgentId?: string;
+  company_id: string;
+  createdAt: string;
+  latestVisit?: StoreVisit; // Virtual field for UI
+}
+
+export interface StoreVisit {
+  id: string;
+  storeId: string;
+  agentId: string;
+  visitDate: string;
+  notes?: string;
+  productInterest?: string;
+  nextVisitDate?: string;
+  createdAt: string;
 }
 
 export interface AuditLog {

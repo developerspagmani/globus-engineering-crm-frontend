@@ -26,12 +26,12 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   }, []);
 
   const toggleExpand = (name: string) => {
-    setExpandedItems(prev => 
+    setExpandedItems(prev =>
       prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]
     );
   };
 
-  const filteredItems = navigationConfig.filter(item => 
+  const filteredItems = navigationConfig.filter(item =>
     hasPermission(item, user, company?.activeModules)
   );
 
