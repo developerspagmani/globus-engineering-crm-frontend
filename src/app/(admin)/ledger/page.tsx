@@ -135,6 +135,7 @@ export default function LedgerPage() {
     doc.save(`ledger_export_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+
   return (
     <ModuleGuard moduleId="mod_ledger">
       <div className="container-fluid py-4 min-vh-100 bg-white">
@@ -146,12 +147,12 @@ export default function LedgerPage() {
           </div>
           <div className="d-flex gap-2 hide-print">
             <Link 
-              href="/ledger/new"
-              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
-              style={{ backgroundColor: '#ff4081', border: 'none' }}
+              href="/ledger/new-entry"
+              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm rounded-pill border-0" 
+              style={{ backgroundColor: '#ff4081' }}
             >
               <i className="bi bi-plus-lg"></i>
-              <span className="fw-bold text-uppercase small">Add Ledger</span>
+              <span className="fw-bold text-uppercase small">Add New Ledger Entry</span>
             </Link>
           </div>
         </div>
@@ -243,9 +244,11 @@ export default function LedgerPage() {
                       <td className="text-muted small">{party.state || '-'}</td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
-                          <button className="btn btn-success p-1 px-2 border-0 shadow-sm rounded" style={{ height: '32px', width: '32px' }} title="View Ledger Details">
-                              <i className="bi bi-search x-small"></i>
-                          </button>
+                          <Link href={`/ledger/${party.id}`}>
+                            <button className="btn btn-success p-1 px-2 border-0 shadow-sm rounded" style={{ height: '32px', width: '32px' }} title="View Ledger Details">
+                                <i className="bi bi-search x-small"></i>
+                            </button>
+                          </Link>
                           
                           <div className="dropdown">
                             <button 
@@ -305,6 +308,7 @@ export default function LedgerPage() {
           </div>
         )}
       </div>
+
       <style jsx>{`
         @media print {
           :global(body *) { visibility: hidden; }

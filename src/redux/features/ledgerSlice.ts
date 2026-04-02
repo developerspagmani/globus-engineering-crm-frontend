@@ -15,16 +15,16 @@ export const fetchLedgerEntries = createAsyncThunk(
       return response.data.map((entry: any) => ({
         id: entry.id.toString(),
         date: entry.date ? new Date(entry.date).toISOString().split('T')[0] : '',
-        partyId: entry.party_id?.toString(),
-        partyName: entry.party_name,
-        partyType: entry.party_type?.toLowerCase() || 'other',
+        partyId: (entry.party_id || entry.partyId)?.toString(),
+        partyName: entry.party_name || entry.partyName,
+        partyType: (entry.party_type || entry.partyType || 'customer').toLowerCase(),
         description: entry.description_ || entry.description || '',
-        referenceNo: entry.reference_no,
-        type: entry.debit > 0 ? 'debit' : 'credit',
-        amount: parseFloat(entry.debit > 0 ? entry.debit : entry.credit),
-        balance: parseFloat(entry.balance || '0'),
-        company_id: entry.company_id,
-        createdAt: entry.app_created_at
+        referenceNo: entry.reference_id || entry.reference_no,
+        type: (entry.type || 'debit').toLowerCase(),
+        amount: parseFloat(String(entry.amount || '0')),
+        balance: parseFloat(String(entry.balance || '0')),
+        company_id: entry.company_id || entry.companyId,
+        createdAt: entry.created_at || entry.createdAt
       }));
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch ledger entries');

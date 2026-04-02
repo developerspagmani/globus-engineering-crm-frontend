@@ -141,21 +141,6 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         const result = await (dispatch as any)(createInward(finalData)).unwrap();
         console.log('✅ API result:', result);
 
-        // Auto-post to ledger 
-        if (finalData.customerId) {
-          (dispatch as any)(addLedgerEntry({
-            partyId: finalData.customerId,
-            partyName: finalData.customerName || '',
-            partyType: 'customer',
-            company_id: finalData.company_id,
-            date: finalData.date,
-            type: 'credit',
-            amount: 0,
-            description: `Material Receipt: ${finalData.inwardNo}`,
-            referenceId: finalData.inwardNo
-          } as any));
-        }
-
         setModal({
           isOpen: true,
           type: 'success',

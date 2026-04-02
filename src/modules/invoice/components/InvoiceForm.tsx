@@ -22,7 +22,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    const searchParams = useSearchParams();
    const inwardId = searchParams.get('inwardId');
 
-   const { company } = useSelector((state: RootState) => state.auth);
+   const { company, token: authToken } = useSelector((state: RootState) => state.auth);
    const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
    const { items: inwards } = useSelector((state: RootState) => state.inward);
    const { settings } = useSelector((state: RootState) => state.invoices);
@@ -65,6 +65,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       notes: '',
    });
 
+   const [pendingInwards, setPendingInwards] = useState<any[]>([]);
+   const [inwardLoading, setInwardLoading] = useState(false);
+
    const [selectionMode, setSelectionMode] = useState<'CUSTOMER' | 'GSTN'>('CUSTOMER');
 
    const [gstLoading, setGstLoading] = useState(false);
@@ -76,6 +79,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       title: '',
       message: ''
    });
+
+   const [loading, setLoading] = useState(false);
 
    useEffect(() => {
       if (company?.id) {
@@ -158,43 +163,58 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             discount: initialData.discount || 0,
          };
          setFormData(mappedData);
-      } else if (inwardId && priceFixings.length > 0 && customers.length > 0) {
-         const inward = inwards.find(i => i.id === inwardId);
-         if (inward) {
-            const customer = customers.find(c => String(c.id) === String(inward.customerId));
-            const formattedAddress = [customer?.street1, customer?.city, customer?.state].filter(Boolean).join(', ');
+      }
+   }, [initialData]);
+
+   const populateFromInward = (inward: any) => {
+      console.log("DEBUG: Populating from Inward:", inward.id);
+      const customer = customers.find(c => String(c.id) === String(inward.customerId || inward.customer_id));
+      const formattedAddress = [customer?.street1, customer?.city, customer?.state].filter(Boolean).join(', ');
+      
+      const formatToDateInput = (d: any) => {
+         if (!d) return '';
+         try {
+            return new Date(d).toISOString().split('T')[0];
+         } catch (e) { return ''; }
+      };
+
+      setFormData((prev: any) => {
+         try {
+            const pDate = formatToDateInput(inward.po_date || inward.poDate);
+            const dDate = formatToDateInput(inward.dc_date || inward.dcDate);
             
-            setFormData((prev: any) => ({
+            return {
                ...prev,
-               customerId: inward.customerId || '',
-               customerName: inward.customerName || '',
-               address: inward.address || formattedAddress || '',
-               poNo: inward.poReference || '',
-               po_no: inward.poReference || '',
-               poDate: inward.poDate || '',
-               po_date: inward.poDate || '',
-               dcNo: inward.dcNo || '',
-               dc_no: inward.dcNo || '',
-               dcDate: inward.dcDate || '',
-               dc_date: inward.dcDate || '',
-               gstin: (inward as any).gstin || customer?.gst || '',
-               state: (inward as any).state || customer?.state || '',
+               customerId: inward.customerId || inward.customer_id || prev.customerId,
+               customerName: inward.customerName || inward.customer_name || prev.customerName,
+               address: inward.address || formattedAddress || prev.address,
+               poNo: inward.po_reference || inward.poReference || '',
+               po_no: inward.po_reference || inward.poReference || '',
+               poDate: pDate,
+               po_date: pDate,
+               dcNo: inward.dc_no || inward.dcNo || '',
+               dc_no: inward.dc_no || inward.dcNo || '',
+               dcDate: dDate,
+               dc_date: dDate,
+               gstin: (inward as any).gstin || customer?.gst || prev.gstin,
+               state: (inward as any).state || customer?.state || prev.state,
                inwardId: inward.id,
-               items: inward.items.map((item, idx) => {
+               items: (inward.items || []).map((item: any, idx: number) => {
+                  console.log(`DEBUG: Processing Item ${idx}:`, item.item_name || item.description);
                   const unitPrice = findPrice(
                      prev.company_id,
-                     inward.customerId || '',
-                     item.description,
+                     inward.customerId || inward.customer_id || prev.customerId,
+                     item.item_name || item.description || '',
                      item.process || ''
                   );
 
-                  const qty = item.quantity;
+                  const qty = item.remainingQty ?? item.quantity ?? 0;
                   const amount = qty * unitPrice;
-                  const tax = amount * 0.12;
+                  const tax = amount * (prev.taxRate / 100);
 
                   return {
                      id: idx.toString(),
-                     description: item.description,
+                     description: item.item_name || item.description || '',
                      process: item.process || '',
                      quantity: qty,
                      unitPrice: unitPrice,
@@ -203,10 +223,20 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      total: amount + tax
                   };
                })
-            }));
+            };
+         } catch (err) {
+            console.error("DEBUG: CRASH in populateFromInward:", err);
+            return prev;
          }
+      });
+   };
+
+   useEffect(() => {
+      if (inwardId && inwards.length > 0 && customers.length > 0) {
+         const inward = inwards.find(i => i.id === inwardId);
+         if (inward) populateFromInward(inward);
       }
-   }, [initialData, inwardId, inwards, priceFixings, customers]);
+   }, [inwardId, inwards, priceFixings, customers]);
 
    useEffect(() => {
       const subTotal = formData.items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
@@ -234,8 +264,39 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             customerName: customer?.name || '',
             address: customer?.street1 || '',
             gstin: customer?.gst || '',
-            state: customer?.state || ''
+            state: customer?.state || '',
+            inwardId: undefined // Reset inward selection when customer changes
          }));
+
+         // Fetch pending inwards for stock tracking
+         if (value) {
+            setInwardLoading(true);
+            const activeToken = authToken || localStorage.getItem('token');
+            console.log("DEBUG: Retrying with token:", activeToken ? "Token Found" : "Token MISSING");
+
+            if (activeToken) {
+               console.log(`DEBUG: Calling API for Customer: ${value}`);
+               fetch(`/api/inward/pending/${value}`, {
+                  headers: {
+                     'Authorization': `Bearer ${activeToken.replace(/^"|"$/g, '')}`
+                  }
+               })
+                  .then(res => res.json())
+                  .then(data => {
+                     console.log("DEBUG: Inward Data Received:", data);
+                     setPendingInwards(Array.isArray(data) ? data : []);
+                  })
+                  .catch(err => {
+                     console.error("DEBUG: API Error:", err);
+                  })
+                  .finally(() => setInwardLoading(false));
+            } else {
+               console.warn("DEBUG: No token found in state, skipping fetch.");
+               setInwardLoading(false);
+            }
+         } else {
+            setPendingInwards([]);
+         }
       } else {
          let updates: any = { [name]: value };
          if (name === 'poNo') updates.po_no = value;
@@ -298,11 +359,62 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       setFormData((prev: any) => ({ ...prev, items: newItems }));
    };
 
+   const handleAddItem = () => {
+      setFormData((prev: any) => ({
+         ...prev,
+         items: [
+            ...prev.items,
+            { id: Date.now().toString(), description: '', process: '', quantity: 1, unitPrice: 0, tax: 0, amount: 0, total: 0 }
+         ]
+      }));
+   };
+
+   const handleRemoveItem = (id: string) => {
+      if (formData.items.length === 1) return;
+      setFormData((prev: any) => ({
+         ...prev,
+         items: prev.items.filter((item: any) => item.id !== id)
+      }));
+   };
+
+   const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (loading) return;
+
+      try {
+         setLoading(true);
+         if (mode === 'create') {
+            await (dispatch as any)(addInvoice(formData)).unwrap();
+            setModal({
+               isOpen: true,
+               type: 'success',
+               title: 'Success!',
+               message: 'Invoice created successfully.'
+            });
+         } else {
+            await (dispatch as any)(updateInvoice({ ...formData, id: initialData?.id || '' })).unwrap();
+         }
+         setTimeout(() => {
+            const tab = searchParams.get('tab');
+            router.push(`/invoices?tab=${tab || 'all'}`);
+         }, 1500);
+      } catch (error: any) {
+         setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Error',
+            message: error.message || 'Something went wrong.'
+         });
+      } finally {
+         setLoading(false);
+      }
+   };
+
    return (
       <>
          <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div className="card-body p-4 p-lg-5">
-               <form onSubmit={e => e.preventDefault()}>
+               <form onSubmit={handleSubmit}>
             <div className="d-flex align-items-center justify-content-between mb-5 pb-2 gap-4 flex-wrap">
                <div className="d-flex align-items-center">
                   <button
@@ -454,21 +566,46 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             </div>
 
             {mode === 'create' && (
-               <div className="d-flex align-items-center mb-5 pb-4 border-bottom">
-                  <h5 className="text-danger fw-bold mb-0 me-4">Select the Bill Type</h5>
-                  <div style={{ width: '300px' }}>
-                     <select
-                        className="form-select border-0 border-bottom rounded-0 py-2"
-                        style={{ fontSize: '0.85rem' }}
-                        name="billType"
-                        value={formData.billType}
-                        onChange={handleInputChange}
-                     >
-                        <option value="With Process">With Process</option>
-                        <option value="Without Process">Without Process</option>
-                        <option value="Both">Both</option>
-                     </select>
+               <div className="d-flex align-items-center mb-5 pb-4 border-bottom gap-4">
+                  <div className="d-flex align-items-center">
+                     <h5 className="text-danger fw-bold mb-0 me-4" style={{ whiteSpace: 'nowrap' }}>Select the Bill Type</h5>
+                     <div style={{ width: '220px' }}>
+                        <select
+                           className="form-select border-0 border-bottom rounded-0 py-2 fw-bold"
+                           style={{ fontSize: '0.85rem' }}
+                           name="billType"
+                           value={formData.billType}
+                           onChange={handleInputChange}
+                        >
+                           <option value="With Process">With Process</option>
+                           <option value="Without Process">Without Process</option>
+                           <option value="Both">Both</option>
+                        </select>
+                     </div>
                   </div>
+
+                  {pendingInwards.length > 0 && formData.customerId && (
+                     <div className="d-flex align-items-center gap-2" style={{ border: '1px solid #f97316', borderRadius: '8px', padding: '6px 14px', minWidth: '280px', background: '#fff' }}>
+                        <i className="bi bi-box-seam" style={{ fontSize: '15px', color: '#f97316' }}></i>
+                        <select
+                           className="border-0 bg-transparent fw-bold"
+                           style={{ outline: 'none', fontSize: '13px', color: '#212529', flex: 1, cursor: 'pointer' }}
+                           onChange={(e) => {
+                              const selected = pendingInwards.find(i => i.id === e.target.value);
+                              if (selected) populateFromInward(selected);
+                           }}
+                           value={formData.inwardId || ''}
+                        >
+                           <option value="">Select Inward Reference</option>
+                           {pendingInwards.map(i => (
+                              <option key={i.id} value={i.id}>
+                                 #{i.inward_no} - {i.po_reference || 'No PO'} ({i.items.reduce((s:number, it:any) => s + it.remainingQty, 0)} pending)
+                              </option>
+                           ))}
+                        </select>
+                        {inwardLoading && <span className="spinner-border spinner-border-sm text-orange"></span>}
+                     </div>
+                  )}
                </div>
             )}
 
@@ -630,17 +767,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               </select>
                            </td>
                            <td className="py-3">
-                              <select className="form-select border-0 bg-transparent" value={item.process} onChange={e => handleItemChange(index, 'process', e.target.value)}>
+                              <select className="form-select border-0 bg-transparent" value={String(item.process || '')} onChange={e => handleItemChange(index, 'process', e.target.value)}>
                                  <option value="">Select Process</option>
                                  {masterProcesses.map(p => <option key={p.id} value={p.processName}>{p.processName}</option>)}
                               </select>
                            </td>
                            <td className="py-3">
-                              <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} />
+                              <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} />
                            </td>
                            {formData.billType === 'Both' && (
                               <td className="py-3">
-                                 <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" value={item.wopQty} onChange={e => handleItemChange(index, 'wopQty', parseInt(e.target.value))} />
+                                 <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty} onChange={e => handleItemChange(index, 'wopQty', parseInt(e.target.value))} />
                               </td>
                            )}
                            {formData.billType !== 'Without Process' && (
@@ -674,100 +811,100 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             </div>
 
             {formData.billType !== 'Without Process' && (
-               <div className="row justify-content-end mt-4">
-                  <div className="col-md-4">
-                     <div className="row mb-3 align-items-center">
-                        <div className="col-7 text-muted fw-bold small text-uppercase">Sub Total</div>
-                        <div className="col-5 d-flex justify-content-end align-items-center gap-2 text-dark fw-bold">
-                           <span className="small">₹</span>
-                           <span className="text-end" style={{ width: '80px' }}>{formData.subTotal?.toFixed(2)}</span>
+               <div className="col-lg-5 ms-auto">
+                  <div className="mt-4 pt-4 border-top">
+                     {/* Sub Total Row */}
+                     <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                        <h6 className="text-muted fw-bold small text-uppercase mb-0">Sub Total</h6>
+                        <div className="d-flex align-items-center gap-2 text-dark fs-5 fw-bold">
+                           <span>₹</span>
+                           <span>{formData.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                      </div>
-                     <div className="row mb-3 align-items-center">
-                        <div className="col-7 text-muted fw-bold small text-uppercase">(-) Discount</div>
-                        <div className="col-5">
-                           <div className="d-flex align-items-center justify-content-end gap-2 border-bottom border-secondary border-opacity-25 pb-1">
-                              <span className="text-dark fw-bold small">₹</span>
+
+                     {/* Discount Row */}
+                     <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                        <h6 className="text-muted fw-bold small text-uppercase mb-0">(-) Discount</h6>
+                        <div className="d-flex align-items-center justify-content-center text-dark fw-bold fs-5">
+                           <span className="me-2">₹</span>
+                           <input
+                              type="number"
+                              step="0.01"
+                              className="border-0 bg-transparent text-end fw-bold p-0 no-spinner"
+                              style={{ width: '120px', outline: 'none' }}
+                              value={formData.discount || ''}
+                              placeholder="0.00"
+                              onChange={e => setFormData((prev: any) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                           />
+                        </div>
+                     </div>
+
+                     {/* Other Charges Row */}
+                     <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                        <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) Other Charges</h6>
+                        <div className="d-flex align-items-center justify-content-center text-dark fw-bold fs-5">
+                           <span className="me-2">₹</span>
+                           <input
+                              type="number"
+                              step="0.01"
+                              className="border-0 bg-transparent text-end fw-bold p-0 no-spinner"
+                              style={{ width: '120px', outline: 'none' }}
+                              value={formData.otherCharges || ''}
+                              placeholder="0.00"
+                              onChange={e => setFormData((prev: any) => ({ ...prev, otherCharges: parseFloat(e.target.value) || 0 }))}
+                           />
+                        </div>
+                     </div>
+
+                     {/* IGST Row */}
+                     <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                        <div className="d-flex align-items-center gap-4">
+                           <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) IGST</h6>
+                           <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '60px' }}>
                               <input
                                  type="number"
-                                 step="0.01"
-                                 className="border-0 bg-transparent text-end fw-bold text-dark p-0 no-spinner"
-                                 style={{ width: '80px', outline: 'none' }}
-                                 value={formData.discount || '0.00'}
-                                 onChange={e => setFormData((prev: any) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                                 className="border-0 bg-transparent text-center fw-bold p-0 no-spinner w-100"
+                                 style={{ outline: 'none', fontSize: '14px' }}
+                                 value={formData.taxRate}
+                                 onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
                               />
+                              <span className="small fw-bold">%</span>
                            </div>
                         </div>
-                     </div>
-                     <div className="row mb-3 align-items-center">
-                        <div className="col-7 text-muted fw-bold small text-uppercase">(+) Other Charges</div>
-                        <div className="col-5">
-                           <div className="d-flex align-items-center justify-content-end gap-2 border-bottom border-secondary border-opacity-25 pb-1">
-                              <span className="text-dark fw-bold small">₹</span>
-                              <input
-                                 type="number"
-                                 step="0.01"
-                                 className="border-0 bg-transparent text-end fw-bold text-dark p-0 no-spinner"
-                                 style={{ width: '80px', outline: 'none' }}
-                                 value={formData.otherCharges || '0.00'}
-                                 onChange={e => setFormData((prev: any) => ({ ...prev, otherCharges: parseFloat(e.target.value) || 0 }))}
-                              />
-                           </div>
+                        <div className="d-flex align-items-center gap-2 text-dark fs-5 fw-bold">
+                           <span>₹</span>
+                           <span>{formData.taxTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                      </div>
-                     <div className="row mb-4 align-items-center pb-2 border-bottom">
-                        <div className="col-7 text-muted fw-bold small text-uppercase d-flex align-items-center gap-2">
-                           <span>(+) IGST</span>
-                           <div className="d-flex align-items-center bg-light px-2 py-1 rounded shadow-inner" style={{ width: '70px' }}>
-                              <input
-                                 type="number"
-                                 className="border-0 bg-transparent text-center fw-bold no-spinner p-0"
-                                 style={{ width: '30px', fontSize: '0.75rem', outline: 'none' }}
-                                 value={formData.taxRate ?? 12}
-                                 onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseInt(e.target.value) || 0 }))}
-                              />
-                              <span className="small text-muted fw-bold">%</span>
-                           </div>
-                        </div>
-                        <div className="col-5 d-flex justify-content-end align-items-center gap-2 text-dark fw-bold">
-                           <span className="small">₹</span>
-                           <span className="text-end" style={{ width: '80px' }}>{formData.taxTotal?.toFixed(2)}</span>
+
+                     {/* Grand Total Row */}
+                     <div className="d-flex align-items-center justify-content-between pt-3 pb-2" style={{ borderBottom: '2.5px solid #212529' }}>
+                        <h4 className="fw-bold mb-0 text-dark text-uppercase small" style={{ letterSpacing: '1px' }}>Grand Total</h4>
+                        <div className="d-flex align-items-center gap-2 text-danger fw-bold fs-2">
+                           <span>₹</span>
+                           <span className="text-nowrap">{formData.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                      </div>
-                     <div className="pt-3 row align-items-center">
-                        <div className="col-7 h5 fw-black text-uppercase mb-0">Grand Total</div>
-                        <div className="col-5 d-flex justify-content-end align-items-center gap-2 h4 fw-black text-danger mb-0">
-                           <span className="h5 mb-0">₹</span>
-                           <span className="text-end" style={{ width: '80px' }}>{formData.grandTotal?.toFixed(2)}</span>
-                        </div>
-                     </div>
-                     <style jsx>{`
-                        .no-spinner::-webkit-inner-spin-button, 
-                        .no-spinner::-webkit-outer-spin-button { 
-                           -webkit-appearance: none; 
-                           margin: 0; 
-                        }
-                        .no-spinner {
-                           -moz-appearance: textfield;
-                        }
-                     `}</style>
                   </div>
                </div>
             )}
 
             <div className="mt-5 pt-4 text-center">
-               <button type="submit" className="btn btn-success px-5 py-2 fw-bold text-uppercase me-2" onClick={() => {
-                  const submitData = { ...formData, id: mode === 'edit' ? initialData?.id : undefined };
-                  const action = mode === 'create' ? addInvoice(submitData) : updateInvoice(submitData);
-
-                  (dispatch as any)(action).then(() => {
-                     if (company?.id) {
-                        (dispatch as any)(fetchInwards(company.id));
-                     }
-                  });
-                  setModal({ isOpen: true, type: 'success', title: 'Success', message: `Invoice ${mode === 'create' ? 'submitted' : 'updated'} successfully!` });
-               }}>Submit</button>
-               <button type="button" className="btn btn-danger px-5 py-2 fw-bold text-uppercase">Reset</button>
+               <button
+                  type="submit"
+                  className="btn btn-success px-5 py-2 fw-bold text-uppercase me-2"
+                  disabled={loading}
+               >
+                  {loading ? (
+                     <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Saving...
+                     </>
+                  ) : (
+                     mode === 'create' ? 'Submit' : 'Update'
+                  )}
+               </button>
+               <button type="button" className="btn btn-danger px-5 py-2 fw-bold text-uppercase" onClick={() => router.back()}>Back</button>
             </div>
          </form>
       </div>

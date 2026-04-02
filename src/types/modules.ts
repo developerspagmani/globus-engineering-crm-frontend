@@ -82,6 +82,8 @@ export interface OutwardEntry {
   challanNo: string;
   vehicleNo: string;
   company_id: string;
+  inwardId?: string;
+  inwardNo?: string;
   date: string;
   status: 'pending' | 'completed' | 'cancelled';
   items: { description: string; quantity: number; unit: string }[];

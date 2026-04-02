@@ -16,7 +16,8 @@ export const fetchOutwards = createAsyncThunk(
         customerName: item.customer_name || 'N/A',
         invoiceReference: item.invoice_reference || item.invoice_no || '',
         challanNo: item.challan_no || '',
-        vehicleNo: item.vehicle_no || '',
+        inwardId: item.inward_id || item.inwardId || '',
+        inwardNo: item.inward_no || item.inwardNo || '',
         company_id: item.company_id?.toString() || '',
         date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
         status: item.status || 'pending',
@@ -31,7 +32,7 @@ export const fetchOutwards = createAsyncThunk(
 
 export const createOutward = createAsyncThunk(
   'outward/create',
-  async (data: Omit<OutwardEntry, 'id' | 'createdAt'>, { rejectWithValue }) => {
+  async (data: any, { rejectWithValue }) => {
     try {
       const response = await api.post('/outward', {
         outward_no: data.outwardNo,
@@ -42,7 +43,9 @@ export const createOutward = createAsyncThunk(
         vehicle_no: data.vehicleNo,
         status: data.status,
         items: data.items,
-        company_id: data.company_id
+        company_id: data.company_id,
+        inward_id: data.inward_id || data.inwardId,
+        inward_no: data.inward_no || data.inwardNo
       });
       return response.data;
     } catch (err: any) {
@@ -53,7 +56,7 @@ export const createOutward = createAsyncThunk(
 
 export const updateOutward = createAsyncThunk(
   'outward/update',
-  async (data: OutwardEntry, { rejectWithValue }) => {
+  async (data: any, { rejectWithValue }) => {
     try {
       const response = await api.put(`/outward/${data.id}`, {
         outward_no: data.outwardNo,
@@ -64,7 +67,9 @@ export const updateOutward = createAsyncThunk(
         vehicle_no: data.vehicleNo,
         status: data.status,
         items: data.items,
-        company_id: data.company_id
+        company_id: data.company_id,
+        inward_id: data.inward_id || data.inwardId,
+        inward_no: data.inward_no || data.inwardNo
       });
       return response.data;
     } catch (err: any) {
