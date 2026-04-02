@@ -148,75 +148,71 @@ export default function LedgerPage() {
           <div className="d-flex gap-2 hide-print">
             <Link 
               href="/ledger/new-entry"
-              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm rounded-pill border-0" 
-              style={{ backgroundColor: '#ff4081' }}
-            >
+              className="btn btn-primary d-flex align-items-center gap-2">
+            
               <i className="bi bi-plus-lg"></i>
               <span className="fw-bold text-uppercase small">Add New Ledger Entry</span>
             </Link>
           </div>
         </div>
 
-        {/* Action Button Group */}
-        <div className="card border-0 mb-4">
-           <div className="card-body p-0">
-             <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="d-flex align-items-center flex-grow-1">
-                   <div className="position-relative" style={{ minWidth: '350px' }}>
-                     <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                     <input 
-                         type="text" 
-                         className="form-control ps-5 py-2 border-0 bg-white shadow-sm" 
-                         placeholder="SEARCH FOR PARTY, CITY OR STATE..." 
-                         style={{ borderRadius: '4px', border: '1px solid #e0e0e0 !important' }}
-                         value={filters.search}
-                         onChange={(e) => dispatch(setLedgerFilters({ search: e.target.value }))}
-                     />
-                   </div>
+        {/* Filter Row */}
+        <div className="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden">
+          <div className="card-body py-3">
+            <div className="d-flex flex-wrap align-items-center gap-2">
+              {/* Search Bar */}
+              <div className="flex-grow-1" style={{ minWidth: '350px' }}>
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0 py-3 px-3">
+                    <i className="bi bi-search text-muted small"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    className="form-control border-start-0 py-2 search-bar shadow-none" 
+                    placeholder="Search by Customer Name, City or State..." 
+                    value={filters.search}
+                    onChange={(e) => dispatch(setLedgerFilters({ search: e.target.value }))}
+                  />
                 </div>
-                
-                <div className="d-flex align-items-center gap-3">
-                   {/* Date Filters Moved to Right Corner */}
-                   <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '4px', borderColor: '#e0e0e0' }}>
-                     <input 
-                       type="date" 
-                       className="form-control py-1 border-0 shadow-none bg-transparent" 
-                       value={filters.dateFrom}
-                       onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
-                       style={{ width: '135px', fontSize: '0.85rem' }}
-                     />
-                     <span className="text-muted small fw-bold mx-1">TO</span>
-                     <input 
-                       type="date" 
-                       className="form-control py-1 border-0 shadow-none bg-transparent" 
-                       value={filters.dateTo}
-                       onChange={(e) => dispatch(setLedgerFilters({ dateTo: e.target.value }))}
-                       style={{ width: '135px', fontSize: '0.85rem' }}
-                     />
-                   </div>
-
-                   <div className="d-flex gap-1 hide-print flex-wrap">
-                      <button onClick={handlePrint} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}><i className="bi bi-printer fw-bold"></i> PRINT</button>
-                      <button onClick={handleExportPDF} className="btn btn-sm fw-bold px-3 py-2 rounded-0 text-white shadow-sm" style={{ backgroundColor: '#ff9800', borderColor: '#ff9800' }}><i className="bi bi-file-earmark-pdf fw-bold"></i> PDF</button>
-                   </div>
-                </div>
-             </div>
-           </div>
+              </div>
+              
+              {/* Date Filters */}
+              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '44px' }}>
+                <input 
+                  type="date" 
+                  className="form-control py-1 border-0 shadow-none bg-transparent small" 
+                  value={filters.dateFrom}
+                  onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
+                  style={{ width: '135px' }}
+                />
+              </div>
+              <span className="text-muted small fw-bold mx-1">TO</span>
+              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '44px' }}>
+                <input 
+                  type="date" 
+                  className="form-control py-1 border-0 shadow-none bg-transparent small" 
+                  value={filters.dateTo}
+                  onChange={(e) => dispatch(setLedgerFilters({ dateTo: e.target.value }))}
+                  style={{ width: '135px' }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Exact Table Layout requested by user - DYNAMICALLY POPULATED FROM LEDGER */}
-        <div className="card border-0 shadow-sm rounded-0">
-          <div className="table-responsive">
+        {/* Dynamic Table from Ledger */}
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
             <table className="table table-hover align-middle mb-0">
-              <thead className="table-light">
-                <tr className="text-muted border-bottom small text-uppercase fw-bold">
-                  <th className="px-4 py-3 border-0 text-center" style={{ width: '80px' }}>Sno</th>
-                  <th className="py-3 border-0">Customer Name</th>
-                  <th className="py-3 border-0">Strret1</th>
-                  <th className="py-3 border-0">Strret2</th>
-                  <th className="py-3 border-0">City</th>
-                  <th className="py-3 border-0">State</th>
-                  <th className="py-3 border-0 text-center px-4" style={{ width: '100px' }}>Action</th>
+              <thead className="bg-light">
+                <tr className="border-bottom">
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider text-center" style={{ width: '60px' }}>Sno</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Customer Name</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Street 1</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Street 2</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">City</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">State</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider text-center px-4" style={{ width: '120px' }}>Action</th>
                 </tr>
               </thead>
               <tbody className="border-top-0">
@@ -229,14 +225,13 @@ export default function LedgerPage() {
                 ) : paginatedItems.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-5">
-                      <p className="text-muted fw-bold text-uppercase tracking-wider small">No dynamic ledger records found for this company.</p>
-                      <span className="x-small text-muted">Create an Inward entry to start the ledger history.</span>
+                      <p className="text-muted fw-normal small">No ledger records found for this company.</p>
                     </td>
                   </tr>
                 ) : (
                   paginatedItems.map((party, index) => (
-                    <tr key={party.id} className="border-bottom">
-                      <td className="px-4 text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <tr key={party.id}>
+                      <td className="text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td className="fw-bold text-dark text-uppercase">{party.name}</td>
                       <td className="text-muted small">{party.street1 || '-'}</td>
                       <td className="text-muted small">{party.street2 || '-'}</td>
@@ -244,10 +239,8 @@ export default function LedgerPage() {
                       <td className="text-muted small">{party.state || '-'}</td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
-                          <Link href={`/ledger/${party.id}`}>
-                            <button className="btn btn-success p-1 px-2 border-0 shadow-sm rounded" style={{ height: '32px', width: '32px' }} title="View Ledger Details">
-                                <i className="bi bi-search x-small"></i>
-                            </button>
+                          <Link href={`/ledger/${party.id}`} className="btn-action-view" title="View Detail">
+                            <i className="bi bi-eye-fill"></i>
                           </Link>
                           
                           <div className="dropdown">

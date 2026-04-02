@@ -80,40 +80,61 @@ export default function LedgerDetailPage() {
 
    return (
       <ModuleGuard moduleId="mod_ledger">
-         <div className="container-fluid py-4 bg-white min-vh-100">
-            <div className="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
-               <div>
-                  <button onClick={() => router.back()} className="btn btn-sm text-muted p-0 mb-2 hide-print">
-                     <i className="bi bi-arrow-left me-2"></i>Back
-                  </button>
-                  <h2 className="fw-bold mb-1">{customer?.name || 'Customer Statement'}</h2>
-                  <div className="d-flex gap-4 align-items-center">
-                     <div className="small border-end pe-4">
-                        <span className="text-muted text-uppercase x-small d-block fw-bold">Balance Owed</span>
-                        <span className="fs-3 fw-bold text-danger">₹ {finalBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+         <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4" style={{ backgroundColor: '#f8f9fa' }}>
+            
+            {/* Unified Account Overview Card - EVERYTHING IN ONE CARD */}
+            <div className="card bg-white border-0 shadow-sm p-4 px-lg-5 rounded-4 mb-4 mt-2">
+               <div className="d-flex justify-content-between align-items-start mb-4">
+                  <div className="d-flex align-items-center gap-3">
+                     <button 
+                        onClick={() => router.push('/ledger')} 
+                        className="btn btn-link text-dark p-0 shadow-none hover-scale hide-print"
+                     >
+                        <i className="bi bi-arrow-left-circle" style={{ fontSize: '1.8rem' }}></i>
+                     </button>
+                     <div>
+                        <h2 className="fw-bold mb-0 fs-2 text-dark tracking-tight">{customer?.name || 'Customer Statement'}</h2>
+                        <p className="text-muted x-small mb-0 fw-bold text-uppercase tracking-wider">Financial Account Statement</p>
                      </div>
-                     <div className="small">
-                        <span className="text-muted text-uppercase x-small d-block fw-bold">Customer City</span>
-                        <span className="fw-semibold text-dark">{customer?.city || 'N/A'}</span>
+                  </div>
+                  
+                  <div className="hide-print">
+                     <button onClick={handlePrint} className="btn btn-primary d-flex align-items-center gap-2">
+                        <i className="bi bi-printer"></i>
+                        <span>PRINT STATEMENT</span>
+                     </button>
+                  </div>
+               </div>
+
+               <div className="border-top pt-4">
+                  <div className="d-flex gap-5 align-items-center">
+                     <div>
+                        <span className="text-muted text-uppercase x-small d-block fw-bold tracking-wider mb-1 opacity-75">Current Due Balance</span>
+                        <span className={`fs-2 fw-900 ${finalBalance > 0 ? 'text-danger' : 'text-success'}`}>
+                           ₹ {Math.abs(finalBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                           <small className="ms-2 fs-6 opacity-75">{finalBalance > 0 ? '(DR)' : '(CR)'}</small>
+                        </span>
+                     </div>
+                     <div className="border-start ps-5 h-100 py-2">
+                        <span className="text-muted text-uppercase x-small d-block fw-bold tracking-wider mb-1 opacity-75">Contact Address & Location</span>
+                        <span className="fw-bold text-dark fs-5">{customer?.city || 'N/A'}, {customer?.state || '-'}</span>
+                        <p className="text-muted small mb-0 mt-1">{customer?.street1 || 'No specific address details found.'}</p>
                      </div>
                   </div>
                </div>
-               <div className="hide-print">
-                  <button onClick={handlePrint} className="btn btn-dark fw-bold px-4 shadow-sm rounded-pill">
-                     <i className="bi bi-printer me-2"></i>PRINT STATEMENT
-                  </button>
-               </div>
             </div>
 
-            <div className="card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+            {/* Main Ledger Table */}
+            <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '40px' }}>
                <table className="table table-hover align-middle mb-0">
                   <thead className="bg-light">
-                     <tr className="small text-muted fw-bold text-uppercase">
-                        <th className="ps-4 py-3 border-0">Date</th>
-                        <th className="py-3 border-0">Particulars</th>
-                        <th className="py-3 border-0 text-end">Debit (+)</th>
-                        <th className="py-3 border-0 text-end">Credit (-)</th>
-                        <th className="py-3 border-0 text-end pe-4">Current Balance</th>
+                     <tr className="small text-muted fw-bold text-uppercase border-bottom">
+                        <th className="ps-4 py-3 border-0" style={{ width: '130px' }}>Entry Date</th>
+                        <th className="py-3 border-0">Transaction Particulars</th>
+                        <th className="py-3 border-0 text-end" style={{ width: '160px' }}>Debit (+)</th>
+                        <th className="py-3 border-0 text-end" style={{ width: '160px' }}>Credit (-)</th>
+                        <th className="py-3 border-0 text-end pe-4" style={{ width: '200px' }}>Running Balance</th>
                      </tr>
                   </thead>
                   <tbody>
@@ -121,20 +142,20 @@ export default function LedgerDetailPage() {
                         <tr><td colSpan={5} className="text-center py-5">No records found.</td></tr>
                      ) : (
                         statementEntries.map((e: any, idx) => (
-                           <tr key={idx} className="border-bottom">
-                              <td className="ps-4 py-3 small fw-bold">{new Date(e.date).toLocaleDateString()}</td>
+                           <tr key={idx} className="border-bottom border-light">
+                              <td className="ps-4 py-3 small fw-bold text-dark">{new Date(e.date).toLocaleDateString()}</td>
                               <td className="py-3">
                                  <span className="d-block fw-bold text-dark small">{e.description}</span>
-                                 <div className="small text-muted text-uppercase" style={{ fontSize: '10px' }}>{e.displayType}</div>
+                                 <div className="text-muted x-small text-uppercase tracking-wider opacity-75">{e.displayType}</div>
                               </td>
-                              <td className="py-3 text-end text-danger fw-bold">
-                                 {e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
+                              <td className="py-3 text-end text-danger fw-bold small">
+                                 {e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
                               </td>
-                              <td className="py-3 text-end text-success fw-bold">
-                                 {!e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
+                              <td className="py-3 text-end text-success fw-bold small">
+                                 {!e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
                               </td>
-                              <td className="py-3 text-end pe-4 fw-bold text-primary">
-                                 ₹ {e.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              <td className={`py-3 text-end pe-4 fw-900 ${e.balance > 0 ? 'text-danger' : 'text-success'}`} style={{ fontSize: '1rem' }}>
+                                 ₹ {Math.abs(e.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                               </td>
                            </tr>
                         ))
@@ -143,6 +164,7 @@ export default function LedgerDetailPage() {
                </table>
             </div>
          </div>
+ </div>
          <style jsx>{`
          .hide-print { @media print { display: none !important; } }
          .x-small { font-size: 0.7rem; }

@@ -50,7 +50,7 @@ const PendingPaymentPage = () => {
     printWindow.document.write('<h1 style="margin: 0; color: #ef4444;">Globus Engineering CRM</h1>');
     printWindow.document.write('<p style="margin: 5px 0 0; color: #666;">Payment Collection Notice - Outstanding Balance</p>');
     printWindow.document.write('</div>');
-    
+
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${inv.customerName}</div></div>`);
     printWindow.document.write(`<div><div class="label">Invoice No</div><div class="value">${inv.invoiceNumber}</div></div>`);
@@ -59,9 +59,9 @@ const PendingPaymentPage = () => {
     printWindow.document.write(`<div><div class="label">Due Date</div><div class="value">${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : 'N/A'}</div></div>`);
     printWindow.document.write(`<div><div class="label">Overdue Status</div><div class="value">${calculateOverdueDays(inv.dueDate)} Days Overdue</div></div>`);
     printWindow.document.write('</div>');
-    
+
     printWindow.document.write('<div style="margin-top: 50px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px;">Issued by Finance Dept - Globus Engineering CRM on ' + new Date().toLocaleString() + '</div>');
-    
+
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.print();
@@ -76,11 +76,11 @@ const PendingPaymentPage = () => {
     doc.text("GLOBUS ENGINEERING CRM", 14, 25);
     doc.setFontSize(10);
     doc.text("OUTSTANDING PAYMENT STATEMENT", 14, 32);
-    
+
     doc.setTextColor(33, 33, 33);
     doc.setFontSize(12);
     doc.text("BILLING & COLLECTION OVERVIEW", 14, 55);
-    
+
     autoTable(doc, {
       startY: 60,
       body: [
@@ -97,7 +97,7 @@ const PendingPaymentPage = () => {
       styles: { cellPadding: 8, fontSize: 10 },
       columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } },
     });
-    
+
     doc.setFontSize(10);
     doc.setTextColor(150, 150, 150);
     doc.text(`Generated on ${new Date().toLocaleString()}`, 14, 285);
@@ -169,13 +169,13 @@ const PendingPaymentPage = () => {
                             >
                               <i className="bi bi-wallet2 px-1"></i>
                             </button>
-                            
+
                             <div className="dropdown">
-                              <button 
-                                className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
-                                type="button" 
-                                id={`actions-${inv.id}`} 
-                                data-bs-toggle="dropdown" 
+                              <button
+                                className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
+                                type="button"
+                                id={`actions-${inv.id}`}
+                                data-bs-toggle="dropdown"
                                 aria-expanded="false"
                                 style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                               >

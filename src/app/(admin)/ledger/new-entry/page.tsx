@@ -10,19 +10,23 @@ export default function NewLedgerEntryPage() {
 
   return (
     <ModuleGuard moduleId="mod_ledger">
-      <div className="container-fluid py-4 min-vh-100 bg-white">
-        <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-light">
-          <div>
-            <button onClick={() => router.back()} className="btn btn-sm text-muted p-0 mb-2">
-              <i className="bi bi-arrow-left me-2"></i>Back to Ledger list
-            </button>
-            <h2 className="fw-bold mb-1">Add New Ledger Entry</h2>
-            <p className="text-muted small mb-0 tracking-wider">Record manual financial adjustments and opening balances</p>
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4" style={{ backgroundColor: '#f8f9fa' }}>
+        {/* Header Section - Floating Style (Matched to Customer page) */}
+        <div className="d-flex align-items-center gap-3 mb-5 pt-4">
+          <button 
+             onClick={() => router.push('/ledger')} 
+             className="btn btn-link text-dark p-0 shadow-none hover-scale"
+          >
+             <i className="bi bi-arrow-left-circle" style={{ fontSize: '1.8rem' }}></i>
+          </button>
+          <div className="pt-1">
+             <h2 className="fw-bold mb-0 fs-2 text-dark tracking-tight">Add New Ledger Entry</h2>
+             <p className="text-muted small mb-0">Record manual adjustments or opening balances for clients.</p>
           </div>
         </div>
 
-        <div className="row justify-content-center">
-            <div className="col-lg-10">
+        <div className="row">
+            <div className="col-12">
                 <LedgerEntryForm />
             </div>
         </div>
