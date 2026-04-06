@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import CustomerForm from '@/modules/customer/components/CustomerForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
+import { checkActionPermission } from '@/config/permissions';
 
 export default function EditCustomerPage() {
   const params = useParams();
@@ -14,6 +15,7 @@ export default function EditCustomerPage() {
   const router = useRouter();
   const [isEdit, setIsEdit] = React.useState(false);
 
+  const { user } = useSelector((state: RootState) => state.auth);
   const customer = useSelector((state: RootState) =>
     state.customers.items.find(c => c.id === id)
   );
@@ -46,7 +48,7 @@ export default function EditCustomerPage() {
                 <h2 className="fw-bold mb-0">{isEdit ? 'Edit Customer' : 'Customer Account'}</h2>
                 <p className="text-muted small mb-0">{isEdit ? 'Update account details and contact information for this partner.' : 'Review organizational profile and contact synchronization details.'}</p>
               </div>
-              {!isEdit && (
+              {!isEdit && checkActionPermission(user, 'mod_customer', 'edit') && (
                 <button 
                   className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent fw-bold rounded-pill"
                   onClick={() => setIsEdit(true)}

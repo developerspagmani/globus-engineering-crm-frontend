@@ -252,11 +252,9 @@ const LeadsPage = () => {
                   <td><span className="fw-600 text-muted" style={{ fontSize: '0.9rem' }}>{lead.industry}</span></td>
                   <td className="text-center px-4">
                     <div className="d-flex justify-content-center gap-1">
-                        {checkActionPermission(user, 'mod_lead', 'edit') && (
-                          <Link href={`/leads/${lead.id}/edit`} className="btn-action-view" title="View Profile">
-                            <i className="bi bi-eye-fill"></i>
-                          </Link>
-                        )}
+                        <Link href={`/leads/${lead.id}/edit`} className="btn-action-view" title="View Profile">
+                          <i className="bi bi-eye-fill"></i>
+                        </Link>
                         
                         <div className="dropdown">
                           <button 

@@ -7,9 +7,11 @@ import CompanyUserForm from '@/modules/company-user/components/CompanyUserForm';
 import Breadcrumb from '@/components/Breadcrumb';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { checkActionPermission } from '@/config/permissions';
 
 export default function ViewUserPage() {
   const { id } = useParams();
+  const { user: currentUser } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.companyUsers);
   const userToView = items.find(u => u.id === id);
 
@@ -39,12 +41,14 @@ export default function ViewUserPage() {
             <p className="text-muted small mb-0">View user profile and granular CRUD permissions.</p>
           </div>
         </div>
-        <Link 
-          href={`/users/${userToView.id}/edit`} 
-          className="btn btn-primary px-4 py-2 fw-bold shadow-accent rounded-pill d-flex align-items-center gap-2 mt-2"
-        >
-          <i className="bi bi-pencil-fill"></i> Edit Permissions
-        </Link>
+        {checkActionPermission(currentUser, 'mod_user_management', 'edit') && (
+          <Link 
+            href={`/users/${userToView.id}/edit`} 
+            className="btn btn-primary px-4 py-2 fw-bold shadow-accent rounded-pill d-flex align-items-center gap-2 mt-2"
+          >
+            <i className="bi bi-pencil-fill"></i> Edit Permissions
+          </Link>
+        )}
       </div>
 
       <CompanyUserForm mode="view" initialData={userToView} />

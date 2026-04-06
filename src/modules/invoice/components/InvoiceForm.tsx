@@ -231,10 +231,40 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       });
    };
 
+   const fetchPendingForCustomer = async (custId: string) => {
+      if (!custId) {
+         setPendingInwards([]);
+         return;
+      }
+      
+      setInwardLoading(true);
+      const activeToken = authToken || localStorage.getItem('token');
+      if (activeToken) {
+         try {
+            const res = await fetch(`/api/inward/pending/${custId}`, {
+               headers: {
+                  'Authorization': `Bearer ${activeToken.replace(/^"|"$/g, '')}`
+               }
+            });
+            const data = await res.json();
+            setPendingInwards(Array.isArray(data) ? data : []);
+         } catch (err) {
+            console.error("DEBUG: API Error fetching pending inwards:", err);
+         } finally {
+            setInwardLoading(false);
+         }
+      } else {
+         setInwardLoading(false);
+      }
+   };
+
    useEffect(() => {
       if (inwardId && inwards.length > 0 && customers.length > 0) {
          const inward = inwards.find(i => i.id === inwardId);
-         if (inward) populateFromInward(inward);
+         if (inward) {
+            populateFromInward(inward);
+            fetchPendingForCustomer(inward.customerId || '');
+         }
       }
    }, [inwardId, inwards, priceFixings, customers]);
 
@@ -269,34 +299,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          }));
 
          // Fetch pending inwards for stock tracking
-         if (value) {
-            setInwardLoading(true);
-            const activeToken = authToken || localStorage.getItem('token');
-            console.log("DEBUG: Retrying with token:", activeToken ? "Token Found" : "Token MISSING");
-
-            if (activeToken) {
-               console.log(`DEBUG: Calling API for Customer: ${value}`);
-               fetch(`/api/inward/pending/${value}`, {
-                  headers: {
-                     'Authorization': `Bearer ${activeToken.replace(/^"|"$/g, '')}`
-                  }
-               })
-                  .then(res => res.json())
-                  .then(data => {
-                     console.log("DEBUG: Inward Data Received:", data);
-                     setPendingInwards(Array.isArray(data) ? data : []);
-                  })
-                  .catch(err => {
-                     console.error("DEBUG: API Error:", err);
-                  })
-                  .finally(() => setInwardLoading(false));
-            } else {
-               console.warn("DEBUG: No token found in state, skipping fetch.");
-               setInwardLoading(false);
-            }
-         } else {
-            setPendingInwards([]);
-         }
+         fetchPendingForCustomer(value);
       } else {
          let updates: any = { [name]: value };
          if (name === 'poNo') updates.po_no = value;
@@ -435,7 +438,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                   <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
                </div>
 
-               {mode === 'create' && (
+               {mode === 'create' && !inwardId && (
                   <div className="d-flex align-items-center gap-3 ms-auto">
                      {/* Toggle pill */}
                      <div
@@ -499,11 +502,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               cursor: 'pointer',
                            }}
                         >
-                           <i className="bi bi-person" style={{ fontSize: '15px', color: '#6c757d', flexShrink: 0 }}></i>
+                           <i className="bi bi-person" style={{ fontSize: '15px', color: '#6c757d', flexShrink: 0, opacity: customersLoading ? 0.5 : 1 }}></i>
                            <select
                               name="customerId"
                               value={formData.customerId}
                               onChange={handleInputChange}
+                              disabled={customersLoading}
                               style={{
                                  border: 'none',
                                  outline: 'none',
@@ -513,18 +517,28 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                  flex: 1,
                                  appearance: 'none',
                                  WebkitAppearance: 'none',
-                                 cursor: 'pointer',
+                                 cursor: customersLoading ? 'not-allowed' : 'pointer',
                                  background: 'transparent',
                                  width: '100%',
                                  padding: 0,
                               }}
                            >
-                              <option value="">Choose Customer</option>
-                              {customers.map(c => (
-                                 <option key={c.id} value={c.id}>{c.name}</option>
-                              ))}
+                              {customersLoading ? (
+                                 <option value="">Loading customers...</option>
+                              ) : (
+                                 <>
+                                    <option value="">Choose Customer</option>
+                                    {customers.map(c => (
+                                       <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                 </>
+                              )}
                            </select>
-                           <i className="bi bi-chevron-down" style={{ fontSize: '11px', color: '#6c757d', flexShrink: 0 }}></i>
+                           {customersLoading ? (
+                              <span className="spinner-border spinner-border-sm text-secondary ms-1" style={{ width: '13px', height: '13px' }}></span>
+                           ) : (
+                              <i className="bi bi-chevron-down" style={{ fontSize: '11px', color: '#6c757d', flexShrink: 0 }}></i>
+                           )}
                         </div>
                      ) : (
                         <div
@@ -584,28 +598,45 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      </div>
                   </div>
 
-                  {pendingInwards.length > 0 && formData.customerId && (
-                     <div className="d-flex align-items-center gap-2" style={{ border: '1px solid #f97316', borderRadius: '8px', padding: '6px 14px', minWidth: '280px', background: '#fff' }}>
-                        <i className="bi bi-box-seam" style={{ fontSize: '15px', color: '#f97316' }}></i>
-                        <select
-                           className="border-0 bg-transparent fw-bold"
-                           style={{ outline: 'none', fontSize: '13px', color: '#212529', flex: 1, cursor: 'pointer' }}
-                           onChange={(e) => {
-                              const selected = pendingInwards.find(i => i.id === e.target.value);
-                              if (selected) populateFromInward(selected);
-                           }}
-                           value={formData.inwardId || ''}
-                        >
-                           <option value="">Select Inward Reference</option>
-                           {pendingInwards.map(i => (
-                              <option key={i.id} value={i.id}>
-                                 #{i.inward_no} - {i.po_reference || 'No PO'} ({i.items.reduce((s:number, it:any) => s + it.remainingQty, 0)} pending)
-                              </option>
-                           ))}
-                        </select>
-                        {inwardLoading && <span className="spinner-border spinner-border-sm text-orange"></span>}
-                     </div>
-                  )}
+                  {/* INWARD REFERENCE DROPDOWN (STATIC) */}
+                  <div className="d-flex align-items-center gap-2" 
+                     style={{ 
+                        border: formData.customerId ? (pendingInwards.length > 0 ? '1px solid #f97316' : '1px solid #dee2e6') : '1px solid #dee2e6', 
+                        borderRadius: '8px', 
+                        padding: '6px 14px', 
+                        minWidth: '280px', 
+                        background: formData.customerId && pendingInwards.length > 0 ? '#fff' : '#f8f9fa',
+                        opacity: formData.customerId ? 1 : 0.6
+                     }}
+                  >
+                     <i className="bi bi-box-seam" style={{ fontSize: '15px', color: formData.customerId && pendingInwards.length > 0 ? '#f97316' : '#6c757d' }}></i>
+                     <select
+                        className="border-0 bg-transparent fw-bold"
+                        style={{ outline: 'none', fontSize: '13px', color: '#212529', flex: 1, cursor: formData.customerId ? 'pointer' : 'not-allowed' }}
+                        onChange={(e) => {
+                           const selected = pendingInwards.find(i => i.id === e.target.value);
+                           if (selected) populateFromInward(selected);
+                        }}
+                        value={formData.inwardId || ''}
+                        disabled={!formData.customerId || pendingInwards.length === 0}
+                     >
+                        {!formData.customerId ? (
+                           <option value="">Select customer first...</option>
+                        ) : pendingInwards.length === 0 ? (
+                           <option value="">No pending records found</option>
+                        ) : (
+                           <>
+                              <option value="">Select Inward Reference</option>
+                              {pendingInwards.map(i => (
+                                 <option key={i.id} value={i.id}>
+                                    #{i.inward_no} - {i.po_reference || 'No PO'} ({i.items.reduce((s:number, it:any) => s + it.remainingQty, 0)} pending)
+                                 </option>
+                              ))}
+                           </>
+                        )}
+                     </select>
+                     {inwardLoading && <span className="spinner-border spinner-border-sm text-orange"></span>}
+                  </div>
                </div>
             )}
 

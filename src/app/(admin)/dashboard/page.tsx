@@ -171,7 +171,7 @@ export default function DashboardPage() {
               <div className="card border-0 shadow-sm h-100">
                 <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                   <h5 className="fw-bold mb-0">Recent Activities</h5>
-                  <button className="btn btn-link link-primary p-0 text-decoration-none small">View All</button>
+                  <Link href="/ledger" className="btn btn-link link-primary p-0 text-decoration-none small">View All</Link>
                 </div>
                 <div className="card-body">
                   <div className="table-responsive p-1">

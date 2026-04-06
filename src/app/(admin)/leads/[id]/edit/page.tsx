@@ -7,6 +7,7 @@ import { RootState } from '@/redux/store';
 import Breadcrumb from '@/components/Breadcrumb';
 import LeadForm from '@/modules/lead/components/LeadForm';
 import Link from 'next/link';
+import { checkActionPermission } from '@/config/permissions';
 
 export default function EditLeadPage() {
   const [mounted, setMounted] = useState(false);
@@ -14,6 +15,7 @@ export default function EditLeadPage() {
   const router = useRouter();
   const [isEdit, setIsEdit] = useState(false);
 
+  const { user } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.leads);
   const lead = items.find(item => item.id === id);
 
@@ -50,7 +52,7 @@ export default function EditLeadPage() {
           <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">{isEdit ? 'Edit' : 'View'}: {lead.company}</h3>
           <p className="text-muted small mb-0">{isEdit ? 'Update contact logs or status for this prospect.' : 'Review contact logs or status for this prospect.'}</p>
         </div>
-        {!isEdit && (
+        {!isEdit && checkActionPermission(user, 'mod_lead', 'edit') && (
           <button 
             className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
             onClick={() => setIsEdit(true)}

@@ -107,12 +107,10 @@ const VendorTable: React.FC = () => {
                       
                       <td className="text-center px-4 text-nowrap">
                         <div className="d-flex justify-content-center gap-2">
-                          {user?.role === 'super_admin' && (
-                            <Link href={`/vendors/${vendor.id}/edit`} className="btn-action-edit" title="Edit">
-                              <i className="bi bi-pencil-fill"></i>
-                            </Link>
-                          )}
-                          {user?.role === 'super_admin' && (
+                          <Link href={`/vendors/${vendor.id}/edit`} className="btn-action-edit" title="Edit">
+                            <i className="bi bi-pencil-fill"></i>
+                          </Link>
+                          {checkActionPermission(user, 'mod_vendor', 'delete') && (
                             <button 
                               className="btn-action-delete"
                               onClick={() => handleDelete(vendor.id)}

@@ -27,7 +27,7 @@ export default function VendorListPage() {
             <h2 className="fw-bold mb-1">Supplier Hub</h2>
             <p className="text-muted small mb-0">Manage industrial vendors and manufacturing partners.</p>
           </div>
-          {user?.role === 'super_admin' && (
+          {checkActionPermission(user, 'mod_vendor', 'create') && (
             <Link href="/vendors/new" className="btn btn-primary d-flex align-items-center gap-2">
               <i className="bi bi-plus-circle-fill"></i>
               <span>Add New Vendor</span>

@@ -133,28 +133,34 @@ const CompanyUserTable: React.FC = () => {
                             <i className="bi bi-three-dots-vertical fs-5"></i>
                           </button>
                           <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${user.id}`}>
-                            <li>
-                              <button className="dropdown-item d-flex align-items-center gap-2 py-2 text-dark" onClick={() => setResetModalUser(user.id)}>
-                                <i className="bi bi-key-fill text-warning"></i> <span className="small fw-semibold">Reset Password</span>
-                              </button>
-                            </li>
-                            <li>
-                              <Link href={`/users/${user.id}/edit`} className="dropdown-item d-flex align-items-center gap-2 py-2 text-dark">
-                                <i className="bi bi-pencil-fill text-primary"></i> <span className="small fw-semibold">Edit Permissions</span>
-                              </Link>
-                            </li>
+                            {checkActionPermission(currentUser, 'mod_user_management', 'edit') && (
+                              <li>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2 text-dark" onClick={() => setResetModalUser(user.id)}>
+                                  <i className="bi bi-key-fill text-warning"></i> <span className="small fw-semibold">Reset Password</span>
+                                </button>
+                              </li>
+                            )}
+                            {checkActionPermission(currentUser, 'mod_user_management', 'edit') && (
+                              <li>
+                                <Link href={`/users/${user.id}/edit`} className="dropdown-item d-flex align-items-center gap-2 py-2 text-dark">
+                                  <i className="bi bi-pencil-fill text-primary"></i> <span className="small fw-semibold">Edit Permissions</span>
+                                </Link>
+                              </li>
+                            )}
                             <li>
                               <hr className="dropdown-divider my-1 border-light" />
                             </li>
-                            <li>
-                              <button 
-                                className={`dropdown-item d-flex align-items-center gap-2 py-2 ${user.id === currentUser?.id ? 'text-muted' : 'text-danger'}`} 
-                                onClick={() => handleDelete(user.id)}
-                                disabled={user.id === currentUser?.id}
-                              >
-                                <i className="bi bi-trash-fill"></i> <span className="small fw-semibold">Revoke Access</span>
-                              </button>
-                            </li>
+                            {checkActionPermission(currentUser, 'mod_user_management', 'delete') && (
+                              <li>
+                                <button 
+                                  className={`dropdown-item d-flex align-items-center gap-2 py-2 ${user.id === currentUser?.id ? 'text-muted' : 'text-danger'}`} 
+                                  onClick={() => handleDelete(user.id)}
+                                  disabled={user.id === currentUser?.id}
+                                >
+                                  <i className="bi bi-trash-fill"></i> <span className="small fw-semibold">Revoke Access</span>
+                                </button>
+                              </li>
+                            )}
                           </ul>
                         </div>
                       </div>

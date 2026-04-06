@@ -56,7 +56,27 @@ export const createInward = createAsyncThunk(
         items: data.items,
         company_id: data.company_id
       });
-      return response.data;
+      const c = response.data;
+      return {
+        id: c.id.toString(),
+        inwardNo: String(c.inward_no || data.inwardNo || ''),
+        customerId: c.customer_id?.toString() || data.customerId || '',
+        customerName: String(c.customer_name || data.customerName || 'N/A'),
+        address: c.address || data.address || '',
+        vendorId: c.vendor_id?.toString() || data.vendorId || '',
+        vendorName: c.vendor_name || data.vendorName || '',
+        poReference: c.po_reference || data.poReference || '',
+        poDate: c.po_date ? new Date(c.po_date).toISOString().split('T')[0] : data.poDate,
+        challanNo: c.challan_no || data.challanNo || '',
+        dcNo: c.dc_no || data.dcNo || '',
+        dcDate: c.dc_date ? new Date(c.dc_date).toISOString().split('T')[0] : data.dcDate,
+        vehicleNo: c.vehicle_no || data.vehicleNo || '',
+        company_id: c.company_id?.toString() || data.company_id || '',
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : data.date,
+        status: c.status || data.status || 'pending',
+        items: c.items || data.items || [],
+        createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to create inward entry');
     }
@@ -84,7 +104,27 @@ export const updateInward = createAsyncThunk(
         items: data.items,
         company_id: data.company_id
       });
-      return response.data;
+      const c = response.data || data;
+      return {
+        id: c.id?.toString() || data.id,
+        inwardNo: String(c.inward_no || data.inwardNo || ''),
+        customerId: c.customer_id?.toString() || data.customerId || '',
+        customerName: String(c.customer_name || data.customerName || 'N/A'),
+        address: c.address || data.address || '',
+        vendorId: c.vendor_id?.toString() || data.vendorId || '',
+        vendorName: c.vendor_name || data.vendorName || '',
+        poReference: c.po_reference || data.poReference || '',
+        poDate: c.po_date ? new Date(c.po_date).toISOString().split('T')[0] : data.poDate,
+        challanNo: c.challan_no || data.challanNo || '',
+        dcNo: c.dc_no || data.dcNo || '',
+        dcDate: c.dc_date ? new Date(c.dc_date).toISOString().split('T')[0] : data.dcDate,
+        vehicleNo: c.vehicle_no || data.vehicleNo || '',
+        company_id: c.company_id?.toString() || data.company_id || '',
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : data.date,
+        status: c.status || data.status || 'pending',
+        items: c.items || data.items || [],
+        createdAt: c.app_created_at || c.created_at || c.createdAt || data.createdAt
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to update inward entry');
     }

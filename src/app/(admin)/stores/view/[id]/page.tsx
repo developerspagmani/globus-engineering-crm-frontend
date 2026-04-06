@@ -7,8 +7,8 @@ import { RootState } from '@/redux/store';
 import api from '@/lib/axios';
 import Loader from '@/components/Loader';
 import StoreForm from '@/modules/stores/components/StoreForm';
-import AdminNavbar from '@/components/AdminNavbar';
-import AdminSidebar from '@/components/AdminSidebar';
+import ModuleGuard from '@/components/ModuleGuard';
+import { checkActionPermission } from '@/config/permissions';
 
 export default function StoreViewPage() {
   const { id } = useParams();
@@ -16,7 +16,7 @@ export default function StoreViewPage() {
   const [store, setStore] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { user } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     const loadData = async () => {
@@ -33,26 +33,14 @@ export default function StoreViewPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="admin-layout d-flex bg-light min-vh-100">
-        <AdminSidebar collapsed={sidebarCollapsed} />
-        <div className="main-wrapper flex-grow-1">
-          <AdminNavbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-          <Loader text="Loading Store Profile..." />
-        </div>
-      </div>
-    );
+    return <Loader text="Loading Store Profile..." />;
   }
 
   if (!store) return <div className="text-center p-5">Store not found</div>;
 
   return (
-    <div className="admin-layout d-flex bg-light min-vh-100">
-      <AdminSidebar collapsed={sidebarCollapsed} />
-      
-      <div className={`main-wrapper flex-grow-1 ${sidebarCollapsed ? 'expanded' : ''}`}>
-        <AdminNavbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-        
+    <ModuleGuard moduleId="mod_lead">
+      <div className="bg-white min-vh-100 p-4 animate-fade-in shadow-sm">
         <div className="content-area p-4">
           {/* Header Action Bar */}
           <div className="d-flex justify-content-between align-items-center mb-4">
@@ -72,7 +60,7 @@ export default function StoreViewPage() {
               </div>
             </div>
 
-            {!isEditing && (
+            {!isEditing && checkActionPermission(user, 'mod_lead', 'edit') && (
               <button 
                 onClick={() => setIsEditing(true)} 
                 className="btn btn-primary d-flex align-items-center gap-2 px-4 rounded-pill shadow-sm"
@@ -104,6 +92,6 @@ export default function StoreViewPage() {
           </div>
         </div>
       </div>
-    </div>
+    </ModuleGuard>
   );
 }

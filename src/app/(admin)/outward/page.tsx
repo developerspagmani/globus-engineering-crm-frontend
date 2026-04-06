@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
@@ -15,7 +16,7 @@ import Link from 'next/link';
 export default function OutwardListPage() {
   const dispatch = useDispatch();
   const { items: outwards, filters, loading } = useSelector((state: RootState) => state.outward);
-  const { company } = useSelector((state: RootState) => state.auth);
+  const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
@@ -76,11 +77,13 @@ export default function OutwardListPage() {
             <h2 className="fw-bold mb-1">Outward Entries</h2>
             <p className="text-muted fs-6">Manage outgoing finished goods and customer dispatches.</p>
           </div>
-          <Link href="/outward/new" className="btn d-flex align-items-center gap-2 px-4 shadow-sm text-white border-0 py-2 mt-2" 
-            style={{ background: 'linear-gradient(135deg, #ff4c00 0%, #ff8c00 100%)', borderRadius: '12px' }}>
-            <i className="bi bi-box-arrow-right fs-5"></i>
-            <span className="fw-bold fs-6">New Outward Entry</span>
-          </Link>
+          {checkActionPermission(user, 'mod_outward', 'create') && (
+            <Link href="/outward/new" className="btn d-flex align-items-center gap-2 px-4 shadow-sm text-white border-0 py-2 mt-2" 
+              style={{ background: 'linear-gradient(135deg, #ff4c00 0%, #ff8c00 100%)', borderRadius: '12px' }}>
+              <i className="bi bi-box-arrow-right fs-5"></i>
+              <span className="fw-bold fs-6">New Outward Entry</span>
+            </Link>
+          )}
         </div>
 
         {/* Filter Section - Aligned in one row */}
@@ -164,7 +167,6 @@ export default function OutwardListPage() {
                       </td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
-                          {/* Fixed View Button using Link */}
                           <Link href={`/outward/${item.id}/edit`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
                           <div className="dropdown">
                             <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
@@ -174,8 +176,12 @@ export default function OutwardListPage() {
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintOutward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
                               {/* Added missing Export PDF */}
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handleExportPDFOutward(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
-                              <li><hr className="dropdown-divider opacity-50" /></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger small fw-bold" onClick={() => handleDeleteParams(item.id)}><i className="bi bi-trash3"></i> Remove Record</button></li>
+                              {checkActionPermission(user, 'mod_outward', 'delete') && (
+                                <>
+                                  <li><hr className="dropdown-divider opacity-50" /></li>
+                                  <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger small fw-bold" onClick={() => handleDeleteParams(item.id)}><i className="bi bi-trash3"></i> Remove Record</button></li>
+                                </>
+                              )}
                             </ul>
                           </div>
                         </div>

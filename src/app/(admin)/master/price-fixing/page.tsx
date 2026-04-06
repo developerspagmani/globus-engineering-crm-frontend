@@ -9,6 +9,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -16,7 +17,7 @@ export default function PriceFixingPage() {
   const dispatch = useDispatch();
   const { priceFixings, items, processes, loading: masterLoading } = useSelector((state: RootState) => state.master);
   const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
-  const { company } = useSelector((state: RootState) => state.auth);
+  const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list' | 'view'>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -177,7 +178,7 @@ export default function PriceFixingPage() {
           )}
           <h4 className="mb-0 text-dark fw-bold" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? 'Edit Price Rule' : 'Add New Price Rule') : view === 'view' ? 'Price Profile' : 'Pricing Hub'}</h4>
           <div className="ms-auto d-flex gap-2">
-            {view === 'view' && (
+            {view === 'view' && checkActionPermission(user, 'mod_price_fixing', 'edit') && (
               <button
                 onClick={() => setView('add')}
                 className="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-accent"
@@ -186,7 +187,7 @@ export default function PriceFixingPage() {
                 <span>Edit Rule</span>
               </button>
             )}
-            {view === 'list' && (
+            {view === 'list' && checkActionPermission(user, 'mod_price_fixing', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ customerId: '', itemId: '', processId: '', price: '' }); }}
                 className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
@@ -401,17 +402,21 @@ export default function PriceFixingPage() {
                                           <span className="small fw-semibold">Export PDF</span>
                                         </button>
                                       </li>
-                                      <li><hr className="dropdown-divider opacity-50" /></li>
-                                      <li>
-                                        <button 
-                                          className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
-                                          type="button"
-                                          onClick={() => handleDeleteParams(pf.id)}
-                                        >
-                                          <i className="bi bi-trash3"></i>
-                                          <span className="small fw-semibold">Remove Record</span>
-                                        </button>
-                                      </li>
+                                      {checkActionPermission(user, 'mod_price_fixing', 'delete') && (
+                                        <>
+                                          <li><hr className="dropdown-divider opacity-50" /></li>
+                                          <li>
+                                            <button 
+                                              className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
+                                              type="button"
+                                              onClick={() => handleDeleteParams(pf.id)}
+                                            >
+                                              <i className="bi bi-trash3"></i>
+                                              <span className="small fw-semibold">Remove Record</span>
+                                            </button>
+                                          </li>
+                                        </>
+                                      )}
                                     </ul>
                                   </div>
                                 </div>

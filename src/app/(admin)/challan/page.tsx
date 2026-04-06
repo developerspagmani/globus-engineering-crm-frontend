@@ -244,11 +244,9 @@ const ChallanPage = () => {
                         </td>
                         <td className="text-center px-4 text-nowrap">
                           <div className="d-flex justify-content-center gap-1">
-                            {checkActionPermission(user, 'mod_challan', 'edit') && (
-                              <Link href={`/challan/${challan.id}/edit`} className="btn-action-view" title="View Profile">
-                                <i className="bi bi-eye-fill"></i>
-                              </Link>
-                            )}
+                            <Link href={`/challan/${challan.id}/edit`} className="btn-action-view" title="View Profile">
+                              <i className="bi bi-eye-fill"></i>
+                            </Link>
                             
                             <div className="dropdown">
                               <button 

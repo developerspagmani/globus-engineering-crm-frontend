@@ -7,12 +7,14 @@ import { useParams } from 'next/navigation';
 import OutwardForm from '@/modules/outward/components/OutwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
+import { checkActionPermission } from '@/config/permissions';
 
 export default function EditOutwardPage() {
   const params = useParams();
   const id = params.id as string;
   const [isEdit, setIsEdit] = React.useState(false);
   
+  const { user } = useSelector((state: RootState) => state.auth);
   const outward = useSelector((state: RootState) => 
     state.outward.items.find(o => o.id === id)
   );
@@ -34,7 +36,7 @@ export default function EditOutwardPage() {
                 <h2 className="fw-bold mb-0">{isEdit ? 'Edit' : 'View'} Outward: {outward.outwardNo}</h2>
                 <p className="text-muted small mb-0">{isEdit ? `Modify dispatch details for ${outward.customerName}.` : `Review dispatch details for ${outward.customerName}.`}</p>
               </div>
-              {!isEdit && (
+              {!isEdit && checkActionPermission(user, 'mod_outward', 'edit') && (
                 <button 
                   className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
                   onClick={() => setIsEdit(true)}

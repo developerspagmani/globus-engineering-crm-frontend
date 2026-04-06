@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchVouchers } from '@/redux/features/voucherSlice';
 import { fetchPendingPayments } from '@/redux/features/pendingPaymentSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
@@ -16,6 +17,7 @@ const PaymentReportPage = () => {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'PAYMENT' | 'PENDING'>('PAYMENT');
   const [ageingFilter, setAgeingFilter] = useState<'all' | '0-30' | '31-60' | '61-90' | '90+'>('all');
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -23,12 +25,14 @@ const PaymentReportPage = () => {
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: vouchers, loading: vLoading } = useSelector((state: RootState) => state.voucher);
   const { items: pending, loading: pLoading } = useSelector((state: RootState) => state.pendingPayments);
+  const { items: customers } = useSelector((state: RootState) => state.customers);
 
   useEffect(() => {
     setMounted(true);
-    if (activeCompany?.id) {
-      (dispatch as any)(fetchVouchers(activeCompany.id));
-      (dispatch as any)(fetchPendingPayments(activeCompany.id));
+    if (activeCompany?.id) { 
+      (dispatch as any)(fetchVouchers(activeCompany.id)); 
+      (dispatch as any)(fetchPendingPayments(activeCompany.id)); 
+      (dispatch as any)(fetchCustomers(activeCompany.id));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -47,10 +51,16 @@ const PaymentReportPage = () => {
     return true;
   };
 
-  const paymentData = vouchers.filter(v => v.type === 'receipt' && (v.partyName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) && matchesDate(v.date));
+  const paymentData = vouchers.filter(v => {
+    const matchesCustomer = !selectedCustomerId || String(v.partyId) === String(selectedCustomerId);
+    return v.type === 'receipt' && matchesCustomer && (v.partyName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) && matchesDate(v.date);
+  });
+  
   const filteredPending = pending.filter(inv => {
     const days = calculateDays(inv.date);
+    const matchesCustomer = !selectedCustomerId || String(inv.customerId) === String(selectedCustomerId);
     const matchSearch = (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
+    if (!matchesCustomer) return false;
     if (!matchSearch) return false;
     if (!matchesDate(inv.date)) return false;
     if (ageingFilter === '0-30') return days <= 30;
@@ -94,8 +104,7 @@ const PaymentReportPage = () => {
       <div className="card shadow-sm border-0 mb-4 rounded-4 overflow-hidden">
         <div className="card-body p-3">
           <div className="row g-3 align-items-center">
-            <div className={`col-md-${activeTab === 'PENDING' ? '3' : '4'}`}>
-              <div className="position-relative">
+            <div className={`col-md-${activeTab === 'PENDING' ? '4' : '4'}`}>              <div className="position-relative">
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input
                   type="text"
@@ -107,6 +116,20 @@ const PaymentReportPage = () => {
                 />
               </div>
             </div>
+
+            <div className="col-md-3">
+              <select 
+                className="form-select border-0 bg-light-soft px-3 shadow-none fw-bold small text-muted"
+                value={selectedCustomerId}
+                onChange={(e) => setSelectedCustomerId(e.target.value)}
+                style={{ height: '42px', borderRadius: '10px' }}
+              >
+                <option value="">-- ALL CUSTOMERS --</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                ))}
+              </select>
+            </div>
             {/* Rest of filters... */}
             <div className="col-auto ms-auto d-flex align-items-center gap-1">
               <div className="d-flex align-items-center  bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
@@ -116,7 +139,7 @@ const PaymentReportPage = () => {
               <div className="d-flex align-items-center  bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
                 <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
               </div>
-              {activeTab === 'PENDING' && <select className="form-select border-0 bg-light-soft px-3" value={ageingFilter} onChange={(e) => setAgeingFilter(e.target.value as any)} style={{ height: '42px', borderRadius: '10px', width: '150px' }}><option value="all">Every Bucket</option><option value="0-30">0-30 Days</option><option value="31-60">31-60 Days</option><option value="61-90">61-90 Days</option><option value="90+">90+ Days</option></select>}
+              {/* {activeTab === 'PENDING' && <select className="form-select border-0 bg-light-soft px-3" value={ageingFilter} onChange={(e) => setAgeingFilter(e.target.value as any)} style={{ height: '42px', borderRadius: '10px', width: '150px' }}><option value="all">Every Bucket</option><option value="0-30">0-30 Days</option><option value="31-60">31-60 Days</option><option value="61-90">61-90 Days</option><option value="90+">90+ Days</option></select>} */}
               <ReportActions />
             </div>
           </div>

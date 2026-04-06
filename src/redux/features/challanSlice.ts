@@ -9,10 +9,20 @@ export const fetchChallans = createAsyncThunk(
       const url = company_id ? `/challans?company_id=${company_id}` : '/challans';
       const response = await api.get(url);
       return response.data.map((c: any) => ({
-        ...c,
         id: c.id.toString(),
-        items: c.items || JSON.parse(c.items_json || '[]'),
-        createdAt: c.app_created_at
+        challanNo: c.challan_no || '',
+        partyId: c.party_id || '',
+        partyName: c.party_name || '',
+        partyType: c.party_type || 'customer',
+        company_id: c.company_id || '',
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
+        type: c.type || 'delivery',
+        status: c.status || 'draft',
+        items: Array.isArray(c.items) ? c.items : JSON.parse(c.items_json || '[]'),
+        vehicleNo: c.vehicle_no || '',
+        driverName: c.driver_name || '',
+        notes: c.notes || '',
+        createdAt: c.app_created_at || c.createdAt || ''
       }));
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch challans');
@@ -37,7 +47,23 @@ export const createChallan = createAsyncThunk(
         driver_name: data.driverName,
         company_id: data.company_id
       });
-      return response.data;
+      const c = response.data;
+      return {
+        id: c.id.toString(),
+        challanNo: c.challan_no || data.challanNo,
+        partyId: c.party_id || data.partyId,
+        partyName: c.party_name || data.partyName,
+        partyType: c.party_type || data.partyType,
+        company_id: c.company_id || data.company_id,
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : data.date,
+        type: c.type || data.type,
+        status: c.status || data.status,
+        items: c.items || data.items,
+        vehicleNo: c.vehicle_no || data.vehicleNo,
+        driverName: c.driver_name || data.driverName,
+        notes: c.notes || data.notes,
+        createdAt: c.app_created_at || c.createdAt || new Date().toISOString()
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to create challan');
     }
@@ -60,7 +86,23 @@ export const updateChallan = createAsyncThunk(
         driver_name: data.driverName,
         company_id: data.company_id
       });
-      return response.data;
+      const c = response.data || data;
+      return {
+        id: c.id?.toString() || data.id,
+        challanNo: c.challan_no || data.challanNo,
+        partyId: c.party_id || data.partyId,
+        partyName: c.party_name || data.partyName,
+        partyType: c.party_type || data.partyType,
+        company_id: c.company_id || data.company_id,
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : data.date,
+        type: c.type || data.type,
+        status: c.status || data.status,
+        items: c.items || data.items,
+        vehicleNo: c.vehicle_no || data.vehicleNo,
+        driverName: c.driver_name || data.driverName,
+        notes: c.notes || data.notes,
+        createdAt: c.app_created_at || c.createdAt || data.createdAt
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to update challan');
     }
@@ -140,20 +182,12 @@ const challanSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(createChallan.fulfilled, (state, action) => {
-        state.items.unshift({
-          ...action.payload,
-          id: action.payload.id.toString(),
-          items: action.payload.items || JSON.parse(action.payload.items_json || '[]')
-        });
+        state.items.unshift(action.payload);
       })
       .addCase(updateChallan.fulfilled, (state, action) => {
-        const index = state.items.findIndex(i => i.id === action.payload.id.toString());
+        const index = state.items.findIndex(i => i.id === action.payload.id);
         if (index !== -1) {
-          state.items[index] = {
-            ...action.payload,
-            id: action.payload.id.toString(),
-            items: action.payload.items || JSON.parse(action.payload.items_json || '[]')
-          };
+          state.items[index] = action.payload;
         }
       })
       .addCase(deleteChallan.fulfilled, (state, action) => {

@@ -59,21 +59,21 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
   useEffect(() => {
     if (initialData) {
       setFormData({
-        challanNo: initialData.challanNo,
-        partyId: initialData.partyId,
-        partyName: initialData.partyName,
-        partyType: initialData.partyType,
-        company_id: initialData.company_id,
-        date: initialData.date,
-        type: initialData.type,
-        status: initialData.status,
-        items: initialData.items,
+        challanNo: initialData.challanNo || '',
+        partyId: initialData.partyId || '',
+        partyName: initialData.partyName || '',
+        partyType: initialData.partyType || 'customer',
+        company_id: initialData.company_id || activeCompany?.id || '',
+        date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        type: initialData.type || 'delivery',
+        status: initialData.status || 'draft',
+        items: initialData.items && initialData.items.length > 0 ? initialData.items : [{ description: '', quantity: 1, unit: 'pcs', hsnCode: '' }],
         vehicleNo: initialData.vehicleNo || '',
         driverName: initialData.driverName || '',
         notes: initialData.notes || '',
       });
     }
-  }, [initialData]);
+  }, [initialData, activeCompany?.id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

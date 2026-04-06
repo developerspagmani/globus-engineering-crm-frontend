@@ -62,8 +62,9 @@ function LoginContent() {
         router.push('/dashboard');
       }
     } catch (err: any) {
-      console.error('Login Error:', err);
-      dispatch(loginFailure(err.response?.data?.error || 'Authentication Failed'));
+      // Use silent handling for 401 to prevent Turbopack error frames from showing up
+      const errorMsg = err.response?.data?.error || (err.response?.status === 401 ? 'Invalid password' : 'Authentication Failed');
+      dispatch(loginFailure(errorMsg));
     }
   };
 

@@ -8,6 +8,7 @@ import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters } from '@/redux/fe
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
+import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -146,13 +147,15 @@ export default function LedgerPage() {
             <p className="text-muted small mb-0">Total parties with transactions: {uniqueParties.length}</p>
           </div>
           <div className="d-flex gap-2 hide-print">
-            <Link 
-              href="/ledger/new-entry"
-              className="btn btn-primary d-flex align-items-center gap-2">
-            
-              <i className="bi bi-plus-lg"></i>
-              <span className="fw-bold text-uppercase small">Add New Ledger Entry</span>
-            </Link>
+            {checkActionPermission(currentUser, 'mod_ledger', 'create') && (
+              <Link 
+                href="/ledger/new-entry"
+                className="btn btn-primary d-flex align-items-center gap-2">
+              
+                <i className="bi bi-plus-lg"></i>
+                <span className="fw-bold text-uppercase small">Add New Ledger Entry</span>
+              </Link>
+            )}
           </div>
         </div>
 

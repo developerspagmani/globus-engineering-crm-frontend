@@ -8,13 +8,14 @@ import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export default function ItemDetailsPage() {
   const dispatch = useDispatch();
   const { items, loading } = useSelector((state: RootState) => state.master);
-  const { company } = useSelector((state: RootState) => state.auth);
+  const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -168,7 +169,7 @@ export default function ItemDetailsPage() {
           <h4 className="mb-0 text-dark fw-bold" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add New Item') : 'Item Hub'}</h4>
           
           <div className="ms-auto d-flex gap-2">
-            {view === 'add' && editingId && isViewOnly && (
+            {view === 'add' && editingId && isViewOnly && checkActionPermission(user, 'mod_items', 'edit') && (
               <button 
                 className="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-accent"
                 onClick={() => setIsViewOnly(false)}
@@ -177,7 +178,7 @@ export default function ItemDetailsPage() {
                 <span>Edit</span>
               </button>
             )}
-            {view === 'list' && (
+            {view === 'list' && checkActionPermission(user, 'mod_items', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ itemCode: '', itemName: '' }); }}
                 className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
@@ -348,17 +349,21 @@ export default function ItemDetailsPage() {
                                           <span className="small fw-semibold">Export PDF</span>
                                         </button>
                                       </li>
-                                      <li><hr className="dropdown-divider opacity-50" /></li>
-                                      <li>
-                                        <button 
-                                          className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
-                                          type="button"
-                                          onClick={() => handleDeleteParams(item.id)}
-                                        >
-                                          <i className="bi bi-trash3"></i>
-                                          <span className="small fw-semibold">Remove Record</span>
-                                        </button>
-                                      </li>
+                                      {checkActionPermission(user, 'mod_items', 'delete') && (
+                                        <>
+                                          <li><hr className="dropdown-divider opacity-50" /></li>
+                                          <li>
+                                            <button 
+                                              className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
+                                              type="button"
+                                              onClick={() => handleDeleteParams(item.id)}
+                                            >
+                                              <i className="bi bi-trash3"></i>
+                                              <span className="small fw-semibold">Remove Record</span>
+                                            </button>
+                                          </li>
+                                        </>
+                                      )}
                                     </ul>
                                   </div>
                                 </div>

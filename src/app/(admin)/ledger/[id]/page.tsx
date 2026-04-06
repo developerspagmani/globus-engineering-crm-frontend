@@ -21,6 +21,11 @@ export default function LedgerDetailPage() {
    const { items: allEntries, loading } = useSelector((state: RootState) => state.ledger);
    const { items: customers } = useSelector((state: RootState) => state.customers);
 
+   const [fromDate, setFromDate] = React.useState<string>('');
+   const [toDate, setToDate] = React.useState<string>('');
+   const [filterType, setFilterType] = React.useState<'ALL' | 'DEBIT' | 'CREDIT'>('ALL');
+   const [showFilters, setShowFilters] = React.useState(false);
+
    const customer = customers.find(c => String(c.id) === String(partyId));
 
    useEffect(() => {
@@ -36,6 +41,12 @@ export default function LedgerDetailPage() {
             const isIdMatch = String(e.partyId || e.party_id || '').toLowerCase() === String(partyId).toLowerCase();
             const desc = (e.description || '').toLowerCase();
             const isMaterialPlaceholder = (desc.includes('material') || desc.includes('receipt')) && !desc.includes('payment') && !desc.includes('chq') && !desc.includes('vch');
+
+            // Apply Date Filter
+            const entryDate = new Date(e.date || e.createdAt || e.created_at);
+            if (fromDate && entryDate < new Date(fromDate)) return false;
+            if (toDate && entryDate > new Date(toDate)) return false;
+
             return isIdMatch && !isMaterialPlaceholder;
          })
          .sort((a: any, b: any) => {
@@ -66,22 +77,24 @@ export default function LedgerDetailPage() {
          if (isDebit) runningBal += amt;
          else if (isCredit) runningBal -= amt;
 
+         // Apply Type Filter (Filter for display, but keep original entries for balance calculation)
+         if (filterType === 'DEBIT' && !isDebit) return null;
+         if (filterType === 'CREDIT' && !isCredit) return null;
+
          // Extract Ref/Invoice No
          let refNo = '-';
          const rawRef = e.referenceId || e.reference_id || e.invoiceNo || e.invoice_no || '';
          const rawDesc = e.description || '';
 
-         if (rawRef && String(rawRef).length > 2) {
-            const refStr = String(rawRef);
-            // Replace MAN- with empty string to show only the number segment
-            refNo = `#${refStr.replace('MAN-', '')}`;
+         if (rawRef && String(rawRef).length >= 2) {
+            const cleanVal = String(rawRef).replace(/[^\d]/g, '');
+            refNo = cleanVal ? `#${cleanVal}` : '-';
          } else {
             // Flexible pattern: Keywords -> any non-digits -> the number
-            const pattern = /(?:inv|invoice|ref|#|man)[^0-9-]*([a-z0-9-]+)/i;
+            const pattern = /(?:inv|invoice|ref|#|man)[^0-9]*(\d+)/i;
             const match = rawDesc.match(pattern);
             if (match) {
-               const cleanVal = match[1].replace('MAN-', '');
-               refNo = `#${cleanVal}`;
+               refNo = `#${match[1]}`;
             }
          }
 
@@ -93,7 +106,7 @@ export default function LedgerDetailPage() {
             refNo,
             displayType: isDebit ? 'DEBIT' : (isCredit ? 'CREDIT' : (typeStr || 'LEDGER'))
          };
-      });
+      }).filter((item): item is any => item !== null);
 
       const latestBalance = mapped.length > 0 ? mapped[mapped.length - 1].balance : 0;
 
@@ -101,7 +114,7 @@ export default function LedgerDetailPage() {
          statementEntries: [...mapped].reverse(), // Newest at top
          finalBalance: latestBalance
       };
-   }, [allEntries, partyId]);
+   }, [allEntries, partyId, fromDate, toDate, filterType]);
 
    const handlePrint = () => {
       const printWindow = window.open('', '_blank', 'height=800,width=1000');
@@ -188,8 +201,9 @@ export default function LedgerDetailPage() {
    };
 
    return (
-      <ModuleGuard moduleId="mod_ledger">
-         <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4" style={{ backgroundColor: '#f8f9fa' }}>
+      <>
+         <ModuleGuard moduleId="mod_ledger">
+            <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4" style={{ backgroundColor: '#f8f9fa' }}>
 
             {/* Unified Account Overview Card - EVERYTHING IN ONE CARD */}
             <div className="card bg-white border-0 shadow-sm p-4 px-lg-5 rounded-4 mb-4 mt-2">
@@ -216,22 +230,125 @@ export default function LedgerDetailPage() {
                </div>
 
                <div className="border-top pt-4">
-                  <div className="d-flex gap-5 align-items-center">
-                     <div>
+                  <div className="d-flex align-items-center">
+                     {/* Section 1: Balance */}
+                     <div className="pe-5" style={{ minWidth: '220px' }}>
                         <span className="text-muted text-uppercase x-small d-block fw-bold tracking-wider mb-1 opacity-75">Current Due Balance</span>
                         <span className={`fs-2 fw-900 ${finalBalance > 0 ? 'text-danger' : 'text-success'}`}>
                            ₹ {Math.abs(finalBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                            <small className="ms-2 fs-6 opacity-75">{finalBalance > 0 ? '(DR)' : '(CR)'}</small>
                         </span>
                      </div>
-                     <div className="border-start ps-5 h-100 py-2">
+
+                     {/* Section 2: Location */}
+                     <div className="border-start ps-5 pe-5 flex-grow-1">
                         <span className="text-muted text-uppercase x-small d-block fw-bold tracking-wider mb-1 opacity-75">Contact Address & Location</span>
                         <span className="fw-bold text-dark fs-5">{customer?.city || 'N/A'}, {customer?.state || '-'}</span>
                         <p className="text-muted small mb-0 mt-1">{customer?.street1 || 'No specific address details found.'}</p>
                      </div>
+
+                     {/* Section 3: Filters (Orange Pill) */}
+                     <div className="border-start ps-5 h-100 d-flex align-items-center">
+                        <button
+                           onClick={() => setShowFilters(!showFilters)}
+                           className={`btn rounded-pill px-4 py-2 fw-bold text-uppercase d-flex align-items-center gap-2 border-2 transition-all shadow-sm ${showFilters ? 'btn-dark' : 'btn-primary'}`}
+                           style={{
+                              fontSize: '12px',
+                              letterSpacing: '1px',
+                              backgroundColor: !showFilters ? '#ff5722' : '#ff5722',
+                              borderColor: !showFilters ? '#ff5722' : '#ff5722'
+                           }}
+                        >
+                           <i className={`bi ${showFilters ? 'bi-x-lg' : 'bi-funnel'}`} style={{ fontSize: '0.9rem' }}></i>
+                           {showFilters ? 'Close' : 'Filters'}
+                        </button>
+                     </div>
                   </div>
                </div>
             </div>
+
+            {/* Collapsible Filter Bar - High-Fidelity UI */}
+            {showFilters && (
+               <div className="card bg-white border border-light-subtle shadow-sm px-4 py-3 rounded-4 mb-4 animate-fade-in hide-print position-relative">
+                  <div className="d-flex align-items-stretch justify-content-between" style={{ minHeight: '60px' }}>
+                     <div className="d-flex align-items-center flex-grow-1">
+                        
+                        {/* FROM SECTION */}
+                        <div className="me-2 text-start">
+                           <label className="d-block fw-800 text-muted mb-1" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>FROM</label>
+                           <input
+                              type="date"
+                              className="form-control form-control-sm border border-secondary border-opacity-25 px-3 fw-600 rounded-3 text-dark"
+                              value={fromDate}
+                              onChange={(e) => setFromDate(e.target.value)}
+                              style={{ width: '150px', height: '42px', backgroundColor: '#f9f9f5' }}
+                           />
+                        </div>
+
+                        <div className="mx-2 mt-4 text-muted opacity-50 fw-bold">—</div>
+
+                        {/* TO SECTION */}
+                        <div className="mx-2 ps-2 pe-4 border-end d-flex flex-column justify-content-center">
+                           <label className="d-block fw-800 text-muted mb-1" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>TO</label>
+                           <input
+                              type="date"
+                              className="form-control form-control-sm border border-secondary border-opacity-25 px-3 fw-600 rounded-3 text-dark"
+                              value={toDate}
+                              onChange={(e) => setToDate(e.target.value)}
+                              style={{ width: '150px', height: '42px', backgroundColor: '#f9f9f5' }}
+                           />
+                        </div>
+
+                        {/* TYPE SECTION (PILLS) */}
+                        <div className="mx-4 pe-4 border-end d-flex flex-column justify-content-center">
+                           <label className="d-block fw-800 text-muted mb-1" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>TYPE</label>
+                           <div className="d-flex gap-2">
+                              <button
+                                 onClick={() => setFilterType('ALL')}
+                                 className={`btn btn-sm px-3 rounded-3 fw-bold transition-all shadow-none ${filterType === 'ALL' ? 'bg-dark text-white shadow-sm' : 'border border-secondary border-opacity-25 text-dark'}`}
+                                 style={{ height: '38px', minWidth: '55px', backgroundColor: filterType === 'ALL' ? '#1a1a1a' : 'transparent' }}
+                              >
+                                 All
+                              </button>
+                              <button
+                                 onClick={() => setFilterType('DEBIT')}
+                                 className={`btn btn-sm px-3 rounded-3 fw-bold transition-all shadow-none ${filterType === 'DEBIT' ? 'bg-dark text-white shadow-sm' : 'border border-secondary border-opacity-25 text-dark'}`}
+                                 style={{ height: '38px', minWidth: '65px', backgroundColor: filterType === 'DEBIT' ? '#1a1a1a' : 'transparent' }}
+                              >
+                                 Debit
+                              </button>
+                              <button
+                                 onClick={() => setFilterType('CREDIT')}
+                                 className={`btn btn-sm px-3 rounded-3 fw-bold transition-all shadow-none ${filterType === 'CREDIT' ? 'bg-dark text-white shadow-sm' : 'border border-secondary border-opacity-25 text-dark'}`}
+                                 style={{ height: '38px', minWidth: '65px', backgroundColor: filterType === 'CREDIT' ? '#1a1a1a' : 'transparent' }}
+                              >
+                                 Credit
+                              </button>
+                           </div>
+                        </div>
+
+                        {/* RESULTS BADGE */}
+                        <div className="ms-3 d-flex align-items-center">
+                           <div className="d-flex align-items-center border border-secondary border-opacity-10 px-2 py-2 rounded-4" style={{ backgroundColor: '#f5f5f0' }}>
+                              <i className="bi bi-info-circle text-dark me-2 small"></i>
+                              <span className="fw-800 text-dark small" style={{ fontSize: '13px' }}>{statementEntries.length} results</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* RESET BUTTON */}
+                     <div className="ms-4 ps-4 border-start d-flex align-items-center">
+                        <button
+                           onClick={() => { setFromDate(''); setToDate(''); setFilterType('ALL'); }}
+                           className="btn btn-outline-dark btn-sm rounded-pill px-4 fw-800 transition-all shadow-none border-secondary border-opacity-25"
+                           style={{ fontSize: '11px', height: '38px', letterSpacing: '0.5px' }}
+                        >
+                           RESET
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            )}
 
             {/* Main Ledger Table */}
             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
@@ -276,14 +393,15 @@ export default function LedgerDetailPage() {
                   </table>
                </div>
             </div>
-         </div>
-         <style jsx>{`
-         .hide-print { @media print { display: none !important; } }
-         .x-small { font-size: 0.75rem; }
-         .xx-small { font-size: 0.65rem; }
-         .fw-900 { font-weight: 900; }
-         .fw-800 { font-weight: 800; }
-      `}</style>
-      </ModuleGuard>
+               <style jsx>{`
+               .hide-print { @media print { display : none !important; } }
+               .x-small { font-size: 0.75rem; }
+               .xx-small { font-size: 0.65rem; }
+               .fw-900 { font-weight: 900; }
+               .fw-800 { font-weight: 800; }
+               `}</style>
+            </div>
+         </ModuleGuard>
+      </>
    );
 }

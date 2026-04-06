@@ -35,6 +35,11 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 401) {
+      // Don't intercept 401s for the login request itself
+      if (error.config?.url?.includes('/auth/login')) {
+        return Promise.reject(error);
+      }
+
       // Auto-Logout mechanism
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;

@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import Breadcrumb from '@/components/Breadcrumb';
 import EmployeeForm from '@/modules/employee/components/EmployeeForm';
+import { checkActionPermission } from '@/config/permissions';
 
 const EditEmployeePage = () => {
   const [mounted, setMounted] = useState(false);
@@ -14,7 +15,7 @@ const EditEmployeePage = () => {
   const [isEdit, setIsEdit] = useState(false);
 
   const { items } = useSelector((state: RootState) => state.employee);
-  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const employee = items.find(item => String(item.id) === String(id));
 
@@ -60,7 +61,7 @@ const EditEmployeePage = () => {
           <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">{isEdit ? 'Edit' : 'View'} Employee Profile</h3>
           <p className="text-muted small mb-0">{isEdit ? 'Update personal or professional details for' : 'Review employee details for'} {employee?.name || 'staff member'}.</p>
         </div>
-        {!isEdit && (
+        {!isEdit && checkActionPermission(user, 'mod_employee', 'edit') && (
           <button 
             className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
             onClick={() => setIsEdit(true)}

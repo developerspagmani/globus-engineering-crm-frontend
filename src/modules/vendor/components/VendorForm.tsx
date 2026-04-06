@@ -10,7 +10,7 @@ import { Vendor } from '@/types/modules';
 
 interface VendorFormProps {
   initialData?: Vendor;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'view';
 }
 
 const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
@@ -188,7 +188,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
         value={formData[name]}
         onChange={handleChange}
         placeholder={label}
-        required={required}
+        disabled={mode === 'view'}
       />
     </div>
   );
@@ -217,6 +217,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
                       value={formData.company_id} 
                       onChange={handleChange}
                       required
+                      disabled={mode === 'view'}
                     >
                       <option value="">-- Choose Company --</option>
                       {companies.map(comp => (
@@ -229,7 +230,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             )}
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Vendor Type</label>
-              <select className="form-select" name="vendorType" value={formData.vendorType} onChange={handleChange} required>
+              <select className="form-select" name="vendorType" value={formData.vendorType} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="New">New</option>
                 <option value="Regular">Regular</option>
                 <option value="Contractor">Contractor</option>
@@ -242,7 +243,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Category</label>
-              <select className="form-select" name="category" value={formData.category} onChange={handleChange} required>
+              <select className="form-select" name="category" value={formData.category} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="Raw Materials">Raw Materials</option>
                 <option value="Logistics">Logistics</option>
                 <option value="Machinery">Machinery</option>
@@ -252,7 +253,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status</label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required>
+              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
                 <option value="inactive">Inactive</option>
@@ -299,18 +300,20 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             {renderInput('CST', 'cst')}
           </div>
 
-          <div className="mt-5 pt-4 border-top d-flex gap-3">
-            <button type="submit" className="btn btn-primary px-4">
-              {mode === 'create' ? 'Register Vendor' : 'Update Vendor'}
-            </button>
-            <button 
-              type="button" 
-              className="btn btn-outline-secondary px-4"
-              onClick={() => router.push('/vendors')}
-            >
-              Cancel
-            </button>
-          </div>
+          {mode !== 'view' && (
+            <div className="mt-5 pt-4 border-top d-flex gap-3">
+              <button type="submit" className="btn btn-primary px-4">
+                {mode === 'create' ? 'Register Vendor' : 'Update Vendor'}
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-outline-secondary px-4"
+                onClick={() => router.push('/vendors')}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
