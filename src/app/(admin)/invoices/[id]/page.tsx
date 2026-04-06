@@ -11,8 +11,8 @@ import Link from 'next/link';
 export default function InvoiceDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  
-  const invoice = useSelector((state: RootState) => 
+
+  const invoice = useSelector((state: RootState) =>
     state.invoices.items.find(inv => inv.id === id)
   );
 

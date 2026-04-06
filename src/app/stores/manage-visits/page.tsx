@@ -10,6 +10,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import api from '@/lib/axios';
 import { Store, StoreVisit } from '@/types/modules';
 import { useRouter } from 'next/navigation';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function ManageVisitsPage() {
   const dispatch = useDispatch();
@@ -23,6 +24,8 @@ export default function ManageVisitsPage() {
   const [showForm, setShowForm] = useState(false);
   const [loadingVisits, setLoadingVisits] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const fetchVisits = async (storeId: string) => {
     setLoadingVisits(true);
@@ -56,13 +59,17 @@ export default function ManageVisitsPage() {
   }, [selectedStoreId, stores]);
 
   const handleDeleteVisit = async (id: string) => {
-    if (window.confirm('Delete this visit log?')) {
-      try {
-        await (dispatch as any)(deleteVisit(id)).unwrap();
-        setVisits(prev => prev.filter(v => v.id !== id));
-      } catch (err) {
-        alert('Failed to delete: ' + err);
-      }
+    setItemToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      await (dispatch as any)(deleteVisit(itemToDelete)).unwrap();
+      setVisits(prev => prev.filter(v => v.id !== itemToDelete));
+    } catch (err) {
+      alert('Failed to delete: ' + err);
     }
   };
 
@@ -97,12 +104,13 @@ export default function ManageVisitsPage() {
                   </button>
                 </div>
                 <div className="col-md-4">
-                    <h5 className="fw-800 mb-0 tracking-tight text-dark uppercase letter-spacing-1">Field Visit Hub</h5>
-                    <p className="text-muted xx-small fw-800 mb-0 uppercase opacity-75">assigned shops only</p>
+                    <h5 className="fw-800 mb-0 tracking-tight text-dark uppercase letter-spacing-1">Field Visit</h5>
+                    {/* <p className="text-muted xx-small fw-800 mb-0 uppercase opacity-75">assigned shops only</p> */}
                 </div>
-                <div className="col-md-6 text-end ms-auto">
+                <div className="col-md-6 text-end ms-auto d-flex align-items-center justify-content-end gap-3">
+                   <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-0">Select Store :</label>
                    <select 
-                      className="form-select border-0 bg-light py-2 fw-800 text-primary shadow-none uppercase ms-auto" 
+                      className="form-select border-0 bg-light py-2 fw-800 text-dark shadow-none uppercase" 
                       style={{ fontSize: '0.85rem', maxWidth: '350px' }}
                       value={selectedStoreId}
                       onChange={(e) => setSelectedStoreId(e.target.value)}
@@ -113,12 +121,12 @@ export default function ManageVisitsPage() {
                 </div>
                 {showForm && (
                    <div className="col-auto text-end ps-3 border-start">
-                    <button 
+                    {/* <button 
                       className="btn btn-outline-secondary btn-sm px-3 rounded-pill fw-800 tracking-wider"
                       onClick={() => { setShowForm(false); setEditingVisit(undefined); }}
                     >
                       <i className="bi bi-x-lg me-2"></i> CANCEL
-                    </button>
+                    </button> */}
                    </div>
                 )}
               </div>
@@ -128,27 +136,19 @@ export default function ManageVisitsPage() {
               <div className="col-lg-12">
                 {selectedStore && showForm ? (
                   /* Form View */
-                  <div className="card border-0 shadow-md rounded-4 overflow-hidden mb-4">
-                    <div className="card-header bg-primary py-3 d-flex justify-content-between align-items-center">
-                        <h6 className="text-white fw-800 mb-0 small uppercase">ENTRY LOG: {selectedStore.name.toUpperCase()}</h6>
-                        <span className="badge bg-white text-primary fw-800 uppercase" style={{ fontSize: '0.6rem' }}>FORM ACTIVE</span>
-                    </div>
-                    <div className="p-4">
-                      <StoreVisitForm 
-                        store={selectedStore} 
-                        initialData={editingVisit}
-                        onSuccess={() => { 
-                          fetchVisits(selectedStoreId);
-                          setShowForm(false);
-                          setEditingVisit(undefined); 
-                        }} 
-                        onCancel={() => {
-                          setShowForm(false);
-                          setEditingVisit(undefined);
-                        }} 
-                      />
-                    </div>
-                  </div>
+                  <StoreVisitForm 
+                    store={selectedStore} 
+                    initialData={editingVisit}
+                    onSuccess={() => { 
+                      fetchVisits(selectedStoreId);
+                      setShowForm(false);
+                      setEditingVisit(undefined); 
+                    }} 
+                    onCancel={() => {
+                      setShowForm(false);
+                      setEditingVisit(undefined);
+                    }} 
+                  />
                 ) : selectedStore ? (
                   /* History Table View */
                   <div className="card border-0 shadow-md rounded-4 overflow-hidden">
@@ -201,16 +201,18 @@ export default function ManageVisitsPage() {
                                   <td className="text-end pe-4">
                                     <div className="d-flex justify-content-end gap-2">
                                       <button 
-                                        className="btn btn-outline-primary btn-sm rounded-pill px-3 fw-800 xx-small shadow-sm" 
+                                        className="btn-action-view" 
+                                        title="Edit Visit"
                                         onClick={() => { setEditingVisit(v); setShowForm(true); }}
                                       >
-                                        <i className="bi bi-pencil me-1"></i> EDIT
+                                        <i className="bi bi-pencil"></i>
                                       </button>
                                       <button 
-                                        className="btn btn-outline-danger btn-sm rounded-pill px-3 fw-800 xx-small shadow-sm" 
+                                        className="btn-action-delete" 
+                                        title="Delete Visit"
                                         onClick={() => handleDeleteVisit(v.id)}
                                       >
-                                        <i className="bi bi-trash3 me-1"></i> DEL
+                                        <i className="bi bi-trash3"></i>
                                       </button>
                                     </div>
                                   </td>
@@ -240,6 +242,15 @@ export default function ManageVisitsPage() {
           </div>
         </div>
       </div>
+      <ConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Visit Log"
+        message="Are you sure you want to delete this visit report? This action cannot be undone."
+        confirmLabel="Delete"
+        type="danger"
+      />
     </div>
   );
 }

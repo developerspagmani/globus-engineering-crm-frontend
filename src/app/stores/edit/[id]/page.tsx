@@ -42,7 +42,24 @@ export default function EditStorePage() {
         
         <div className="content-area">
           <div className="container-fluid">
-            <h4 className="fw-bold mb-4">Edit Store Profile</h4>
+            {/* Elite Header Row */}
+            <div className="card shadow-sm border-0 rounded-4 p-3 mb-4 bg-white">
+              <div className="row align-items-center g-3">
+                <div className="col-auto">
+                   <button 
+                      className="btn btn-light rounded-circle shadow-sm" 
+                      style={{ width: '40px', height: '40px' }}
+                      onClick={() => router.push('/stores')}
+                    >
+                    <i className="bi bi-arrow-left"></i>
+                  </button>
+                </div>
+                <div className="col">
+                    <h5 className="fw-800 mb-0 tracking-tight text-dark uppercase letter-spacing-1">Edit Store Profile</h5>
+                    <p className="text-muted xx-small fw-800 mb-0 uppercase opacity-75">Update shop information</p>
+                </div>
+              </div>
+            </div>
             
             {loading ? (
               <div className="text-center p-5"><div className="spinner-border text-primary"></div></div>

@@ -17,7 +17,7 @@ export default function NewStorePage() {
         
         <div className="content-area">
           <div className="container-fluid">
-            <h4 className="fw-bold mb-4">Register New Store</h4>
+            <h4 className="fw-bold mb-4">Add New Store</h4>
             <StoreForm mode="create" />
           </div>
         </div>

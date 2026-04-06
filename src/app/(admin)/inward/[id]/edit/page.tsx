@@ -3,7 +3,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import InwardForm from '@/modules/inward/components/InwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
@@ -14,8 +14,8 @@ export default function EditInwardPage() {
   const id = params.id as string;
   const [isEdit, setIsEdit] = React.useState(false);
   const isReadOnly = searchParams.get('readonly') === 'true';
-  
-  const inward = useSelector((state: RootState) => 
+  const router = useRouter()
+  const inward = useSelector((state: RootState) =>
     state.inward.items.find(i => i.id === id)
   );
 
@@ -29,15 +29,19 @@ export default function EditInwardPage() {
         ) : (
           <>
             <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-              <Link href="/inward" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Inward List">
+              <button
+                onClick={() => router.back()}
+                className="btn btn-outline-secondary border-0 p-0 me-3"
+                title="Back to Previous Page"
+              >
                 <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
-              </Link>
+              </button>
               <div>
                 <h2 className="fw-bold mb-0">{isEdit ? 'Edit' : 'View'} Inward: {inward.inwardNo}</h2>
                 <p className="text-muted small mb-0">{isEdit ? `Modify receipt details for ${inward.customerName}.` : `Review receipt details for ${inward.customerName}.`}</p>
               </div>
               {!isEdit && !isReadOnly && (
-                <button 
+                <button
                   className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
                   onClick={() => setIsEdit(true)}
                 >

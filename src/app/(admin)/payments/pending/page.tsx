@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
@@ -12,23 +13,36 @@ import autoTable from 'jspdf-autotable';
 
 const PendingPaymentPage = () => {
   const [mounted, setMounted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const router = useRouter();
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, loading } = useSelector((state: RootState) => state.invoices);
+  const { items: customers } = useSelector((state: RootState) => state.customers);
 
   useEffect(() => {
     setMounted(true);
-    (dispatch as any)(fetchInvoices(activeCompany?.id));
-  }, [dispatch, activeCompany]);
+    if (activeCompany?.id) {
+       (dispatch as any)(fetchInvoices(activeCompany.id));
+       (dispatch as any)(fetchCustomers(activeCompany.id));
+    }
+  }, [dispatch, activeCompany?.id]);
 
   if (!mounted) return null;
 
   // Filter for pending/billed but not paid invoices
-  const pendingInvoices = items.filter(inv =>
-    inv.status?.toLowerCase() !== 'paid' &&
-    inv.status?.toLowerCase() !== 'cancelled'
-  );
+  const pendingInvoices = items.filter(inv => {
+    const isPending = inv.status?.toLowerCase() !== 'paid' && inv.status?.toLowerCase() !== 'cancelled';
+    if (!isPending) return false;
+
+    const matchesSearch = (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || 
+                         (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+                         (inv.poNo?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
+    const matchesCustomer = !selectedCustomerId || String(inv.customerId) === String(selectedCustomerId);
+
+    return matchesSearch && matchesCustomer;
+  });
 
   const calculateOverdueDays = (dueDate: string) => {
     if (!dueDate) return 0;
@@ -119,6 +133,38 @@ const PendingPaymentPage = () => {
               <p className="text-muted small mb-0 tracking-tight">Track outstanding balances and overdue collections • {pendingInvoices.length} entries</p>
             </div>
             <button className="btn btn-link text-muted p-0 shadow-none" onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}><i className="bi bi-arrow-repeat fs-5"></i></button>
+          </div>
+          
+          {/* Filter Bar */}
+          <div className="px-4 mb-3">
+             <div className="row g-2">
+                <div className="col-md-5">
+                   <div className="position-relative">
+                      <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                      <input 
+                         type="text" 
+                         className="form-control border-0 bg-light px-5" 
+                         placeholder="Search Customer, Invoice, or PO No..."
+                         value={searchTerm}
+                         onChange={(e) => setSearchTerm(e.target.value)}
+                         style={{ height: '42px', borderRadius: '10px' }}
+                      />
+                   </div>
+                </div>
+                <div className="col-md-4">
+                   <select 
+                      className="form-select border-0 bg-light px-3 fw-bold small text-muted"
+                      value={selectedCustomerId}
+                      onChange={(e) => setSelectedCustomerId(e.target.value)}
+                      style={{ height: '42px', borderRadius: '10px' }}
+                   >
+                      <option value="">-- ALL CUSTOMERS --</option>
+                      {customers.map(c => (
+                         <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                      ))}
+                   </select>
+                </div>
+             </div>
           </div>
 
           <div className="table-responsive p-0 mt-3" style={{ minHeight: '400px', paddingBottom: '80px' }}>

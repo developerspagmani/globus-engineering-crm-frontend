@@ -3,7 +3,7 @@
 import React from 'react';
 import VoucherForm from '@/modules/voucher/components/VoucherForm';
 import Breadcrumb from '@/components/Breadcrumb';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import Link from 'next/link';
@@ -31,12 +31,18 @@ const NewVoucherPageContent = () => {
     referenceNo: String(targetInvoice.id)
   } : undefined;
 
+  const router = useRouter();
+
   return (
     <div className="content-area animate-fade-in">
       <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-        <Link href="/vouchers" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Voucher List">
+        <button 
+          onClick={() => router.back()} 
+          className="btn btn-outline-secondary border-0 p-0 me-3" 
+          title="Back to Previous Page"
+        >
           <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
-        </Link>
+        </button>
         <div>
           <h2 className="fw-bold mb-0 text-dark">Create New Voucher</h2>
           <p className="text-muted small mb-0">Record a new payment, receipt, or journal entry.</p>

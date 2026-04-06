@@ -6,6 +6,7 @@ import { RootState } from '@/redux/store';
 import { Invoice, Company } from '@/data/mockModules';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface InvoicePreviewProps {
   invoice: Invoice;
@@ -18,7 +19,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   const { settings } = useSelector((state: RootState) => state.invoices);
   const searchParams = useSearchParams();
   const isReadOnly = searchParams.get('readonly') === 'true';
-
+  const router = useRouter()
   const handlePrint = () => {
     window.print();
   };
@@ -29,9 +30,13 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     <div>
       {!hideControls && (
         <div className="d-flex justify-content-between align-items-center mb-4 no-print">
-          <Link href="/invoices" className="btn btn-outline-secondary border shadow-sm d-flex align-items-center gap-2 px-3 fw-bold">
+          <button
+            onClick={() => router.back()}
+            className="btn btn-outline-secondary border-0 p-0 me-3"
+            title="Back to Previous Page"
+          >
             <i className="bi bi-arrow-left"></i> Back to List
-          </Link>
+          </button>
           <div className="d-flex gap-2">
             {!isReadOnly && (
               <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-light border shadow-sm d-flex align-items-center gap-2 px-3 fw-bold">
@@ -73,10 +78,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '1.75rem', fontWeight: 900, color: accentColor, letterSpacing: '0.05em' }}>TAX INVOICE</div>
             <div className="mt-2">
-               <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Invoice No: <strong style={{ color: '#111827' }}>{invoice.invoiceNumber}</strong></div>
-               <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Invoice Date: <strong style={{ color: '#111827' }}>{new Date(invoice.date).toLocaleDateString('en-IN')}</strong></div>
-               <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>DC No: <strong style={{ color: '#111827' }}>{invoice.dcNo || '-'}</strong></div>
-               <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>DC Date: <strong style={{ color: '#111827' }}>{invoice.dcDate ? new Date(invoice.dcDate).toLocaleDateString('en-IN') : '-'}</strong></div>
+              <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Invoice No: <strong style={{ color: '#111827' }}>{invoice.invoiceNumber}</strong></div>
+              <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>Invoice Date: <strong style={{ color: '#111827' }}>{new Date(invoice.date).toLocaleDateString('en-IN')}</strong></div>
+              <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>DC No: <strong style={{ color: '#111827' }}>{invoice.dcNo || '-'}</strong></div>
+              <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>DC Date: <strong style={{ color: '#111827' }}>{invoice.dcDate ? new Date(invoice.dcDate).toLocaleDateString('en-IN') : '-'}</strong></div>
             </div>
           </div>
         </div>
@@ -91,17 +96,17 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               {invoice.state && <span>Place of Supply: <strong>{invoice.state}</strong></span>}
             </div>
             {invoice.gstin && (
-                <div style={{ fontSize: '0.85rem', color: '#4b5563', marginTop: '0.5rem' }}>
-                    GSTIN/UIN: <strong style={{ color: '#111827' }}>{invoice.gstin}</strong>
-                </div>
+              <div style={{ fontSize: '0.85rem', color: '#4b5563', marginTop: '0.5rem' }}>
+                GSTIN/UIN: <strong style={{ color: '#111827' }}>{invoice.gstin}</strong>
+              </div>
             )}
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '0.4rem', letterSpacing: '0.05em' }}>Order Info</div>
             <div className="d-flex flex-column gap-1">
-               <div style={{ fontSize: '0.85rem', color: '#374151' }}>PO No: <strong>{invoice.poNo || '-'}</strong></div>
-               <div style={{ fontSize: '0.85rem', color: '#374151' }}>PO Date: <strong>{invoice.poDate ? new Date(invoice.poDate).toLocaleDateString('en-IN') : '-'}</strong></div>
-               <div style={{ fontSize: '0.85rem', color: '#374151' }}>Due Date: <strong className="text-danger">{new Date(invoice.dueDate).toLocaleDateString('en-IN')}</strong></div>
+              <div style={{ fontSize: '0.85rem', color: '#374151' }}>PO No: <strong>{invoice.poNo || '-'}</strong></div>
+              <div style={{ fontSize: '0.85rem', color: '#374151' }}>PO Date: <strong>{invoice.poDate ? new Date(invoice.poDate).toLocaleDateString('en-IN') : '-'}</strong></div>
+              <div style={{ fontSize: '0.85rem', color: '#374151' }}>Due Date: <strong className="text-danger">{new Date(invoice.dueDate).toLocaleDateString('en-IN')}</strong></div>
             </div>
           </div>
         </div>
@@ -138,8 +143,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
         <div style={{ padding: '2rem 3rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '2rem' }}>
             <div style={{ fontSize: '0.8rem', color: '#6b7280', alignSelf: 'end' }}>
-               <div style={{ fontWeight: 700, color: '#374151', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Amount in Words:</div>
-               <div style={{ color: '#111827', fontWeight: 600 }}>Twelve Hundred and Forty Three Rupees Only</div>
+              <div style={{ fontWeight: 700, color: '#374151', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Amount in Words:</div>
+              <div style={{ color: '#111827', fontWeight: 600 }}>Twelve Hundred and Forty Three Rupees Only</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div className="d-flex flex-column gap-2">
@@ -173,14 +178,14 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
           <div>
             <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#111827', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Declaration:</div>
             <div style={{ fontSize: '0.75rem', color: '#6b7280', lineHeight: 1.5 }}>
-               We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
+              We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ borderTop: `1px solid #111827`, paddingTop: '1rem' }}>
-               <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#111827', textTransform: 'uppercase' }}>For {company?.name || 'Globus Engineering Tools'}</div>
-               <div style={{ height: '50px' }}></div>
-               <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Authorized Signatory</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#111827', textTransform: 'uppercase' }}>For {company?.name || 'Globus Engineering Tools'}</div>
+              <div style={{ height: '50px' }}></div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>Authorized Signatory</div>
             </div>
           </div>
         </div>
@@ -190,7 +195,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           .no-print { display: none !important; }
           .main-wrapper { margin-left: 0 !important; }

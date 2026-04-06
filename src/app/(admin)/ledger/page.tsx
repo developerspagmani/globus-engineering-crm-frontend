@@ -180,7 +180,7 @@ export default function LedgerPage() {
               <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '44px' }}>
                 <input 
                   type="date" 
-                  className="form-control py-1 border-0 shadow-none bg-transparent small" 
+                  className="form-control py-1 border-0 shadow-none bg-transparent" 
                   value={filters.dateFrom}
                   onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
                   style={{ width: '135px' }}
@@ -208,8 +208,7 @@ export default function LedgerPage() {
                 <tr className="border-bottom">
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider text-center" style={{ width: '60px' }}>Sno</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Customer Name</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Street 1</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Street 2</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Street</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">City</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">State</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider text-center px-4" style={{ width: '120px' }}>Action</th>
@@ -218,13 +217,13 @@ export default function LedgerPage() {
               <tbody className="border-top-0">
                 {ledgerLoading ? (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={6}>
                       <Loader text="Fetching Ledger Entries..." />
                     </td>
                   </tr>
                 ) : paginatedItems.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-5">
+                    <td colSpan={6} className="text-center py-5">
                       <p className="text-muted fw-normal small">No ledger records found for this company.</p>
                     </td>
                   </tr>
@@ -234,7 +233,6 @@ export default function LedgerPage() {
                       <td className="text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td className="fw-bold text-dark text-uppercase">{party.name}</td>
                       <td className="text-muted small">{party.street1 || '-'}</td>
-                      <td className="text-muted small">{party.street2 || '-'}</td>
                       <td className="text-muted small">{party.city || '-'}</td>
                       <td className="text-muted small">{party.state || '-'}</td>
                       <td className="text-center px-4">

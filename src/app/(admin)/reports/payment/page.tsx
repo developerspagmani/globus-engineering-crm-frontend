@@ -26,9 +26,9 @@ const PaymentReportPage = () => {
 
   useEffect(() => {
     setMounted(true);
-    if (activeCompany?.id) { 
-      (dispatch as any)(fetchVouchers(activeCompany.id)); 
-      (dispatch as any)(fetchPendingPayments(activeCompany.id)); 
+    if (activeCompany?.id) {
+      (dispatch as any)(fetchVouchers(activeCompany.id));
+      (dispatch as any)(fetchPendingPayments(activeCompany.id));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -83,7 +83,7 @@ const PaymentReportPage = () => {
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Payment Report', active: true }]} /><h2 className="fw-900 mt-2">Payment Report</h2><p className="text-muted small">Track collection history and monitor outstanding dues.</p></div>
         <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" onClick={() => { (dispatch as any)(fetchVouchers(activeCompany?.id)); (dispatch as any)(fetchPendingPayments(activeCompany?.id)); }}><i className="bi bi-arrow-repeat text-primary fw-bold"></i>
           <span className="small fw-800 text-muted">Refresh</span>
-</button>
+        </button>
       </div>
 
       <div className="d-flex gap-2 mb-4">
@@ -97,13 +97,13 @@ const PaymentReportPage = () => {
             <div className={`col-md-${activeTab === 'PENDING' ? '3' : '4'}`}>
               <div className="position-relative">
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                <input 
-                  type="text" 
-                  className="form-control border-0 bg-light-soft ps-5 search-bar" 
-                  placeholder="Search customer name..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                  style={{ height: '42px', borderRadius: '10px' }} 
+                <input
+                  type="text"
+                  className="form-control border-0 bg-light-soft ps-5 search-bar"
+                  placeholder="Search customer name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ height: '42px', borderRadius: '10px' }}
                 />
               </div>
             </div>
@@ -111,8 +111,8 @@ const PaymentReportPage = () => {
             <div className="col-auto ms-auto d-flex align-items-center gap-1">
               <div className="d-flex align-items-center  bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
                 <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                </div>
-                <span className="text-muted small fw-bold mx-1">TO</span>
+              </div>
+              <span className="text-muted small fw-bold mx-1">TO</span>
               <div className="d-flex align-items-center  bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
                 <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
               </div>

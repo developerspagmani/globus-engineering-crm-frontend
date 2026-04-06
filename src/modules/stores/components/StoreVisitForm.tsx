@@ -55,7 +55,7 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const payload = {
       id: initialData?.id,
       store_id: store.id,
@@ -90,34 +90,34 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
           <div className="row g-4 mb-4">
             <div className="col-md-6">
               <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Visit Date / Time</label>
-              <input 
-                type="date" 
-                className="form-control border-0 bg-light py-2 fw-700" 
-                name="visitDate" 
-                value={formData.visitDate} 
-                onChange={handleChange} 
-                required 
+              <input
+                type="date"
+                className="form-control border-0 bg-light py-2 fw-700"
+                name="visitDate"
+                value={formData.visitDate}
+                onChange={handleChange}
+                required
               />
             </div>
             <div className="col-md-6">
               <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Next Follow-up Date</label>
-              <input 
-                type="date" 
-                className="form-control border-0 bg-light py-2 fw-700 text-primary" 
-                name="nextVisitDate" 
-                value={formData.nextVisitDate} 
-                onChange={handleChange} 
+              <input
+                type="date"
+                className="form-control border-0 bg-light py-2 fw-700 text-primary"
+                name="nextVisitDate"
+                value={formData.nextVisitDate}
+                onChange={handleChange}
               />
             </div>
           </div>
 
           <div className="mb-4">
             <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Product / Tooling Interest</label>
-            <input 
+            <input
               type="text"
-              className="form-control border-0 bg-light py-2 fw-700" 
-              name="productInterest" 
-              value={formData.productInterest} 
+              className="form-control border-0 bg-light py-2 fw-700"
+              name="productInterest"
+              value={formData.productInterest}
               onChange={handleChange}
               placeholder="Ex. Diamond Tools, Grinding Wheels, Carbide Pins..."
             />
@@ -125,11 +125,11 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
 
           <div className="mb-4">
             <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Detailed Discussion Feedback</label>
-            <textarea 
-              className="form-control border-0 bg-light py-2 fw-700" 
-              name="notes" 
-              rows={4} 
-              value={formData.notes} 
+            <textarea
+              className="form-control border-0 bg-light py-2 fw-700"
+              name="notes"
+              rows={4}
+              value={formData.notes}
               onChange={handleChange}
               placeholder="Record your discussion notes here..."
               required

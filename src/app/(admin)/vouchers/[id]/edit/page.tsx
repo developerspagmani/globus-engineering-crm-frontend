@@ -39,15 +39,19 @@ const EditVoucherPage = () => {
   return (
     <div className="content-area animate-fade-in">
       <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-        <Link href="/vouchers" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Voucher List">
+        <button 
+          onClick={() => router.back()} 
+          className="btn btn-outline-secondary border-0 p-0 me-3" 
+          title="Back to Previous Page"
+        >
           <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
-        </Link>
+        </button>
         <div>
           <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Voucher: {voucher.voucherNo}</h2>
           <p className="text-muted small mb-0">{isEdit ? 'Update transaction details and narration.' : 'Review transaction details and narration.'}</p>
         </div>
         {!isEdit && !isReadOnly && (
-          <button 
+          <button
             className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
             onClick={() => setIsEdit(true)}
           >

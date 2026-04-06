@@ -7,6 +7,7 @@ import { fetchStores, deleteStore, setStoreFilters } from '@/redux/features/stor
 import { Store } from '@/types/modules';
 import StoreVisitForm from './StoreVisitForm';
 import { useRouter } from 'next/navigation';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 const StoreList: React.FC = () => {
   const dispatch = useDispatch();
@@ -16,6 +17,8 @@ const StoreList: React.FC = () => {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -29,8 +32,13 @@ const StoreList: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this store and all its visit history?')) {
-      (dispatch as any)(deleteStore(id));
+    setItemToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      (dispatch as any)(deleteStore(itemToDelete));
     }
   };
 
@@ -60,11 +68,11 @@ const StoreList: React.FC = () => {
         <div className="d-flex align-items-center gap-2">
           {hasPermission('canCreate') && (
             <button 
-              className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent" 
               onClick={() => router.push('/stores/manage-visits')}
             >
               <i className="bi bi-clipboard2-check fw-800"></i>
-              <span className="fw-700">REGISTER TODAY'S VISIT</span>
+              <span className="fw-700">Register Visit</span>
             </button>
           )}
           {hasPermission('canCreate') && (
@@ -73,7 +81,7 @@ const StoreList: React.FC = () => {
               onClick={() => router.push('/stores/new')}
             >
               <i className="bi bi-plus-lg fw-800"></i>
-              <span className="fw-700">REGISTER NEW STORE</span>
+              <span className="fw-700">Add New Store</span>
             </button>
           )}
         </div>
@@ -89,26 +97,26 @@ const StoreList: React.FC = () => {
                 <input 
                   type="text" 
                   className="form-control border-0 bg-light py-2" 
-                  placeholder="SEARCH BY SHOP NAME OR OWNER..." 
+                  placeholder="Search by shop name or owner..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setStoreFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
-            <div className="col-md-4">
+            <div className="col-md-3">
               <select 
                 className="form-select form-select-sm border-0 bg-light py-2 fw-700 text-muted" 
                 value={filters.area}
                 onChange={(e) => dispatch(setStoreFilters({ area: e.target.value }))}
               >
-                <option value="all">ALL CLUSTERS / AREAS</option>
+                <option value="all">AREAS</option>
                 {areas.map(area => <option key={area} value={area || ''}>{String(area).toUpperCase()}</option>)}
               </select>
             </div>
             <div className="col-md-2 text-end">
-              <button className="btn btn-light btn-sm w-100 fw-800 text-muted border-0 py-2">
+              {/* <button className="btn btn-light btn-sm w-100 fw-800 text-muted border-0 py-2">
                 <i className="bi bi-funnel me-2"></i> FILTERS
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
@@ -151,7 +159,7 @@ const StoreList: React.FC = () => {
                   {store.latestVisit ? (
                     <div>
                       <p className="small fw-800 mb-0 text-dark">{new Date(store.latestVisit.visitDate).toLocaleDateString()}</p>
-                      <p className="xx-small text-muted mb-0 fw-700">{store.latestVisit.productInterest?.toUpperCase()}</p>
+                      {/* <p className="xx-small text-muted mb-0 fw-700">{store.latestVisit.productInterest?.toUpperCase()}</p> */}
                     </div>
                   ) : (
                     <span className="xx-small fw-800 text-muted opacity-50 text-uppercase">No visits yet</span>
@@ -159,13 +167,13 @@ const StoreList: React.FC = () => {
                 </td>
                 <td className="text-end pe-4">
                   <div className="d-flex justify-content-end align-items-center gap-2">
-                    {hasPermission('canEdit') && (
+                    {hasPermission('canRead') && (
                       <button 
                         className="btn btn-action-view" 
-                        title="Record Today's Visit"
-                        onClick={() => router.push(`/stores/visit/${store.id}`)}
+                        title="View Store Details"
+                        onClick={() => router.push(`/stores/view/${store.id}`)}
                       >
-                        <i className="bi bi-clipboard2-check"></i>
+                        <i className="bi bi-eye"></i>
                       </button>
                     )}
                     <div className="dropdown">
@@ -200,6 +208,15 @@ const StoreList: React.FC = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Store Profile"
+        message="Are you sure you want to delete this store? All associated visit history will also be permanently removed."
+        confirmLabel="Delete Store"
+        type="danger"
+      />
     </div>
   );
 };

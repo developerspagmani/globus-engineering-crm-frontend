@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { addLedgerEntry, fetchLedgerEntries } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import StatusModal from '@/components/StatusModal';
 
 const LedgerEntryForm: React.FC = () => {
@@ -13,34 +14,52 @@ const LedgerEntryForm: React.FC = () => {
   const router = useRouter();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     customerId: '',
     type: 'credit' as 'debit' | 'credit',
     amount: '',
-    description: ''
+    description: '',
+    linkedInvoiceId: '',
   });
 
-  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
-    isOpen: false,
-    type: 'success',
-    title: '',
-    message: ''
-  });
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+  }>({ isOpen: false, type: 'success', title: '', message: '' });
 
   useEffect(() => {
     if (activeCompany?.id) {
-       (dispatch as any)(fetchCustomers(activeCompany.id));
+      (dispatch as any)(fetchCustomers(activeCompany.id));
+      (dispatch as any)(fetchInvoices(activeCompany.id));
     }
   }, [dispatch, activeCompany?.id]);
+
+  // Reset mapping when customer changes
+  useEffect(() => {
+    setFormData(p => ({ ...p, linkedInvoiceId: '' }));
+  }, [formData.customerId]);
+
+  const customerInvoices = allInvoices.filter(inv => 
+    String(inv.customerId) === String(formData.customerId) && inv.status !== 'paid'
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.customerId || !formData.amount) return;
 
     try {
-      const selectedCustomer = customers.find(c => String(c.id) === String(formData.customerId));
+      const selectedCustomer = customers.find(
+        (c) => String(c.id) === String(formData.customerId)
+      );
+      const refId = `MAN-${Date.now().toString().slice(-6)}`;
+      const selectedInvoice = allInvoices.find(inv => inv.id === formData.linkedInvoiceId);
+      const invoiceSuffix = selectedInvoice ? ` [Mapped to Inv #${selectedInvoice.invoiceNumber}]` : '';
+
       const payload = {
         partyId: formData.customerId,
         partyName: selectedCustomer?.company || selectedCustomer?.name || 'Customer',
@@ -50,163 +69,329 @@ const LedgerEntryForm: React.FC = () => {
         date: formData.date,
         type: formData.type,
         amount: parseFloat(formData.amount),
-        description: formData.description,
-        referenceId: `MAN-${Date.now().toString().slice(-6)}`
+        description: `Manual Entry Generated: ${refId}${invoiceSuffix}`,
+        referenceId: refId,
+        linkedInvoiceId: formData.linkedInvoiceId,
       };
 
       await (dispatch as any)(addLedgerEntry(payload)).unwrap();
-      
       setModal({
         isOpen: true,
         type: 'success',
-        title: 'Entry Recorded!',
-        message: 'The manual ledger transaction has been successfully saved.'
+        title: 'Entry recorded',
+        message: 'The manual ledger transaction has been successfully saved.',
       });
     } catch (err: any) {
       setModal({
         isOpen: true,
         type: 'error',
         title: 'Error',
-        message: err.message || 'Failed to save transaction.'
+        message: err.message || 'Failed to save transaction.',
       });
     }
   };
 
   return (
     <>
-        <form onSubmit={handleSubmit}>
-          {/* Card 1: Basic Details */}
-          <div className="card shadow-sm border-0 bg-white p-5 rounded-4 mb-4">
-            <h5 className="text-primary fw-bold mb-4">Basic Details</h5>
+      <form onSubmit={handleSubmit}>
+        <div className="lef-card">
+
+          {/* Row 1: Date & Customer */}
+          <div className="lef-grid lef-grid--1-2 lef-mb">
+            <div className="lef-field">
+              <label className="lef-label">Date</label>
+              <input
+                type="date"
+                className="lef-input"
+                value={formData.date}
+                onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="lef-field">
+              <label className="lef-label">Customer</label>
+              <select
+                className="lef-input lef-select"
+                value={formData.customerId}
+                onChange={(e) => setFormData((p) => ({ ...p, customerId: e.target.value }))}
+                required
+              >
+                <option value="">Choose customer…</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.company || c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Row 2: Transaction Type */}
+          <div className="lef-field lef-mb">
+            <label className="lef-label">Transaction type</label>
+            <div className="lef-type-grid">
+              <button
+                type="button"
+                onClick={() => setFormData((p) => ({ ...p, type: 'debit' }))}
+                className={`lef-type-btn ${formData.type === 'debit' ? 'lef-type-btn--debit-active' : ''}`}
+              >
+                <div>
+                  <div className={`lef-type-name ${formData.type === 'debit' ? 'lef-type-name--debit' : ''}`}>
+                    Debit
+                  </div>
+                  <div className="lef-type-desc">Increase balance</div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+                  className={`lef-type-icon ${formData.type === 'debit' ? 'lef-type-icon--debit' : ''}`}>
+                  <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M10 6v8M6 10h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFormData((p) => ({ ...p, type: 'credit' }))}
+                className={`lef-type-btn ${formData.type === 'credit' ? 'lef-type-btn--credit-active' : ''}`}
+              >
+                <div>
+                  <div className={`lef-type-name ${formData.type === 'credit' ? 'lef-type-name--credit' : ''}`}>
+                    Credit
+                  </div>
+                  <div className="lef-type-desc">Reduce balance</div>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+                  className={`lef-type-icon ${formData.type === 'credit' ? 'lef-type-icon--credit' : ''}`}>
+                  <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M6 10h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Row 3: Amount & Optional Invoice Link */}
+          <div className={`lef-grid ${formData.type === 'credit' ? 'lef-grid--1-2' : ''} lef-mb`}>
+            <div className="lef-field">
+              <label className="lef-label">Amount (₹)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                className="lef-input"
+                placeholder="0.00"
+                value={formData.amount}
+                style={formData.type !== 'credit' ? { maxWidth: '300px' } : {}}
+                onChange={(e) => setFormData((p) => ({ ...p, amount: e.target.value }))}
+                required
+              />
+            </div>
             
-            <div className="row g-4">
-              <div className="col-md-6 d-flex flex-column gap-2">
-                <label className="text-muted x-small fw-bold text-uppercase tracking-wider">Transaction Date</label>
-                <input
-                  type="date"
-                  className="form-control rounded-3 border-secondary-subtle bg-white shadow-none py-2 px-3 fw-semibold text-dark"
-                  value={formData.date}
-                  onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                  required
-                />
-              </div>
-              
-              <div className="col-md-6 d-flex flex-column gap-2">
-                <label className="text-muted x-small fw-bold text-uppercase tracking-wider">Select Customer</label>
+            {formData.type === 'credit' && (
+              <div className="lef-field">
+                <label className="lef-label">
+                  Link to Invoice (Optional)
+                  {customerInvoices.length > 0 && (
+                    <span className="ms-2 px-2 py-0.5 rounded bg-primary bg-opacity-10 text-primary fw-900 border-0" 
+                      style={{ fontSize: '9px', verticalAlign: 'middle' }}>
+                      {customerInvoices.length} PENDING
+                    </span>
+                  )}
+                </label>
                 <select
-                  className="form-select rounded-3 border-secondary-subtle bg-white shadow-none py-2 px-3 fw-semibold text-muted"
-                  value={formData.customerId}
-                  onChange={e => setFormData(prev => ({ ...prev, customerId: e.target.value }))}
-                  required
+                  className="lef-input lef-select"
+                  value={formData.linkedInvoiceId}
+                  onChange={(e) => setFormData((p) => ({ ...p, linkedInvoiceId: e.target.value }))}
+                  disabled={!formData.customerId || customerInvoices.length === 0}
                 >
-                  <option value="">Choose Customer...</option>
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                  ))}
+                  {customerInvoices.length > 0 ? (
+                    <>
+                      <option value="">-- APPLY AS GENERAL CREDIT --</option>
+                      {customerInvoices.map((inv) => (
+                        <option key={inv.id} value={inv.id}>
+                          Invoice #{inv.invoiceNumber} - ₹{inv.grandTotal.toLocaleString()}
+                        </option>
+                      ))}
+                    </>
+                  ) : (
+                    <option value="">No pending invoices found</option>
+                  )}
                 </select>
               </div>
-
-              {/* Transaction Type Picker */}
-              <div className="col-md-12 d-flex flex-column gap-2 mt-3">
-                <label className="text-muted x-small fw-bold text-uppercase tracking-wider">Financial Transaction Type</label>
-                <div className="d-flex gap-3">
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData({...formData, type: 'debit'})}
-                      className={`flex-fill p-3 rounded-4 d-flex align-items-center justify-content-between border-2 transition-all ${formData.type === 'debit' ? 'border-danger bg-danger-subtle' : 'border-secondary-subtle bg-white grayscale'}`}
-                      style={{ height: '80px', cursor: 'pointer' }}
-                    >
-                      <div className="text-start">
-                          <div className={`x-small fw-bold text-uppercase ${formData.type === 'debit' ? 'text-danger' : 'text-muted'}`}>Debit (Owes +)</div>
-                          <div className="small fw-900 text-dark tracking-tight">Increase Customer Balance</div>
-                      </div>
-                      <i className={`bi bi-plus-circle-fill fs-3 ${formData.type === 'debit' ? 'text-danger animate-scale-up' : 'text-muted'}`}></i>
-                    </button>
-
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData({...formData, type: 'credit'})}
-                      className={`flex-fill p-3 rounded-4 d-flex align-items-center justify-content-between border-2 transition-all ${formData.type === 'credit' ? 'border-success bg-success-subtle' : 'border-secondary-subtle bg-white grayscale'}`}
-                      style={{ height: '80px', cursor: 'pointer' }}
-                    >
-                      <div className="text-start">
-                          <div className={`x-small fw-bold text-uppercase ${formData.type === 'credit' ? 'text-success' : 'text-muted'}`}>Credit (Paid -)</div>
-                          <div className="small fw-900 text-dark tracking-tight">Reduce Customer Balance</div>
-                      </div>
-                      <i className={`bi bi-dash-circle-fill fs-3 ${formData.type === 'credit' ? 'text-success animate-scale-up' : 'text-muted'}`}></i>
-                    </button>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Card 2: Financial Adjustment */}
-          <div className="card shadow-sm border-0 bg-white p-5 rounded-4 mb-4">
-            <h5 className="text-primary fw-bold mb-4">Financial Adjustment</h5>
-            
-            <div className="row g-4">
-              <div className="col-md-6 d-flex flex-column gap-2">
-                <label className="text-muted x-small fw-bold text-uppercase tracking-wider">Adjusted Amount</label>
-                <div className="input-group">
-                    <span className="input-group-text bg-white border-secondary-subtle border-end-0 rounded-start-3 ps-3 fw-bold text-muted">₹</span>
-                    <input
-                      type="number"
-                      className="form-control rounded-end-3 border-secondary-subtle bg-white shadow-none py-2 pe-3 fw-bold text-dark"
-                      placeholder="0.00"
-                      value={formData.amount}
-                      onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                      required
-                    />
-                </div>
-              </div>
-
-              <div className="col-md-6 d-flex flex-column gap-2">
-                <label className="text-muted x-small fw-bold text-uppercase tracking-wider">Adjustment Particulars</label>
-                <input
-                  type="text"
-                  className="form-control rounded-3 border-secondary-subtle bg-white shadow-none py-2 px-3 fw-semibold text-dark"
-                  placeholder="Opening Balance, Credit Memo, etc."
-                  value={formData.description}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  required
-                />
-              </div>
-            </div>
+          {/* Actions */}
+          <div className="lef-actions">
+            <button
+              type="button"
+              className="btn btn-light px-4 py-2 rounded-pill fw-800 text-muted border-0"
+             > Discard
+            </button>
+            <button type="submit" className="btn btn-primary d-flex align-items-center gap-2">
+              Record transaction
+            </button>
           </div>
+        </div>
+      </form>
 
-          {/* Form Action Section */}
-          <div className="d-flex justify-content-center gap-3 mt-4 mb-5 pb-5">
-             <button type="submit" className="btn btn-dark px-5 py-3 rounded-pill fw-bold border-0 shadow-sm transition-all hover-scale d-flex align-items-center gap-2">
-                <i className="bi bi-check2-circle-fill"></i>
-                <span>RECORD TRANSACTION</span>
-             </button>
-          </div>
-        </form>
-
-        <StatusModal
-          isOpen={modal.isOpen}
-          onClose={() => {
-            setModal(prev => ({ ...prev, isOpen: false }));
-            if (modal.type === 'success') {
-                (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany?.id }));
-                router.push('/ledger');
-            }
-          }}
-          type={modal.type}
-          title={modal.title}
-          message={modal.message}
-        />
+      <StatusModal
+        isOpen={modal.isOpen}
+        onClose={() => {
+          setModal((p) => ({ ...p, isOpen: false }));
+          if (modal.type === 'success') {
+            (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany?.id }));
+            router.push('/ledger');
+          }
+        }}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+      />
 
       <style jsx>{`
-        .fw-900 { font-weight: 900; }
-        .x-small { font-size: 0.7rem !important; }
-        .grayscale { filter: grayscale(1); opacity: 0.6; }
-        .transition-all { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-        .animate-scale-up { animation: scaleUp 0.3s ease-out; }
-        .hover-scale:hover { transform: scale(1.02); }
-        @keyframes scaleUp {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
+        .lef-card {
+          background: #ffffff;
+          border: 0.5px solid rgba(0, 0, 0, 0.1);
+          border-radius: 12px;
+          padding: 1.5rem;
+        
+        }
+        .lef-mb { margin-bottom: 1.25rem; }
+        .lef-grid {
+          display: grid;
+          gap: 16px;
+        }
+        .lef-grid--1-2 {
+          grid-template-columns: 1fr 2fr;
+        }
+        .lef-field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .lef-label {
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: #6b7280;
+        }
+        .lef-input {
+          width: 100%;
+          box-sizing: border-box;
+          height: 38px;
+          padding: 0 12px;
+          font-size: 14px;
+          color: #111827;
+          background: #ffffff;
+          border: 0.5px solid rgba(0, 0, 0, 0.18);
+          border-radius: 8px;
+          outline: none;
+          transition: border-color 0.15s;
+          appearance: none;
+          -webkit-appearance: none;
+        }
+        .lef-input:focus {
+          border-color: rgba(0, 0, 0, 0.4);
+          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+        }
+        .lef-select {
+          background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 36px;
+          cursor: pointer;
+        }
+        .lef-type-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+        .lef-type-btn {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 16px;
+          background: #ffffff;
+          border: 0.5px solid rgba(0, 0, 0, 0.15);
+          border-radius: 8px;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.15s, border-color 0.15s, border-width 0.15s;
+        }
+        .lef-type-btn:hover {
+          background: #f9fafb;
+        }
+        .lef-type-btn--debit-active {
+          background: #fef2f2;
+          border: 2px solid #fca5a5;
+        }
+        .lef-type-btn--credit-active {
+          background: #f0fdf4;
+          border: 2px solid #86efac;
+        }
+        .lef-type-name {
+          font-size: 12px;
+          font-weight: 600;
+          color: #6b7280;
+          margin-bottom: 2px;
+        }
+        .lef-type-name--debit { color: #dc2626; }
+        .lef-type-name--credit { color: #16a34a; }
+        .lef-type-desc {
+          font-size: 13px;
+          color: #111827;
+        }
+        .lef-type-icon {
+          opacity: 0.3;
+          color: #6b7280;
+          flex-shrink: 0;
+          transition: opacity 0.15s, color 0.15s;
+        }
+        .lef-type-icon--debit {
+          opacity: 1;
+          color: #dc2626;
+        }
+        .lef-type-icon--credit {
+          opacity: 1;
+          color: #16a34a;
+        }
+        .lef-actions {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 10px;
+          padding-top: 1rem;
+          border-top: 0.5px solid rgba(0, 0, 0, 0.08);
+        }
+        .lef-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 20px;
+          font-size: 13px;
+          font-weight: 500;
+          border-radius: 999px;
+          cursor: pointer;
+          transition: background 0.15s, transform 0.1s;
+          border: 0.5px solid transparent;
+        }
+        .lef-btn:active { transform: scale(0.98); }
+        .lef-btn--ghost {
+          background: transparent;
+          border-color: rgba(0, 0, 0, 0.18);
+          color: #6b7280;
+        }
+        .lef-btn--ghost:hover { background: #f3f4f6; }
+        .lef-btn--primary {
+          background: #111827;
+          border-color: #111827;
+          color: #ffffff;
+        }
+        .lef-btn--primary:hover { background: #1f2937; }
+
+        @media (max-width: 560px) {
+          .lef-grid--1-2 { grid-template-columns: 1fr; }
+          .lef-type-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </>

@@ -46,25 +46,52 @@ export default function LedgerDetailPage() {
 
       let runningBal = 0;
       const mapped = partyEntries.map((e: any) => {
-         const type = (e.type || '').toUpperCase();
+         const typeStr = (e.type || '').toUpperCase();
          const desc = (e.description || '').toLowerCase();
-         
-         // 1. ROBUST AMOUNT RETRIEVAL: Try all possible aliases
+
+         // 1. Check for explicit database type first
+         let isDebit = typeStr === 'DEBIT' || typeStr === 'INVOICE';
+         let isCredit = typeStr === 'CREDIT' || typeStr === 'RECEIPT';
+
+         // 2. Fallback to specific description scanning (for legacy or untyped data)
+         if (!isDebit && !isCredit) {
+            isDebit = desc.includes('invoice generated') || desc.includes('challan generated');
+            isCredit = desc.includes('payment') || desc.includes('receipt') || desc.includes('chq') || desc.includes('vch') || desc.includes('paid');
+         }
+
+         // 3. ROBUST AMOUNT RETRIEVAL
          const rawAmt = e.amount || e.grandTotal || e.total || e.grand_total || '0';
          const amt = parseFloat(String(rawAmt).replace(/[^\d.]/g, ''));
-         
-         const isDebit = type === 'DEBIT' || type === 'INVOICE' || desc.includes('inv');
-         const isCredit = type === 'CREDIT' || type === 'RECEIPT' || desc.includes('payment') || desc.includes('chq') || desc.includes('vch') || desc.includes('paid');
 
          if (isDebit) runningBal += amt;
          else if (isCredit) runningBal -= amt;
-         
+
+         // Extract Ref/Invoice No
+         let refNo = '-';
+         const rawRef = e.referenceId || e.reference_id || e.invoiceNo || e.invoice_no || '';
+         const rawDesc = e.description || '';
+
+         if (rawRef && String(rawRef).length > 2) {
+            const refStr = String(rawRef);
+            // Replace MAN- with empty string to show only the number segment
+            refNo = `#${refStr.replace('MAN-', '')}`;
+         } else {
+            // Flexible pattern: Keywords -> any non-digits -> the number
+            const pattern = /(?:inv|invoice|ref|#|man)[^0-9-]*([a-z0-9-]+)/i;
+            const match = rawDesc.match(pattern);
+            if (match) {
+               const cleanVal = match[1].replace('MAN-', '');
+               refNo = `#${cleanVal}`;
+            }
+         }
+
          return {
             ...e,
             resolvedAmount: amt,
             balance: runningBal,
             isDebit,
-            displayType: isDebit ? 'DEBIT' : (isCredit ? 'CREDIT' : (type || 'LEDGER'))
+            refNo,
+            displayType: isDebit ? 'DEBIT' : (isCredit ? 'CREDIT' : (typeStr || 'LEDGER'))
          };
       });
 
@@ -76,18 +103,100 @@ export default function LedgerDetailPage() {
       };
    }, [allEntries, partyId]);
 
-   const handlePrint = () => window.print();
+   const handlePrint = () => {
+      const printWindow = window.open('', '_blank', 'height=800,width=1000');
+      if (!printWindow) return;
+
+      const html = `
+         <html>
+            <head>
+               <title>Ledger Statement - ${customer?.name || 'Customer'}</title>
+               <style>
+                  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 50px; color: #1e293b; line-height: 1.5; }
+                  .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #0f172a; padding-bottom: 20px; margin-bottom: 40px; }
+                  .company-info h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
+                  .company-info p { margin: 5px 0 0; font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+                  .statement-meta { text-align: right; }
+                  .balance-box { background: #f8fafc; padding: 15px 25px; border-radius: 12px; border: 1px solid #e2e8f0; display: inline-block; margin-top: 10px; }
+                  .balance-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+                  .balance-value { font-size: 24px; font-weight: 900; color: #0f172a; }
+                  .customer-section { margin-bottom: 40px; }
+                  .customer-section h2 { margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; }
+                  .customer-section p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
+                  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                  th { background: #0f172a; color: white; text-align: left; padding: 12px 15px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+                  td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #334155; }
+                  .text-end { text-align: right; }
+                  .text-center { text-align: center; }
+                  .fw-bold { font-weight: 700; }
+                  .text-danger { color: #dc2626; }
+                  .text-success { color: #16a34a; }
+                  @media print { body { padding: 20px; } .balance-box { border: 1px solid #ddd; } }
+               </style>
+            </head>
+            <body>
+               <div class="header">
+                  <div class="company-info">
+                     <h1>GLOBUS ENGINEERING</h1>
+                     <p>Financial Statement Account</p>
+                  </div>
+                  <div class="statement-meta">
+                     <div class="balance-box">
+                        <div class="balance-label">Statement Balance</div>
+                        <div class="balance-value">INR ${Math.abs(finalBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                     </div>
+                  </div>
+               </div>
+
+               <div class="customer-section">
+                  <h2>${customer?.name || 'Customer Statement'}</h2>
+                  <p>${customer?.city || ''}, ${customer?.state || ''}</p>
+                  <p style="font-size: 12px; margin-top: 10px;">Statement Date: ${new Date().toLocaleDateString()}</p>
+               </div>
+
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Date</th>
+                        <th>Ref / Invoice No</th>
+                        <th class="text-center">Type</th>
+                        <th class="text-end">Debit (+)</th>
+                        <th class="text-end">Credit (-)</th>
+                        <th class="text-end">Balance</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     ${statementEntries.map(e => `
+                        <tr>
+                           <td>${new Date(e.date).toLocaleDateString()}</td>
+                           <td class="fw-bold">${e.refNo || '—'}</td>
+                           <td class="text-center font-monospace" style="font-size: 11px; font-weight: 800;">${String(e.displayType).toUpperCase()}</td>
+                           <td class="text-end fw-bold ${e.isDebit ? 'text-danger' : ''}">${e.isDebit ? '₹' + e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}</td>
+                           <td class="text-end fw-bold ${!e.isDebit ? 'text-success' : ''}">${!e.isDebit ? '₹' + e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}</td>
+                           <td class="text-end fw-bold" style="background: #fdfdfe;">₹${Math.abs(e.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                     `).join('')}
+                  </tbody>
+               </table>
+            </body>
+         </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.print();
+   };
 
    return (
       <ModuleGuard moduleId="mod_ledger">
          <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4" style={{ backgroundColor: '#f8f9fa' }}>
-            
+
             {/* Unified Account Overview Card - EVERYTHING IN ONE CARD */}
             <div className="card bg-white border-0 shadow-sm p-4 px-lg-5 rounded-4 mb-4 mt-2">
                <div className="d-flex justify-content-between align-items-start mb-4">
                   <div className="d-flex align-items-center gap-3">
-                     <button 
-                        onClick={() => router.push('/ledger')} 
+                     <button
+                        onClick={() => router.push('/ledger')}
                         className="btn btn-link text-dark p-0 shadow-none hover-scale hide-print"
                      >
                         <i className="bi bi-arrow-left-circle" style={{ fontSize: '1.8rem' }}></i>
@@ -97,7 +206,7 @@ export default function LedgerDetailPage() {
                         <p className="text-muted x-small mb-0 fw-bold text-uppercase tracking-wider">Financial Account Statement</p>
                      </div>
                   </div>
-                  
+
                   <div className="hide-print">
                      <button onClick={handlePrint} className="btn btn-primary d-flex align-items-center gap-2">
                         <i className="bi bi-printer"></i>
@@ -126,48 +235,54 @@ export default function LedgerDetailPage() {
 
             {/* Main Ledger Table */}
             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '40px' }}>
-               <table className="table table-hover align-middle mb-0">
-                  <thead className="bg-light">
-                     <tr className="small text-muted fw-bold text-uppercase border-bottom">
-                        <th className="ps-4 py-3 border-0" style={{ width: '130px' }}>Entry Date</th>
-                        <th className="py-3 border-0">Transaction Particulars</th>
-                        <th className="py-3 border-0 text-end" style={{ width: '160px' }}>Debit (+)</th>
-                        <th className="py-3 border-0 text-end" style={{ width: '160px' }}>Credit (-)</th>
-                        <th className="py-3 border-0 text-end pe-4" style={{ width: '200px' }}>Running Balance</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     {statementEntries.length === 0 ? (
-                        <tr><td colSpan={5} className="text-center py-5">No records found.</td></tr>
-                     ) : (
-                        statementEntries.map((e: any, idx) => (
-                           <tr key={idx} className="border-bottom border-light">
-                              <td className="ps-4 py-3 small fw-bold text-dark">{new Date(e.date).toLocaleDateString()}</td>
-                              <td className="py-3">
-                                 <span className="d-block fw-bold text-dark small">{e.description}</span>
-                                 <div className="text-muted x-small text-uppercase tracking-wider opacity-75">{e.displayType}</div>
-                              </td>
-                              <td className="py-3 text-end text-danger fw-bold small">
-                                 {e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
-                              </td>
-                              <td className="py-3 text-end text-success fw-bold small">
-                                 {!e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
-                              </td>
-                              <td className={`py-3 text-end pe-4 fw-900 ${e.balance > 0 ? 'text-danger' : 'text-success'}`} style={{ fontSize: '1rem' }}>
-                                 ₹ {Math.abs(e.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                              </td>
-                           </tr>
-                        ))
-                     )}
-                  </tbody>
-               </table>
+               <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '40px' }}>
+                  <table className="table table-hover align-middle mb-0">
+                     <thead className="bg-light">
+                        <tr className="small text-muted fw-bold text-uppercase border-bottom">
+                           <th className="ps-4 py-3 border-0" style={{ width: '12%' }}>Date</th>
+                           <th className="py-3 border-0 text-center" style={{ width: '15%' }}>Ref No</th>
+                           <th className="py-3 border-0 text-center" style={{ width: '10%' }}>Type</th>
+                           <th className="py-3 border-0 text-end" style={{ width: '21%' }}>Debit (+)</th>
+                           <th className="py-3 border-0 text-end" style={{ width: '21%' }}>Credit (-)</th>
+                           <th className="py-3 border-0 text-end pe-4" style={{ width: '21%' }}>Balance</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        {statementEntries.length === 0 ? (
+                           <tr><td colSpan={5} className="text-center py-5">No records found.</td></tr>
+                        ) : (
+                           statementEntries.map((e: any, idx) => (
+                              <tr key={idx} className="border-bottom border-light">
+                                 <td className="ps-4 py-3 small fw-bold text-dark">{new Date(e.date).toLocaleDateString()}</td>
+                                 <td className="py-3 text-center small fw-bold text-primary">{e.refNo || '-'}</td>
+                                 <td className="py-3 text-center">
+                                    <span className={`badge ${e.isDebit ? 'bg-danger' : 'bg-success'} bg-opacity-10 ${e.isDebit ? 'text-danger' : 'text-success'} xx-small fw-800 tracking-wider`}>
+                                       {e.displayType}
+                                    </span>
+                                 </td>
+                                 <td className="py-3 text-end text-danger fw-bold small">
+                                    {e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
+                                 </td>
+                                 <td className="py-3 text-end text-success fw-bold small">
+                                    {!e.isDebit ? `₹ ${e.resolvedAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
+                                 </td>
+                                 <td className={`py-3 text-end pe-4 fw-900 ${e.balance > 0 ? 'text-danger' : 'text-success'}`} style={{ fontSize: '1rem' }}>
+                                    ₹ {Math.abs(e.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                 </td>
+                              </tr>
+                           ))
+                        )}
+                     </tbody>
+                  </table>
+               </div>
             </div>
          </div>
- </div>
          <style jsx>{`
          .hide-print { @media print { display: none !important; } }
-         .x-small { font-size: 0.7rem; }
+         .x-small { font-size: 0.75rem; }
+         .xx-small { font-size: 0.65rem; }
+         .fw-900 { font-weight: 900; }
+         .fw-800 { font-weight: 800; }
       `}</style>
       </ModuleGuard>
    );
