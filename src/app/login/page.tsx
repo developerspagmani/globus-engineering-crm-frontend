@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import api from '@/lib/axios';
 import { loginStart, loginSuccess, loginFailure } from '@/redux/features/authSlice';
 import { RootState } from '@/redux/store';
 import { mockCompanies, mockUsers } from '@/data/mockModules';
 
-export default function LoginPage() {
+function LoginContent() {
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,8 +17,12 @@ export default function LoginPage() {
   const [company_id, setcompany_id] = useState('');
   const [dbCompanies, setDbCompanies] = useState<any[]>([]);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+
+  const msg = searchParams.get('msg');
+  const redirect = searchParams.get('redirect');
 
   useEffect(() => {
     setMounted(true);
@@ -46,7 +50,17 @@ export default function LoginPage() {
         company: company || null,
         token: token
       }));
-      router.push('/dashboard');
+      
+      // Use role-based redirection if no specific redirect is requested
+      if (redirect && !redirect.includes('/login')) {
+        router.push(redirect);
+      } else if (user.role === 'sales') {
+        router.push('/stores');
+      } else if (user.role === 'staff') {
+        router.push('/customers');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: any) {
       console.error('Login Error:', err);
       dispatch(loginFailure(err.response?.data?.error || 'Authentication Failed'));
@@ -75,6 +89,16 @@ export default function LoginPage() {
                   <h2 className="fw-900 text-dark tracking-tight mb-2">Login</h2>
                   <p className="text-muted small px-3">Access the Globus Engineering Ecosystem</p>
                 </div>
+
+                {msg === 'session_expired' && !error && (
+                  <div className="alert alert-info border-0 rounded-3 mb-4 d-flex align-items-center bg-info text-white-50 bg-opacity-10 py-2" style={{ borderLeft: '4px solid #0dcaf0 !important' }}>
+                    <i className="bi bi-info-circle-fill me-3 fs-5 text-info"></i>
+                    <div>
+                      <strong className="d-block text-info">Session Expired</strong>
+                      <span className="small text-muted">Please login again to continue.</span>
+                    </div>
+                  </div>
+                )}
 
                 {error && (
                   <div className="error-badge mb-4 animate-shake">
@@ -190,5 +214,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-vh-100 d-flex align-items-center justify-content-center">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

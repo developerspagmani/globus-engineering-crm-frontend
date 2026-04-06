@@ -89,7 +89,13 @@ export const hasPermission = (
   if (user.role === 'company_admin') return true;
 
   // 5. Default Access (items like Dashboard/Settings that don't belong to a specific paid module)
-  if (item.moduleId === 'default') return true;
+  if (item.moduleId === 'default') {
+    // Hide Dashboard for sales and staff roles
+    if (item.name === 'Dashboard' && (user.role === 'sales' || user.role === 'staff')) {
+      return false;
+    }
+    return true;
+  }
 
   // 6. Module check: Is this module active for the organization?
   if (user.role !== 'sales_agent') {

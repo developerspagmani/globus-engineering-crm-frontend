@@ -8,14 +8,18 @@ import { checkActionPermission } from '@/config/permissions';
 import { fetchDashboardStats, fetchAuditLogs } from '@/redux/features/dashboardSlice';
 
 export default function DashboardPage() {
+  const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const { company, user } = useSelector((state: RootState) => state.auth);
   const { stats: realStats, logs: auditLogs, loading } = useSelector((state: RootState) => state.dashboard);
 
   React.useEffect(() => {
+    setMounted(true);
     dispatch(fetchDashboardStats());
     dispatch(fetchAuditLogs());
   }, [dispatch]);
+  
+  if (!mounted) return <div className="h-100 d-flex align-items-center justify-content-center py-5"><div className="spinner-border text-primary" role="status"></div></div>;
 
   // Determine if we should show the global super admin view or a specific tenant view
   const isViewingGlobal = user?.role === 'super_admin' && !company;

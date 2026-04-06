@@ -15,6 +15,11 @@ const StoreList: React.FC = () => {
   const { items: stores, loading, error, filters } = useSelector((state: RootState) => state.stores);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Helper to check granular permissions
   const hasPermission = (action: 'canRead' | 'canCreate' | 'canEdit' | 'canDelete') => {
@@ -42,7 +47,7 @@ const StoreList: React.FC = () => {
 
   const areas = Array.from(new Set(stores.map(s => s.area).filter(Boolean)));
 
-  if (loading) return <div className="text-center p-5"><div className="spinner-border text-primary"></div></div>;
+  if (!mounted || loading) return <div className="text-center p-5 mt-5"><div className="spinner-border text-primary"></div></div>;
 
   return (
     <div className="container-fluid py-4">

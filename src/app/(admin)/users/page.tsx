@@ -39,7 +39,7 @@ export default function CompanyUserListPage() {
         </div>
         <Link href="/users/new" className="btn btn-primary d-flex align-items-center gap-2 py-2 px-4 shadow-accent rounded-pill fw-bold">
           <i className="bi bi-person-plus-fill fs-5"></i>
-          <span>Invite User</span>
+          <span>Add User</span>
         </Link>
       </div>
 

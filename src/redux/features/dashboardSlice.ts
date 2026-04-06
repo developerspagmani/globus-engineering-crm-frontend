@@ -43,11 +43,19 @@ export const fetchAuditLogs = createAsyncThunk(
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
-  reducers: {},
+  reducers: {
+    clearDashboardData: (state) => {
+      state.stats = null;
+      state.logs = [];
+      state.error = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchDashboardStats.pending, (state) => {
         state.loading = true;
+        // Optionally clear stats on start of fetch to avoid stale data
+        // state.stats = null; 
       })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => {
         state.loading = false;
@@ -57,11 +65,26 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.stats = null; // Clear stale data on failure (e.g., 403 Forbidden)
       })
       .addCase(fetchAuditLogs.fulfilled, (state, action) => {
         state.logs = action.payload;
-      });
+      })
+      .addCase(fetchAuditLogs.rejected, (state) => {
+        state.logs = []; // Clear stale logs on failure
+      })
+      // Listen for global logout
+      .addMatcher(
+        (action) => action.type === 'auth/logout',
+        (state) => {
+          state.stats = null;
+          state.logs = [];
+          state.error = null;
+        }
+      );
   },
 });
+
+export const { clearDashboardData } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

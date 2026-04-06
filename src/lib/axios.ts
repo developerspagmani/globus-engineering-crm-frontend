@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { getCookie } from './cookies';
+import { getCookie, deleteCookie } from './cookies';
 
 const api = axios.create({
   baseURL: '/api',
@@ -27,5 +27,34 @@ api.interceptors.request.use((config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+// Add Interceptor for Response (Handle 401 Unauthorized - Token Expired)
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Auto-Logout mechanism
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        
+        // Prevent infinite loop if already on login page
+        if (!currentPath.includes('/login')) {
+          localStorage.removeItem('globus_auth');
+          deleteCookie('token');
+          
+          // Clear entire state and redirect
+          window.location.href = `/login?msg=session_expired&redirect=${encodeURIComponent(currentPath)}`;
+          
+          // Return a pending promise to stop any further execution in components/thunks
+          // This prevents "Token verification failed" errors from showing up in the UI
+          return new Promise(() => {});
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

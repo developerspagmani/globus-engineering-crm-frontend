@@ -146,6 +146,20 @@ export const availableModules: ModuleData[] = [
     description: 'Set customer-specific rates for items and processes.',
     status: 'active',
     icon: 'bi-currency-rupee'
+  },
+  {
+    id: 'mod_stores',
+    name: 'Field Stores',
+    description: 'Manage assigned retail shops and field inventory locations.',
+    status: 'active',
+    icon: 'bi-shop'
+  },
+  {
+    id: 'mod_store_visits',
+    name: 'Store Visits',
+    description: 'Log and track activity history for field store visits.',
+    status: 'active',
+    icon: 'bi-clipboard-check'
   }
 ];
 
@@ -155,7 +169,7 @@ export const mockCompanies: Company[] = [
     name: 'Globus Engineering Main',
     slug: 'globus-eng',
     plan: 'enterprise',
-    activeModules: ['mod_invoice', 'mod_customer', 'mod_inward', 'mod_outward', 'mod_ledger', 'mod_challan', 'mod_voucher', 'mod_employee', 'mod_sales_hub', 'mod_lead', 'mod_pending_payment', 'mod_vendor', 'mod_sales_map', 'mod_user_management', 'mod_items', 'mod_processes', 'mod_price_fixing']
+    activeModules: ['mod_invoice', 'mod_customer', 'mod_inward', 'mod_outward', 'mod_ledger', 'mod_challan', 'mod_voucher', 'mod_employee', 'mod_sales_hub', 'mod_lead', 'mod_pending_payment', 'mod_vendor', 'mod_sales_map', 'mod_user_management', 'mod_items', 'mod_processes', 'mod_price_fixing', 'mod_stores', 'mod_store_visits']
   },
   {
     id: 'comp_apex',

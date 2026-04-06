@@ -46,17 +46,23 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
       });
       setModulePermissions(initialData.modulePermissions || []);
     } else {
-      // Default permissions for new user: access to all current company modules with read-only
-      const defaultPerms: ModulePermission[] = companyModules.map(m => ({
-        moduleId: m.id,
-        canRead: true,
-        canCreate: false,
-        canEdit: false,
-        canDelete: false
-      }));
+      // Default permissions for new user
+      const defaultPerms: ModulePermission[] = companyModules.map(m => {
+        // Auto-tick logic for Sales/Staff
+        const isAutoTickModule = ['mod_lead', 'mod_stores', 'mod_store_visits', 'mod_sales_hub'].includes(m.id);
+        const shouldTickAll = (formData.role === 'sales' || formData.role === 'staff') && isAutoTickModule;
+
+        return {
+          moduleId: m.id,
+          canRead: true,
+          canCreate: shouldTickAll,
+          canEdit: shouldTickAll,
+          canDelete: false
+        };
+      });
       setModulePermissions(defaultPerms);
     }
-  }, [initialData, companyModules]);
+  }, [initialData, companyModules, formData.role]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
