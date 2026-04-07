@@ -20,6 +20,11 @@ export default function LedgerPage() {
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // console.log('[LEDGER FRONTEND DEBUG] Active Company:', activeCompany?.id, activeCompany?.name);
@@ -147,7 +152,7 @@ export default function LedgerPage() {
             <p className="text-muted small mb-0">Total parties with transactions: {uniqueParties.length}</p>
           </div>
           <div className="d-flex gap-2 hide-print">
-            {checkActionPermission(currentUser, 'mod_ledger', 'create') && (
+            {mounted && checkActionPermission(currentUser, 'mod_ledger', 'create') && (
               <Link 
                 href="/ledger/new-entry"
                 className="btn btn-primary d-flex align-items-center gap-2">

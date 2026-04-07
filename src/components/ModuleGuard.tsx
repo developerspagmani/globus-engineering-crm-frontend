@@ -15,8 +15,8 @@ const ModuleGuard: React.FC<ModuleGuardProps> = ({ moduleId, children, requiredR
   const { company, user, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
 
-  // Super Admin bypasses all module guards
-  if (user?.role === 'super_admin') {
+  // Super Admin and Company Admin bypass all module guards
+  if (user?.role === 'super_admin' || user?.role === 'company_admin') {
     return <>{children}</>;
   }
 

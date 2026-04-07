@@ -253,7 +253,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           type="text" 
                           className="form-control border-0 rounded-0" 
                           placeholder="Item details..."
-                          value={item.description} 
+                          value={item.description || ''} 
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                           required 
                           disabled={mode === 'view'}
@@ -263,8 +263,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                         <input 
                           type="number" 
                           className="form-control border-0 rounded-0" 
-                          value={item.quantity} 
-                          onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))}
+                          value={item.quantity || 0} 
+                          onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
                           required 
                           disabled={mode === 'view'}
                         />
@@ -273,7 +273,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                         <input 
                           type="text" 
                           className="form-control border-0 rounded-0" 
-                          value={item.unit} 
+                          value={item.unit || ''} 
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                           required 
                           disabled={mode === 'view'}
@@ -283,7 +283,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                         <input 
                           type="text" 
                           className="form-control border-0 rounded-0" 
-                          value={item.hsnCode} 
+                          value={item.hsnCode || ''} 
                           onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
                           disabled={mode === 'view'}
                         />

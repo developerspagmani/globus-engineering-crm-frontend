@@ -30,6 +30,10 @@ const InvoiceReportPage = () => {
   if (!mounted) return null;
 
   const filteredInvoices = invoices.filter(inv => {
+    // Exclude 'Without Process' only records from the invoice report
+    const invType = String(inv.type || '').toUpperCase();
+    if (invType === 'WOP' || invType === 'WITHOUT PROCESS') return false;
+
     const searchTerm = search.toLowerCase();
     const matchesSearch = (
       (inv.customerName?.toLowerCase() ?? '').includes(searchTerm) ||

@@ -33,6 +33,10 @@ const GstReportPage = () => {
   if (!mounted) return null;
 
   const filteredItems = (invoices || []).filter(inv => {
+    // Exclude 'Without Process' records from GST report as they are non-taxable
+    const invType = String(inv.type || '').toUpperCase();
+    if (invType === 'WOP' || invType === 'WITHOUT PROCESS') return false;
+
     const matchesSearch = (inv.customerName?.toLowerCase() || '').includes(search.toLowerCase()) || 
                          (inv.invoiceNumber?.toLowerCase() || '').includes(search.toLowerCase());
     

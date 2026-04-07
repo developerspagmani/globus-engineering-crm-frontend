@@ -125,7 +125,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               </tr>
             </thead>
             <tbody>
-              {invoice.items.map((item, index) => (
+              {invoice.items.filter((item: any) => (item.quantity ?? 0) > 0).map((item: any, index: number) => (
                 <tr key={index} style={{ borderBottom: '1px solid #f3f4f6' }}>
                   <td style={{ padding: '1rem 0', color: '#374151' }}>{index + 1}</td>
                   <td style={{ padding: '1rem 0', fontWeight: 600, color: '#111827' }}>{item.description}</td>

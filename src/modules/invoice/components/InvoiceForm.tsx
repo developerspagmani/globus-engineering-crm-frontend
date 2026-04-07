@@ -217,6 +217,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      description: item.item_name || item.description || '',
                      process: item.process || '',
                      quantity: qty,
+                     wopQty: 0,
                      unitPrice: unitPrice,
                      amount: amount,
                      tax: tax,
@@ -367,7 +368,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          ...prev,
          items: [
             ...prev.items,
-            { id: Date.now().toString(), description: '', process: '', quantity: 1, unitPrice: 0, tax: 0, amount: 0, total: 0 }
+            { id: Date.now().toString(), description: '', process: '', quantity: 1, wopQty: 0, unitPrice: 0, tax: 0, amount: 0, total: 0 }
          ]
       }));
    };
@@ -804,17 +805,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               </select>
                            </td>
                            <td className="py-3">
-                              <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value))} />
+                              <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity || 0} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)} />
                            </td>
                            {formData.billType === 'Both' && (
                               <td className="py-3">
-                                 <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty} onChange={e => handleItemChange(index, 'wopQty', parseInt(e.target.value))} />
+                                 <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty || 0} onChange={e => handleItemChange(index, 'wopQty', parseInt(e.target.value) || 0)} />
                               </td>
                            )}
                            {formData.billType !== 'Without Process' && (
                               <>
                                  <td className="py-3">
-                                    <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} />
+                                    <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-end" value={item.unitPrice || 0} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)} />
                                  </td>
                                  <td className="py-3 text-end fw-semibold">
                                     ₹ {(item.amount || 0).toFixed(2)}

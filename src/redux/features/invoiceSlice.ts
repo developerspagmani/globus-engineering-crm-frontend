@@ -9,7 +9,7 @@ const mapInvoice = (inv: any): Invoice => {
 
   return {
     id: inv.id.toString(),
-    invoiceNumber: String(inv.invoice_no || inv.invoiceNumber || `INV-${inv.id}`),
+    invoiceNumber: inv.invoice_no ? String(inv.invoice_no).padStart(4, '0') : inv.invoiceNumber ? String(inv.invoiceNumber).padStart(4, '0') : `INV-${inv.id}`,
     customerId: inv.customer_id?.toString() || inv.customerId?.toString() || '',
     customerName: inv.customer_name || inv.customerName || 'N/A',
     address: inv.address || '',
@@ -18,7 +18,7 @@ const mapInvoice = (inv: any): Invoice => {
     dueDate: inv.due_date || inv.dueDate ? new Date(inv.due_date || inv.dueDate).toISOString().split('T')[0] : '',
     poNo: inv.po_no || inv.poNo || '',
     poDate: inv.po_date || inv.poDate ? new Date(inv.po_date || inv.poDate).toISOString().split('T')[0] : '',
-    dcNo: inv.dc_no || inv.dcNo || '',
+    dcNo: inv.dc_no ? String(inv.dc_no).padStart(4, '0') : (inv.dcNo ? String(inv.dcNo).padStart(4, '0') : ''),
     dcDate: inv.dc_date || inv.dcDate ? new Date(inv.dc_date || inv.dcDate).toISOString().split('T')[0] : '',
     grandTotal: parseFloat(inv.grand_total || inv.grandTotal || '0'),
     status: inv.status?.toLowerCase() || 'draft',
