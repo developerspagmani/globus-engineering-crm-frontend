@@ -99,7 +99,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      challanNumber: prev.challanNumber || String(data.nextChallan || data.nextDeliveryNo || '').padStart(4, '0')
                   }));
                } catch (err) {
-                  console.error('Failed to pre-fetch next sequence numbers:', err);
+                  // console.error('Failed to pre-fetch next sequence numbers:', err);
                }
             });
          }
@@ -167,7 +167,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    }, [initialData]);
 
    const populateFromInward = (inward: any) => {
-      console.log("DEBUG: Populating from Inward:", inward.id);
+      // console.log("DEBUG: Populating from Inward:", inward.id);
       const customer = customers.find(c => String(c.id) === String(inward.customerId || inward.customer_id));
       const formattedAddress = [customer?.street1, customer?.city, customer?.state].filter(Boolean).join(', ');
       
@@ -200,7 +200,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                state: (inward as any).state || customer?.state || prev.state,
                inwardId: inward.id,
                items: (inward.items || []).map((item: any, idx: number) => {
-                  console.log(`DEBUG: Processing Item ${idx}:`, item.item_name || item.description);
+                  // console.log(`DEBUG: Processing Item ${idx}:`, item.item_name || item.description);
                   const unitPrice = findPrice(
                      prev.company_id,
                      inward.customerId || inward.customer_id || prev.customerId,
@@ -225,7 +225,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                })
             };
          } catch (err) {
-            console.error("DEBUG: CRASH in populateFromInward:", err);
+            // console.error("DEBUG: CRASH in populateFromInward:", err);
             return prev;
          }
       });
@@ -249,7 +249,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             const data = await res.json();
             setPendingInwards(Array.isArray(data) ? data : []);
          } catch (err) {
-            console.error("DEBUG: API Error fetching pending inwards:", err);
+            // console.error("DEBUG: API Error fetching pending inwards:", err);
          } finally {
             setInwardLoading(false);
          }

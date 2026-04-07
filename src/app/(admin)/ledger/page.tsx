@@ -15,14 +15,14 @@ import autoTable from 'jspdf-autotable';
 export default function LedgerPage() {
   const dispatch = useDispatch();
   const { company: activeCompany, user: currentUser } = useSelector((state: RootState) => state.auth);
-  console.log('[LEDGER FRONTEND DEBUG] Current Auth State (User/Company):', { currentUser, activeCompany });
+  // console.log('[LEDGER FRONTEND DEBUG] Current Auth State (User/Company):', { currentUser, activeCompany });
   const { items: ledgerEntries, loading: ledgerLoading, filters } = useSelector((state: RootState) => state.ledger);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
 
   useEffect(() => {
-    console.log('[LEDGER FRONTEND DEBUG] Active Company:', activeCompany?.id, activeCompany?.name);
+    // console.log('[LEDGER FRONTEND DEBUG] Active Company:', activeCompany?.id, activeCompany?.name);
     if (activeCompany?.id) {
        (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany.id }));
        (dispatch as any)(fetchCustomers(activeCompany.id));
@@ -67,7 +67,7 @@ export default function LedgerPage() {
     });
     
     const result = Array.from(partyMap.values());
-    console.log('[LEDGER FRONTEND DEBUG] Unique Parties Calculated:', result);
+    // console.log('[LEDGER FRONTEND DEBUG] Unique Parties Calculated:', result);
     return result;
   }, [ledgerEntries, customers, activeCompany?.id, filters.dateFrom, filters.dateTo]);
 

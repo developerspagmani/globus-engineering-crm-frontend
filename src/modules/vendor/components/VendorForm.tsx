@@ -132,7 +132,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
         }
       }
     } catch (err) {
-      console.error('Failed to save vendor:', err);
+      // console.error('Failed to save vendor:', err);
       alert('Failed to save vendor');
     }
   };

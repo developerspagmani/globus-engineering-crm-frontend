@@ -128,18 +128,18 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚀 Final Inward Data to submit:', formData);
+    // console.log('🚀 Final Inward Data to submit:', formData);
     try {
       const finalData = { ...formData };
       if (!finalData.company_id && user?.company_id) {
         finalData.company_id = user.company_id;
       }
 
-      console.log('📡 Sending to API:', finalData);
+      // console.log('📡 Sending to API:', finalData);
 
       if (mode === 'create') {
         const result = await (dispatch as any)(createInward(finalData)).unwrap();
-        console.log('✅ API result:', result);
+        // console.log('✅ API result:', result);
 
         setModal({
           isOpen: true,
@@ -158,11 +158,11 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         });
       }
     } catch (err: any) {
-      console.error('❌ Failed to save inward:', err);
+      // console.error('❌ Failed to save inward:', err);
       // Detailed error log
       if (err.response) {
-        console.error('Data:', err.response.data);
-        console.error('Status:', err.response.status);
+        // console.error('Data:', err.response.data);
+        // console.error('Status:', err.response.status);
       }
       setModal({
         isOpen: true,

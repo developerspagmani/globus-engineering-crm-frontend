@@ -119,18 +119,18 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
         password: formData.password || 'password123'
       };
 
-      console.log('CLIENT: Saving User with Payload:', userData);
+      // console.log('CLIENT: Saving User with Payload:', userData);
 
       if (mode === 'create') {
         const result = await (dispatch as any)(addUser(userData)).unwrap();
-        console.log('CLIENT: Success creating user:', result);
+        // console.log('CLIENT: Success creating user:', result);
       } else {
         const result = await (dispatch as any)(updateUser({ id: initialData!.id, ...userData } as any)).unwrap();
-        console.log('CLIENT: Success updating user:', result);
+        // console.log('CLIENT: Success updating user:', result);
       }
       router.push('/users');
     } catch (err: any) {
-      console.error('CLIENT: Failed to save user:', err);
+      // console.error('CLIENT: Failed to save user:', err);
       alert('Failed to save user: ' + (err.message || err));
     }
   };

@@ -17,11 +17,11 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  console.log('--- AXIOS OUTGOING ---');
-  console.log('Method:', config.method?.toUpperCase());
-  console.log('URL:', config.url);
-  console.log('Auth Header:', config.headers.Authorization ? 'Bearer [HIDDEN]' : 'MISSING');
-  console.log('Payload:', config.data);
+  // console.log('--- AXIOS OUTGOING ---');
+  // console.log('Method:', config.method?.toUpperCase());
+  // console.log('URL:', config.url);
+  // console.log('Auth Header:', config.headers.Authorization ? 'Bearer [HIDDEN]' : 'MISSING');
+  // console.log('Payload:', config.data);
   
   return config;
 }, (error) => {
