@@ -35,12 +35,46 @@ const CITY_TO_DISTRICT: Record<string, string> = {
     'HYDERABAD': 'Hyderabad',
 };
 
+const STATE_MAP: Record<string, string> = {
+    'TN': 'TAMIL NADU',
+    'KA': 'KARNATAKA',
+    'AP': 'ANDHRA PRADESH',
+    'MH': 'MAHARASHTRA',
+    'TG': 'TELANGANA',
+    'TS': 'TELANGANA',
+    'KL': 'KERALA',
+    'GJ': 'GUJARAT',
+    'RJ': 'RAJASTHAN',
+    'MP': 'MADHYA PRADESH',
+    'UP': 'UTTAR PRADESH',
+    'WB': 'WEST BENGAL',
+    'HP': 'HIMACHAL PRADESH',
+    'AR': 'ARUNACHAL PRADESH',
+    'JK': 'JAMMU AND KASHMIR',
+    'HR': 'HARYANA',
+    'PB': 'PUNJAB'
+};
+
 /**
  * Normalizes a region name for consistent matching.
  */
 export const normalizeName = (name: string | null | undefined): string => {
     if (!name) return '';
-    return name.trim().toUpperCase();
+    const trimmed = name.trim().toUpperCase();
+    return STATE_MAP[trimmed] || trimmed;
+};
+
+/**
+ * Checks if a data region matches a selected map region.
+ */
+export const isRegionMatch = (dataState: string | null | undefined, selectedRegion: string | null | undefined): boolean => {
+    if (!selectedRegion) return true;
+    if (!dataState) return false;
+    
+    const dState = normalizeName(dataState);
+    const sRegion = normalizeName(selectedRegion);
+
+    return dState === sRegion;
 };
 
 /**

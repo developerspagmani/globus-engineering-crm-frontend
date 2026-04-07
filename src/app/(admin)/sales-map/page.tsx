@@ -8,7 +8,7 @@ import { logout, setCompanyContext } from '@/redux/features/authSlice';
 import { useRouter } from 'next/navigation';
 import IndiaMap from '@/components/IndiaMap';
 import CustomerTable from '@/components/CustomerTable';
-import { isDistrictMatch } from '@/utils/geo_utils';
+import { isDistrictMatch, isRegionMatch } from '@/utils/geo_utils';
 import { Company } from '@/types/modules';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchCompanies } from '@/redux/features/companySlice';
@@ -59,7 +59,7 @@ const SalesMapPage = () => {
             const customerDistrict = customer.district || '';
 
             const matchesRegion = !selectedRegion ||
-                customerState.toLowerCase() === selectedRegion.toLowerCase() ||
+                isRegionMatch(customerState, selectedRegion) ||
                 isDistrictMatch(customerDistrict, selectedRegion);
 
             const matchesSearch = !searchQuery ||
