@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import { checkActionPermission } from '@/config/permissions';
@@ -18,6 +19,8 @@ export default function LedgerPage() {
   // console.log('[LEDGER FRONTEND DEBUG] Current Auth State (User/Company):', { currentUser, activeCompany });
   const { items: ledgerEntries, loading: ledgerLoading, filters } = useSelector((state: RootState) => state.ledger);
   const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
+  const [partyTypeFilter, setPartyTypeFilter] = React.useState<'all' | 'customer' | 'vendor'>('all');
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [mounted, setMounted] = React.useState(false);
@@ -27,10 +30,10 @@ export default function LedgerPage() {
   }, []);
 
   useEffect(() => {
-    // console.log('[LEDGER FRONTEND DEBUG] Active Company:', activeCompany?.id, activeCompany?.name);
     if (activeCompany?.id) {
        (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany.id }));
        (dispatch as any)(fetchCustomers(activeCompany.id));
+       (dispatch as any)(fetchVendors(activeCompany.id));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -50,31 +53,40 @@ export default function LedgerPage() {
         return true;
     });
 
-    companyLedger.forEach(entry => {
+     companyLedger.forEach(entry => {
       const entryPartyId = String(entry.partyId || '').toLowerCase();
       if (!partyMap.has(entryPartyId)) {
-        // Find matching customer data for address
-        const customerRef = customers.find(c => 
-           String(c.id).toLowerCase() === entryPartyId
-        );
+        // Find matching customer OR vendor data for address
+        const customerRef = customers.find(c => String(c.id).toLowerCase() === entryPartyId);
+        const vendorRef = !customerRef ? vendors.find(v => String(v.id).toLowerCase() === entryPartyId) : null;
+        const partyRef = customerRef || vendorRef;
         
-        // Even if customer metadata is missing, we show the name from the ledger entry
+        // Even if metadata is missing, we show the name from the ledger entry
         partyMap.set(entryPartyId, {
           id: entry.partyId,
-          name: entry.partyName || customerRef?.name || 'Unknown',
-          street1: customerRef?.street1 || 'Address not specified',
-          street2: customerRef?.street2 || '',
-          city: customerRef?.city || '-',
-          state: customerRef?.state || '-',
+          name: entry.partyName || partyRef?.name || 'Unknown',
+          street1: partyRef?.street1 || 'Address not specified',
+          street2: partyRef?.street2 || '',
+          city: partyRef?.city || '-',
+          state: partyRef?.state || '-',
+          partyType: customerRef ? 'customer' : (vendorRef ? 'vendor' : ((entry as any).partyType || (entry as any).party_type || 'customer')),
           lastUpdated: entry.date
         });
       }
     });
     
-    const result = Array.from(partyMap.values());
-    // console.log('[LEDGER FRONTEND DEBUG] Unique Parties Calculated:', result);
+    let result = Array.from(partyMap.values());
+    
+    // 2. Filter by Party Type
+    if (partyTypeFilter !== 'all') {
+      result = result.filter(p => p.partyType.toLowerCase() === partyTypeFilter.toLowerCase());
+    }
+
+    // 3. SORT: Recent First
+    result.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+
     return result;
-  }, [ledgerEntries, customers, activeCompany?.id, filters.dateFrom, filters.dateTo]);
+  }, [ledgerEntries, customers, vendors, activeCompany?.id, filters.dateFrom, filters.dateTo, partyTypeFilter]);
 
   const filteredItems = uniqueParties.filter(item => {
     return (item.name || '').toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -177,7 +189,7 @@ export default function LedgerPage() {
                   <input 
                     type="text" 
                     className="form-control border-start-0 py-2 search-bar shadow-none" 
-                    placeholder="Search by Customer Name, City or State..." 
+                    placeholder="Search by Party Name, City or State..." 
                     value={filters.search}
                     onChange={(e) => dispatch(setLedgerFilters({ search: e.target.value }))}
                   />
@@ -204,6 +216,20 @@ export default function LedgerPage() {
                   style={{ width: '135px' }}
                 />
               </div>
+
+              {/* Party Type Filter */}
+              <div className="ms-auto d-flex align-items-center gap-2">
+                 <select 
+                    className="form-select border-0 shadow-sm bg-light fw-bold small text-primary"
+                    value={partyTypeFilter}
+                    onChange={(e) => setPartyTypeFilter(e.target.value as any)}
+                    style={{ width: '140px', borderRadius: '8px', height: '44px' }}
+                 >
+                    <option value="all">ALL PARTIES</option>
+                    <option value="customer">CUSTOMERS</option>
+                    <option value="vendor">VENDORS</option>
+                 </select>
+              </div>
             </div>
           </div>
         </div>
@@ -215,7 +241,7 @@ export default function LedgerPage() {
               <thead className="bg-light">
                 <tr className="border-bottom">
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider text-center" style={{ width: '60px' }}>Sno</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Customer Name</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Party Name</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Street</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">City</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">State</th>
@@ -239,7 +265,11 @@ export default function LedgerPage() {
                   paginatedItems.map((party, index) => (
                     <tr key={party.id}>
                       <td className="text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                      <td className="fw-bold text-dark text-uppercase">{party.name}</td>
+                      <td>
+                        <div className="d-flex flex-column">
+                           <span className="fw-bold text-dark text-uppercase">{party.name}</span>
+                        </div>
+                      </td>
                       <td className="text-muted small">{party.street1 || '-'}</td>
                       <td className="text-muted small">{party.city || '-'}</td>
                       <td className="text-muted small">{party.state || '-'}</td>

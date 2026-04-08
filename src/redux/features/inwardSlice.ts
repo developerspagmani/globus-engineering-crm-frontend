@@ -27,6 +27,7 @@ export const fetchInwards = createAsyncThunk(
         date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
         status: item.status || 'pending',
         items: item.items || [],
+        totalRemaining: item.totalRemaining,
         createdAt: item.created_at
       }));
     } catch (err: any) {

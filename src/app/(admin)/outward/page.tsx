@@ -19,8 +19,10 @@ export default function OutwardListPage() {
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     (dispatch as any)(fetchOutwards(company?.id));
   }, [dispatch, company?.id]);
 
@@ -29,6 +31,7 @@ export default function OutwardListPage() {
     if (company?.id && item.company_id !== company.id.toString()) return false;
 
     const matchesSearch = (item.customerName || '').toLowerCase().includes(filters.search.toLowerCase()) ||
+                         (item.vendorName || '').toLowerCase().includes(filters.search.toLowerCase()) ||
                          (item.outwardNo || '').toLowerCase().includes(filters.search.toLowerCase()) ||
                          (item.invoiceReference || '').toLowerCase().includes(filters.search.toLowerCase());
     const matchesStatus = filters.status === 'all' || item.status === filters.status;
@@ -45,8 +48,9 @@ export default function OutwardListPage() {
 
   const handlePrintOutward = (item: any) => {
      const p = window.open('', '', 'height=600,width=800'); if (!p) return;
+     const partyName = item.partyType === 'vendor' ? item.vendorName : item.customerName;
      p.document.write('<html><head><title>Print Outward</title><style>body{font-family:sans-serif;padding:40px;color:#333;}.label{font-weight:bold;color:#666;font-size:0.8rem;text-transform:uppercase;}.value{font-size:1.1rem;margin-bottom:20px;font-weight:500;}</style></head><body><h1>Globus Engineering</h1>');
-     p.document.write(`<p><span class="label">Customer:</span><br/><span class="value">${item.customerName}</span></p>`);
+     p.document.write(`<p><span class="label">Party:</span><br/><span class="value">${partyName} (${(item.partyType || 'customer').toUpperCase()})</span></p>`);
      p.document.write(`<p><span class="label">Outward No:</span><br/><span class="value">${item.outwardNo || '-'}</span></p>`);
      p.document.write(`<p><span class="label">Date:</span><br/><span class="value">${item.date}</span></p>`);
      p.document.close(); p.print();
@@ -54,11 +58,13 @@ export default function OutwardListPage() {
 
   const handleExportPDFOutward = (item: any) => {
     const doc = new jsPDF();
+    const partyName = item.partyType === 'vendor' ? item.vendorName : item.customerName;
     doc.text("GLOBUS ENGINEERING - OUTWARD RECEIPT", 14, 20);
     autoTable(doc, {
       startY: 30,
       body: [
-        ['Customer', item.customerName],
+        ['Party', partyName],
+        ['Type', (item.partyType || 'customer').toUpperCase()],
         ['Outward No', item.outwardNo || '-'],
         ['Invoice Ref', item.invoiceReference || '-'],
         ['Date', item.date],
@@ -75,9 +81,9 @@ export default function OutwardListPage() {
         <div className="d-flex justify-content-between align-items-start mb-4 px-3">
           <div>
             <h2 className="fw-bold mb-1">Outward Entries</h2>
-            <p className="text-muted fs-6">Manage outgoing finished goods and customer dispatches.</p>
+            <p className="text-muted fs-6">Manage outgoing finished goods and customer/vendor dispatches.</p>
           </div>
-          {checkActionPermission(user, 'mod_outward', 'create') && (
+          {mounted && checkActionPermission(user, 'mod_outward', 'create') && (
             <Link href="/outward/new" className="btn d-flex align-items-center gap-2 px-4 shadow-sm text-white border-0 py-2 mt-2" 
               style={{ background: 'linear-gradient(135deg, #ff4c00 0%, #ff8c00 100%)', borderRadius: '12px' }}>
               <i className="bi bi-box-arrow-right fs-5"></i>
@@ -94,7 +100,7 @@ export default function OutwardListPage() {
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input
                   type="text"
-                  placeholder="Search by outward no, customer..."
+                  placeholder="Search by outward no, party name..."
                   className="form-control ps-5 border-light search-bar"
                   style={{ height: '54px', borderRadius: '15px'}}
                   value={filters.search}
@@ -143,7 +149,8 @@ export default function OutwardListPage() {
                   <tr className="text-uppercase small fw-bold text-muted">
                     <th className="px-4 py-4 border-0">SNO</th>
                     <th className="py-4 border-0">OUTWARD NO</th>
-                    <th className="py-4 border-0">CUSTOMER</th>
+                    <th className="py-4 border-0">PARTY (CUSTOMER/VENDOR)</th>
+                    <th className="py-4 border-0">TYPE</th>
                     <th className="py-4 border-0">INVOICE REF</th>
                     <th className="py-4 border-0">VEHICLE NO</th>
                     <th className="py-4 border-0">DATE</th>
@@ -156,7 +163,14 @@ export default function OutwardListPage() {
                     <tr key={item.id} className="border-bottom border-light">
                       <td className="px-4 text-muted fw-bold">{index+1}</td>
                       <td className="fw-900 text-dark fs-6">{item.outwardNo || 'N/A'}</td>
-                      <td className="text-muted small ">{item.customerName}</td>
+                      <td className="text-muted small ">
+                         {item.partyType === 'vendor' ? item.vendorName : item.customerName}
+                      </td>
+                      <td>
+                         <span className={`badge rounded-pill px-2 py-1 small fw-bold ${item.partyType === 'vendor' ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary'}`}>
+                            {(item.partyType || 'customer').toUpperCase()}
+                         </span>
+                      </td>
                       <td><span className="badge bg-light text-dark border-0 shadow-inner px-2 py-1 fw-bold" style={{ borderRadius: '6px' }}>{item.invoiceReference || '-'}</span></td>
                       <td className="text-muted small fw-bold text-uppercase">{item.vehicleNo || '-'}</td>
                       <td className="text-muted small fw-bold">{item.date}</td>
@@ -176,7 +190,7 @@ export default function OutwardListPage() {
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintOutward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
                               {/* Added missing Export PDF */}
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handleExportPDFOutward(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
-                              {checkActionPermission(user, 'mod_outward', 'delete') && (
+                              {mounted && checkActionPermission(user, 'mod_outward', 'delete') && (
                                 <>
                                   <li><hr className="dropdown-divider opacity-50" /></li>
                                   <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger small fw-bold" onClick={() => handleDeleteParams(item.id)}><i className="bi bi-trash3"></i> Remove Record</button></li>

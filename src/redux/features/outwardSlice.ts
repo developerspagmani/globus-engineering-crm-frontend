@@ -12,16 +12,24 @@ export const fetchOutwards = createAsyncThunk(
       return response.data.map((item: any) => ({
         id: item.id.toString(),
         outwardNo: item.outward_no || item.dc_no || '',
+        partyType: item.party_type || 'customer',
         customerId: item.customer_id?.toString() || '',
-        customerName: item.customer_name || 'N/A',
+        customerName: item.customer_name || '',
+        vendorId: item.vendor_id?.toString() || '',
+        vendorName: item.vendor_name || '',
+        processName: item.process_name || '',
         invoiceReference: item.invoice_reference || item.invoice_no || '',
         challanNo: item.challan_no || '',
+        vehicleNo: item.vehicle_no || '',
+        driverName: item.driver_name || '',
+        notes: item.notes || '',
         inwardId: item.inward_id || item.inwardId || '',
         inwardNo: item.inward_no || item.inwardNo || '',
         company_id: item.company_id?.toString() || '',
         date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
         status: item.status || 'pending',
         items: item.items || [],
+        amount: item.amount || 0,
         createdAt: item.created_at
       }));
     } catch (err: any) {
@@ -36,16 +44,23 @@ export const createOutward = createAsyncThunk(
     try {
       const response = await api.post('/outward', {
         outward_no: data.outwardNo,
+        party_type: data.partyType || 'customer',
         customer_id: data.customerId,
         customer_name: data.customerName,
+        vendor_id: data.vendorId,
+        vendor_name: data.vendorName,
+        process_name: data.processName,
         invoice_reference: data.invoiceReference,
         challan_no: data.challanNo,
         vehicle_no: data.vehicleNo,
+        driver_name: data.driverName,
+        notes: data.notes,
         status: data.status,
         items: data.items,
         company_id: data.company_id,
         inward_id: data.inward_id || data.inwardId,
-        inward_no: data.inward_no || data.inwardNo
+        inward_no: data.inward_no || data.inwardNo,
+        amount: data.amount
       });
       return response.data;
     } catch (err: any) {
@@ -60,16 +75,23 @@ export const updateOutward = createAsyncThunk(
     try {
       const response = await api.put(`/outward/${data.id}`, {
         outward_no: data.outwardNo,
+        party_type: data.partyType,
         customer_id: data.customerId,
         customer_name: data.customerName,
+        vendor_id: data.vendorId,
+        vendor_name: data.vendorName,
+        process_name: data.processName,
         invoice_reference: data.invoiceReference,
         challan_no: data.challanNo,
         vehicle_no: data.vehicleNo,
+        driver_name: data.driverName,
+        notes: data.notes,
         status: data.status,
         items: data.items,
         company_id: data.company_id,
         inward_id: data.inward_id || data.inwardId,
-        inward_no: data.inward_no || data.inwardNo
+        inward_no: data.inward_no || data.inwardNo,
+        amount: data.amount
       });
       return response.data;
     } catch (err: any) {

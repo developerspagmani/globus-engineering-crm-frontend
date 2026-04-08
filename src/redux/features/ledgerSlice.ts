@@ -18,6 +18,8 @@ export const fetchLedgerEntries = createAsyncThunk(
         partyId: (entry.party_id || entry.partyId)?.toString(),
         partyName: entry.party_name || entry.partyName,
         partyType: (entry.party_type || entry.partyType || 'customer').toLowerCase(),
+        vchType: entry.vch_type || entry.vchType || '',
+        vchNo: entry.vch_no || entry.vchNo || '',
         description: entry.description_ || entry.description || '',
         referenceNo: entry.reference_id || entry.reference_no,
         type: (entry.type || 'debit').toLowerCase(),

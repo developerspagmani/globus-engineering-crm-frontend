@@ -70,22 +70,30 @@ export interface InwardEntry {
   date: string;
   status: 'pending' | 'completed' | 'cancelled';
   items: { description: string; process?: string; quantity: number; unit?: string }[];
+  totalRemaining?: number;
   createdAt: string;
 }
 
 export interface OutwardEntry {
   id: string;
   outwardNo: string;
-  customerId: string;
-  customerName: string;
+  partyType?: 'customer' | 'vendor';
+  customerId?: string;
+  customerName?: string;
+  vendorId?: string;
+  vendorName?: string;
+  processName?: string;
   invoiceReference: string;
   challanNo: string;
   vehicleNo: string;
+  driverName?: string;
+  notes?: string;
   company_id: string;
   inwardId?: string;
   inwardNo?: string;
   date: string;
   status: 'pending' | 'completed' | 'cancelled';
+  amount?: number;
   items: { description: string; quantity: number; unit: string }[];
   createdAt: string;
 }
@@ -132,6 +140,8 @@ export interface LedgerEntry {
   partyType: 'customer' | 'vendor';
   company_id: string;
   date: string;
+  vchType?: string;
+  vchNo?: string;
   type: 'debit' | 'credit';
   amount: number;
   balance: number;
