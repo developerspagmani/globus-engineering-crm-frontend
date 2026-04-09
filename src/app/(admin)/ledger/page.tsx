@@ -55,6 +55,8 @@ export default function LedgerPage() {
 
      companyLedger.forEach(entry => {
       const entryPartyId = String(entry.partyId || '').toLowerCase();
+      const entryDate = entry.date || '';
+
       if (!partyMap.has(entryPartyId)) {
         // Find matching customer OR vendor data for address
         const customerRef = customers.find(c => String(c.id).toLowerCase() === entryPartyId);
@@ -70,8 +72,14 @@ export default function LedgerPage() {
           city: partyRef?.city || '-',
           state: partyRef?.state || '-',
           partyType: customerRef ? 'customer' : (vendorRef ? 'vendor' : ((entry as any).partyType || (entry as any).party_type || 'customer')),
-          lastUpdated: entry.date
+          lastUpdated: entryDate
         });
+      } else {
+        // UPDATE lastUpdated if this transaction is newer
+        const existing = partyMap.get(entryPartyId);
+        if (new Date(entryDate) > new Date(existing.lastUpdated)) {
+            existing.lastUpdated = entryDate;
+        }
       }
     });
     

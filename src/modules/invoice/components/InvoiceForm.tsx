@@ -106,7 +106,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       } else {
          (dispatch as any)(fetchCustomers());
       }
-   }, [dispatch, company?.id]);
+   }, [dispatch, company?.id, mode]);
 
    useEffect(() => {
       if (company?.id && !formData.company_id) {
@@ -167,7 +167,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    }, [initialData]);
 
    const populateFromInward = (inward: any) => {
-      // console.log("DEBUG: Populating from Inward:", inward.id);
       const customer = customers.find(c => String(c.id) === String(inward.customerId || inward.customer_id));
       const formattedAddress = [customer?.street1, customer?.city, customer?.state].filter(Boolean).join(', ');
       
@@ -200,7 +199,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                state: (inward as any).state || customer?.state || prev.state,
                inwardId: inward.id,
                items: (inward.items || []).map((item: any, idx: number) => {
-                  // console.log(`DEBUG: Processing Item ${idx}:`, item.item_name || item.description);
                   const unitPrice = findPrice(
                      prev.company_id,
                      inward.customerId || inward.customer_id || prev.customerId,
@@ -226,7 +224,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                })
             };
          } catch (err) {
-            // console.error("DEBUG: CRASH in populateFromInward:", err);
             return prev;
          }
       });
@@ -250,7 +247,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             const data = await res.json();
             setPendingInwards(Array.isArray(data) ? data : []);
          } catch (err) {
-            // console.error("DEBUG: API Error fetching pending inwards:", err);
          } finally {
             setInwardLoading(false);
          }
@@ -296,10 +292,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             address: customer?.street1 || '',
             gstin: customer?.gst || '',
             state: customer?.state || '',
-            inwardId: undefined // Reset inward selection when customer changes
+            inwardId: undefined
          }));
 
-         // Fetch pending inwards for stock tracking
          fetchPendingForCustomer(value);
       } else {
          let updates: any = { [name]: value };
@@ -363,24 +358,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       setFormData((prev: any) => ({ ...prev, items: newItems }));
    };
 
-   const handleAddItem = () => {
-      setFormData((prev: any) => ({
-         ...prev,
-         items: [
-            ...prev.items,
-            { id: Date.now().toString(), description: '', process: '', quantity: 1, wopQty: 0, unitPrice: 0, tax: 0, amount: 0, total: 0 }
-         ]
-      }));
-   };
-
-   const handleRemoveItem = (id: string) => {
-      if (formData.items.length === 1) return;
-      setFormData((prev: any) => ({
-         ...prev,
-         items: prev.items.filter((item: any) => item.id !== id)
-      }));
-   };
-
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (loading) return;
@@ -441,7 +418,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
                {mode === 'create' && !inwardId && (
                   <div className="d-flex align-items-center gap-3 ms-auto">
-                     {/* Toggle pill */}
                      <div
                         className="d-flex align-items-center p-1"
                         style={{
@@ -487,7 +463,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </button>
                      </div>
 
-                     {/* Divider */}
                      <div style={{ width: '1px', height: '28px', background: 'rgba(0,0,0,0.12)' }} />
 
                      {selectionMode === 'CUSTOMER' ? (
@@ -599,7 +574,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      </div>
                   </div>
 
-                  {/* INWARD REFERENCE DROPDOWN (STATIC) */}
                   <div className="d-flex align-items-center gap-2" 
                      style={{ 
                         border: formData.customerId ? (pendingInwards.length > 0 ? '1px solid #f97316' : '1px solid #dee2e6') : '1px solid #dee2e6', 
@@ -845,7 +819,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             {formData.billType !== 'Without Process' && (
                <div className="col-lg-5 ms-auto">
                   <div className="mt-4 pt-4 border-top">
-                     {/* Sub Total Row */}
                      <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                         <h6 className="text-muted fw-bold small text-uppercase mb-0">Sub Total</h6>
                         <div className="d-flex align-items-center gap-2 text-dark fs-5 fw-bold">
@@ -854,7 +827,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </div>
                      </div>
 
-                     {/* Discount Row */}
                      <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                         <h6 className="text-muted fw-bold small text-uppercase mb-0">(-) Discount</h6>
                         <div className="d-flex align-items-center justify-content-center text-dark fw-bold fs-5">
@@ -871,7 +843,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </div>
                      </div>
 
-                     {/* Other Charges Row */}
                      <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                         <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) Other Charges</h6>
                         <div className="d-flex align-items-center justify-content-center text-dark fw-bold fs-5">
@@ -888,7 +859,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </div>
                      </div>
 
-                     {/* IGST Row */}
                      <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                         <div className="d-flex align-items-center gap-4">
                            <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) IGST</h6>
@@ -909,7 +879,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </div>
                      </div>
 
-                     {/* Grand Total Row */}
                      <div className="d-flex align-items-center justify-content-between pt-3 pb-2" style={{ borderBottom: '2.5px solid #212529' }}>
                         <h4 className="fw-bold mb-0 text-dark text-uppercase small" style={{ letterSpacing: '1px' }}>Grand Total</h4>
                         <div className="d-flex align-items-center gap-2 text-danger fw-bold fs-2">
@@ -925,13 +894,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                <button
                   type="submit"
                   className="btn btn-success px-5 py-2 fw-bold text-uppercase me-2"
-                  disabled={loading}
+                  disabled={loading || !formData.invoiceNumber}
                >
                   {loading ? (
                      <>
                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         Saving...
                      </>
+                  ) : !formData.invoiceNumber ? (
+                     'Loading No...'
                   ) : (
                      mode === 'create' ? 'Submit' : 'Update'
                   )}

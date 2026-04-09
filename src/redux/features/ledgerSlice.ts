@@ -79,6 +79,11 @@ const ledgerSlice = createSlice({
     setLedgerPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    resetLedgerState: (state) => {
+      state.items = [];
+      state.loading = false;
+      state.error = null;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -97,7 +102,7 @@ const ledgerSlice = createSlice({
   }
 });
 
-export const { setLedgerFilters, setLedgerPage } = ledgerSlice.actions;
+export const { setLedgerFilters, setLedgerPage, resetLedgerState } = ledgerSlice.actions;
 
 export const addLedgerEntry = createAsyncThunk(
   'ledger/add',

@@ -29,6 +29,11 @@ export default function PriceFixingPage() {
     price: ''
   });
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     (dispatch as any)(fetchPriceFixings(company?.id));
@@ -178,7 +183,7 @@ export default function PriceFixingPage() {
           )}
           <h4 className="mb-0 text-dark fw-bold" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? 'Edit Price Rule' : 'Add New Price Rule') : view === 'view' ? 'Price Profile' : 'Pricing Hub'}</h4>
           <div className="ms-auto d-flex gap-2">
-            {view === 'view' && checkActionPermission(user, 'mod_price_fixing', 'edit') && (
+            {view === 'view' && mounted && checkActionPermission(user, 'mod_price_fixing', 'edit') && (
               <button
                 onClick={() => setView('add')}
                 className="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-accent"
@@ -187,7 +192,7 @@ export default function PriceFixingPage() {
                 <span>Edit Rule</span>
               </button>
             )}
-            {view === 'list' && checkActionPermission(user, 'mod_price_fixing', 'create') && (
+            {view === 'list' && mounted && checkActionPermission(user, 'mod_price_fixing', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ customerId: '', itemId: '', processId: '', price: '' }); }}
                 className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
@@ -402,7 +407,7 @@ export default function PriceFixingPage() {
                                           <span className="small fw-semibold">Export PDF</span>
                                         </button>
                                       </li>
-                                      {checkActionPermission(user, 'mod_price_fixing', 'delete') && (
+                                      {mounted && checkActionPermission(user, 'mod_price_fixing', 'delete') && (
                                         <>
                                           <li><hr className="dropdown-divider opacity-50" /></li>
                                           <li>

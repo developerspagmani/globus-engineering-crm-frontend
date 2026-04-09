@@ -7,6 +7,8 @@ import { RootState } from '@/redux/store';
 import { addLedgerEntry, fetchLedgerEntries } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import { fetchInwards } from '@/redux/features/inwardSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
 import StatusModal from '@/components/StatusModal';
 
 const LedgerEntryForm: React.FC = () => {
@@ -14,15 +16,18 @@ const LedgerEntryForm: React.FC = () => {
   const router = useRouter();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
+  const { items: allInwards } = useSelector((state: RootState) => state.inward);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    customerId: '',
+    partyType: 'customer' as 'customer' | 'vendor',
+    customerId: '', // Reused for VendorId based on partyType
     type: 'credit' as 'debit' | 'credit',
     amount: '',
     description: '',
-    linkedInvoiceId: '',
+    linkedInvoiceId: '', // Reused for linkedInwardId based on partyType
   });
 
   const [modal, setModal] = useState<{
@@ -35,7 +40,9 @@ const LedgerEntryForm: React.FC = () => {
   useEffect(() => {
     if (activeCompany?.id) {
       (dispatch as any)(fetchCustomers(activeCompany.id));
+      (dispatch as any)(fetchVendors(activeCompany.id));
       (dispatch as any)(fetchInvoices(activeCompany.id));
+      (dispatch as any)(fetchInwards(activeCompany.id));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -48,30 +55,47 @@ const LedgerEntryForm: React.FC = () => {
     String(inv.customerId) === String(formData.customerId) && inv.status !== 'paid'
   );
 
+  const vendorInwards = allInwards.filter(inw => 
+    String(inw.vendorId) === String(formData.customerId) && inw.status !== 'completed'
+  );
+
+  const customerInwards = allInwards.filter(inw => 
+    String(inw.customerId) === String(formData.customerId) && inw.status !== 'completed'
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.customerId || !formData.amount) return;
 
     try {
-      const selectedCustomer = customers.find(
-        (c) => String(c.id) === String(formData.customerId)
-      );
+      const selectedParty = formData.partyType === 'customer' 
+        ? customers.find((c) => String(c.id) === String(formData.customerId))
+        : vendors.find((v) => String(v.id) === String(formData.customerId));
+
       const refId = `MAN-${Date.now().toString().slice(-6)}`;
-      const selectedInvoice = allInvoices.find(inv => inv.id === formData.linkedInvoiceId);
-      const invoiceSuffix = selectedInvoice ? ` [Mapped to Inv #${selectedInvoice.invoiceNumber}]` : '';
+      
+      let invoiceSuffix = '';
+      if (formData.partyType === 'customer') {
+        const selectedInvoice = allInvoices.find(inv => inv.id === formData.linkedInvoiceId);
+        invoiceSuffix = selectedInvoice ? ` [Mapped to Inv #${selectedInvoice.invoiceNumber}]` : '';
+      } else {
+        const selectedInward = allInwards.find(inw => inw.id === formData.linkedInvoiceId);
+        invoiceSuffix = selectedInward ? ` [Mapped to Inward #${selectedInward.inwardNo}]` : '';
+      }
 
       const payload = {
         partyId: formData.customerId,
-        partyName: selectedCustomer?.company || selectedCustomer?.name || 'Customer',
-        partyType: 'customer',
+        partyName: (selectedParty as any)?.company || (selectedParty as any)?.name || (selectedParty as any)?.customer_name || 'Party',
+        partyType: formData.partyType,
         company_id: activeCompany?.id,
         companyId: activeCompany?.id,
         date: formData.date,
         type: formData.type,
+        vchType: formData.type === 'credit' ? 'RECEIPT' : 'PAYMENT',
         amount: parseFloat(formData.amount),
         description: `Manual Entry Generated: ${refId}${invoiceSuffix}`,
         referenceId: refId,
-        linkedInvoiceId: formData.linkedInvoiceId,
+        linkedInvoiceId: formData.linkedInvoiceId, // Reused backend logic handles both
       };
 
       await (dispatch as any)(addLedgerEntry(payload)).unwrap();
@@ -202,14 +226,17 @@ const LedgerEntryForm: React.FC = () => {
                   onChange={(e) => setFormData((p) => ({ ...p, linkedInvoiceId: e.target.value }))}
                   disabled={!formData.customerId || customerInvoices.length === 0}
                 >
-                  {customerInvoices.length > 0 ? (
+                  {(customerInvoices.length > 0) ? (
                     <>
-                      <option value="">-- APPLY AS GENERAL CREDIT --</option>
-                      {customerInvoices.map((inv) => (
-                        <option key={inv.id} value={inv.id}>
-                          Invoice #{inv.invoiceNumber} - ₹{inv.grandTotal.toLocaleString()}
-                        </option>
-                      ))}
+                      <option value="">-- NO LINK (GENERAL CREDIT) --</option>
+                      {customerInvoices.map((inv) => {
+                        const balanceRemaining = inv.grandTotal - (inv.paidAmount || 0);
+                        return (
+                          <option key={inv.id} value={inv.id}>
+                            Invoice #{inv.invoiceNumber} - Balance: ₹{balanceRemaining.toLocaleString()}
+                          </option>
+                        );
+                      })}
                     </>
                   ) : (
                     <option value="">No pending invoices found</option>

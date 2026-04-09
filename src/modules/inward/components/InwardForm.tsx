@@ -24,7 +24,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
   const { items: masterItems, processes: masterProcesses } = useSelector((state: RootState) => state.master);
 
   const [formData, setFormData] = useState<Omit<InwardEntry, 'id' | 'createdAt'>>({
-    inwardNo: `INW-${Math.floor(1000 + Math.random() * 9000)}`,
+    inwardNo: '',
     customerId: '',
     customerName: '',
     address: '',
@@ -36,7 +36,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
     dcNo: '',
     dcDate: '',
     vehicleNo: '',
-    company_id: activeCompany?.id || '',
+    company_id: '',
     date: new Date().toISOString().split('T')[0],
     status: 'pending',
     items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }],
@@ -52,16 +52,22 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     if (activeCompany?.id) {
+      if (mode === 'create' && !formData.inwardNo) {
+        setFormData(prev => ({ 
+          ...prev, 
+          company_id: activeCompany.id,
+          inwardNo: `INW-${Math.floor(1000 + Math.random() * 9000)}`
+        }));
+      } else {
+        setFormData(prev => ({ ...prev, company_id: activeCompany.id }));
+      }
       (dispatch as any)(fetchItems(activeCompany.id));
       (dispatch as any)(fetchProcesses(activeCompany.id));
       (dispatch as any)(fetchCustomers(activeCompany.id));
-      // Also sync formData company context
-      setFormData(prev => ({ ...prev, company_id: activeCompany.id }));
     } else {
-      // Also allow fetching all if no company context yet (e.g. initial super admin load)
       (dispatch as any)(fetchCustomers());
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, mode]);
 
   useEffect(() => {
     if (initialData) {
@@ -290,7 +296,14 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
             <div className="mt-5 text-center d-flex justify-content-center gap-3">
               {mode !== 'view' && (
                 <>
-                  <button type="submit" className="btn btn-success px-4 rounded-1" style={{ minWidth: '100px' }}>{mode === 'create' ? 'ADD' : 'SAVE'}</button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-success px-4 rounded-1" 
+                    style={{ minWidth: '100px' }}
+                    disabled={!formData.company_id || !formData.inwardNo}
+                  >
+                    {!formData.company_id ? 'Loading...' : (mode === 'create' ? 'ADD' : 'SAVE')}
+                  </button>
                   <button type="button" className="btn btn-danger px-4 rounded-1" style={{ minWidth: '100px' }} onClick={() => mode === 'create' ? setFormData({ ...formData, poReference: '', dcNo: '', poDate: '', dcDate: '', items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }] } as any) : router.push('/inward')}>RESET</button>
                 </>
               )}

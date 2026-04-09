@@ -4,9 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchLedgerEntries } from '@/redux/features/ledgerSlice';
+import { fetchLedgerEntries, resetLedgerState } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
+import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import Link from 'next/link';
@@ -21,6 +22,7 @@ export default function LedgerDetailPage() {
   const { items: allEntries, loading } = useSelector((state: RootState) => state.ledger);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
+  const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
 
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
@@ -36,10 +38,16 @@ export default function LedgerDetailPage() {
 
   useEffect(() => {
     if (activeCompany?.id) {
+      dispatch(resetLedgerState());
       (dispatch as any)(fetchLedgerEntries({ partyId, companyId: activeCompany.id }));
       (dispatch as any)(fetchCustomers(activeCompany.id));
       (dispatch as any)(fetchVendors(activeCompany.id));
+      (dispatch as any)(fetchInvoices(activeCompany.id));
     }
+    
+    return () => {
+      dispatch(resetLedgerState());
+    };
   }, [dispatch, activeCompany?.id, partyId]);
 
   // 2. Process Ledger Calculations
@@ -109,7 +117,7 @@ export default function LedgerDetailPage() {
 
   const handlePrint = () => { window.print(); };
 
-  if (loading && !processedEntries.length) return <Loader text="Syncing Statement..." />;
+  if (loading || (!party && !allEntries.length)) return <Loader text="Syncing Statement..." />;
 
   const isVendor = party?.partyType === 'vendor';
 
@@ -125,9 +133,9 @@ export default function LedgerDetailPage() {
                     <div className="d-flex align-items-center gap-3 mb-2">
                         <Link href="/ledger" className="btn btn-sm btn-light rounded-circle hide-print"><i className="bi bi-chevron-left"></i></Link>
                         <h1 className="fw-900 text-primary mb-0 tracking-tight">GLOBUS ENGINEERING</h1>
-                        <span className={`badge rounded-pill px-3 py-2 ms-2 fw-bold ${isVendor ? 'bg-purple-subtle text-purple' : 'bg-primary-subtle text-primary'}`}>
+                        {/* <span className={`badge rounded-pill px-3 py-2 ms-2 fw-bold ${isVendor ? 'bg-purple-subtle text-purple' : 'bg-primary-subtle text-primary'}`}>
                             {isVendor ? 'VENDOR / SUPPLIER' : 'CUSTOMER STATEMENT'}
-                        </span>
+                        </span> */}
                     </div>
                     <p className="text-muted small fw-bold text-uppercase tracking-widest mb-0 opacity-75">Professional Account Ledger Statement</p>
                  </div>
@@ -142,7 +150,7 @@ export default function LedgerDetailPage() {
                  <div className="col-md-5">
                     <span className="text-muted x-small fw-800 text-uppercase tracking-wider d-block mb-2">Account Holder</span>
                     <h3 className="fw-900 mb-1 text-dark">{party?.name || 'Loading Name...'}</h3>
-                    <p className="text-muted small mb-0 font-monospace">ID: {partyId}</p>
+                    {/* <p className="text-muted small mb-0 font-monospace">ID: {partyId}</p> */}
                     <p className="text-muted small mb-0">{party?.street1 || 'No address specified'}</p>
                  </div>
                  <div className="col-md-3 border-start">
@@ -232,13 +240,12 @@ export default function LedgerDetailPage() {
                                 <td className="ps-5 py-3 small fw-bold text-muted">{new Date(e.date).toLocaleDateString()}</td>
                                 <td className="py-3">
                                     <div className="fw-800 text-dark small text-uppercase" style={{ letterSpacing: '0.01em' }}>{e.description}</div>
-                                    <div className="x-small text-muted mt-1 opacity-75">{e.referenceNo || (e as any).referenceId || (e as any).reference_id ? `Ref: ${e.referenceNo || (e as any).referenceId || (e as any).reference_id}` : ''}</div>
+                                    {/* <div className="x-small text-muted mt-1 opacity-75">{e.referenceNo || (e as any).referenceId || (e as any).reference_id ? `Ref: ${e.referenceNo || (e as any).referenceId || (e as any).reference_id}` : ''}</div> */}
                                 </td>
                                 <td className="py-3">
                                     <span className={`badge border py-2 px-3 fw-800 x-small text-uppercase tracking-wider rounded-pill shadow-none ${
                                         e.vchType === 'INVOICE' ? 'bg-primary-subtle text-primary border-primary-subtle' :
-                                        e.vchType === 'PAYMENT' ? 'bg-danger-subtle text-danger border-danger-subtle' :
-                                        e.vchType === 'RECEIPT' ? 'bg-success-subtle text-success border-success-subtle' :
+                                        (e.vchType === 'PAYMENT' || e.vchType === 'RECEIPT') ? 'bg-success-subtle text-success border-success-subtle' :
                                         e.vchType === 'OUTWARD' ? 'bg-purple-subtle text-purple border-purple-subtle' :
                                         'bg-light text-dark border-secondary-subtle'
                                     }`}>
@@ -247,11 +254,45 @@ export default function LedgerDetailPage() {
                                 </td>
                                 <td className="py-3 small fw-bold text-muted font-monospace">{e.vchNo || '-'}</td>
                                 <td className="py-3 text-center">
-                                    <span className={`badge rounded-pill fw-900 x-small px-3 py-1 ${
-                                        e.vchType === 'PAYMENT' || e.vchType === 'RECEIPT' ? 'bg-success text-white' : 'bg-warning-subtle text-warning border border-warning-subtle'
-                                    }`}>
-                                        {e.vchType === 'PAYMENT' || e.vchType === 'RECEIPT' ? 'PAID' : 'DUE'}
-                                    </span>
+                                    {(() => {
+                                      // DYNAMIC STATUS CHECK: 
+                                      // 1. If it's an Invoice, check the actual invoice status in the DB
+                                      // 1. DYNAMIC STATUS CHECK: 
+                                      // If it's an Invoice OR a Payment/Receipt linked to an invoice
+                                      const linkedId = e.vchNo || e.referenceNo;
+                                      const targetInv = allInvoices.find(inv => 
+                                        String(inv.id) === String(linkedId) || 
+                                        String(inv.invoiceNumber) === String(e.vchNo)
+                                      );
+
+                                      if (targetInv) {
+                                        const isActuallyPaid = targetInv.status?.toLowerCase() === 'paid';
+                                        return (
+                                          <span className={`badge rounded-pill fw-900 x-small px-3 py-1 ${isActuallyPaid ? 'bg-success text-white' : 'bg-warning-subtle text-warning border border-warning-subtle'}`}>
+                                            {isActuallyPaid ? 'PAID' : 'DUE'}
+                                          </span>
+                                        );
+                                      }
+                                      
+                                      // 2. Fallback: If it's a general payment/receipt/journal credit (not linked)
+                                      const isSettlement = isVendor ? e.debitValue > 0 : e.creditValue > 0;
+                                      const isManualCredit = !isVendor && e.type === 'credit';
+                                      
+                                      if (isSettlement || isManualCredit) {
+                                        return (
+                                          <span className="badge rounded-pill fw-900 x-small px-3 py-1 bg-success text-white">
+                                            {e.vchType === 'JOURNAL' ? 'ADJUSTED' : 'PAID'}
+                                          </span>
+                                        );
+                                      }
+
+                                      // 3. Fallback for other entries (like opening balance debits)
+                                      return (
+                                        <span className="badge rounded-pill fw-900 x-small px-3 py-1 bg-warning-subtle text-warning border border-warning-subtle">
+                                          DUE
+                                        </span>
+                                      );
+                                    })()}
                                 </td>
                                 <td className={`py-3 text-end fw-bold ${e.debitValue > 0 ? 'text-danger' : 'text-light opacity-25'}`}>
                                     {e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '0.00'}

@@ -17,8 +17,12 @@ export default function InwardListPage() {
   const dispatch = useDispatch();
   const { items: inwards, filters, loading } = useSelector((state: RootState) => state.inward);
   const { company, user } = useSelector((state: RootState) => state.auth);
-
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     (dispatch as any)(fetchInwards(company?.id));
@@ -85,7 +89,7 @@ export default function InwardListPage() {
             <h2 className="fw-bold mb-1">Inward Entries</h2>
             <p className="text-muted fs-6">Manage incoming materials and vendor gate receipts.</p>
           </div>
-          {checkActionPermission(user, 'mod_inward', 'create') && (
+          {mounted && checkActionPermission(user, 'mod_inward', 'create') && (
             <Link href="/inward/new" className="btn d-flex align-items-center gap-2 px-4 shadow-sm text-white border-0 py-2 mt-2" 
               style={{ background: 'linear-gradient(135deg, #ff4c00 0%, #ff8c00 100%)', borderRadius: '12px' }}>
               <i className="bi bi-box-arrow-in-right fs-5"></i>
@@ -185,7 +189,7 @@ export default function InwardListPage() {
                             <ul className="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintInward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handleExportPDFInward(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
-                              {checkActionPermission(user, 'mod_inward', 'delete') && (
+                              {mounted && checkActionPermission(user, 'mod_inward', 'delete') && (
                                 <>
                                   <li><hr className="dropdown-divider opacity-50" /></li>
                                   <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger small fw-bold" onClick={() => handleDeleteParams(item.id)}><i className="bi bi-trash3"></i> Remove Record</button></li>

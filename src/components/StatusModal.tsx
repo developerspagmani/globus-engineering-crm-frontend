@@ -18,9 +18,12 @@ const StatusModal: React.FC<StatusModalProps> = ({
   type,
   title,
   message,
-  confirmLabel = 'Success',
+  confirmLabel,
   onConfirm
 }) => {
+  const defaultLabel = type === 'success' ? 'OK' : 'CLOSE';
+  const label = confirmLabel || defaultLabel;
+
   if (!isOpen) return null;
 
   const config = {
@@ -101,7 +104,7 @@ const StatusModal: React.FC<StatusModalProps> = ({
               onClose();
             }}
           >
-            {confirmLabel.toUpperCase()}
+            {label.toUpperCase()}
           </button>
         </div>
       </div>
