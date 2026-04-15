@@ -40,21 +40,21 @@ const Loader: React.FC<LoaderProps> = ({ text = 'Loading data...', className = '
         .ring-1 {
           width: 100%;
           height: 100%;
-          border-top-color: #ff4081;
+          border-top-color: #94a3b8;
           animation: rotate 1.5s linear infinite;
         }
 
         .ring-2 {
           width: 70%;
           height: 70%;
-          border-right-color: #3f51b5;
+          border-right-color: #64748b;
           animation: rotate 1.2s linear reverse infinite;
         }
 
         .ring-3 {
           width: 40%;
           height: 40%;
-          border-bottom-color: #00bcd4;
+          border-bottom-color: #475569;
           animation: rotate 1s linear infinite;
         }
 

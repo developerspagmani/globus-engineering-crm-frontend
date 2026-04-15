@@ -168,6 +168,8 @@ export interface Company {
   gstin?: string;
   plan: 'basic' | 'premium' | 'enterprise';
   activeModules: string[];
+  logo?: string | null;
+  logoSecondary?: string | null;
 }
 
 export interface ModulePermission {

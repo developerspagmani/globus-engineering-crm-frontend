@@ -411,7 +411,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      }}
                      title="Back to Invoices"
                   >
-                     <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+                     <i className="bi bi-arrow-left fs-3 text-muted"></i>
                   </button>
                   <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
                </div>
@@ -561,7 +561,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      <h5 className="text-danger fw-bold mb-0 me-4" style={{ whiteSpace: 'nowrap' }}>Select the Bill Type</h5>
                      <div style={{ width: '220px' }}>
                         <select
-                           className="form-select border-0 border-bottom rounded-0 py-2 fw-bold"
+                           className="form-select py-2 fw-bold"
                            style={{ fontSize: '0.85rem' }}
                            name="billType"
                            value={formData.billType}
@@ -623,7 +623,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         <div className="col-sm-9">
                            <input
                               type="text"
-                              className="form-control border-0 border-bottom rounded-0 fw-bold px-2 bg-light bg-opacity-50"
+                              className="form-control fw-bold px-2 bg-light bg-opacity-50"
                               style={{ height: '42px', cursor: 'not-allowed' }}
                               value={formData.customerName || ''}
                               readOnly
@@ -636,7 +636,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         <div className="col-sm-9">
                            <input
                               type="text"
-                              className="form-control border-0 border-bottom rounded-0 bg-transparent shadow-none px-2"
+                              className="form-control bg-transparent shadow-none px-2"
                               name="address"
                               value={formData.address}
                               onChange={handleInputChange}
@@ -653,7 +653,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         <div className="col-sm-9">
                            <input
                               type="text"
-                              className="form-control border-0 border-bottom rounded-0 bg-light bg-opacity-50 text-uppercase fw-bold shadow-none px-2"
+                              className="form-control bg-light bg-opacity-50 text-uppercase fw-bold shadow-none px-2"
                               name="gstin"
                               placeholder="GSTIN"
                               value={formData.gstin}
@@ -668,7 +668,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         <div className="col-sm-9">
                            <input
                               type="text"
-                              className="form-control border-0 border-bottom rounded-0 bg-transparent fw-bold shadow-none px-2"
+                              className="form-control bg-transparent fw-bold shadow-none px-2"
                               name="state"
                               placeholder="e.g. KARNATAKA"
                               value={formData.state}
@@ -688,7 +688,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         <div className="row mb-3 align-items-center">
                            <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Delivery Challan</label>
                            <div className="col-sm-9">
-                              <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
+                              <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
                            </div>
                         </div>
                      ) : (
@@ -696,14 +696,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Invoice No</label>
                               <div className="col-sm-9">
-                                 <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 fw-bold shadow-none" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
+                                 <input type="text" className="form-control px-2 fw-bold shadow-none" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
                               </div>
                            </div>
                            {formData.billType === 'Both' && (
                               <div className="row mb-3 align-items-center">
                                  <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Delivery Challan</label>
                                  <div className="col-sm-9">
-                                    <input type="text" className="form-control border-0 border-bottom rounded-0 px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
+                                    <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '42px' } : { height: '42px' }} />
                                  </div>
                               </div>
                            )}
@@ -712,13 +712,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      <div className="row mb-3 align-items-center">
                         <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po No</label>
                         <div className="col-sm-9">
-                           <input type="text" className="form-control border-0 border-bottom rounded-0 shadow-none px-2" name="poNo" value={formData.poNo} onChange={handleInputChange} placeholder="Po No" style={{ height: '42px' }} />
+                           <input type="text" className="form-control shadow-none px-2" name="poNo" value={formData.poNo} onChange={handleInputChange} placeholder="Po No" style={{ height: '42px' }} />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
                         <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc No</label>
                         <div className="col-sm-9">
-                           <input type="text" className="form-control border-0 border-bottom rounded-0 shadow-none px-2" name="dcNo" value={formData.dcNo} onChange={handleInputChange} placeholder="Dc No" style={{ height: '42px' }} />
+                           <input type="text" className="form-control shadow-none px-2" name="dcNo" value={formData.dcNo} onChange={handleInputChange} placeholder="Dc No" style={{ height: '42px' }} />
                         </div>
                      </div>
                   </div>
@@ -727,19 +727,19 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      <div className="row mb-3 align-items-center">
                         <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Date</label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control border-0 border-bottom rounded-0 shadow-none px-2 bg-transparent" name="date" value={formData.date} onChange={handleInputChange} style={{ height: '42px' }} />
+                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="date" value={formData.date} onChange={handleInputChange} style={{ height: '42px' }} />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
                         <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po Date</label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control border-0 border-bottom rounded-0 shadow-none px-2 bg-transparent" name="poDate" value={formData.poDate} onChange={handleInputChange} style={{ height: '42px' }} />
+                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="poDate" value={formData.poDate} onChange={handleInputChange} style={{ height: '42px' }} />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
                         <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc Date</label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control border-0 border-bottom rounded-0 shadow-none px-2 bg-transparent" name="dcDate" value={formData.dcDate} onChange={handleInputChange} style={{ height: '42px' }} />
+                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="dcDate" value={formData.dcDate} onChange={handleInputChange} style={{ height: '42px' }} />
                         </div>
                      </div>
                   </div>
@@ -767,29 +767,29 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      {formData.items?.map((item: any, index: number) => (
                         <tr key={item.id} className="border-bottom">
                            <td className="py-3">
-                              <select className="form-select border-0 bg-transparent fw-bold" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)}>
+                              <select className="form-select bg-transparent fw-bold" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)}>
                                  <option value="">Select Item</option>
                                  {masterItems.map(mi => <option key={mi.id} value={mi.itemName}>{mi.itemName}</option>)}
                               </select>
                            </td>
                            <td className="py-3">
-                              <select className="form-select border-0 bg-transparent" value={String(item.process || '')} onChange={e => handleItemChange(index, 'process', e.target.value)}>
+                              <select className="form-select bg-transparent" value={String(item.process || '')} onChange={e => handleItemChange(index, 'process', e.target.value)}>
                                  <option value="">Select Process</option>
                                  {masterProcesses.map(p => <option key={p.id} value={p.processName}>{p.processName}</option>)}
                               </select>
                            </td>
                            <td className="py-3">
-                              <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity || 0} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)} />
+                              <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity || 0} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)} />
                            </td>
                            {formData.billType === 'Both' && (
                               <td className="py-3">
-                                 <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty || 0} onChange={e => handleItemChange(index, 'wopQty', parseInt(e.target.value) || 0)} />
+                                 <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty || 0} onChange={e => handleItemChange(index, 'wopQty', parseInt(e.target.value) || 0)} />
                               </td>
                            )}
                            {formData.billType !== 'Without Process' && (
                               <>
                                  <td className="py-3">
-                                    <input type="number" className="form-control border-0 border-bottom rounded-0 bg-transparent p-1 text-end" value={item.unitPrice || 0} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                                    <input type="number" className="form-control bg-transparent p-1 text-end" value={item.unitPrice || 0} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)} />
                                  </td>
                                  <td className="py-3 text-end fw-semibold">
                                     ₹ {(item.amount || 0).toFixed(2)}
@@ -834,8 +834,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <input
                               type="number"
                               step="0.01"
-                              className="border-0 bg-transparent text-end fw-bold p-0 no-spinner"
-                              style={{ width: '120px', outline: 'none' }}
+                              className="form-control bg-light text-end fw-bold p-1 no-spinner"
+                              style={{ width: '120px' }}
                               value={formData.discount || ''}
                               placeholder="0.00"
                               onChange={e => setFormData((prev: any) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
@@ -850,8 +850,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <input
                               type="number"
                               step="0.01"
-                              className="border-0 bg-transparent text-end fw-bold p-0 no-spinner"
-                              style={{ width: '120px', outline: 'none' }}
+                              className="form-control bg-light text-end fw-bold p-1 no-spinner"
+                              style={{ width: '120px' }}
                               value={formData.otherCharges || ''}
                               placeholder="0.00"
                               onChange={e => setFormData((prev: any) => ({ ...prev, otherCharges: parseFloat(e.target.value) || 0 }))}
@@ -862,11 +862,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                         <div className="d-flex align-items-center gap-4">
                            <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) IGST</h6>
-                           <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '60px' }}>
+                           <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '80px' }}>
                               <input
                                  type="number"
-                                 className="border-0 bg-transparent text-center fw-bold p-0 no-spinner w-100"
-                                 style={{ outline: 'none', fontSize: '14px' }}
+                                 className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
+                                 style={{ fontSize: '14px' }}
                                  value={formData.taxRate}
                                  onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
                               />
@@ -890,24 +890,25 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                </div>
             )}
 
-            <div className="mt-5 pt-4 text-center">
+            <div className="d-flex justify-content-center gap-3 mt-5">
                <button
                   type="submit"
-                  className="btn btn-success px-5 py-2 fw-bold text-uppercase me-2"
+                  className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2"
                   disabled={loading || !formData.invoiceNumber}
+                  style={{ minWidth: '150px' }}
                >
                   {loading ? (
                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Saving...
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>SAVING...</span>
                      </>
                   ) : !formData.invoiceNumber ? (
-                     'Loading No...'
+                     'LOADING...'
                   ) : (
-                     mode === 'create' ? 'Submit' : 'Update'
+                     'SUBMIT'
                   )}
                </button>
-               <button type="button" className="btn btn-danger px-5 py-2 fw-bold text-uppercase" onClick={() => router.back()}>Back</button>
+               <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.back()}>CLEAR</button>
             </div>
          </form>
       </div>
@@ -931,3 +932,4 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 };
 
 export default InvoiceForm;
+Form;

@@ -116,15 +116,15 @@ const SalesHubPage = () => {
             buttonText="Export List"
           />
           {checkActionPermission(user, 'mod_lead', 'create') && (
-            <Link href="/leads/new" className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+            <Link href="/leads/new" className="btn btn-outline-primary btn-page-action px-4">
               <i className="bi bi-funnel-fill"></i>
-              <span className="fw-800 small text-uppercase">New Lead</span>
+              <span>Add Lead</span>
             </Link>
           )}
           {checkActionPermission(user, 'mod_sales_hub', 'create') && (
-            <button className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-plus-lg"></i>
-              <span className="fw-800 small text-uppercase">New Deal</span>
+              <span>Add Deal</span>
             </button>
           )}
         </div>
@@ -134,14 +134,14 @@ const SalesHubPage = () => {
       <div className="row g-4 mb-5">
         <div className="col-md-3">
           <div className="card border-0 shadow-sm p-4 bg-primary bg-gradient text-white rounded-4 h-100">
-            <p className="x-small fw-700 text-uppercase tracking-widest opacity-75 mb-1">Pipeline Value</p>
+            <p className="x-small fw-700 text-capitalize tracking-widest opacity-75 mb-1">Pipeline Value</p>
             <h2 className="fw-900 mb-0">₹{(stats.totalValue / 100000).toFixed(2)}L</h2>
             <div className="mt-3 x-small fw-600 opacity-75">Base Currency: INR</div>
           </div>
         </div>
         <div className="col-md-3">
           <div className="card border-0 shadow-sm p-4 rounded-4 h-100">
-            <p className="x-small text-muted fw-700 text-uppercase tracking-widest mb-1">Active Deals</p>
+            <p className="x-small text-muted fw-700 text-capitalize tracking-widest mb-1">Active Deals</p>
             <h2 className="fw-900 text-dark mb-0">{stats.totalDeals}</h2>
             <div className="mt-2 progress" style={{ height: '6px' }}>
                <div className="progress-bar bg-warning" style={{ width: `${(stats.negotiationCount / stats.totalDeals) * 100}%` }}></div>
@@ -150,14 +150,14 @@ const SalesHubPage = () => {
         </div>
         <div className="col-md-3">
           <div className="card border-0 shadow-sm p-4 rounded-4 h-100">
-            <p className="x-small text-muted fw-700 text-uppercase tracking-widest mb-1">Personal Leads</p>
+            <p className="x-small text-muted fw-700 text-capitalize tracking-widest mb-1">Personal Leads</p>
             <h2 className="fw-900 text-dark mb-0">{stats.myLeadsCount}</h2>
             <div className="mt-2 x-small text-success fw-700"><i className="bi bi-arrow-up me-1"></i>Active Prospects</div>
           </div>
         </div>
         <div className="col-md-3">
           <div className="card border-0 shadow-sm p-4 rounded-4 h-100">
-            <p className="x-small text-muted fw-700 text-uppercase tracking-widest mb-1">Win Count</p>
+            <p className="x-small text-muted fw-700 text-capitalize tracking-widest mb-1">Win Count</p>
             <h2 className="fw-900 text-success mb-0">{stats.wonDeals}</h2>
             <div className="mt-2 x-small text-muted fw-600">Converted to Customers</div>
           </div>
@@ -176,11 +176,11 @@ const SalesHubPage = () => {
               <table className="table mb-0 align-middle">
                 <thead className="bg-light bg-opacity-50">
                   <tr>
-                    <th className="px-4 py-3 x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Deal Title</th>
-                    <th className="py-3 x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Prospect</th>
-                    <th className="py-3 x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Value</th>
-                    <th className="py-3 x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0">Status</th>
-                    <th className="px-4 py-3 x-small fw-800 text-muted text-uppercase tracking-widest border-bottom-0 text-end">Action</th>
+                    <th className="px-4 py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Deal Title</th>
+                    <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Prospect</th>
+                    <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Value</th>
+                    <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Status</th>
+                    <th className="px-4 py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0 text-end">Action</th>
                   </tr>
                 </thead>
                 <tbody>

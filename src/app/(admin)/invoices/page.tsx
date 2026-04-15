@@ -54,18 +54,17 @@ export default function InvoiceHistoryPage() {
               headers={{ invoiceNo: 'Invoice No', date: 'Date', customerName: 'Customer', grandTotal: 'Amount', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
             {checkActionPermission(user, 'mod_invoice', 'create') && (
               <Link
                 href="/invoices/new"
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
                 <i className="bi bi-file-earmark-plus"></i>
-                <span className="fw-800 small text-uppercase">Create New Invoice</span>
+                <span>Add Invoice</span>
               </Link>
             )}
           </div>
@@ -76,7 +75,7 @@ export default function InvoiceHistoryPage() {
           <div className="col-md-4">
             <div className="card border-0 shadow-sm rounded-4 h-100">
               <div className="card-body p-4">
-                <div className="x-small text-uppercase tracking-widest text-muted fw-bold mb-2">Total Billed</div>
+                <div className="x-small text-capitalize tracking-widest text-muted fw-bold mb-2">Total Billed</div>
                 <div className="h2 fw-bold mb-0 font-monospace">₹{totalBilled.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
             </div>
@@ -84,7 +83,7 @@ export default function InvoiceHistoryPage() {
           <div className="col-md-4">
             <div className="card border-0 shadow-sm rounded-4 h-100">
               <div className="card-body p-4">
-                <div className="x-small text-uppercase tracking-widest text-success fw-bold mb-2">Total Paid</div>
+                <div className="x-small text-capitalize tracking-widest text-success fw-bold mb-2">Total Paid</div>
                 <div className="h2 fw-bold mb-0 font-monospace text-success">₹{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
             </div>
@@ -92,7 +91,7 @@ export default function InvoiceHistoryPage() {
           <div className="col-md-4">
             <div className="card border-0 shadow-sm rounded-4 h-100 border-start border-4 border-warning">
               <div className="card-body p-4">
-                <div className="x-small text-uppercase tracking-widest text-warning fw-bold mb-2">Outstanding Balance</div>
+                <div className="x-small text-capitalize tracking-widest text-warning fw-bold mb-2">Outstanding Balance</div>
                 <div className="h2 fw-bold mb-0 font-monospace text-warning">₹{totalUnpaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
             </div>

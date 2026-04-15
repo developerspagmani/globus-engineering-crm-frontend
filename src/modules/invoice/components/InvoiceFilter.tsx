@@ -16,35 +16,30 @@ const InvoiceFilter: React.FC = () => {
 
 
   return (
-    <div className="card border-0 shadow-sm mb-4">
-      <div className="card-body py-3">
-        <div className="d-flex flex-wrap align-items-center gap-2">
-          {/* Search Bar */}
-          <div className="flex-grow-1" style={{ minWidth: '300px' }}>
-            <div className="input-group">
-              <span className="input-group-text bg-white border-end-0">
-                <i className="bi bi-search text-muted"></i>
+    <div className="card filter-card">
+        <div className="filter-bar-row">
+          <div className="filter-item-search">
+            <div className="search-group">
+              <span className="input-group-text">
+                <i className="bi bi-search"></i>
               </span>
               <input
                 type="text"
-                className="form-control border-start-0 search-bar"
+                className="form-control search-bar"
                 placeholder="Search by invoice number or customer..."
                 name="search"
                 value={filters.search}
                 onChange={handleChange}
-                style={{ height: '42px' }}
               />
             </div>
           </div>
 
-          {/* Status Dropdown */}
-          <div style={{ width: '180px' }}>
+          <div className="filter-item-select">
             <select
-              className="form-select"
+              className="form-select search-bar"
               name="status"
               value={filters.status}
               onChange={handleChange}
-              style={{ height: '42px', borderRadius: '8px' }}
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -55,39 +50,24 @@ const InvoiceFilter: React.FC = () => {
             </select>
           </div>
 
-          {/* Date Filters */}
-          <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+          <div className="date-filter-group">
             <input 
               type="date" 
-              className="form-control py-1 border-0 shadow-none bg-transparent" 
+              className="text-muted" 
               name="fromDate"
               value={filters.fromDate}
               onChange={handleChange}
-              style={{ fontSize: '0.85rem' }}
             />
-          </div>
-          <span className="text-muted small fw-bold mx-1">TO</span>
-          <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+            <span className="text-muted small fw-bold mx-1">To</span>
             <input 
               type="date" 
-              className="form-control py-1 border-0 shadow-none bg-transparent" 
+              className="text-muted" 
               name="toDate"
               value={filters.toDate}
               onChange={handleChange}
-              style={{ fontSize: '0.85rem' }}
             />
           </div>
-
         </div>
-      </div>
-      <style jsx>{`
-        .form-control {
-          font-size: 0.85rem !important;
-        }
-        .form-select {
-          font-size: 0.85rem !important;
-          }
-      `}</style>
     </div>
   );
 };

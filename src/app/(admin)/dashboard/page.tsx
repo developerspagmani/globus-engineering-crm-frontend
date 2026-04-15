@@ -19,7 +19,7 @@ export default function DashboardPage() {
     dispatch(fetchAuditLogs());
   }, [dispatch]);
   
-  if (!mounted) return <div className="h-100 d-flex align-items-center justify-content-center py-5"><div className="spinner-border text-primary" role="status"></div></div>;
+  if (!mounted) return <div className="h-100 d-flex align-items-center justify-content-center py-5"><div className="spinner-border text-secondary" role="status"></div></div>;
 
   // Determine if we should show the global super admin view or a specific tenant view
   const isViewingGlobal = user?.role === 'super_admin' && !company;
@@ -63,8 +63,8 @@ export default function DashboardPage() {
             <div className="card h-100 border-0 shadow-sm">
               <div className="card-body p-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
-                  <div className={`bg-${stat.color} bg-opacity-10 p-3 rounded-3`}>
-                    <i className={`bi ${stat.icon} text-${stat.color} fs-4`}></i>
+                  <div className={`p-3 rounded-3`} style={{ backgroundColor: stat.color === 'primary' ? 'var(--accent-soft)' : '', background: stat.color !== 'primary' ? `var(--${stat.color}-soft, rgba(0,0,0,0.05))` : '' }}>
+                    <i className={`bi ${stat.icon} fs-4`} style={{ color: stat.color === 'primary' ? 'var(--accent-color)' : '' }}></i>
                   </div>
                   <span className={`badge ${stat.change.includes('+') ? 'bg-success' : 'bg-info'} bg-opacity-10 text-${stat.change.includes('+') ? 'success' : 'info'} rounded-pill px-2 py-1 small`}>
                     {stat.change}
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                                </div>
                              </td>
                              <td className="small">
-                               <span className="text-primary fw-bold text-uppercase x-small me-1">{log.action}</span> 
+                               <span className="text-primary fw-bold text-capitalize x-small me-1">{log.action}</span> 
                                {(() => {
                                  const details = log.details ? JSON.parse(log.details) : null;
                                  const displayId = details?.invoice_no || details?.business_id || log.entity_id;

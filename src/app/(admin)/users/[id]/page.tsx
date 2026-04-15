@@ -28,7 +28,7 @@ export default function ViewUserPage() {
       <div className="mb-4 d-flex justify-content-between align-items-start">
         <div className="d-flex align-items-center">
           <Link href="/users" className="btn btn-outline-secondary border-0 p-0 me-3 mt-1" title="Back to User Management">
-            <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+            <i className="bi bi-arrow-left fs-3 text-muted"></i>
           </Link>
           <div>
             <Breadcrumb 
@@ -54,4 +54,6 @@ export default function ViewUserPage() {
       <CompanyUserForm mode="view" initialData={userToView} />
     </div>
   );
+}
+);
 }

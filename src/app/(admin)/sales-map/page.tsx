@@ -125,14 +125,14 @@ const SalesMapPage = () => {
             {isPageLoading && (
                 <div className="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white z-50">
                     <div className="mb-4">
-                        <div className="p-3 bg-primary bg-opacity-10 rounded-4 shadow-sm animate-bounce">
-                            <i className="bi bi-geo-alt-fill text-primary fs-1"></i>
+                        <div className="p-3 rounded-4 shadow-sm animate-bounce" style={{ backgroundColor: 'var(--accent-soft)' }}>
+                            <i className="bi bi-geo-alt-fill fs-1" style={{ color: 'var(--accent-color)' }}></i>
                         </div>
                     </div>
-                    <h2 className="h5 fw-black text-uppercase tracking-widest mb-2">Globus Engineering</h2>
+                    <h2 className="h5 fw-black text-capitalize tracking-widest mb-2">Globus Engineering</h2>
                     <div className="d-flex align-items-center gap-2">
                         <div className="spinner-grow spinner-grow-sm text-primary" role="status"></div>
-                        <span className="small fw-bold text-muted text-uppercase tracking-wider">Syncing Map Data...</span>
+                        <span className="small fw-bold text-muted text-capitalize tracking-wider">Syncing Map Data...</span>
                     </div>
                 </div>
             )}
@@ -141,8 +141,8 @@ const SalesMapPage = () => {
             <div className={`bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between sticky-top z-3 mt-n1 shadow-sm transition-all duration-500 ${isPageLoading ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="d-flex align-items-center gap-4">
                     <Link href="/dashboard" className="btn btn-light border rounded-pill d-flex align-items-center gap-2 px-3 py-2 transition-all hover-shadow">
-                        <i className="bi bi-grid-fill text-primary"></i>
-                        <span className="fw-bold small text-uppercase tracking-wider">Dashboard</span>
+                        <i className="bi bi-grid-fill" style={{ color: 'var(--accent-color)' }}></i>
+                        <span className="fw-bold small text-capitalize tracking-wider">Dashboard</span>
                     </Link>
                     
                     <div className="vr opacity-10"></div>
@@ -153,21 +153,22 @@ const SalesMapPage = () => {
                             type="button"
                             data-bs-toggle="dropdown"
                         >
-                            <div className="p-2 bg-primary bg-opacity-10 rounded-3">
-                                <i className="bi bi-building-fill text-primary"></i>
+                            <div className="p-2 rounded-3" style={{ backgroundColor: 'var(--accent-soft)' }}>
+                                <i className="bi bi-building-fill" style={{ color: 'var(--accent-color)' }}></i>
                             </div>
                             <div className="text-start">
-                                <h1 className="h6 fw-black mb-0 text-uppercase tracking-tight text-dark">
+                                <h1 className="h6 fw-black mb-0 text-capitalize tracking-tight text-dark">
                                     {hasMounted ? (activeCompany?.name || 'Global View') : 'Global View'}
                                 </h1>
                                 <div className="x-small text-muted fw-bold tracking-widest leading-none mt-1">SALES TERRITORY MAP</div>
                             </div>
                         </button>
                         <ul className="dropdown-menu shadow border-0 mt-3 py-2 animate-fade-in" style={{ minWidth: '240px' }}>
-                            <li className="px-3 py-2 text-uppercase x-small fw-800 text-muted tracking-widest border-bottom mb-2">Select Company Context</li>
+                            <li className="px-3 py-2 text-capitalize x-small fw-800 text-muted tracking-widest border-bottom mb-2">Select Company Context</li>
                             <li>
                                 <button 
-                                    className={`dropdown-item py-2 d-flex align-items-center gap-2 ${!activeCompany ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
+                                    className={`dropdown-item py-2 d-flex align-items-center gap-2 ${!activeCompany ? 'active fw-700' : ''}`}
+                                    style={!activeCompany ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
                                     onClick={() => handleCompanySwitch(null)}
                                 >
                                     <i className={`bi bi-globe ${!activeCompany ? 'opacity-100' : 'opacity-0'}`}></i>
@@ -177,7 +178,8 @@ const SalesMapPage = () => {
                             {companies.map((comp) => (
                                 <li key={comp.id}>
                                     <button 
-                                        className={`dropdown-item py-2 d-flex align-items-center gap-2 ${activeCompany?.id === comp.id ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
+                                        className={`dropdown-item py-2 d-flex align-items-center gap-2 ${activeCompany?.id === comp.id ? 'active fw-700' : ''}`}
+                                        style={activeCompany?.id === comp.id ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
                                         onClick={() => handleCompanySwitch(comp)}
                                     >
                                         <i className={`bi bi-check-lg ${activeCompany?.id === comp.id ? 'opacity-100' : 'opacity-0'}`}></i>
@@ -197,7 +199,7 @@ const SalesMapPage = () => {
                     <div className="dropdown">
                         <button className="btn btn-white border shadow-sm d-flex align-items-center py-1 px-2 rounded-pill transition hover-shadow" type="button" data-bs-toggle="dropdown">
                             <img
-                                src={`https://ui-avatars.com/api/?name=${(hasMounted && user?.name) || 'User'}&background=3b82f6&color=fff`}
+                                src={`https://ui-avatars.com/api/?name=${(hasMounted && user?.name) || 'User'}&background=ea580c&color=fff`}
                                 alt="Profile"
                                 className="rounded-circle me-2 border border-white"
                                 width="30"
@@ -224,7 +226,7 @@ const SalesMapPage = () => {
                                 <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white bg-opacity-80">
                                     <div className="d-flex align-items-center gap-2">
                                         <i className="bi bi-geo-alt-fill text-primary"></i>
-                                        <span className="fw-black text-uppercase tracking-wider small">Regional Distribution</span>
+                                        <span className="fw-black text-capitalize tracking-wider small">Regional Distribution</span>
                                     </div>
                                     <div className="badge bg-light text-dark border rounded-pill px-3">
                                         {viewMode === 'states' ? 'All India View' : `Viewing State: ${selectedRegion}`}
@@ -254,7 +256,7 @@ const SalesMapPage = () => {
                                 <div className="card-body p-4">
                                     <div className="d-flex align-items-center justify-content-between mb-4">
                                         <div>
-                                            <div className="x-small text-primary fw-black text-uppercase tracking-widest mb-1">Regional Deep-Dive</div>
+                                            <div className="x-small text-primary fw-black text-capitalize tracking-widest mb-1">Regional Deep-Dive</div>
                                             <h2 className="h4 fw-black text-dark mb-0">{selectedRegion}</h2>
                                         </div>
                                         <div className="p-3 bg-white shadow-sm rounded-circle text-primary">
@@ -265,20 +267,20 @@ const SalesMapPage = () => {
                                     <div className="row g-3 mb-4">
                                         <div className="col-6">
                                             <div className="p-3 bg-white rounded-4 shadow-sm border border-light">
-                                                <div className="smaller text-muted fw-bold text-uppercase mb-1">Customers</div>
+                                                <div className="smaller text-muted fw-bold text-capitalize mb-1">Customers</div>
                                                 <div className="h3 fw-black text-dark mb-0">{filteredCustomers.length}</div>
                                             </div>
                                         </div>
                                         <div className="col-6">
                                             <div className="p-3 bg-white rounded-4 shadow-sm border border-light">
-                                                <div className="smaller text-muted fw-bold text-uppercase mb-1">Engagement</div>
+                                                <div className="smaller text-muted fw-bold text-capitalize mb-1">Engagement</div>
                                                 <div className="h3 fw-black text-success mb-0">{stats.activePercentage}%</div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="bg-white rounded-4 shadow-sm border border-light p-3">
-                                        <div className="smaller text-muted fw-bold text-uppercase tracking-wider mb-3 px-1">Enrolled Clients</div>
+                                        <div className="smaller text-muted fw-bold text-capitalize tracking-wider mb-3 px-1">Enrolled Clients</div>
                                         <div className="d-flex flex-wrap gap-2">
                                             {filteredCustomers.length > 0 ? (
                                                 filteredCustomers.map((c, i) => (

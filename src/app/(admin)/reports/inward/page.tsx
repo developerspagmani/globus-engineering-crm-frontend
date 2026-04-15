@@ -43,7 +43,7 @@ const InwardReportPage = () => {
   const handlePrintRecord = (item: any) => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Inward Summary</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
+    printWindow.document.write('<html><head><title>Inward Summary</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
     printWindow.document.write('<div class="header"><h1>Globus Engineering</h1><p>Inward Summary Statement</p></div>');
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${item.customerName || item.vendorName}</div></div>`);
@@ -64,31 +64,34 @@ const InwardReportPage = () => {
 
   return (
     <div className="container-fluid py-4 animate-fade-in bg-light min-vh-100">
-      <div className="d-flex justify-content-between align-items-center mb-4 px-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div>
           <Breadcrumb items={[{ label: 'Intelligence Reports', active: false }, { label: 'Inward Report', active: true }]} />
           <h2 className="fw-900 mb-1 text-dark tracking-tight mt-2">Inward Report</h2>
           <p className="text-muted small mb-0 font-weight-500">History of all incoming material receipts and industrial logistics entries.</p>
         </div>
-        <button className="btn btn-white shadow-sm border border-light px-3" onClick={() => (dispatch as any)(fetchInwards(activeCompany?.id))}><i className="bi bi-arrow-repeat text-primary fw-bold"></i> <span className="small fw-800 text-muted">Refresh</span></button>
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Inward Report" />
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => (dispatch as any)(fetchInwards(activeCompany?.id))}><i className="bi bi-arrow-repeat text-primary fw-bold"></i> <span className="small fw-800 text-muted">Refresh</span></button>
+        </div>
       </div>
 
       <div className="card border-0 shadow-sm mb-4 overflow-hidden rounded-4">
         <div className="card-body p-3">
-          <div className="row g-3 align-items-center">
-            <div className="col-lg-4 col-md-4">
-              <div className="position-relative"><i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i><input type="text" className="form-control ps-5 border bg-light-soft px-3 search-bar shadow-none" placeholder="Search customer or DC..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ height: '42px', borderRadius: '10px' }} /></div>
-            </div>
-            <div className="col-auto ms-auto d-flex align-items-center gap-1">
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                </div>
-                <span className="text-muted small fw-bold mx-1">TO</span>
-                
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input type="text" className="form-control search-bar" placeholder="Search customer or DC..." value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
-              <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Inward Report" />
+            </div>
+            
+            <div className="date-filter-group">
+              <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <span className="text-muted small fw-bold mx-1">To</span>
+              <input type="date" className="text-muted" value={toDate} onChange={(e) => setToDate(e.target.value)} />
             </div>
           </div>
         </div>
@@ -104,7 +107,7 @@ const InwardReportPage = () => {
             <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
-                  <tr className="text-uppercase small fw-bold text-muted">
+                  <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-3 border-0">Sno</th>
                     <th className="py-3 border-0">Date</th>
                     <th className="py-3 border-0">Dc No</th>
@@ -120,9 +123,9 @@ const InwardReportPage = () => {
                       <td className="px-4 small text-muted font-monospace">{index + 1}</td>
                       <td className="small text-muted">{item.date}</td>
                       <td className="text-dark fw-bold">{item.dcNo || item.challanNo || '-'}</td>
-                      <td className="text-dark fw-800 text-uppercase" style={{ fontSize: '0.85rem' }}>{item.customerName || item.vendorName}</td>
+                      <td className="text-dark fw-800 text-capitalize" style={{ fontSize: '0.85rem' }}>{item.customerName || item.vendorName}</td>
                       <td className="text-muted small text-truncate" style={{ maxWidth: '200px' }}>{item.address || '-'}</td>
-                      <td><span className={`badge rounded-pill px-3 py-1 small ${item.status === 'completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>{item.status?.toUpperCase() || 'PENDING'}</span></td>
+                      <td><span className={`badge rounded-pill px-3 py-1 small text-capitalize ${item.status === 'completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>{item.status || 'pending'}</span></td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
                           <Link href={`/inward/${item.id}/edit?readonly=true`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>

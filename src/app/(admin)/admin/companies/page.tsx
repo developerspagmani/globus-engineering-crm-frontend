@@ -62,10 +62,10 @@ export default function CompaniesPage() {
         </div>
         <Link
           href="/admin/companies/new"
-          className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-accent fw-bold text-decoration-none"
+          className="btn btn-primary btn-page-action px-4"
         >
-          <i className="bi bi-plus-lg fs-5"></i>
-          <span>Onboard New Company</span>
+          <i className="bi bi-plus-lg"></i>
+          <span>Add Company</span>
         </Link>
       </div>
 
@@ -75,10 +75,10 @@ export default function CompaniesPage() {
             <table className="table table-hover align-middle mb-0">
               <thead className="bg-light bg-opacity-50">
                 <tr>
-                  <th className="px-4 py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest">Company Identity</th>
-                  <th className="py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest">Plan Tier</th>
-                  <th className="py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest text-center">Modules Allocated</th>
-                  <th className="py-3 border-0 x-small fw-800 text-muted text-uppercase tracking-widest text-end px-4">Actions</th>
+                  <th className="px-4 py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest">Company Identity</th>
+                  <th className="py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest">Plan Tier</th>
+                  <th className="py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest text-center">Modules Allocated</th>
+                  <th className="py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest text-end px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>

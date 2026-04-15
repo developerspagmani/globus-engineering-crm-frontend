@@ -116,10 +116,10 @@ export default function ItemDetailsPage() {
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Item Details</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div class="header">');
-    printWindow.document.write('<h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1>');
+    printWindow.document.write('<h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1>');
     printWindow.document.write('<p style="margin: 5px 0 0; color: #666;">Master Data - Item Entry</p>');
     printWindow.document.write('</div>');
     
@@ -178,7 +178,7 @@ export default function ItemDetailsPage() {
               ]} 
             />
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
-              {view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add New Item') : 'Item Hub'}
+              {view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add Item') : 'Item Hub'}
             </h2>
             <p className="text-muted small mb-0">
               {view === 'add' ? 'Manage detailed specifications and pricing for this industrial component.' : 'Manage your complete catalog of parts, tools, and industrial materials.'}
@@ -196,33 +196,30 @@ export default function ItemDetailsPage() {
             )}
             {view === 'add' && editingId && isViewOnly && mounted && checkActionPermission(user, 'mod_items', 'edit') && (
               <button 
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+                className="btn btn-primary btn-page-action px-4"
                 onClick={() => setIsViewOnly(false)}
-                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-pencil-square"></i>
-                <span className="fw-800 small text-uppercase">Edit Profile</span>
+                <span>Edit Item</span>
               </button>
             )}
             {view === 'list' && mounted && checkActionPermission(user, 'mod_items', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ itemCode: '', itemName: '' }); }}
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
-                <i className="bi bi-plus-lg fs-5"></i>
-                <span className="fw-800 small text-uppercase">Add New Item</span>
+                <i className="bi bi-plus-lg"></i>
+                <span>Add Item</span>
               </button>
             )}
             {view === 'add' && (
               <button 
                 type="button" 
-                className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3" 
+                className="btn btn-outline-secondary btn-page-action px-3" 
                 onClick={() => setView('list')} 
-                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-arrow-left"></i>
-                <span className="fw-800 small text-uppercase">Back</span>
+                <span>Back</span>
               </button>
             )}
           </div>
@@ -242,8 +239,8 @@ export default function ItemDetailsPage() {
                       type="text"
                       required
                       placeholder="Item Code"
-                      className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
+                      className="form-control"
+                      style={{ fontSize: '1.1rem' }}
                       value={formData.itemCode}
                       onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
                       disabled={isViewOnly}
@@ -261,8 +258,8 @@ export default function ItemDetailsPage() {
                       type="text"
                       required
                       placeholder="Item Name"
-                      className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
+                      className="form-control"
+                      style={{ fontSize: '1.1rem' }}
                       value={formData.itemName}
                       onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
                       disabled={isViewOnly}
@@ -276,16 +273,16 @@ export default function ItemDetailsPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="btn px-4 py-2 text-white fw-bold rounded-1 d-flex align-items-center justify-content-center gap-2"
-                      style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '120px' }}
+                      className="btn px-4 py-2 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
+                      style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '120px', borderRadius: '4px' }}
                     >
                       {isSubmitting ? (
                         <>
                           <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          <span>{editingId ? 'UPDATING...' : 'ADDING...'}</span>
+                          <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
                         </>
                       ) : (
-                        editingId ? 'UPDATE' : 'ADD'
+                        editingId ? 'UPDATE' : 'SUBMIT'
                       )}
                     </button>
                     <button
@@ -294,7 +291,7 @@ export default function ItemDetailsPage() {
                       className="btn px-4 py-2 text-white fw-bold rounded-1"
                       style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
                     >
-                      {editingId ? 'CANCEL' : 'RESET'}
+                      {editingId ? 'CANCEL' : 'CLEAR'}
                     </button>
                   </div>
                 ) : (
@@ -313,19 +310,22 @@ export default function ItemDetailsPage() {
             </div>
           ) : (
             <div className="animate-fade-in">
-              <div className="d-flex align-items-center mb-4">
-                <div className="input-group" style={{ maxWidth: '350px' }}>
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search "></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search items..."
-                    className="form-control border-start-0 shadow-none search-bar"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ height: '42px' }}
-                  />
+              <div className="card filter-card mb-4">
+                <div className="filter-bar-row">
+                  <div className="filter-item-search">
+                    <div className="search-group">
+                      <span className="input-group-text">
+                        <i className="bi bi-search"></i>
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Search items..."
+                        className="form-control search-bar"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -335,10 +335,10 @@ export default function ItemDetailsPage() {
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light">
                         <tr>
-                          <th className="px-4 py-2 text-uppercase small fw-bold" style={{ width: '60px' }}>Sno</th>
-                          <th className="px-4 py-2 text-uppercase small fw-bold">Item Code</th>
-                          <th className="px-4 py-2 text-uppercase small fw-bold">Item Name</th>
-                          <th className="px-4 py-2 text-uppercase small fw-bold text-end">Actions</th>
+                          <th className="px-4 py-2 text-capitalize small fw-bold" style={{ width: '60px' }}>Sno</th>
+                          <th className="px-4 py-2 text-capitalize small fw-bold">Item Code</th>
+                          <th className="px-4 py-2 text-capitalize small fw-bold">Item Name</th>
+                          <th className="px-4 py-2 text-capitalize small fw-bold text-end">Actions</th>
                         </tr>
                       </thead>
                       <tbody>

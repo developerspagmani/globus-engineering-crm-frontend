@@ -105,7 +105,7 @@ const VendorTable: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="text-center py-5">
                     <div className="d-flex flex-column align-items-center gap-3">
-                      <div className="spinner-border text-orange" role="status">
+                      <div className="spinner-border text-secondary" role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
                       <span className="text-muted small fw-bold text-uppercase tracking-wider">Fetching Vendors...</span>

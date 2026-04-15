@@ -43,11 +43,10 @@ export default function CompanyUserListPage() {
             {checkActionPermission(user, 'mod_user_management', 'create') && (
               <Link
                 href="/users/new"
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
                 <i className="bi bi-person-plus-fill"></i>
-                <span className="fw-800 small text-uppercase">Add User</span>
+                <span>Add User</span>
               </Link>
             )}
           </div>

@@ -2,6 +2,8 @@
 
 import React, { useMemo } from 'react';
 import { Company, LedgerEntry } from '@/types/modules';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 interface LedgerPrintTemplateProps {
   party: {
@@ -28,6 +30,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
   dateFrom, 
   dateTo 
 }) => {
+  const { settings } = useSelector((state: RootState) => state.invoices);
   const isVendor = party?.partyType?.toLowerCase() === 'vendor';
 
   // 1. Core Accounting Logic
@@ -131,10 +134,10 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
     <div className="ledger-master-print-container" style={{ background: 'white' }}>
       {pages.map((pageEntries, pageIdx) => (
         <div key={pageIdx} className="ledger-page-box" style={{ 
-            width: '210mm', 
+            width: '198mm', 
             margin: '0 auto', 
             background: 'white', 
-            padding: '15mm', 
+            padding: '10mm', 
             boxSizing: 'border-box',
             position: 'relative',
             color: 'black',
@@ -229,6 +232,29 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                 )}
               </tbody>
            </table>
+
+           {/* Footer Section for Ledger - only on last page */}
+           {pageIdx === pages.length - 1 && (
+             <div className="ledger-footer-details mt-4 border-top pt-3" style={{ fontSize: '8.5pt' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div>
+                        <div style={{ fontWeight: 'bold', marginBottom: '5px', textDecoration: 'underline' }}>Statutory Details</div>
+                        <div>VAT TIN: {settings?.vatTin || '33132028969'}</div>
+                        <div>CST NO: {settings?.cstNo || '1091562'}</div>
+                        <div>PAN NO: {settings?.panNo || 'AAIFG6568K'}</div>
+                    </div>
+                    <div>
+                        <div style={{ fontWeight: 'bold', marginBottom: '5px', textDecoration: 'underline' }}>Bankers</div>
+                        <div>Bank: {settings?.bankName || 'INDIAN OVERSEAS BANK'}</div>
+                        <div>A/c No: {settings?.bankAcc || '170902000000962'}</div>
+                        <div>IFSC: {settings?.bankBranchIfsc || 'IOBA0001709'}</div>
+                    </div>
+                </div>
+                <div className="mt-4 text-center" style={{ fontWeight: 'bold', fontStyle: 'italic' }}>
+                    --- End of Ledger Account ---
+                </div>
+             </div>
+           )}
         </div>
       ))}
       

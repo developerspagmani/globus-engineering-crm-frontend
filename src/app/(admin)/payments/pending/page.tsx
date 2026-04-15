@@ -137,35 +137,35 @@ const PendingPaymentPage = () => {
               headers={{ customerName: 'Customer', invoiceNumber: 'Invoice No', grandTotal: 'Total', paidAmount: 'Paid', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
             <button 
-              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
+              className="btn btn-primary btn-page-action px-4" 
               onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}
-              style={{ height: '42px', borderRadius: '10px' }}
             >
               <i className="bi bi-arrow-repeat"></i>
-              <span className="fw-800 small text-uppercase">Refresh Data</span>
+              <span>Refresh Data</span>
             </button>
           </div>
         </div>
         
         {/* Filter Bar */}
-        <div className="card shadow-sm border-0 mb-4 overflow-hidden rounded-4">
-          <div className="card-body p-3 bg-white">
-             <div className="row g-2">
-                <div className="col-md-6">
-                   <div className="position-relative">
-                      <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+        <div className="card filter-card">
+          <div className="card-body">
+             <div className="d-flex flex-wrap align-items-center gap-2">
+                <div className="search-bar-container">
+                   <div className="input-group">
+                      <span className="search-icon">
+                         <i className="bi bi-search"></i>
+                      </span>
                       <input 
                          type="text" 
-                         className="form-control border-0 bg-light px-5" 
-                         placeholder="Search Customer, Invoice, or PO No..."
+                         className="form-control search-bar border-start-0" 
+                         placeholder="Search customer, invoice, or PO no..."
                          value={searchTerm}
                          onChange={(e) => setSearchTerm(e.target.value)}
-                         style={{ height: '42px', borderRadius: '10px' }}
                       />
                    </div>
                 </div>
@@ -195,15 +195,15 @@ const PendingPaymentPage = () => {
               <table className="table align-middle mb-0 table-hover">
                 <thead className="bg-light">
                   <tr>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider">Sno</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider">Customer</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider">Po No</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider">Dc No</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider">Invoice No</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider">Invoice Date</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider">Pending Amount</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider text-danger">Over Due</th>
-                    <th className="fw-900 small py-3 text-uppercase tracking-wider text-center">Action</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Sno</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Customer</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Po No</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Dc No</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice No</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice Date</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Pending Amount</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider text-danger">Over Due</th>
+                    <th className="fw-900 small py-3 text-capitalize tracking-wider text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="border-top-0">
@@ -212,7 +212,7 @@ const PendingPaymentPage = () => {
                     return (
                       <tr key={inv.id} className="border-bottom border-light">
                         <td className="text-dark small">{index + 1}</td>
-                        <td className="text-dark fw-bold small text-uppercase">{inv.customerName}</td>
+                        <td className="text-dark fw-bold small text-capitalize">{inv.customerName}</td>
                         <td className="text-muted small">{inv.poNo || '-'}</td>
                         <td className="text-muted small">{inv.dcNo || '-'}</td>
                         <td className="text-dark fw-bold small">{inv.invoiceNumber}</td>

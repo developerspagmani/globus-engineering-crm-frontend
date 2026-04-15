@@ -38,10 +38,10 @@ const NewVoucherPageContent = () => {
       <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
         <button 
           onClick={() => router.back()} 
-          className="btn btn-outline-secondary border-0 p-0 me-3" 
+          className="back-btn-standard" 
           title="Back to Previous Page"
         >
-          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+          <i className="bi bi-arrow-left fs-4"></i>
         </button>
         <div>
           <h2 className="fw-bold mb-0 text-dark">Create New Voucher</h2>

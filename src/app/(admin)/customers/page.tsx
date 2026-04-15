@@ -39,18 +39,17 @@ export default function CustomerListPage() {
               headers={{ name: 'Customer Name', company: 'Company', email: 'Email', phone: 'Phone', industry: 'Industry', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
             {(checkActionPermission(user, 'mod_customer', 'create') || user?.role === 'company_admin') && (
               <Link
                 href="/customers/new"
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
                 <i className="bi bi-person-plus-fill"></i>
-                <span className="fw-800 small text-uppercase">Add New Customer</span>
+                <span>Add Customer</span>
               </Link>
             )}
           </div>

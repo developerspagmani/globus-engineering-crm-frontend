@@ -30,7 +30,7 @@ export default function EditOutwardPage() {
           <>
             <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
               <Link href="/outward" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Outward List">
-                <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+                <i className="bi bi-arrow-left fs-3 text-muted"></i>
               </Link>
               <div>
                 <h2 className="fw-bold mb-0">{isEdit ? 'Edit' : 'View'} Outward: {outward.outwardNo}</h2>
@@ -52,4 +52,6 @@ export default function EditOutwardPage() {
       </div>
     </ModuleGuard>
   );
+}
+);
 }

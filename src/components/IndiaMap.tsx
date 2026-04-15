@@ -452,7 +452,7 @@ function IndiaMap({
                     <div>
                         <div className="fw-bold text-dark small text-uppercase tracking-wider mb-1">{error}</div>
                         <button
-                            className="btn btn-primary btn-sm rounded-pill px-4 mt-2"
+                            className="btn btn-secondary btn-sm rounded-pill px-4 mt-2"
                             onClick={() => window.location.reload()}
                         >
                             Retry Loading
@@ -463,9 +463,9 @@ function IndiaMap({
 
             {!error && (!isDimensionsReady || !geoData) && (
                 <div className="position-absolute d-flex flex-column align-items-center gap-3 z-3">
-                    <div className="spinner-grow text-primary opacity-50" style={{ width: '3rem', height: '3rem' }} role="status"></div>
+                    <div className="spinner-grow text-secondary opacity-50" style={{ width: '3rem', height: '3rem' }} role="status"></div>
                     <div className="text-center px-4">
-                        <span className="smaller text-uppercase fw-bold text-primary tracking-widest d-block mb-1">
+                        <span className="smaller text-uppercase fw-bold text-secondary tracking-widest d-block mb-1">
                             {!geoData ? 'Syncing Regional Data...' : 'Optimizing Viewport...'}
                         </span>
                         <span className="x-small text-muted fw-medium d-block">Configuring industrial layers for your screen</span>
@@ -498,7 +498,7 @@ function IndiaMap({
                         <div className="d-flex align-items-center justify-content-between gap-3 mb-1">
                             <span className="fw-black text-white small text-uppercase tracking-wider">{hoveredRegion}</span>
                             {activeDistricts.some(d => isDistrictMatch(d, hoveredRegion)) || isManufacturing(hoveredRegion) ? (
-                                <span className="badge bg-primary smaller animate-pulse">LIVE</span>
+                                <span className="badge bg-secondary smaller animate-pulse">LIVE</span>
                             ) : null}
                         </div>
                         <div className="smaller text-white text-opacity-50 fw-medium">
@@ -512,7 +512,7 @@ function IndiaMap({
 
             {viewMode === 'districts' && (
                 <button onClick={handleResetZoom} className="btn btn-dark btn-sm position-absolute top-0 start-0 m-3 z-3 shadow d-flex align-items-center gap-2 px-3 py-2 border-white border-opacity-10 rounded-pill">
-                    <i className="bi bi-arrow-left text-primary"></i>
+                    <i className="bi bi-arrow-left text-secondary"></i>
                     <span className="text-uppercase fw-bold smaller tracking-wider">India Map</span>
                 </button>
             )}

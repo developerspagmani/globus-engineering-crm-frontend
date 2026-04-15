@@ -63,11 +63,10 @@ export default function StoreViewPage() {
             {!isEditing && checkActionPermission(user, 'mod_lead', 'edit') && (
               <button 
                 onClick={() => setIsEditing(true)} 
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 rounded-pill shadow-sm"
-                style={{ backgroundColor: '#ff4081', border: 'none' }}
+                className="btn btn-primary btn-page-action px-4"
               >
                 <i className="bi bi-pencil-square"></i>
-                <span className="fw-700">EDIT PROFILE</span>
+                <span>Edit Store</span>
               </button>
             )}
           </div>
@@ -77,7 +76,7 @@ export default function StoreViewPage() {
             <div className="col-12 col-xl-10">
                <div className="premium-form-card animate-fade-in">
                   <div className="card-header bg-white border-0 py-3 ps-4">
-                     <h6 className="fw-800 mb-0 text-muted small tracking-widest text-uppercase">
+                     <h6 className="fw-800 mb-0 text-muted small tracking-widest text-capitalize">
                         Store Identity & Contact Information
                      </h6>
                   </div>

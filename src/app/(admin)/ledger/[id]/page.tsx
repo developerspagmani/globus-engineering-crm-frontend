@@ -224,12 +224,12 @@ export default function LedgerDetailPage() {
                  <div>
                     <div className="d-flex align-items-center gap-3 mb-2">
                         <Link href="/ledger" className="btn btn-sm btn-light rounded-circle hide-print"><i className="bi bi-chevron-left"></i></Link>
-                        <h1 className="fw-900 text-primary mb-0 tracking-tight">GLOBUS ENGINEERING</h1>
+                        <h1 className="fw-900 mb-0 tracking-tight" style={{ color: 'var(--accent-color)' }}>GLOBUS ENGINEERING</h1>
                         {/* <span className={`badge rounded-pill px-3 py-2 ms-2 fw-bold ${isVendor ? 'bg-purple-subtle text-purple' : 'bg-primary-subtle text-primary'}`}>
                             {isVendor ? 'VENDOR / SUPPLIER' : 'CUSTOMER STATEMENT'}
                         </span> */}
                     </div>
-                    <p className="text-muted small fw-bold text-uppercase tracking-widest mb-0 opacity-75">Professional Account Ledger Statement</p>
+                    <p className="text-muted small fw-bold text-capitalize tracking-widest mb-0 opacity-75">Professional Account Ledger Statement</p>
                  </div>
                   <div className="text-end hide-print">
                     <button onClick={handlePrint} className="btn btn-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
@@ -240,13 +240,13 @@ export default function LedgerDetailPage() {
 
               <div className="row g-4 border-top pt-4">
                  <div className="col-md-5">
-                    <span className="text-muted x-small fw-800 text-uppercase tracking-wider d-block mb-2">Account Holder</span>
+                    <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Account Holder</span>
                     <h3 className="fw-900 mb-1 text-dark">{party?.name || 'Loading Name...'}</h3>
                     {/* <p className="text-muted small mb-0 font-monospace">ID: {partyId}</p> */}
                     <p className="text-muted small mb-0">{party?.street1 || 'No address specified'}</p>
                  </div>
                  <div className="col-md-3 border-start">
-                    <span className="text-muted x-small fw-800 text-uppercase tracking-wider d-block mb-2">Statement Period</span>
+                    <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Statement Period</span>
                     <div className="d-flex flex-column gap-1">
                         <input type="date" className="form-control form-control-sm border-0 bg-light hide-print mb-1" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
                         <input type="date" className="form-control form-control-sm border-0 bg-light hide-print" value={dateTo} onChange={e => setDateTo(e.target.value)} />
@@ -257,7 +257,7 @@ export default function LedgerDetailPage() {
                  </div>
                  <div className="col-md-4 border-start text-end">
                     <div className="px-3">
-                        <span className="text-muted x-small fw-800 text-uppercase tracking-wider d-block mb-2">Current Balance Status</span>
+                        <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Current Balance Status</span>
                         <h2 className={`fw-900 mb-0 ${closingBalance >= 0 ? 'text-success' : 'text-danger'}`} style={{ fontSize: '2.5rem' }}>
                             ₹ {Math.abs(closingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             <small className="ms-2 fs-6 opacity-50">{closingBalance >= 0 ? (isVendor ? 'CR' : 'DR') : (isVendor ? 'DR' : 'CR')}</small>
@@ -276,7 +276,7 @@ export default function LedgerDetailPage() {
                     <div className="card-body p-4">
                         <div className="d-flex align-items-center justify-content-between">
                             <div>
-                                <span className="text-muted x-small fw-800 text-uppercase tracking-wider mb-1 d-block">Total Debits (DR)</span>
+                                <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Debits (DR)</span>
                                 <h4 className="fw-900 text-danger mb-0">₹ {totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
                             </div>
                             <div className="bg-danger-subtle p-3 rounded-4"><i className="bi bi-dash-circle text-danger fs-4"></i></div>
@@ -289,7 +289,7 @@ export default function LedgerDetailPage() {
                     <div className="card-body p-4">
                         <div className="d-flex align-items-center justify-content-between">
                             <div>
-                                <span className="text-muted x-small fw-800 text-uppercase tracking-wider mb-1 d-block">Total Credits (CR)</span>
+                                <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Credits (CR)</span>
                                 <h4 className="fw-900 text-success mb-0">₹ {totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
                             </div>
                             <div className="bg-success-subtle p-3 rounded-4"><i className="bi bi-plus-circle text-success fs-4"></i></div>
@@ -298,10 +298,10 @@ export default function LedgerDetailPage() {
                 </div>
             </div>
             <div className="col-md-4">
-                <div className="card border-0 shadow-sm rounded-4 h-100 bg-primary bg-opacity-10">
+                <div className="card border-0 shadow-sm rounded-4 h-100" style={{ backgroundColor: 'var(--accent-soft)' }}>
                     <div className="card-body p-4 text-center">
-                         <span className="text-muted x-small fw-800 text-uppercase tracking-wider mb-1 d-block">Total Ledger Records</span>
-                         <h4 className="fw-900 text-primary mb-0">{processedEntries.length} Transactions</h4>
+                         <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block opacity-75">Total Ledger Records</span>
+                         <h4 className="fw-900 mb-0" style={{ color: 'var(--accent-color)' }}>{processedEntries.length} Transactions</h4>
                     </div>
                 </div>
             </div>
@@ -313,14 +313,14 @@ export default function LedgerDetailPage() {
                 <table className="table ledger-professional-table mb-0 align-middle">
                     <thead>
                         <tr>
-                            <th className="ps-5 py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0">Date</th>
-                            <th className="py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0" style={{ width: '35%' }}>Particulars (Transaction Details)</th>
-                            <th className="py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0">Vch Type</th>
-                            <th className="py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0">Vch No</th>
-                            <th className="py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0 text-center">Status</th>
-                            <th className="py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0 text-end">Debit (Dr)</th>
-                            <th className="py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0 text-end">Credit (Cr)</th>
-                            <th className="pe-5 py-4 text-uppercase fw-800 x-small text-muted tracking-widest border-0 text-end">Net Balance</th>
+                            <th className="ps-5 py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0">Date</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0" style={{ width: '35%' }}>Particulars (Transaction Details)</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0">Vch Type</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0">Vch No</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-center">Status</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end">Debit (Dr)</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end">Credit (Cr)</th>
+                            <th className="pe-5 py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end">Net Balance</th>
                         </tr>
                     </thead>
                     <tbody className="border-top-0">
@@ -331,11 +331,11 @@ export default function LedgerDetailPage() {
                             <tr key={e.id} className="ledger-row border-bottom border-light-subtle">
                                 <td className="ps-5 py-3 small fw-bold text-muted">{new Date(e.date).toLocaleDateString()}</td>
                                 <td className="py-3">
-                                    <div className="fw-800 text-dark small text-uppercase" style={{ letterSpacing: '0.01em' }}>{e.description}</div>
+                                    <div className="fw-800 text-dark small text-capitalize" style={{ letterSpacing: '0.01em' }}>{e.description}</div>
                                     {/* <div className="x-small text-muted mt-1 opacity-75">{e.referenceNo || (e as any).referenceId || (e as any).reference_id ? `Ref: ${e.referenceNo || (e as any).referenceId || (e as any).reference_id}` : ''}</div> */}
                                 </td>
                                 <td className="py-3">
-                                    <span className={`badge border py-2 px-3 fw-800 x-small text-uppercase tracking-wider rounded-pill shadow-none ${
+                                    <span className={`badge border py-2 px-3 fw-800 x-small text-capitalize tracking-wider rounded-pill shadow-none ${
                                         e.vchType === 'INVOICE' ? 'bg-primary-subtle text-primary border-primary-subtle' :
                                         (e.vchType === 'PAYMENT' || e.vchType === 'RECEIPT') ? 'bg-success-subtle text-success border-success-subtle' :
                                         e.vchType === 'OUTWARD' ? 'bg-purple-subtle text-purple border-purple-subtle' :

@@ -76,9 +76,9 @@ const ChallanPage = () => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
     printWindow.document.write('<html><head><title>Challan Summary</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Challan Summary Record</p></div>');
+    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Challan Summary Record</p></div>');
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Challan No</div><div class="value">${challan.challanNo}</div></div>`);
     printWindow.document.write(`<div><div class="label">Date</div><div class="value">${new Date(challan.date).toLocaleDateString()}</div></div>`);
@@ -141,44 +141,41 @@ const ChallanPage = () => {
               headers={{ challanNo: 'Challan No', date: 'Date', partyName: 'Party Name', type: 'Type', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
           {checkActionPermission(user, 'mod_challan', 'create') && (
-            <Link href="/challan/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+            <Link href="/challan/new" className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-plus-lg"></i>
-              <span className="fw-800 small text-uppercase">Create Challan</span>
+              <span>Add Challan</span>
             </Link>
           )}
         </div>
       </div>
 
-        <div className="card shadow-sm border-0 mb-4 overflow-hidden">
-        <div className="card-body p-3">
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <div className="flex-grow-1" style={{ minWidth: '250px' }}>
-              <div className="input-group">
-                <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
+        <div className="card filter-card">
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
                 <input
                   type="text"
-                  className="form-control border-start-0 ps-0 search-bar"
+                  className="form-control search-bar"
                   placeholder="Search by challan or party..."
                   value={filters.search}
                   onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
-                  style={{ height: '42px' }}
                 />
               </div>
             </div>
             
-            <div style={{ width: '180px' }}>
+            <div className="filter-item-select">
               <select
-                className="form-select"
+                className="form-select search-bar"
                 value={filters.type}
                 onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
-                style={{ height: '42px', borderRadius: '8px' }}
               >
                 <option value="all">All Types</option>
                 <option value="delivery">Delivery</option>
@@ -187,28 +184,20 @@ const ChallanPage = () => {
               </select>
             </div>
 
-            <div className="col-auto ms-auto d-flex align-items-center gap-2">
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-                 <input 
-                   type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
-                   value={filters.fromDate}
-                   onChange={(e) => dispatch(setChallanFilters({ fromDate: e.target.value }))}
-                   style={{ width: '135px', fontSize: '0.85rem' }}
-                 />
-                 </div>
-                 <span className="text-muted small fw-bold mx-1">TO</span>
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-                
-                 <input 
-                   type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
-                   value={filters.toDate}
-                   onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
-                   style={{ width: '135px', fontSize: '0.85rem' }}
-                 />
-               </div>
-               </div>
+            <div className="date-filter-group">
+              <input 
+                type="date" 
+                className="text-muted" 
+                value={filters.fromDate}
+                onChange={(e) => dispatch(setChallanFilters({ fromDate: e.target.value }))}
+              />
+              <span className="text-muted small fw-bold mx-1">To</span>
+              <input 
+                type="date" 
+                className="text-muted" 
+                value={filters.toDate}
+                onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
+              />
             </div>
           </div>
         </div>
@@ -242,20 +231,20 @@ const ChallanPage = () => {
                         <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                         <td className="text-nowrap fw-bold text-dark">
                           {challan.challanNo}
-                          <div className="text-muted x-small fw-normal text-uppercase">{challan.type.replace('_', ' ')}</div>
+                          <div className="text-muted x-small fw-normal text-capitalize">{challan.type.replace('_', ' ')}</div>
                         </td>
                         <td className="text-nowrap text-muted small">{new Date(challan.date).toLocaleDateString()}</td>
                         <td className="text-nowrap text-muted small">
                           <div className="fw-bold text-dark">{challan.partyName}</div>
-                          <div className="x-small text-uppercase">{challan.partyType}</div>
+                          <div className="x-small text-capitalize">{challan.partyType}</div>
                         </td>
                         <td className="text-nowrap text-muted small">
                           {challan.items[0]?.description}
                           {challan.items.length > 1 && <span className="ms-1 text-primary x-small fw-bold">+{challan.items.length - 1} more</span>}
                         </td>
                         <td className="text-center">
-                          <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
-                            {challan.status.toUpperCase()}
+                          <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold text-capitalize">
+                            {challan.status}
                           </span>
                         </td>
                         <td className="text-center px-4 text-nowrap">

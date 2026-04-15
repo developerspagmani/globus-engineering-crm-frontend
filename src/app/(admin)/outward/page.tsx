@@ -93,74 +93,69 @@ export default function OutwardListPage() {
               headers={{ outwardNo: 'Outward No', partyType: 'Type', customerName: 'Customer', vendorName: 'Vendor', invoiceReference: 'Invoice Ref', date: 'Date' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
             {mounted && checkActionPermission(user, 'mod_outward', 'create') && (
-              <Link href="/outward/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+              <Link href="/outward/new" className="btn btn-primary btn-page-action px-4">
                 <i className="bi bi-box-arrow-right"></i>
-                <span className="fw-800 small text-uppercase">New Outward Entry</span>
+                <span>Add Outward</span>
               </Link>
             )}
           </div>
         </div>
 
         {/* Filter Section - Aligned in one row */}
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 p-3 bg-white">
-          <div className="row g-3 align-items-center">
-            <div className="col-lg-4 col-md-6">
-              <div className="position-relative">
-                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                <input
-                  type="text"
-                  placeholder="Search by outward no, party name..."
-                  className="form-control ps-5 border-light search-bar"
-                  style={{ height: '42px', borderRadius: '10px'}}
-                  value={filters.search}
-                  onChange={(e) => dispatch(setOutwardFilters({ search: e.target.value }))}
-                />
+        <div className="card filter-card">
+            <div className="filter-bar-row">
+              <div className="filter-item-search">
+                <div className="search-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search by outward no, party name..."
+                    className="form-control search-bar"
+                    value={filters.search}
+                    onChange={(e) => dispatch(setOutwardFilters({ search: e.target.value }))}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="col-lg-2 col-md-6">
-              <select className="form-select border-light  text-dark" 
-                style={{ height: '42px', borderRadius: '10px'}}
-                value={filters.status} onChange={(e) => dispatch(setOutwardFilters({ status: e.target.value as any }))}>
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-            <div className="col-auto ms-auto d-flex align-items-center gap-2">
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+              <div className="filter-item-select">
+                <select className="form-select search-bar" 
+                  value={filters.status} 
+                  onChange={(e) => dispatch(setOutwardFilters({ status: e.target.value as any }))}>
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div className="date-filter-group">
                 <input 
                   type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
-                  style={{ fontSize: '0.85rem' }}
+                  className="text-muted" 
                   value={filters.fromDate}
                   onChange={(e) => dispatch(setOutwardFilters({ fromDate: e.target.value }))}
                 />
-                </div>
-                 <span className="text-muted small fw-bold mx-1">TO</span>
-                 <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-                    <input 
-                      type="date" 
-                       className="form-control py-1 border-0 shadow-none bg-transparent" 
-                      style={{ fontSize: '0.85rem' }}
-                      value={filters.toDate}
-                      onChange={(e) => dispatch(setOutwardFilters({ toDate: e.target.value }))}
-                    />
-                 </div>
-               </div>
+                <span className="text-muted small fw-bold mx-1">TO</span>
+                <input 
+                  type="date" 
+                  className="text-muted" 
+                  value={filters.toDate}
+                  onChange={(e) => dispatch(setOutwardFilters({ toDate: e.target.value }))}
+                />
+              </div>
             </div>
-          </div>
+        </div>
 
         <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
           <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
             {loading ? <Loader text="Loading Records..." /> : (
               <table className="table align-middle mb-0 table-hover">
                 <thead className="bg-light">
-                  <tr className="text-uppercase small fw-bold text-muted">
+                  <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-4 border-0">SNO</th>
                     <th className="py-4 border-0">OUTWARD NO</th>
                     <th className="py-4 border-0">PARTY (CUSTOMER/VENDOR)</th>
@@ -186,7 +181,7 @@ export default function OutwardListPage() {
                          </span>
                       </td>
                       <td><span className="badge bg-light text-dark border-0 shadow-inner px-2 py-1 fw-bold" style={{ borderRadius: '6px' }}>{item.invoiceReference || '-'}</span></td>
-                      <td className="text-muted small fw-bold text-uppercase">{item.vehicleNo || '-'}</td>
+                      <td className="text-muted small fw-bold text-capitalize">{item.vehicleNo || '-'}</td>
                       <td className="text-muted small fw-bold">{item.date}</td>
                       <td>
                         <span className={`badge rounded-pill px-3 py-1 small fw-bold ${item.status==='completed'?'bg-success-subtle text-success':'bg-warning-subtle text-warning'}`}>

@@ -179,11 +179,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         <form onSubmit={handleSubmit}>
           <div className="row g-4 mb-5">
             <div className="col-md-6 d-flex align-items-center gap-3">
-              <label className="text-muted small fw-bold col-2">Date</label>
               <input
                 type="date"
-                className="form-control border-0 border-bottom rounded-0 shadow-none px-0"
-                style={{ borderBottomStyle: 'dotted' as any }}
+                className="form-control"
                 value={formData.date}
                 onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
                 disabled={mode === 'view'}
@@ -193,7 +191,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               <label className="text-muted small fw-bold col-3">Cheque No</label>
               <input
                 type="text"
-                className="form-control border-0 border-bottom rounded-0 shadow-none px-2"
+                className="form-control"
                 placeholder="Cheque No"
                 value={formData.chequeNo}
                 onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value }))}
@@ -203,13 +201,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             <div className="col-md-12 d-flex align-items-center gap-3">
               <label className="text-muted small fw-bold col-1">Customer</label>
               {initialData ? (
-                <div className="w-100 text-center fw-900 text-uppercase fs-3 tracking-tighter" style={{ borderBottom: '2px dotted #ddd', paddingBottom: '5px', color: '#000' }}>
+                <div className="w-100 text-center fw-900 text-uppercase fs-3 tracking-tighter" style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', color: '#000', backgroundColor: '#f8fafc' }}>
                   {formData.customerName || 'LOADING CUSTOMER...'}
                 </div>
               ) : (
                 <select
-                  className="form-select border-0 border-bottom rounded-0 shadow-none px-0 text-center fw-bold text-uppercase fs-5"
-                  style={{ borderBottomStyle: 'dotted' as any }}
+                  className="form-select text-center fw-bold text-uppercase fs-5"
                   value={formData.customerId}
                   onChange={handleCustomerChange}
                   required
@@ -283,23 +280,23 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               <>
                 <button 
                   type="submit" 
-                  className="btn btn-success px-5 rounded-1 fw-bold border-0 d-flex align-items-center gap-2" 
-                  style={{ backgroundColor: '#00a65a', minWidth: '120px' }}
+                  className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2" 
+                  style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px' }}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
                       <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      <span>ADD...</span>
+                      <span>SUBMITTING...</span>
                     </>
                   ) : (
-                    mode === 'create' ? 'ADD' : 'SAVE'
+                    mode === 'create' ? 'SUBMIT' : 'SAVE CHANGES'
                   )}
                 </button>
-                <button type="button" className="btn btn-danger px-4 rounded-1 fw-bold border-0" style={{ backgroundColor: '#dd4b39' }} onClick={() => router.push(redirectPath)}>CANCEL</button>
+                <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.push(redirectPath)}>CLEAR</button>
               </>
             ) : (
-              <button type="button" className="btn btn-secondary px-5 rounded-1 fw-bold border-0" onClick={() => router.push(redirectPath)}>BACK</button>
+              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push(redirectPath)}>BACK TO LIST</button>
             )}
           </div>
         </form>

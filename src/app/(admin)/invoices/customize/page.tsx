@@ -56,7 +56,7 @@ const InvoiceCustomizePage = () => {
               <div className="card-header bg-dark text-white py-3 px-4 d-flex justify-content-between align-items-center">
                 <div className="d-flex align-items-center gap-2">
                   <div className="spinner-grow spinner-grow-sm text-success" role="status"></div>
-                  <span className="small fw-bold text-uppercase tracking-wider">Live Template Preview</span>
+                  <span className="small fw-bold text-capitalize tracking-wider">Live Template Preview</span>
                 </div>
                 <div className="badge bg-primary rounded-pill">A4 Standard</div>
               </div>

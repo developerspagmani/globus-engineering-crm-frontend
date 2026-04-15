@@ -50,7 +50,7 @@ export default function RecordVisitPage() {
           </div>
           
           {loading ? (
-            <div className="text-center p-5"><div className="spinner-border text-primary"></div></div>
+            <div className="text-center p-5"><div className="spinner-border text-secondary"></div></div>
           ) : error ? (
             <div className="alert alert-danger rounded-4 border-0 shadow-sm">{error}</div>
           ) : store ? (

@@ -58,7 +58,7 @@ const StoreList: React.FC = () => {
 
   const areas = Array.from(new Set(stores.map(s => s.area).filter(Boolean)));
 
-  if (!mounted || loading) return <div className="text-center p-5 mt-5"><div className="spinner-border text-primary"></div></div>;
+  if (!mounted || loading) return <div className="text-center p-5 mt-5"><div className="spinner-border text-secondary"></div></div>;
 
   return (
     <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
@@ -70,22 +70,6 @@ const StoreList: React.FC = () => {
           <p className="text-muted small mb-0">Manage your assigned retail shops and field activity logs across all clusters.</p>
         </div>
         <div className="d-flex align-items-center gap-2">
-          <ExportExcel
-            data={stores}
-            fileName="Retail_Store_List"
-            headers={{ name: 'Shop Name', ownerName: 'Owner', phone: 'Phone', area: 'Area' }}
-            buttonText="Export List"
-          />
-          {hasPermission('canCreate') && (
-            <button 
-              className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
-              onClick={() => router.push('/stores/manage-visits')}
-              style={{ height: '42px', borderRadius: '10px' }}
-            >
-              <i className="bi bi-clipboard2-check-fill"></i>
-              <span className="fw-800 small text-uppercase">Register Visit</span>
-            </button>
-          )}
           {hasPermission('canCreate') && (
             <button 
               className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
@@ -93,58 +77,54 @@ const StoreList: React.FC = () => {
               style={{ height: '42px', borderRadius: '10px' }}
             >
               <i className="bi bi-shop-window"></i>
-              <span className="fw-800 small text-uppercase">Add New Store</span>
+              <span className="fw-800 small text-capitalize">Add Store</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="card border-0 shadow-md mb-4 rounded-4 overflow-hidden">
-        <div className="card-body p-3 bg-white">
-          <div className="row g-3 align-items-center">
-            <div className="col-md-6">
-              <div className="input-group input-group-sm">
-                <span className="input-group-text bg-light border-0"><i className="bi bi-search text-muted"></i></span>
+      <div className="card filter-card">
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
                 <input 
                   type="text" 
-                  className="form-control border-0 bg-light py-2" 
+                  className="form-control search-bar" 
                   placeholder="Search by shop name or owner..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setStoreFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
-            <div className="col-md-3">
+            
+            <div className="filter-item-select">
               <select 
-                className="form-select form-select-sm border-0 bg-light py-2 fw-700 text-muted" 
+                className="form-select search-bar" 
                 value={filters.area}
                 onChange={(e) => dispatch(setStoreFilters({ area: e.target.value }))}
               >
-                <option value="all">AREAS</option>
-                {areas.map(area => <option key={area} value={area || ''}>{String(area).toUpperCase()}</option>)}
+                <option value="all">Areas</option>
+                {areas.map(area => <option key={area} value={area || ''}>{area}</option>)}
               </select>
             </div>
-            <div className="col-md-2 text-end">
-              {/* <button className="btn btn-light btn-sm w-100 fw-800 text-muted border-0 py-2">
-                <i className="bi bi-funnel me-2"></i> FILTERS
-              </button> */}
-            </div>
           </div>
-        </div>
       </div>
 
       {/* Data Table */}
       <div className="table-responsive pb-5" style={{ minHeight: '350px' }}>
         <table className="table table-hover align-middle mb-0">
           <thead>
-            <tr>
-              <th className="ps-4">SHOP NAME</th>
-              <th>OWNER</th>
-              <th>PHONE</th>
-              <th>AREA / CLUSTER</th>
-              <th>LAST VISIT</th>
-              <th className="text-end pe-4">ACTIONS</th>
+            <tr className="bg-light">
+              <th className="ps-4 py-3 border-0 small fw-bold text-muted">Shop Name</th>
+              <th className="py-3 border-0 small fw-bold text-muted">Owner</th>
+              <th className="py-3 border-0 small fw-bold text-muted">Phone</th>
+              <th className="py-3 border-0 small fw-bold text-muted">Area / Cluster</th>
+              <th className="py-3 border-0 small fw-bold text-muted">Last Visit</th>
+              <th className="text-end pe-4 py-3 border-0 small fw-bold text-muted">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -156,15 +136,15 @@ const StoreList: React.FC = () => {
                       {store.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h6 className="fw-800 mb-0 small text-dark">{store.name.toUpperCase()}</h6>
+                      <h6 className="fw-800 mb-0 small text-dark text-capitalize">{store.name}</h6>
                     </div>
                   </div>
                 </td>
-                <td><span className="small fw-700 text-dark opacity-75">{store.ownerName?.toUpperCase() || 'N/A'}</span></td>
+                <td><span className="small fw-700 text-dark opacity-75 text-capitalize">{store.ownerName || 'N/A'}</span></td>
                 <td><span className="small fw-700 text-muted">{store.phone}</span></td>
                 <td>
-                  <span className="badge bg-light text-primary px-3 py-2 rounded-pill fw-800 tracking-wider" style={{ fontSize: '0.65rem' }}>
-                    {store.area?.toUpperCase() || 'GENERAL'}
+                  <span className="badge bg-light text-primary px-3 py-2 rounded-pill fw-800 tracking-wider text-capitalize" style={{ fontSize: '0.65rem' }}>
+                    {store.area || 'General'}
                   </span>
                 </td>
                 <td>
@@ -194,13 +174,13 @@ const StoreList: React.FC = () => {
                       </button>
                       <ul className="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2">
                         <li>
-                          <button className="dropdown-item d-flex align-items-center gap-2 rounded-3 py-2 small fw-700" onClick={() => router.push(`/stores/edit/${store.id}`)}>
-                            <i className="bi bi-pencil-square text-primary"></i> EDIT PROFILE
+                          <button className="dropdown-item d-flex align-items-center gap-2 rounded-3 py-2 small fw-700 text-capitalize" onClick={() => router.push(`/stores/edit/${store.id}`)}>
+                            <i className="bi bi-pencil-square text-primary"></i> Edit Profile
                           </button>
                         </li>
                         <li>
-                          <button className="dropdown-item d-flex align-items-center gap-2 rounded-3 py-2 small fw-700 text-danger" onClick={() => handleDelete(store.id)}>
-                            <i className="bi bi-trash3"></i> DELETE STORE
+                          <button className="dropdown-item d-flex align-items-center gap-2 rounded-3 py-2 small fw-700 text-danger text-capitalize" onClick={() => handleDelete(store.id)}>
+                            <i className="bi bi-trash3"></i> Delete Store
                           </button>
                         </li>
                       </ul>
@@ -215,7 +195,7 @@ const StoreList: React.FC = () => {
         {filteredStores.length === 0 && (
           <div className="text-center p-5 bg-white rounded-4 border m-4">
             <i className="bi bi-shop display-4 text-muted mb-3 d-block opacity-25"></i>
-            <h5 className="text-muted fw-800 tracking-tight">NO STORES FOUND</h5>
+            <h5 className="text-muted fw-800 tracking-tight text-capitalize">No Stores Found</h5>
             <p className="small text-muted fw-600">Try adjusting your filters or search keywords.</p>
           </div>
         )}

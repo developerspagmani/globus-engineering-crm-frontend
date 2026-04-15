@@ -29,6 +29,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
 
   React.useEffect(() => {
     if (searchParams.get('print') === 'true') {
+      // Small delay to ensure styles are loaded
       setTimeout(() => {
         window.print();
       }, 500);
@@ -42,9 +43,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   const accentColor = settings.accentColor || '#0d6efd';
 
   return (
-    <div className="invoice-preview-wrapper">
+    <div className="invoice-preview-page">
       {!hideControls && (
-        <div className="preview-controls no-print d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-4 shadow-sm border mx-auto" style={{ maxWidth: '1000px' }}>
+        <div className="d-flex justify-content-between align-items-center mb-4 no-print flex-wrap gap-3 p-3 bg-white rounded-4 shadow-sm border">
           <div className="d-flex align-items-center gap-3">
             <button
               onClick={() => router.back()}
@@ -55,20 +56,20 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               <i className="bi bi-chevron-left"></i>
             </button>
             <h4 className="m-0 fw-bold text-dark">Invoice Preview</h4>
-
+            
             <div className="declaration-toggle-wrapper ms-3">
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={settings.showDeclaration}
-                  onChange={toggleDeclaration}
-                />
-                <span className="slider round"></span>
-                <span className="label-text">Declaration</span>
-              </label>
+               <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={settings.showDeclaration}
+                    onChange={toggleDeclaration}
+                  />
+                  <span className="slider round"></span>
+                  <span className="label-text">Declaration</span>
+               </label>
             </div>
           </div>
-
+          
           <div className="d-flex gap-2">
             {!isReadOnly && (
               <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill">
@@ -90,14 +91,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
       </div>
 
       <style jsx>{`
-        .invoice-preview-wrapper {
-          background-color: #f1f5f9;
-          min-height: 100vh;
-          padding: 20px 0;
-        }
-        .preview-controls {
-           width: 100%;
-           z-index: 1000;
+        .print-area {
+          width: 210mm;
+          margin-bottom: 50px;
         }
         .switch {
           position: relative;
@@ -137,39 +133,28 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
             size: A4; 
             margin: 0 !important; 
           }
-          
-          /* Hide everything first */
-          body * {
-            visibility: hidden !important;
+          .no-print, .declaration-toggle-wrapper { display: none !important; }
+          body { 
+            background: white !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            -webkit-print-color-adjust: exact !important;
           }
-          
-          /* Show only the invoice preview and its children */
-          .invoice-preview-wrapper, .invoice-preview-wrapper * {
-            visibility: visible !important;
-          }
-          
-          /* Position it at the top-left */
-          .invoice-preview-wrapper {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 210mm !important;
+          .invoice-preview-page {
             padding: 0 !important;
             margin: 0 !important;
-            background: white !important;
-            display: block !important;
           }
-          
-          .no-print, .preview-controls, .d-print-none { 
-            display: none !important; 
-            visibility: hidden !important;
-          }
-          
           .print-area { 
             margin: 0 !important; 
             padding: 0 !important;
-            width: 100% !important;
-            display: block !important;
+            width: 198mm !important;
+            height: auto !important;
+            max-width: none !important; 
+            float: left !important;
+          }
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
           }
         }
       `}</style>

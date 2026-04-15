@@ -117,7 +117,7 @@ export default function GstLookupPage() {
                                        </span>
                                        <input
                                            type="text"
-                                           className="form-control form-control-lg ps-5 border-2 rounded-3 text-uppercase fw-bold tracking-widest"
+                                           className="form-control form-control-lg ps-5 border-2 rounded-3 text-capitalize fw-bold tracking-widest"
                                            placeholder="Enter 15-digit GSTIN..."
                                            style={{ height: '60px', fontSize: '1.2rem' }}
                                            value={gstin}
@@ -145,7 +145,7 @@ export default function GstLookupPage() {
 
                            {recentSearches.length > 0 && !data && !loading && (
                                <div className="mt-4 pt-3 border-top">
-                                   <h6 className="x-small fw-800 text-muted text-uppercase tracking-widest mb-3">Recent Inquiries</h6>
+                                   <h6 className="x-small fw-800 text-muted text-capitalize tracking-widest mb-3">Recent Inquiries</h6>
                                    <div className="d-flex flex-wrap gap-2">
                                        {recentSearches.map(item => (
                                            <button 
@@ -183,7 +183,7 @@ export default function GstLookupPage() {
                                     <div className="d-flex justify-content-between align-items-start">
                                         <div>
                                             <span className="badge bg-primary-soft text-primary px-3 py-1 rounded-pill x-small fw-800 mb-2">AUTH-VERIFIED</span>
-                                            <h2 className="fw-800 text-dark mb-1 text-uppercase">{data.legalName}</h2>
+                                            <h2 className="fw-800 text-dark mb-1 text-capitalize">{data.legalName}</h2>
                                             <div className="d-flex align-items-center gap-2 text-muted small">
                                                 <i className="bi bi-hash"></i>
                                                 <span className="fw-bold tracking-widest">{data.gstin}</span>
@@ -198,43 +198,43 @@ export default function GstLookupPage() {
                                     <div className="row g-4 mt-1">
                                         <div className="col-md-6 col-lg-4">
                                             <div className="p-3 bg-light rounded-3 h-100">
-                                                <label className="xx-small fw-800 text-muted text-uppercase tracking-widest d-block mb-1">Trading Name</label>
+                                                <label className="xx-small fw-800 text-muted text-capitalize tracking-widest d-block mb-1">Trading Name</label>
                                                 <span className="fw-bold text-dark small">{data.tradeName || 'N/A'}</span>
                                             </div>
                                         </div>
                                         <div className="col-md-6 col-lg-4">
                                             <div className="p-3 bg-light rounded-3 h-100">
-                                                <label className="xx-small fw-800 text-muted text-uppercase tracking-widest d-block mb-1">Reg. Date</label>
+                                                <label className="xx-small fw-800 text-muted text-capitalize tracking-widest d-block mb-1">Reg. Date</label>
                                                 <span className="fw-bold text-dark small">{data.registrationDate}</span>
                                             </div>
                                         </div>
                                         <div className="col-md-6 col-lg-4">
                                             <div className="p-3 bg-light rounded-3 h-100">
-                                                <label className="xx-small fw-800 text-muted text-uppercase tracking-widest d-block mb-1">Constitution</label>
+                                                <label className="xx-small fw-800 text-muted text-capitalize tracking-widest d-block mb-1">Constitution</label>
                                                 <span className="fw-bold text-dark small">{data.constitution}</span>
                                             </div>
                                         </div>
                                         <div className="col-md-6 col-lg-4">
                                             <div className="p-3 bg-light rounded-3 h-100">
-                                                <label className="xx-small fw-800 text-muted text-uppercase tracking-widest d-block mb-1">Taxpayer Type</label>
+                                                <label className="xx-small fw-800 text-muted text-capitalize tracking-widest d-block mb-1">Taxpayer Type</label>
                                                 <span className="fw-bold text-dark small">{data.taxpayerType}</span>
                                             </div>
                                         </div>
                                         <div className="col-md-6 col-lg-8">
                                             <div className="p-3 bg-light rounded-3 h-100">
-                                                <label className="xx-small fw-800 text-muted text-uppercase tracking-widest d-block mb-1">Principal Place of Business</label>
+                                                <label className="xx-small fw-800 text-muted text-capitalize tracking-widest d-block mb-1">Principal Place of Business</label>
                                                 <span className="fw-bold text-dark small">{data.address}</span>
                                             </div>
                                         </div>
                                         <div className="col-md-6 col-lg-6">
                                             <div className="p-3 bg-light rounded-3 h-100">
-                                                <label className="xx-small fw-800 text-muted text-uppercase tracking-widest d-block mb-1">State Jurisdiction</label>
+                                                <label className="xx-small fw-800 text-muted text-capitalize tracking-widest d-block mb-1">State Jurisdiction</label>
                                                 <span className="fw-bold text-dark small">{data.stateJurisdiction}</span>
                                             </div>
                                         </div>
                                         <div className="col-md-6 col-lg-6">
                                             <div className="p-3 bg-light rounded-3 h-100">
-                                                <label className="xx-small fw-800 text-muted text-uppercase tracking-widest d-block mb-1">Central Jurisdiction</label>
+                                                <label className="xx-small fw-800 text-muted text-capitalize tracking-widest d-block mb-1">Central Jurisdiction</label>
                                                 <span className="fw-bold text-dark small">{data.centerJurisdiction}</span>
                                             </div>
                                         </div>

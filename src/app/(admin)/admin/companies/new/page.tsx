@@ -38,7 +38,7 @@ export default function NewCompanyPage() {
     <div className="animate-fade-in">
       <div className="mb-5 d-flex align-items-center pb-2 border-bottom">
         <Link href="/admin/companies" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Companies">
-          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+          <i className="bi bi-arrow-left fs-3 text-muted"></i>
         </Link>
         <div>
           
@@ -50,6 +50,9 @@ export default function NewCompanyPage() {
       <CompanyForm mode="create" />
     </div>
   );
+}
+
+
 }
 
 

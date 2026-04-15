@@ -40,7 +40,7 @@ export default function EditLeadPage() {
     <div className="content-area animate-fade-in">
       <div className="mb-4 d-flex align-items-center border-bottom pb-3">
         <Link href="/leads" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Leads">
-          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+          <i className="bi bi-arrow-left fs-3 text-muted"></i>
         </Link>
         <div>
           <Breadcrumb 
@@ -70,4 +70,6 @@ export default function EditLeadPage() {
       </div>
     </div>
   );
+}
+);
 }

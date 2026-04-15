@@ -36,7 +36,7 @@ export default function EditInwardPage() {
                 className="btn btn-outline-secondary border-0 p-0 me-3"
                 title="Back to Previous Page"
               >
-                <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+                <i className="bi bi-arrow-left fs-3 text-muted"></i>
               </button>
               <div>
                 <h2 className="fw-bold mb-0">{isEdit ? 'Edit' : 'View'} Inward: {inward.inwardNo}</h2>
@@ -58,4 +58,6 @@ export default function EditInwardPage() {
       </div>
     </ModuleGuard>
   );
+}
+);
 }

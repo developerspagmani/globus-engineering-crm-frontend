@@ -10,7 +10,7 @@ export default function NewUserPage() {
     <div className="container-fluid py-4 animate-fade-in">
       <div className="mb-4 d-flex align-items-center">
         <Link href="/users" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to User Management">
-          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+          <i className="bi bi-arrow-left fs-3 text-muted"></i>
         </Link>
         <div>
           <Breadcrumb 
@@ -27,4 +27,6 @@ export default function NewUserPage() {
       <CompanyUserForm mode="create" />
     </div>
   );
+}
+);
 }

@@ -55,7 +55,7 @@ const InvoiceSettings: React.FC = () => {
   };
 
   return (
-    <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div className="card border-0 shadow-sm overflow-hidden">
       <div className="card-body p-0">
         <div className="p-4 border-bottom bg-light bg-opacity-50">
           <h5 className="fw-bold mb-1">Invoice Configuration</h5>
@@ -75,7 +75,7 @@ const InvoiceSettings: React.FC = () => {
               {/* Branding Section */}
               <div className="col-12">
                 <div className="d-flex align-items-center gap-2 mb-3">
-                  <div className="bg-primary bg-opacity-10 p-2 rounded-3 text-primary">
+                  <div className="bg-primary bg-opacity-10 p-2 text-primary">
                     <i className="bi bi-brush fs-5"></i>
                   </div>
                   <h6 className="fw-bold mb-0">Branding & Identity</h6>
@@ -85,7 +85,7 @@ const InvoiceSettings: React.FC = () => {
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold mb-2">Primary Logo (Left)</label>
                     <div 
-                      className="ratio ratio-16x9 bg-light rounded-4 border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
+                      className="ratio ratio-16x9 bg-light border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
                       style={{ borderStyle: 'dashed' }}
                     >
@@ -110,7 +110,7 @@ const InvoiceSettings: React.FC = () => {
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold mb-2">Secondary Logo (Right)</label>
                     <div 
-                      className="ratio ratio-16x9 bg-light rounded-4 border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
+                      className="ratio ratio-16x9 bg-light border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
                       onClick={() => secondaryFileInputRef.current?.click()}
                       style={{ borderStyle: 'dashed' }}
                     >
@@ -153,7 +153,7 @@ const InvoiceSettings: React.FC = () => {
                       <div className="d-flex align-items-center gap-3">
                         <input 
                           type="color" 
-                          className="form-control form-control-color border-0 p-1 rounded-circle" 
+                          className="form-control form-control-color border-0 p-1" 
                           title="Choose your color"
                           name="accentColor"
                           value={formData.accentColor}
@@ -178,7 +178,7 @@ const InvoiceSettings: React.FC = () => {
               {/* Numbering Section */}
               <div className="col-12">
                 <div className="d-flex align-items-center gap-2 mb-3">
-                  <div className="bg-success bg-opacity-10 p-2 rounded-3 text-success">
+                  <div className="bg-success bg-opacity-10 p-2 text-success">
                     <i className="bi bi-hash fs-5"></i>
                   </div>
                   <h6 className="fw-bold mb-0">Sequence & Numbering</h6>
@@ -211,15 +211,6 @@ const InvoiceSettings: React.FC = () => {
 
               <hr className="my-2 opacity-5" />
 
-              {/* Terms & Footer Section */}
-              <div className="col-12">
-                <div className="d-flex align-items-center gap-2 mb-3">
-                  <div className="bg-info bg-opacity-10 p-2 rounded-3 text-info">
-                    <i className="bi bi-file-text fs-5"></i>
-                  </div>
-                  <h6 className="fw-bold mb-0">Default Content</h6>
-                </div>
-
                 <div className="mb-4">
                   <div className="form-check form-switch custom-switch mb-3">
                     <input 
@@ -245,7 +236,7 @@ const InvoiceSettings: React.FC = () => {
                   <div className="text-muted x-small mt-1 text-end">This will appear at the bottom-left of your invoices.</div>
                 </div>
 
-                <div>
+                <div className="mb-4">
                   <label className="form-label small text-muted text-uppercase fw-bold">Footer Note</label>
                   <input 
                     type="text" 
@@ -257,12 +248,50 @@ const InvoiceSettings: React.FC = () => {
                   />
                   <div className="text-muted x-small mt-1 text-end">A short closing message centered at the very bottom.</div>
                 </div>
-              </div>
+
+                <hr className="my-2 opacity-5" />
+
+                <div className="row g-4 mt-2">
+                  <div className="col-12">
+                    <div className="d-flex align-items-center gap-2 mb-3">
+                      <div className="bg-primary bg-opacity-10 p-2 text-primary">
+                        <i className="bi bi-bank fs-5"></i>
+                      </div>
+                      <h6 className="fw-bold mb-0">Banking & Company Details</h6>
+                    </div>
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">VAT TIN</label>
+                    <input type="text" className="form-control" name="vatTin" value={(formData as any).vatTin} onChange={handleInputChange} />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">CST NO</label>
+                    <input type="text" className="form-control" name="cstNo" value={(formData as any).cstNo} onChange={handleInputChange} />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">PAN NO</label>
+                    <input type="text" className="form-control" name="panNo" value={(formData as any).panNo} onChange={handleInputChange} />
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Bank Name</label>
+                    <input type="text" className="form-control" name="bankName" value={(formData as any).bankName} onChange={handleInputChange} />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Bank Account Number</label>
+                    <input type="text" className="form-control" name="bankAcc" value={(formData as any).bankAcc} onChange={handleInputChange} />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Branch & IFSC Code</label>
+                    <input type="text" className="form-control" name="bankBranchIfsc" value={(formData as any).bankBranchIfsc} onChange={handleInputChange} />
+                  </div>
+                </div>
 
               <div className="col-12 mt-4 pt-2">
                 <button 
                   type="submit" 
-                  className="btn btn-dark px-5 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2"
+                  className="btn btn-dark px-5 py-2 shadow-sm d-flex align-items-center gap-2"
                   disabled={saving}
                 >
                   {saving ? (

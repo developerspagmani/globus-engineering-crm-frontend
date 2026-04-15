@@ -146,7 +146,7 @@ export default function LedgerPage() {
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Ledger Export</title>');
-    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: "Roboto", sans-serif;} th, td {border: 1px solid #ddd; padding: 10px; text-align: left;} th {background-color: #f2f2f2;} .text-uppercase {text-transform: uppercase;}</style>');
+    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: "Roboto", sans-serif;} th, td {border: 1px solid #ddd; padding: 10px; text-align: left;} th {background-color: #f2f2f2;} .text-capitalize {text-transform: uppercase;}</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<h2 style="text-align: center;">Globus Engineering CRM - Ledger Report</h2>');
     printWindow.document.write(printTable.outerHTML);
@@ -320,80 +320,68 @@ export default function LedgerPage() {
               headers={{ id: 'Entry ID', date: 'Date', detail: 'Description', debit: 'Debit', credit: 'Credit' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
             {mounted && checkActionPermission(currentUser, 'mod_ledger', 'create') && (
               <Link
                 href="/ledger/new-entry"
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
                 <i className="bi bi-plus-lg"></i>
-                <span className="fw-800 small text-uppercase">Add New Entry</span>
+                <span>Add Entry</span>
               </Link>
             )}
           </div>
         </div>
 
         {/* Filter Row */}
-        <div className="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden">
-          <div className="card-body py-3">
-            <div className="d-flex flex-wrap align-items-center gap-2">
-              {/* Search Bar */}
-              <div className="flex-grow-1" style={{ minWidth: '350px' }}>
-                <div className="input-group">
-                  <span className="input-group-text bg-white border-end-0 py-3 px-3">
-                    <i className="bi bi-search text-muted small"></i>
+        <div className="card filter-card">
+            <div className="filter-bar-row">
+              <div className="filter-item-search">
+                <div className="search-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-search"></i>
                   </span>
                   <input 
                     type="text" 
-                    className="form-control border-start-0 ps-0 search-bar shadow-none" 
-                    placeholder="Search by Party Name, City or State..." 
+                    className="form-control search-bar" 
+                    placeholder="Search by party name, city or state..." 
                     value={filters.search}
                     onChange={(e) => dispatch(setLedgerFilters({ search: e.target.value }))}
-                    style={{ height: '42px' }}
                   />
                 </div>
               </div>
-              
-              {/* Date Filters */}
-              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '10px', height: '42px' }}>
-                <input 
-                  type="date" 
-                  className="form-control border-0 shadow-none bg-transparent" 
-                  value={filters.dateFrom}
-                  onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
-                  style={{ width: '135px' }}
-                />
-              </div>
-              <span className="text-muted small fw-bold mx-1">TO</span>
-              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '10px', height: '42px' }}>
-                <input 
-                  type="date" 
-                  className="form-control border-0 shadow-none bg-transparent small" 
-                  value={filters.dateTo}
-                  onChange={(e) => dispatch(setLedgerFilters({ dateTo: e.target.value }))}
-                  style={{ width: '135px' }}
-                />
-              </div>
 
-              {/* Party Type Filter */}
-              <div className="ms-auto d-flex align-items-center gap-2">
+              <div className="filter-item-select">
                  <select 
-                    className="form-select border-0 shadow-sm bg-light fw-bold small text-primary"
+                    className="form-select search-bar"
                     value={partyTypeFilter}
                     onChange={(e) => setPartyTypeFilter(e.target.value as any)}
-                    style={{ width: '140px', borderRadius: '10px', height: '42px' }}
                  >
-                    <option value="all">ALL PARTIES</option>
-                    <option value="customer">CUSTOMERS</option>
-                    <option value="vendor">VENDORS</option>
+                    <option value="all">All Parties</option>
+                    <option value="customer">Customers</option>
+                    <option value="vendor">Vendors</option>
                  </select>
               </div>
+              
+              <div className="date-filter-group">
+                <input 
+                  type="date" 
+                  className="text-muted"
+                  value={filters.dateFrom}
+                  onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
+                />
+                <span className="text-muted small fw-bold mx-1">To</span>
+                <input 
+                  type="date" 
+                  className="text-muted"
+                  value={filters.dateTo}
+                  onChange={(e) => dispatch(setLedgerFilters({ dateTo: e.target.value }))}
+                />
+              </div>
             </div>
-          </div>
         </div>
 
         {/* Dynamic Table from Ledger */}
@@ -402,12 +390,12 @@ export default function LedgerPage() {
             <table className="table table-hover align-middle mb-0">
               <thead className="bg-light">
                 <tr className="border-bottom">
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider text-center" style={{ width: '60px' }}>Sno</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Party Name</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">Street</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">City</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider">State</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-uppercase tracking-wider text-center px-4" style={{ width: '120px' }}>Action</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-capitalize tracking-wider text-center" style={{ width: '60px' }}>Sno</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-capitalize tracking-wider">Party Name</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-capitalize tracking-wider">Street</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-capitalize tracking-wider">City</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-capitalize tracking-wider">State</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-capitalize tracking-wider text-center px-4" style={{ width: '120px' }}>Action</th>
                 </tr>
               </thead>
               <tbody className="border-top-0">
@@ -429,7 +417,7 @@ export default function LedgerPage() {
                       <td className="text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td>
                         <div className="d-flex flex-column">
-                           <span className="fw-bold text-dark text-uppercase">{party.name}</span>
+                           <span className="fw-bold text-dark text-capitalize">{party.name}</span>
                         </div>
                       </td>
                       <td className="text-muted small">{party.street1 || '-'}</td>

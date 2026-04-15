@@ -10,7 +10,7 @@ export default function NewLeadPage() {
     <div className="content-area animate-fade-in">
       <div className="mb-4 d-flex align-items-center">
         <Link href="/leads" className="back-btn-standard" title="Back to Leads">
-          <i className="bi bi-arrow-left-circle fs-3 "></i>
+          <i className="bi bi-arrow-left fs-3 "></i>
         </Link>
         <div>
           <Breadcrumb 
@@ -31,5 +31,8 @@ export default function NewLeadPage() {
       </div>
     </div>
   );
+}
+
+
 }
 

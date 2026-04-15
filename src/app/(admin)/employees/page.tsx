@@ -88,9 +88,9 @@ const EmployeesPage = () => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
     printWindow.document.write('<html><head><title>Employee Profile</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Workforce Personnel Record</p></div>');
+    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Workforce Personnel Record</p></div>');
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Full Name</div><div class="value">${emp.name}</div></div>`);
     printWindow.document.write(`<div><div class="label">Employee ID</div><div class="value">${emp.employeeId}</div></div>`);
@@ -155,57 +155,42 @@ const EmployeesPage = () => {
               headers={{ firstName: 'First Name', lastName: 'Last Name', designation: 'Designation', department: 'Department', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
             {checkActionPermission(user, 'mod_employee', 'create') && (
-              <Link href="/employees/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+              <Link href="/employees/new" className="btn btn-primary btn-page-action px-4">
                 <i className="bi bi-person-plus-fill"></i>
-                <span className="fw-800 small text-uppercase">Add Employee</span>
+                <span>Add Employee</span>
               </Link>
             )}
           </div>
       </div>
 
       {/* Filters Card */}
-      <div className="card shadow-sm border-0 mb-4 overflow-hidden">
-        <div className="card-body p-3">
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <div className="col-lg-3 col-md-4">
-              <div className="input-group">
-                <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
+      <div className="card filter-card">
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
                 <input 
                   type="text" 
-                  className="form-control border-start-0 ps-0 search-bar" 
+                  className="form-control search-bar" 
                   placeholder="Search employees..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setEmployeeFilters({ search: e.target.value }))}
-                  style={{ height: '42px' }}
                 />
               </div>
             </div>
             
-            <div className="ms-auto d-flex gap-2 align-items-center">
-              <div className="btn-group p-1 bg-light rounded-3 shadow-none d-none d-sm-flex" style={{ height: '42px' }}>
-                {/* <button 
-                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'all' ? 'bg-white shadow-sm fw-700' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setEmployeeFilters({ status: 'all' }))}
-                >All</button>
-                <button 
-                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'active' ? 'bg-white shadow-sm fw-700 text-success' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setEmployeeFilters({ status: 'active' }))}
-                >Active</button> */}
-              </div>
-            </div>
-            <div className="col-lg-2 col-md-3">
+            <div className="filter-item-select">
               <select 
-                className="form-select" 
+                className="form-select search-bar" 
                 value={filters.department}
                 onChange={(e) => dispatch(setEmployeeFilters({ department: e.target.value as any }))}
-                style={{ height: '42px', borderRadius: '8px' }}
               >
                 <option value="all">Departments</option>
                 <option value="Engineering">Engineering</option>
@@ -216,30 +201,21 @@ const EmployeesPage = () => {
               </select>
             </div>
 
-          
-
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+            <div className="date-filter-group">
               <input 
                 type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                className="text-muted" 
                 value={filters.fromDate}
                 onChange={(e) => dispatch(setEmployeeFilters({ fromDate: e.target.value }))}
               />
+              <span className="text-muted small fw-bold mx-1">To</span>
+              <input 
+                type="date" 
+                className="text-muted" 
+                value={filters.toDate}
+                onChange={(e) => dispatch(setEmployeeFilters({ toDate: e.target.value }))}
+              />
             </div>
-                        <span className="text-muted small fw-bold">TO</span>
-
-             <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-               <input 
-                 type="date" 
-                 className="form-control py-1 border-0 shadow-none bg-transparent" 
-                 value={filters.toDate}
-                 onChange={(e) => dispatch(setEmployeeFilters({ toDate: e.target.value }))}
-               />
-            </div>
-          </div>
-
-            
-            
           </div>
         </div>
 
@@ -283,12 +259,12 @@ const EmployeesPage = () => {
                           </div>
                           <div>
                             <div className="fw-bold text-dark mb-0">{emp.name}</div>
-                            <div className="x-small text-muted fw-bold text-uppercase">{emp.employeeId}</div>
+                            <div className="x-small text-muted fw-bold text-capitalize">{emp.employeeId}</div>
                           </div>
                         </div>
                       </td>
                       <td className="text-nowrap text-muted small">
-                        <div className={`fw-bold text-uppercase ${getDeptColor(emp.department)}`}>{emp.department}</div>
+                        <div className={`fw-bold text-capitalize ${getDeptColor(emp.department)}`}>{emp.department}</div>
                         <div className="fw-normal">{emp.designation}</div>
                       </td>
                       <td className="text-nowrap text-muted small">
@@ -302,8 +278,8 @@ const EmployeesPage = () => {
                         {new Date(emp.joiningDate).toLocaleDateString()}
                       </td>
                       <td className="text-center">
-                        <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
-                          {emp.status.toUpperCase().replace('_', ' ')}
+                        <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold text-capitalize">
+                          {emp.status.replace('_', ' ')}
                         </span>
                       </td>
                       <td className="text-center px-4 text-nowrap">

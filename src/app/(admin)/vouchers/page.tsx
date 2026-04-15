@@ -75,9 +75,9 @@ const VoucherPage = () => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
     printWindow.document.write('<html><head><title>Voucher Summary</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Voucher Summary Record</p></div>');
+    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Voucher Summary Record</p></div>');
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Voucher No</div><div class="value">${voucher.voucherNo}</div></div>`);
     printWindow.document.write(`<div><div class="label">Date</div><div class="value">${new Date(voucher.date).toLocaleDateString()}</div></div>`);
@@ -140,45 +140,42 @@ const VoucherPage = () => {
               headers={{ voucherNo: 'Voucher No', type: 'Type', partyName: 'Party', totalAmount: 'Amount', date: 'Date', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
               <i className="bi bi-printer-fill"></i>
-              <span className="fw-800 small text-uppercase">Print List</span>
+              <span>Print List</span>
             </button>
           {checkActionPermission(user, 'mod_voucher', 'create') && (
-            <Link href="/vouchers/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+            <Link href="/vouchers/new" className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-plus-lg"></i>
-              <span className="fw-800 small text-uppercase">New Voucher</span>
+              <span>Add Voucher</span>
             </Link>
           )}
         </div>
       </div>
 
       {/* Filters Card */}
-      <div className="card shadow-sm border-0 mb-4 overflow-hidden">
-        <div className="card-body p-3">
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <div className="flex-grow-1" style={{ minWidth: '300px' }}>
-              <div className="input-group">
-                <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
+      <div className="card filter-card">
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
                 <input 
                   type="text" 
-                  className="form-control border-start-0 ps-0 search-bar" 
+                  className="form-control search-bar" 
                   placeholder="Search by voucher no, party..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setVoucherFilters({ search: e.target.value }))}
-                  style={{ height: '42px' }}
                 />
               </div>
             </div>
             
-            <div style={{ width: '180px' }}>
+            <div className="filter-item-select">
               <select 
-                className="form-select" 
+                className="form-select search-bar" 
                 value={filters.type}
                 onChange={(e) => dispatch(setVoucherFilters({ type: e.target.value as any }))}
-                style={{ height: '42px', borderRadius: '8px' }}
               >
                 <option value="all">All Types</option>
                 <option value="payment">Payment</option>
@@ -188,31 +185,22 @@ const VoucherPage = () => {
               </select>
             </div>
 
-            {/* Date Filters Moved to Right Corner */}
-            <div className="col-auto ms-auto d-flex align-items-center gap-2">
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-                 <input 
-                   type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
-                   value={filters.fromDate}
-                   onChange={(e) => dispatch(setVoucherFilters({ fromDate: e.target.value }))}
-                   style={{ width: '135px', fontSize: '0.85rem' }}
-                 />
-                 </div>
-                 <span className="text-muted small fw-bold mx-1">TO</span>
-                                <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-
-                 <input 
-                  type="date" 
-                  className="form-control py-1 border-0 shadow-none bg-transparent" 
-                  value={filters.toDate}
-                  onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))}
-                  style={{ width: '135px', fontSize: '0.85rem' }}
-                />
-               </div>
+            <div className="date-filter-group">
+              <input 
+                type="date" 
+                className="text-muted" 
+                value={filters.fromDate}
+                onChange={(e) => dispatch(setVoucherFilters({ fromDate: e.target.value }))}
+              />
+              <span className="text-muted small fw-bold mx-1">To</span>
+              <input 
+                type="date" 
+                className="text-muted" 
+                value={filters.toDate}
+                onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))}
+              />
             </div>
           </div>
-        </div>
       </div>
 
       <div className="card border-0 shadow-sm">
@@ -245,7 +233,7 @@ const VoucherPage = () => {
                         <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                         <td className="text-nowrap fw-bold text-dark">
                           {voucher.voucherNo}
-                          <div className={`x-small text-uppercase fw-normal ${getTypeColor(voucher.type)}`}>
+                          <div className={`x-small text-capitalize fw-normal ${getTypeColor(voucher.type)}`}>
                             {voucher.type}
                           </div>
                         </td>
@@ -259,10 +247,10 @@ const VoucherPage = () => {
                             ₹{voucher.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </span>
                         </td>
-                        <td className="text-nowrap text-muted small text-uppercase fw-bold">{voucher.paymentMode}</td>
+                        <td className="text-nowrap text-muted small text-capitalize fw-bold">{voucher.paymentMode}</td>
                         <td className="text-center">
-                          <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold">
-                            {voucher.status.toUpperCase()}
+                          <span className="badge bg-light text-dark border-0 shadow-sm x-small fw-bold text-capitalize">
+                            {voucher.status}
                           </span>
                         </td>
                         <td className="text-center px-4 text-nowrap">

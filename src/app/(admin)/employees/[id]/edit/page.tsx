@@ -55,7 +55,7 @@ const EditEmployeePage = () => {
       </div>
       <div className="mb-4 d-flex align-items-center border-bottom pb-3">
         <button type="button" className="btn btn-outline-secondary border-0 p-0 me-3" onClick={() => router.push('/employees')} title="Back to Employees">
-           <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+           <i className="bi bi-arrow-left fs-3 text-muted"></i>
         </button>
         <div>
           <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">{isEdit ? 'Edit' : 'View'} Employee Profile</h3>
@@ -82,3 +82,4 @@ const EditEmployeePage = () => {
 };
 
 export default EditEmployeePage;
+Page;

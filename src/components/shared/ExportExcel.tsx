@@ -65,20 +65,11 @@ const ExportExcel: React.FC<ExportExcelProps> = ({
   return (
     <button
       onClick={exportToExcel}
-      className={`btn btn-${variant} d-flex align-items-center gap-2 rounded-pill px-3 fw-semibold shadow-sm transition-all ${className}`}
-      style={{ border: variant.includes('success') ? '1.5px solid #198754' : '' }}
+      className={`btn btn-${variant} btn-page-action ${className}`}
+      style={{ border: variant.includes('success') ? '1.5px solid #198754' : undefined }}
     >
       <i className="bi bi-file-earmark-excel-fill"></i>
       <span>{buttonText}</span>
-      <style jsx>{`
-        button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-        }
-        button:active {
-          transform: translateY(0);
-        }
-      `}</style>
     </button>
   );
 };

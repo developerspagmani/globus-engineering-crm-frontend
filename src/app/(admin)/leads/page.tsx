@@ -112,9 +112,9 @@ const LeadsPage = () => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
     printWindow.document.write('<html><head><title>Lead Summary</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Lead Summary Record</p></div>');
+    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Lead Summary Record</p></div>');
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Contact Name</div><div class="value">${lead.name}</div></div>`);
     printWindow.document.write(`<div><div class="label">Company</div><div class="value">${lead.company}</div></div>`);
@@ -163,34 +163,33 @@ const LeadsPage = () => {
             buttonText="Export List"
           />
           {checkActionPermission(user, 'mod_lead', 'create') && (
-            <Link href="/leads/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+            <Link href="/leads/new" className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-funnel-fill"></i>
-              <span className="fw-800 small text-uppercase">Add New Lead</span>
+              <span>Add Lead</span>
             </Link>
           )}
         </div>
       </div>
 
-      <div className="card shadow-sm border-0 mb-4 overflow-hidden">
-        <div className="card-body p-3">
-          <div className="d-flex flex-wrap align-items-center gap-2">
-            <div className="col-lg-3 col-md-4">
-              <div className="input-group">
-                <span className="input-group-text bg-white border-end-0 text-muted ps-3 py-2">
+      <div className="card filter-card">
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
                 <input
                   type="text"
-                  className="form-control border-start-0 ps-0 py-2 search-bar"
+                  className="form-control search-bar"
                   placeholder="Search prospects..."
                   value={filters.search}
                   onChange={(e) => dispatch(setLeadFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
-            <div className="col-lg-2 col-md-3">
+            <div className="filter-item-select">
               <select
-                className="form-select py-2"
+                className="form-select search-bar"
                 value={filters.status}
                 onChange={(e) => dispatch(setLeadFilters({ status: e.target.value as any }))}
               >
@@ -200,20 +199,17 @@ const LeadsPage = () => {
                 <option value="qualified">Qualified</option>
               </select>
             </div>
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+            <div className="date-filter-group">
               <input 
                 type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                className="text-muted" 
                 value={filters.fromDate}
                 onChange={(e) => dispatch(setLeadFilters({ fromDate: e.target.value }))}
               />
-            </div>
-                        <span className="text-muted small fw-bold">TO</span>
-
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+              <span className="text-muted small fw-bold mx-1">To</span>
               <input 
                 type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
+                className="text-muted" 
                 value={filters.toDate}
                 onChange={(e) => dispatch(setLeadFilters({ toDate: e.target.value }))}
               />
@@ -221,7 +217,6 @@ const LeadsPage = () => {
 
             
           </div>
-        </div>
       </div>
 
       <div className="card border-0 shadow-sm overflow-hidden">
@@ -230,11 +225,11 @@ const LeadsPage = () => {
             <table className="table table-hover align-middle mb-0">
           <thead>
             <tr className="bg-light">
-              <th className="px-4 py-3 small fw-800 text-muted text-uppercase tracking-widest border-0">Prospect Info</th>
-              <th className="py-3 small fw-800 text-muted text-uppercase tracking-widest border-0">Source</th>
-              <th className="py-3 small fw-800 text-muted text-uppercase tracking-widest border-0">Status</th>
-              <th className="py-3 small fw-800 text-muted text-uppercase tracking-widest border-0">Industry</th>
-              <th className="py-3 small fw-800 text-muted text-uppercase tracking-widest border-0 text-center px-4">Action</th>
+              <th className="px-4 py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Prospect Info</th>
+              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Source</th>
+              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Status</th>
+              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Industry</th>
+              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0 text-center px-4">Action</th>
             </tr>
           </thead>
           <tbody>

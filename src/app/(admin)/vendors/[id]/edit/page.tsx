@@ -37,7 +37,7 @@ export default function EditVendorPage() {
           <>
             <div className="mb-4 d-flex align-items-center border-bottom pb-3">
               <Link href="/vendors" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Vendors">
-                <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+                <i className="bi bi-arrow-left fs-3 text-muted"></i>
               </Link>
               <div>
                 <h2 className="fw-bold mb-1">{isEdit ? 'Edit Vendor' : 'Vendor Profile'}</h2>
@@ -59,4 +59,6 @@ export default function EditVendorPage() {
       </div>
     </ModuleGuard>
   );
+}
+);
 }

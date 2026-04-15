@@ -63,41 +63,39 @@ const GstReportPage = () => {
 
   return (
     <div className="container-fluid py-4 bg-light min-vh-100 animate-fade-in">
-      <div className="d-flex justify-content-between align-items-center mb-4 px-2">
-        <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'GST Report', active: true }]} /><h2 className="fw-900 mt-2">GST Report</h2><p className="text-muted small">Tax liability analysis and CGST/SGST/IGST breakdown statements.</p></div>
-        <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" onClick={() => { (dispatch as any)(fetchInvoices(activeCompany?.id)); (dispatch as any)(fetchCustomers(activeCompany?.id)); }}>
-          <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
-          <span className="small fw-800 text-muted">Refresh</span>
-        
-        </button>
+      <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
+        <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'GST Report', active: true }]} /><h2 className="fw-900 mt-2">GST Report</h2><p className="text-muted small mb-0">Tax liability analysis and CGST/SGST/IGST breakdown statements.</p></div>
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="GST Analysis Report" />
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchInvoices(activeCompany?.id)); (dispatch as any)(fetchCustomers(activeCompany?.id)); }}>
+            <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
+            <span className="small fw-800 text-muted">Refresh</span>
+          </button>
+        </div>
       </div>
 
       <div className="card shadow-sm border-0 mb-4 rounded-4 overflow-hidden">
         <div className="card-body p-3">
-          <div className="row g-3 align-items-center">
-            <div className="col-md-4">
-              <div className="position-relative">
-                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
                 <input 
                   type="text" 
-                  className="form-control border bg-light-soft ps-5 search-bar shadow-none" 
+                  className="form-control search-bar" 
                   placeholder="Search customer or invoice..." 
                   value={search} 
                   onChange={(e) => setSearch(e.target.value)} 
-                  style={{ height: '42px', borderRadius: '10px' }} 
                 />
               </div>
             </div>
-            <div className="col-auto ms-auto d-flex align-items-center gap-1">
-              {/* Rest of the filter bar... */}
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                </div>
-                <span className="text-muted small fw-bold mx-1">TO</span>
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
-              </div>
-              <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="GST Analysis Report" />
+            
+            <div className="date-filter-group">
+              <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <span className="text-muted small fw-bold mx-1">To</span>
+              <input type="date" className="text-muted" value={toDate} onChange={(e) => setToDate(e.target.value)} />
             </div>
           </div>
         </div>
@@ -113,7 +111,7 @@ const GstReportPage = () => {
             <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
-                  <tr className="text-uppercase small fw-bold text-muted">
+                  <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-3 border-0">Sno</th>
                     <th className="py-3 border-0">Date</th>
                     <th className="py-3 border-0">Invoice No</th>
@@ -132,7 +130,7 @@ const GstReportPage = () => {
                         <td className="px-4 small text-muted font-monospace">{idx + 1}</td>
                         <td className="small text-muted">{inv.date}</td>
                         <td className="text-dark fw-bold">{inv.invoiceNumber}</td>
-                        <td className="fw-800 text-dark small text-uppercase">{inv.customerName}</td>
+                        <td className="fw-800 text-dark small text-capitalize">{inv.customerName}</td>
                         <td className="small text-muted font-monospace">{customer?.gst || '-'}</td>
                         <td className="text-end fw-900 font-monospace px-2">₹{inv.grandTotal.toLocaleString()}</td>
                         <td className="text-center small text-muted font-monospace">₹{inv.taxTotal?.toLocaleString() || '-'}</td>

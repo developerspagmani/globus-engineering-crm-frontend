@@ -9,12 +9,15 @@ export default function CreateInvoicePage() {
   return (
     <ModuleGuard moduleId="mod_invoice">
       <div className="container-fluid py-4">
-        <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link href="/invoices" className="text-decoration-none text-muted small">Invoices</Link></li>
-            <li className="breadcrumb-item active text-muted small">New Invoice</li>
-          </ol>
-        </nav>
+        <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
+          <Link href="/invoices" className="back-btn-standard" title="Back to Invoices">
+            <i className="bi bi-arrow-left fs-4"></i>
+          </Link>
+          <div>
+            <h2 className="fw-bold mb-0 text-dark">Generate GST Invoice</h2>
+            <p className="text-muted small mb-0">Create a professional tax invoice for dispatched goods.</p>
+          </div>
+        </div>
 
         
 

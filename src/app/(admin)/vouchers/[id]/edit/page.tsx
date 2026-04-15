@@ -44,7 +44,7 @@ const EditVoucherPage = () => {
           className="btn btn-outline-secondary border-0 p-0 me-3" 
           title="Back to Previous Page"
         >
-          <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+          <i className="bi bi-arrow-left fs-3 text-muted"></i>
         </button>
         <div>
           <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Voucher: {voucher.voucherNo}</h2>
@@ -71,3 +71,4 @@ const EditVoucherPage = () => {
 };
 
 export default EditVoucherPage;
+Page;

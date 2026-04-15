@@ -65,7 +65,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({ setFromDate, setToDate, t
     printWindow.document.write('table {width:100%; border-collapse: collapse; font-size: 11px;}');
     printWindow.document.write('th, td {border: 1px solid #ddd; padding: 8px; text-align: left; text-transform: uppercase;}');
     printWindow.document.write('th {background-color: #f8f9fa; color: #333; font-weight: bold;}');
-    printWindow.document.write('h2 { color: #2563eb; margin-bottom: 20px; text-align: center; }');
+    printWindow.document.write('h2 { color: #ea580c; margin-bottom: 20px; text-align: center; }');
     printWindow.document.write('</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div>');
@@ -128,20 +128,20 @@ const ReportActions: React.FC<ReportActionsProps> = ({ setFromDate, setToDate, t
        )}
 
        {/* Export Buttons */}
-       <div className="d-flex gap-2 border-start ps-3">
+       <div className="d-flex gap-2 border-start ps-3 ms-auto">
           <button 
             onClick={handlePrint} 
             className="btn btn-outline-primary fw-bold d-flex align-items-center gap-2 px-3 border-light-subtle shadow-sm hover-up btn-sm rounded-pill" 
             style={{ height: '36px' }}
           >
-            <i className="bi bi-printer"></i> PRINT
+            <i className="bi bi-printer"></i> Print
           </button>
           <button 
             onClick={handleExportPDF} 
             className="btn btn-warning text-white fw-bold d-flex align-items-center gap-2 px-3 border-0 shadow-sm hover-up btn-sm rounded-pill" 
             style={{ backgroundColor: '#ff9800', height: '36px' }}
           >
-            <i className="bi bi-file-earmark-pdf"></i> PDF
+            <i className="bi bi-file-earmark-pdf"></i> Pdf
           </button>
        </div>
     </div>

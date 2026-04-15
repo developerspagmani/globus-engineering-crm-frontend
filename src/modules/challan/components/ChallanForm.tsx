@@ -256,7 +256,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                       <td className="p-0 border-0">
                         <input 
                           type="text" 
-                          className="form-control border-0 rounded-0" 
+                          className="form-control" 
                           placeholder="Item details..."
                           value={item.description || ''} 
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
@@ -267,7 +267,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                       <td className="p-0 border-0">
                         <input 
                           type="number" 
-                          className="form-control border-0 rounded-0" 
+                          className="form-control" 
                           value={item.quantity || 0} 
                           onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
                           required 
@@ -277,7 +277,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                       <td className="p-0 border-0">
                         <input 
                           type="text" 
-                          className="form-control border-0 rounded-0" 
+                          className="form-control" 
                           value={item.unit || ''} 
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                           required 
@@ -287,7 +287,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                       <td className="p-0 border-0">
                         <input 
                           type="text" 
-                          className="form-control border-0 rounded-0" 
+                          className="form-control" 
                           value={item.hsnCode || ''} 
                           onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
                           disabled={mode === 'view'}
@@ -356,25 +356,23 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
             </div>
           </div>
 
-          <div className="text-end pt-4 border-top">
-            <button type="button" className="btn btn-link text-muted me-3 fw-700 text-decoration-none" onClick={() => router.push('/challan')}>
-              {mode === 'view' ? 'Back' : 'Cancel'}
-            </button>
-            {mode !== 'view' && (
-              <button 
-                type="submit" 
-                className="btn btn-primary px-5 fw-bold rounded-pill shadow-accent d-flex align-items-center gap-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span>{mode === 'create' ? 'Generating...' : 'Saving...'}</span>
-                  </>
-                ) : (
-                  mode === 'create' ? 'Generate Challan' : 'Save Changes'
-                )}
-              </button>
+          <div className="d-flex justify-content-end gap-2 mt-4">
+            {mode !== 'view' ? (
+              <>
+                <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.push('/challan')}>CLEAR</button>
+                <button type="submit" className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      SUBMITTING...
+                    </>
+                  ) : (
+                    mode === 'create' ? 'SUBMIT' : 'SAVE CHANGES'
+                  )}
+                </button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push('/challan')}>BACK TO LIST</button>
             )}
           </div>
         </form>

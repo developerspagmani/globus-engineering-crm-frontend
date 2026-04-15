@@ -41,13 +41,13 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     <div className={`sidebar bg-white shadow-sm h-100 d-flex flex-column ${collapsed ? 'collapsed' : ''}`} style={{ zIndex: 1000 }}>
       {/* Brand Header */}
       <div className={`d-flex align-items-center mb-2 ${collapsed ? 'justify-content-center py-4' : 'p-4 gap-3'}`}>
-        <div className="bg-primary bg-gradient p-2 rounded-4 shadow-accent d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', minWidth: '40px' }}>
+        <div className="bg-gradient p-2 rounded-4 shadow-accent d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', minWidth: '40px', background: 'var(--primary-gradient)' }}>
           <i className="bi bi-cpu text-white fs-5"></i>
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
             <h6 className="fw-800 mb-0 text-truncate text-dark tracking-tight" style={{ fontSize: '1rem' }}>GLOBUS</h6>
-            <p className="text-primary x-small mb-0 text-truncate text-uppercase fw-700 tracking-widest opacity-80" style={{ fontSize: '0.65rem' }}>Engineering</p>
+            <p className="x-small mb-0 text-truncate text-uppercase fw-700 tracking-widest opacity-80" style={{ fontSize: '0.65rem', color: 'var(--accent-color)' }}>Engineering</p>
           </div>
         )}
       </div>
@@ -82,8 +82,12 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                         <Link
                           key={child.path}
                           href={child.path}
-                          className={`nav-link py-1 small rounded-2 ${pathname === child.path || pathname.startsWith(child.path + '/') ? 'active bg-primary bg-opacity-10 text-primary fw-bold' : 'text-muted'}`}
-                          style={{ fontSize: '0.85rem' }}
+                          className={`nav-link py-1 small rounded-2 ${pathname === child.path || pathname.startsWith(child.path + '/') ? 'active fw-bold' : 'text-muted'}`}
+                          style={{ 
+                            fontSize: '0.85rem',
+                            backgroundColor: (pathname === child.path || pathname.startsWith(child.path + '/')) ? 'var(--accent-soft)' : 'transparent',
+                            color: (pathname === child.path || pathname.startsWith(child.path + '/')) ? 'var(--accent-color)' : ''
+                          }}
                         >
                           {child.name}
                         </Link>

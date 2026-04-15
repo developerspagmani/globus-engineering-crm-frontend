@@ -216,10 +216,16 @@ const initialState: InvoiceState = {
     prefix: 'INV',
     nextNumber: 1,
     showLogo: true,
-    accentColor: '#0d6efd',
+    accentColor: '#ea580c',
     nextInvoice: null,
     nextChallan: null,
     showDeclaration: true,
+    vatTin: '33132028969',
+    cstNo: '1091562',
+    panNo: 'AAIFG6568K',
+    bankName: 'INDIAN OVERSEAS BANK',
+    bankAcc: '170902000000962',
+    bankBranchIfsc: 'IOBA0001709'
   },
 };
 

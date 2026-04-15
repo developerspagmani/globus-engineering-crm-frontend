@@ -24,7 +24,7 @@ const ModuleGuard: React.FC<ModuleGuardProps> = ({ moduleId, children, requiredR
   if (!mounted || (loading && !isAuthenticated)) {
     return (
       <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '600px' }}>
-        <div className="spinner-border text-primary" role="status">
+        <div className="spinner-border text-secondary" role="status">
           <span className="visually-hidden">Loading permissions...</span>
         </div>
       </div>

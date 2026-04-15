@@ -56,14 +56,15 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
-                    <i className="bi bi-building-fill text-primary"></i>
+                    <i className="bi bi-building-fill" style={{ color: 'var(--accent-color)' }}></i>
                     {company?.name || 'Select Company'}
                   </button>
                   <ul className="dropdown-menu shadow border-0 mt-2 py-2 text-decoration-none">
                     <li className="px-3 py-1 text-uppercase x-small fw-800 text-muted tracking-widest border-bottom mb-2 pb-2 text-decoration-none">Switch Context</li>
                     <li>
                         <button 
-                          className={`dropdown-item py-2 d-flex align-items-center gap-2 ${!company ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
+                          className={`dropdown-item py-2 d-flex align-items-center gap-2 ${!company ? 'active fw-700' : ''}`}
+                          style={!company ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
                           onClick={() => dispatch(setCompanyContext(null))}
                         >
                           <i className={`bi bi-globe ${!company ? 'opacity-100' : 'opacity-0'}`}></i>
@@ -73,7 +74,8 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
                     {companies.map((comp) => (
                       <li key={comp.id}>
                         <button 
-                          className={`dropdown-item py-2 d-flex align-items-center gap-2 ${company?.id === comp.id ? 'active bg-primary bg-opacity-10 text-primary fw-700' : ''}`}
+                          className={`dropdown-item py-2 d-flex align-items-center gap-2 ${company?.id === comp.id ? 'active fw-700' : ''}`}
+                          style={company?.id === comp.id ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
                           onClick={() => handleCompanySwitch(comp)}
                         >
                           <i className={`bi bi-check-lg ${company?.id === comp.id ? 'opacity-100' : 'opacity-0'}`}></i>
@@ -91,12 +93,12 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
                 </div>
               ) : (
                 <span className="text-muted d-flex align-items-center gap-2">
-                  <i className="bi bi-building text-primary"></i>
+                  <i className="bi bi-building" style={{ color: 'var(--accent-color)' }}></i>
                   {mounted && company ? company.name : (mounted ? 'System' : '')}
                 </span>
               )}
             </li>
-            <li className="breadcrumb-item small active fw-700 text-primary ms-2" aria-current="page">Dashboard</li>
+            <li className="breadcrumb-item small active fw-700 ms-2" style={{ color: 'var(--accent-color)' }} aria-current="page">Dashboard</li>
           </ol>
         </nav>
       </div>
@@ -109,7 +111,7 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
             type="button"
           >
             <i className="bi bi-bell text-muted"></i>
-            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary border border-white" style={{ fontSize: '0.6rem', padding: '0.35em 0.65em' }}>
+            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill border border-white" style={{ fontSize: '0.6rem', padding: '0.35em 0.65em', backgroundColor: 'var(--accent-color)' }}>
               3
             </span>
           </button>
@@ -123,7 +125,7 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
             aria-expanded="false"
           >
             <img
-              src={`https://ui-avatars.com/api/?name=${mounted ? user?.name || 'User' : 'User'}&background=3b82f6&color=fff`}
+              src={`https://ui-avatars.com/api/?name=${mounted ? user?.name || 'User' : 'User'}&background=ea580c&color=fff`}
               alt="Profile"
               className="rounded-circle me-2 border border-white"
               width="32"

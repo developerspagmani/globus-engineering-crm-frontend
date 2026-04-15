@@ -52,9 +52,9 @@ const InvoiceReportPage = () => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
     printWindow.document.write('<html><head><title>Invoice Summary</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #2563eb;">Globus Engineering</h1><p style="margin: 5px 0 0; color: #666;">Invoice Summary Statement</p></div>');
+    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #ea580c;">Globus Engineering</h1><p style="margin: 5px 0 0; color: #666;">Invoice Summary Statement</p></div>');
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${inv.customerName}</div></div>`);
     printWindow.document.write(`<div><div class="label">Invoice No</div><div class="value">${inv.invoiceNumber}</div></div>`);
@@ -87,36 +87,37 @@ const InvoiceReportPage = () => {
 
   return (
     <div className="container-fluid py-4 animate-fade-in bg-light min-vh-100">
-      <div className="d-flex justify-content-between align-items-center mb-4 px-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div>
           <Breadcrumb items={[{ label: 'Intelligence Reports', active: false }, { label: 'Invoice Report', active: true }]} />
           <h2 className="fw-900 mb-1 text-dark tracking-tight mt-2">Invoice Report</h2>
           <p className="text-muted small mb-0 font-weight-500">Comprehensive summary of all generated invoices and billing statements.</p>
         </div>
-        <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}>
-          <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
-          <span className="small fw-800 text-muted">Refresh</span>
-        </button>
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Invoice Summary Report" />
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}>
+            <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
+            <span className="small fw-800 text-muted">Refresh</span>
+          </button>
+        </div>
       </div>
 
       <div className="card border-0 shadow-sm mb-4 overflow-hidden rounded-4">
         <div className="card-body p-3">
-          <div className="row g-3 align-items-center">
-            <div className="col-lg-5 col-md-4">
-              <div className="position-relative">
-                <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                <input type="text" className="form-control ps-5 border bg-light-soft search-bar shadow-none" placeholder="Search customer or invoice..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ height: '42px', borderRadius: '10px' }} />
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input type="text" className="form-control search-bar" placeholder="Search customer or invoice..." value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
             </div>
-            <div className="col-auto ms-auto d-flex align-items-center gap-1">
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                </div>
-                <span className="text-muted small fw-bold mx-1">TO</span>
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
-              </div>
-              <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Invoice Summary Report" />
+            
+            <div className="date-filter-group">
+              <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <span className="text-muted small fw-bold mx-1">To</span>
+              <input type="date" className="text-muted" value={toDate} onChange={(e) => setToDate(e.target.value)} />
             </div>
           </div>
         </div>
@@ -132,7 +133,7 @@ const InvoiceReportPage = () => {
             <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
-                  <tr className="text-uppercase small fw-bold text-muted">
+                  <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-3 border-0">Sno</th>
                     <th className="py-3 border-0">Date</th>
                     <th className="py-3 border-0">Invoice No</th>
@@ -149,7 +150,7 @@ const InvoiceReportPage = () => {
                       <td className="px-4 small text-muted font-monospace">{index + 1}</td>
                       <td className="small text-muted">{inv.date}</td>
                       <td className="text-dark fw-bold">{inv.invoiceNumber}</td>
-                      <td className="text-dark fw-800 text-uppercase" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
+                      <td className="text-dark fw-800 text-capitalize" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
                       <td className="text-end small">₹{inv.subTotal?.toLocaleString()}</td>
                       <td className="text-end small text-muted">₹{inv.taxTotal?.toLocaleString()}</td>
                       <td className="text-end fw-900 text-dark px-2">₹{inv.grandTotal?.toLocaleString()}</td>

@@ -86,10 +86,10 @@ export default function ProcessDetailsPage() {
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Process Details</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div class="header text-center">');
-    printWindow.document.write('<h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1>');
+    printWindow.document.write('<h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1>');
     printWindow.document.write('<p style="margin: 5px 0 0; color: #666;">Master Data - Process Entry</p>');
     printWindow.document.write('</div>');
     
@@ -143,11 +143,11 @@ export default function ProcessDetailsPage() {
             <Breadcrumb 
               items={[
                 { label: 'Master Data', href: '/master/processes' },
-                { label: view === 'add' ? (editingId ? 'Process Detail' : 'New Process') : 'Workflow Hub', active: true }
+                { label: view === 'add' ? (editingId ? 'Process Detail' : 'Add Process') : 'Workflow Hub', active: true }
               ]} 
             />
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
-              {view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add New Process') : 'Workflow Hub'}
+              {view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add Process') : 'Workflow Hub'}
             </h2>
             <p className="text-muted small mb-0">
               {view === 'add' ? 'Manage detailed technical steps and stages for industrial production.' : 'Manage your complete catalog of manufacturing and operational processes.'}
@@ -155,43 +155,23 @@ export default function ProcessDetailsPage() {
           </div>
           
           <div className="d-flex align-items-center gap-2">
-            {view === 'list' && (
-              <ExportExcel 
-                data={processes} 
-                fileName="Workflow_Master_List" 
-                headers={{ processName: 'Process Name', id: 'Internal ID' }}
-                buttonText="Export List"
-              />
-            )}
-            {view === 'add' && editingId && isViewOnly && mounted && checkActionPermission(user, 'mod_processes', 'edit') && (
-              <button 
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                onClick={() => setIsViewOnly(false)}
-                style={{ height: '42px', borderRadius: '10px' }}
-              >
-                <i className="bi bi-pencil-square"></i>
-                <span className="fw-800 small text-uppercase">Edit Detail</span>
-              </button>
-            )}
             {view === 'list' && mounted && checkActionPermission(user, 'mod_processes', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ processName: '' }); }}
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
-                <i className="bi bi-plus-lg fs-5"></i>
-                <span className="fw-800 small text-uppercase">Add New Process</span>
+                <i className="bi bi-plus-lg"></i>
+                <span>Add Process</span>
               </button>
             )}
             {view === 'add' && (
               <button 
                 type="button" 
-                className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3" 
+                className="btn btn-outline-secondary btn-page-action px-3" 
                 onClick={() => setView('list')} 
-                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-arrow-left"></i>
-                <span className="fw-800 small text-uppercase">Back</span>
+                <span>Back</span>
               </button>
             )}
           </div>
@@ -210,8 +190,8 @@ export default function ProcessDetailsPage() {
                       type="text"
                       required
                       placeholder="Process"
-                      className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
+                      className="form-control"
+                      style={{ fontSize: '1.1rem' }}
                       value={formData.processName}
                       onChange={(e) => setFormData({ ...formData, processName: e.target.value })}
                       disabled={isViewOnly}
@@ -226,15 +206,15 @@ export default function ProcessDetailsPage() {
                       type="submit"
                       disabled={isSubmitting}
                       className="btn px-4 py-2 text-white fw-bold rounded-1 d-flex align-items-center justify-content-center gap-2"
-                      style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '120px' }}
+                      style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '120px' }}
                     >
                       {isSubmitting ? (
                         <>
                           <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          <span>{editingId ? 'UPDATING...' : 'ADDING...'}</span>
+                          <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
                         </>
                       ) : (
-                        editingId ? 'UPDATE' : 'ADD'
+                        editingId ? 'UPDATE' : 'SUBMIT'
                       )}
                     </button>
                       <button
@@ -243,7 +223,7 @@ export default function ProcessDetailsPage() {
                         className="btn px-4 py-2 text-white fw-bold rounded-1"
                         style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
                       >
-                        {editingId ? 'CANCEL' : 'RESET'}
+                        {editingId ? 'CANCEL' : 'CLEAR'}
                       </button>
                     </>
                   ) : (
@@ -262,18 +242,18 @@ export default function ProcessDetailsPage() {
           ) : (
             <div className="animate-fade-in">
               <div className="d-flex align-items-center mb-4">
-                <div className="input-group" style={{ maxWidth: '300px' }}>
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search text-muted"></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search processes..."
-                    className="form-control border-start-0 shadow-none search-bar"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+              <div className="search-group" style={{ maxWidth: '300px' }}>
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search processes..."
+                  className="form-control search-bar"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
               </div>
 
               <div className="card shadow-sm border-0 overflow-hidden">
@@ -282,9 +262,9 @@ export default function ProcessDetailsPage() {
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light">
                         <tr>
-                          <th className="px-4 py-2 text-uppercase small fw-bold" style={{ width: '80px' }}>Sno</th>
-                          <th className="px-4 py-2 text-uppercase small fw-bold">Process Name</th>
-                          <th className="px-4 py-3 text-uppercase small fw-bold text-end" style={{ width: '180px' }}>Actions</th>
+                          <th className="px-4 py-2 text-capitalize small fw-bold" style={{ width: '80px' }}>Sno</th>
+                          <th className="px-4 py-2 text-capitalize small fw-bold">Process Name</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold text-end" style={{ width: '180px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>

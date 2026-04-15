@@ -28,7 +28,7 @@ export default function InvoiceDetailPage() {
   if (invoiceLoading && !invoice) {
     return (
       <div className="container py-5 text-center">
-        <div className="spinner-border text-primary" role="status">
+        <div className="spinner-border text-secondary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
         <p className="mt-2">Loading invoice details...</p>

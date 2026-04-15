@@ -154,7 +154,7 @@ export default function ManageVisitsPage() {
                   </div>
                   <div className="card-body p-0">
                     {loadingVisits ? (
-                      <div className="text-center p-5"><div className="spinner-border text-primary shadow-sm"></div></div>
+                      <div className="text-center p-5"><div className="spinner-border text-secondary shadow-sm"></div></div>
                     ) : visits.length > 0 ? (
                       <div className="table-responsive">
                         <table className="table table-hover align-middle mb-0">

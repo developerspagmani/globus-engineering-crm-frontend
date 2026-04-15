@@ -124,10 +124,10 @@ export default function PriceFixingPage() {
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Pricing Rule Details</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div class="header text-center">');
-    printWindow.document.write('<h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1>');
+    printWindow.document.write('<h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1>');
     printWindow.document.write('<p style="margin: 5px 0 0; color: #666;">Master Data - Special Pricing Entry</p>');
     printWindow.document.write('</div>');
     
@@ -189,7 +189,7 @@ export default function PriceFixingPage() {
               ]} 
             />
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
-              {view === 'add' ? (editingId ? 'Edit Price Rule' : 'Add New Price Rule') : view === 'view' ? 'Price Profile' : 'Pricing Hub'}
+              {view === 'add' ? (editingId ? 'Edit Price Rule' : 'Add Price Rule') : view === 'view' ? 'Price Profile' : 'Pricing Hub'}
             </h2>
             <p className="text-muted small mb-0">
               {view === 'add' ? 'Manage customized rate contracts and client-specific pricing rules.' : 'Manage your complete rate card and customized client pricing matrix.'}
@@ -208,32 +208,29 @@ export default function PriceFixingPage() {
             {view === 'view' && mounted && checkActionPermission(user, 'mod_price_fixing', 'edit') && (
               <button
                 onClick={() => setView('add')}
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
                 <i className="bi bi-pencil-square"></i>
-                <span className="fw-800 small text-uppercase">Edit Rule</span>
+                <span>Edit Rule</span>
               </button>
             )}
             {view === 'list' && mounted && checkActionPermission(user, 'mod_price_fixing', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ customerId: '', itemId: '', processId: '', price: '' }); }}
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
-                style={{ height: '42px', borderRadius: '10px' }}
+                className="btn btn-primary btn-page-action px-4"
               >
-                <i className="bi bi-plus-lg fs-5"></i>
-                <span className="fw-800 small text-uppercase">Add New Price</span>
+                <i className="bi bi-plus-lg"></i>
+                <span>Add Price</span>
               </button>
             )}
             {(view === 'add' || view === 'view') && (
               <button 
                 type="button" 
-                className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3" 
+                className="btn btn-outline-secondary btn-page-action px-3" 
                 onClick={() => setView('list')} 
-                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-arrow-left"></i>
-                <span className="fw-800 small text-uppercase">Back</span>
+                <span>Back</span>
               </button>
             )}
           </div>
@@ -243,7 +240,7 @@ export default function PriceFixingPage() {
           {(view === 'add' || view === 'view') ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
               <div className="mb-4">
-                <h5 className="fw-bold text-primary">{view === 'view' ? 'View Price Fixing' : editingId ? 'Edit Price Fixing' : 'Add New Price Fixing'}</h5>
+                <h5 className="fw-bold text-primary">{view === 'view' ? 'View Price Fixing' : editingId ? 'Edit Price Fixing' : 'Add Price Fixing'}</h5>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="row mb-5 align-items-center">
@@ -334,10 +331,10 @@ export default function PriceFixingPage() {
                         {isSubmitting ? (
                           <>
                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span>{editingId ? 'UPDATING...' : 'ADDING...'}</span>
+                            <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
                           </>
                         ) : (
-                          editingId ? 'UPDATE' : 'ADD'
+                          editingId ? 'UPDATE' : 'SUBMIT'
                         )}
                       </button>
                       <button
@@ -346,7 +343,7 @@ export default function PriceFixingPage() {
                         className="btn px-4 py-2 text-white fw-bold rounded-1"
                         style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
                       >
-                        {editingId ? 'CANCEL' : 'RESET'}
+                        {editingId ? 'CANCEL' : 'CLEAR'}
                       </button>
                     </>
                   ) : (
@@ -365,18 +362,18 @@ export default function PriceFixingPage() {
           ) : (
             <div className="animate-fade-in">
               <div className="d-flex align-items-center mb-4">
-                <div className="input-group" style={{ maxWidth: '300px' }}>
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search "></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search pricing..."
-                    className="form-control border-start-0 shadow-none search-bar"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+              <div className="search-group" style={{ maxWidth: '300px' }}>
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search pricing..."
+                  className="form-control search-bar"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
               </div>
 
               <div className="card shadow-sm border-0 overflow-hidden">
@@ -385,12 +382,12 @@ export default function PriceFixingPage() {
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light">
                         <tr>
-                          <th className="px-4 py-2 text-uppercase small fw-bold" style={{ width: '60px' }}>Sno</th>
-                          <th className="px-4 py-3 text-uppercase small fw-bold">Customer</th>
-                          <th className="px-4 py-3 text-uppercase small fw-bold">Item</th>
-                          <th className="px-4 py-3 text-uppercase small fw-bold">Process</th>
-                          <th className="px-4 py-3 text-uppercase small fw-bold text-end">Price</th>
-                          <th className="px-4 py-3 text-uppercase small fw-bold text-end">Actions</th>
+                          <th className="px-4 py-2 text-capitalize small fw-bold" style={{ width: '60px' }}>Sno</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold">Customer</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold">Item</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold">Process</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold text-end">Price</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold text-end">Actions</th>
                         </tr>
                       </thead>
                       <tbody>

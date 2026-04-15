@@ -57,7 +57,7 @@ export default function NewLedgerAccountPage() {
 
     const renderInput = (label: string, name: keyof typeof formData, placeholder: string, required = false) => (
         <div className="col-md-6 mb-3">
-            <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">
+            <label className="form-label fw-semibold small text-muted text-capitalize tracking-wider">
                 {label}
             </label>
             <input
@@ -76,9 +76,9 @@ export default function NewLedgerAccountPage() {
         <ModuleGuard moduleId="mod_ledger">
             <div className="container-fluid py-4 min-vh-100 bg-light">
                 {/* Header with Back Button */}
-                <div className="d-flex align-items-center mb-5 pb-2">
-                    <Link href="/ledger" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Ledger">
-                        <i className="bi bi-arrow-left-circle fs-3 text-muted"></i>
+                <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
+                    <Link href="/ledger" className="back-btn-standard" title="Back to Ledger">
+                        <i className="bi bi-arrow-left fs-4"></i>
                     </Link>
                     <div>
                         <h2 className="fw-bold mb-0">Add Ledger Account</h2>
@@ -94,7 +94,7 @@ export default function NewLedgerAccountPage() {
                             <h5 className="text-primary mb-4 border-bottom pb-2">Basic Details</h5>
                             <div className="row g-3 mb-5">
                                 <div className="col-md-12 mb-3">
-                                    <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Customer Name</label>
+                                    <label className="form-label fw-semibold small text-muted text-capitalize tracking-wider">Customer Name</label>
                                     <input
                                         type="text"
                                         className="form-control text-nowrap text-muted fw-100"
@@ -120,7 +120,7 @@ export default function NewLedgerAccountPage() {
                             <div className="mt-5 pt-4 border-top d-flex gap-3">
                                 <button
                                     type="submit"
-                                    className="btn btn-primary px-5 py-2 fw-bold text-uppercase shadow-sm"
+                                    className="btn btn-primary px-5 py-2 fw-bold text-capitalize shadow-sm"
                                     disabled={loading}
                                 >
                                     {loading ? (
@@ -137,7 +137,7 @@ export default function NewLedgerAccountPage() {
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn btn-outline-secondary px-5 py-2 fw-bold text-uppercase"
+                                    className="btn btn-outline-secondary px-5 py-2 fw-bold text-capitalize"
                                     onClick={() => router.push('/ledger')}
                                 >
                                     Cancel

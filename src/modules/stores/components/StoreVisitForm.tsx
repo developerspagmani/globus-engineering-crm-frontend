@@ -97,7 +97,7 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
               <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Visit Date / Time</label>
               <input
                 type="date"
-                className="form-control border-0 bg-light py-2 fw-700"
+                className="form-control fw-700"
                 name="visitDate"
                 value={formData.visitDate}
                 onChange={handleChange}
@@ -108,7 +108,7 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
               <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Next Follow-up Date</label>
               <input
                 type="date"
-                className="form-control border-0 bg-light py-2 fw-700 text-primary"
+                className="form-control fw-700 text-primary"
                 name="nextVisitDate"
                 value={formData.nextVisitDate}
                 onChange={handleChange}
@@ -120,7 +120,7 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
             <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Product / Tooling Interest</label>
             <input
               type="text"
-              className="form-control border-0 bg-light py-2 fw-700"
+              className="form-control fw-700"
               name="productInterest"
               value={formData.productInterest}
               onChange={handleChange}
@@ -131,7 +131,7 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
           <div className="mb-4">
             <label className="xx-small fw-800 text-muted uppercase tracking-widest mb-2 d-block">Detailed Discussion Feedback</label>
             <textarea
-              className="form-control border-0 bg-light py-2 fw-700"
+              className="form-control fw-700"
               name="notes"
               rows={4}
               value={formData.notes}
@@ -142,8 +142,8 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
           </div>
 
           <div className="text-end d-flex gap-2 justify-content-end pt-3">
-            <button type="button" className="btn btn-light px-4 py-2 rounded-pill fw-800 text-muted border-0" onClick={onCancel}>
-              {initialData ? 'CANCEL' : 'DISCARD'}
+            <button type="button" className="btn btn-light px-4 py-2 rounded-pill fw-800 text-muted border" onClick={onCancel}>
+              CLEAR
             </button>
             <button 
               type="submit" 
@@ -156,7 +156,7 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
                   <span>SUBMITTING...</span>
                 </>
               ) : (
-                initialData ? 'SAVE CHANGES' : 'SUBMIT REPORT'
+                'SUBMIT'
               )}
             </button>
           </div>

@@ -12,24 +12,25 @@ const CompanyUserFilter: React.FC = () => {
   return (
     <div className="card shadow-sm border-0 mb-4 overflow-hidden">
       <div className="card-body p-3">
-        <div className="row g-3">
-          <div className="col-md-8">
-            <div className="input-group group-pill bg-light rounded-pill px-2">
-              <span className="input-group-text bg-transparent border-0 text-muted ps-3">
+        <div className="filter-bar-row">
+          <div className="filter-item-search">
+            <div className="search-group">
+              <span className="input-group-text">
                 <i className="bi bi-search"></i>
               </span>
               <input 
                 type="text" 
-                className="form-control bg-transparent border-0 shadow-none ps-0 search-bar" 
+                className="form-control search-bar" 
                 placeholder="Search users by name, email..." 
                 value={filters.search}
                 onChange={(e) => dispatch(setUserFilters({ search: e.target.value }))}
               />
             </div>
           </div>
-          <div className="col-md-4">
+          
+          <div className="filter-item-select">
             <select 
-              className="form-select border-0 bg-light rounded-pill px-4 shadow-none fw-600 text-muted"
+              className="form-select search-bar"
               value={filters.role}
               onChange={(e) => dispatch(setUserFilters({ role: e.target.value }))}
             >
