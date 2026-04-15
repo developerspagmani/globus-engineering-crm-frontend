@@ -5,14 +5,17 @@
   --sidebar-collapsed-width: 85px;
   --header-height: 75px;
 
-  /* Premium Industrial Palette */
+  /* Premium Orange Palette */
   --primary-color: #0f172a;
-  /* Deep Slate */
-  --accent-color: #da3e00;
-  /* Globus Blue */
-  --accent-blue: #2563eb;
-  --accent-soft: rgba(37, 99, 235, 0.1);
-  --primary-gradient: linear-gradient(135deg, #da3e00 0%, #f59e0b 100%);
+  /* Rich Dark */
+  --accent-color: #ff9800;
+  /* Premium Orange */
+  --accent-blue: #ff9800;
+  --accent-soft: rgba(255, 152, 0, 0.1);
+  --accent-orange: #ff6f00;
+  --accent-gold: #ffa726;
+  --primary-gradient: linear-gradient(135deg, #ff9800 0%, #ff6f00 100%);
+  --secondary-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
 
   --bg-body: #f8fafc;
   --bg-sidebar: #fdfdfe;
@@ -27,7 +30,7 @@
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 12px 24px -10px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
-  --shadow-accent: 0 8px 16px -4px rgba(59, 130, 246, 0.3);
+  --shadow-accent: 0 8px 16px -4px rgba(255, 152, 0, 0.3);
 
   --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   --radius-xl: 1.25rem;
@@ -92,7 +95,7 @@ body {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px -5px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 12px 20px -5px rgba(255, 152, 0, 0.4);
 }
 
 /* Sidebar Overhaul */
@@ -198,7 +201,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   width: auto;
-  background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.03), transparent 400px);
+  background: radial-gradient(circle at top right, rgba(255, 152, 0, 0.03), transparent 400px);
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.05) transparent;
 }
@@ -232,13 +235,16 @@ body {
 /* Premium Form Styles */
 .form-control,
 .form-select {
-  padding: 0.5rem 0.8rem;
-  font-size: 0.8rem;
-  border-radius: var(--radius-lg);
+  height: 42px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  border-radius: 10px;
   border: 1.5px solid var(--border-color);
   background-color: #ffffff;
   transition: var(--transition-smooth);
   font-weight: 500;
+  display: flex;
+  align-items: center;
 }
 
 .form-label {
@@ -527,7 +533,7 @@ body {
 .blob-2 {
   width: 500px;
   height: 500px;
-  background: #f43f5e;
+  background: #ff6f00;
   bottom: -150px;
   right: -100px;
 }
@@ -535,7 +541,7 @@ body {
 .blob-3 {
   width: 300px;
   height: 300px;
-  background: #f59e0b;
+  background: #ffa726;
   top: 40%;
   left: 60%;
 }
@@ -644,7 +650,7 @@ body {
 
 .btn-auth-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(255, 71, 0, 0.35);
+  box-shadow: 0 15px 35px rgba(255, 152, 0, 0.35);
 }
 
 .btn-auth-primary:active {

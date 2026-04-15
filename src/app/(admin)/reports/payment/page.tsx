@@ -108,7 +108,7 @@ const PaymentReportPage = () => {
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input
                   type="text"
-                  className="form-control border-0 bg-light-soft ps-5 search-bar"
+                  className="form-control border bg-light-soft ps-5 search-bar shadow-none"
                   placeholder="Search customer name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -119,7 +119,7 @@ const PaymentReportPage = () => {
 
             <div className="col-md-3">
               <select 
-                className="form-select border-0 bg-light-soft px-3 shadow-none fw-bold small text-muted"
+                className="form-select border bg-light-soft px-3 shadow-none fw-bold small text-muted"
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
                 style={{ height: '42px', borderRadius: '10px' }}
@@ -132,15 +132,15 @@ const PaymentReportPage = () => {
             </div>
             {/* Rest of filters... */}
             <div className="col-auto ms-auto d-flex align-items-center gap-1">
-              <div className="d-flex align-items-center  bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <div className="d-flex align-items-center bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
+                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
               </div>
               <span className="text-muted small fw-bold mx-1">TO</span>
-              <div className="d-flex align-items-center  bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+              <div className="d-flex align-items-center bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
+                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
               </div>
               {/* {activeTab === 'PENDING' && <select className="form-select border-0 bg-light-soft px-3" value={ageingFilter} onChange={(e) => setAgeingFilter(e.target.value as any)} style={{ height: '42px', borderRadius: '10px', width: '150px' }}><option value="all">Every Bucket</option><option value="0-30">0-30 Days</option><option value="31-60">31-60 Days</option><option value="61-90">61-90 Days</option><option value="90+">90+ Days</option></select>} */}
-              <ReportActions />
+              <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Payment & Ageing Report" />
             </div>
           </div>
         </div>

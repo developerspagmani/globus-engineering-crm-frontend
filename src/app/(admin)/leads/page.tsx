@@ -14,6 +14,8 @@ import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
+import ExportExcel from '@/components/shared/ExportExcel';
+
 const LeadsPage = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
@@ -146,19 +148,27 @@ const LeadsPage = () => {
   };
 
   return (
-    <div className="content-area animate-fade-in">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
           <Breadcrumb items={[{ label: 'Lead Management', active: true }]} />
-          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Prospective Enquiries</h3>
+          <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Prospective Enquiries</h2>
           <p className="text-muted small mb-0">Follow up with potential industrial partners and conversion funnels.</p>
         </div>
-        {checkActionPermission(user, 'mod_lead', 'create') && (
-          <Link href="/leads/new" className="btn btn-primary d-flex align-items-center gap-2 py-2 px-4 shadow-accent">
-            <i className="bi bi-funnel fs-5"></i>
-            <span>Add Lead</span>
-          </Link>
-        )}
+        <div className="d-flex align-items-center gap-2">
+          <ExportExcel
+            data={filteredItems}
+            fileName="Leads_List"
+            headers={{ name: 'Name', company: 'Company', industry: 'Industry', source: 'Source', status: 'Status', createdAt: 'Inquiry Date' }}
+            buttonText="Export List"
+          />
+          {checkActionPermission(user, 'mod_lead', 'create') && (
+            <Link href="/leads/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-funnel-fill"></i>
+              <span className="fw-800 small text-uppercase">Add New Lead</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="card shadow-sm border-0 mb-4 overflow-hidden">

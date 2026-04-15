@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ExportExcel from '@/components/shared/ExportExcel';
 
 const InvoiceTable: React.FC = () => {
   const router = useRouter();
@@ -29,43 +30,44 @@ const InvoiceTable: React.FC = () => {
 
   const handlePrintRecord = (item: any) => {
     const isInvoice = !!item.invoiceNumber;
+    if (isInvoice) {
+      window.open(`/invoices/${item.id}?print=true`, '_blank');
+      return;
+    }
+
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
     printWindow.document.write('<html><head><title>Record</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
-    printWindow.document.write(`<div class="header"><h1>Globus Engineering</h1><p>${isInvoice ? 'Invoice' : 'Inward'} Record</p></div>`);
+    printWindow.document.write(`<div class="header"><h1>Globus Engineering</h1><p>Record</p></div>`);
     printWindow.document.write('<div class="grid">');
     printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${item.customerName}</div></div>`);
-    printWindow.document.write(`<div><div class="label">${isInvoice ? 'Invoice No' : 'DC No'}</div><div class="value">${isInvoice ? item.invoiceNumber : (item.dcNo || item.challanNo)}</div></div>`);
+    printWindow.document.write(`<div><div class="label">DC No</div><div class="value">${item.dcNo || item.challanNo}</div></div>`);
     printWindow.document.write(`<div><div class="label">Date</div><div class="value">${item.date}</div></div>`);
-    if (isInvoice) {
-      printWindow.document.write(`<div><div class="label">Total Amount</div><div class="value">INR ${item.grandTotal.toLocaleString()}</div></div>`);
-    } else {
-      printWindow.document.write(`<div><div class="label">PO Ref</div><div class="value">${item.poReference || '-'}</div></div>`);
-    }
+    printWindow.document.write(`<div><div class="label">PO Ref</div><div class="value">${item.poReference || '-'}</div></div>`);
     printWindow.document.write('</div>');
     printWindow.document.close(); printWindow.print();
   };
 
   const handleExportPDFRecord = (item: any) => {
     const isInvoice = !!item.invoiceNumber;
+    if (isInvoice) {
+      window.open(`/invoices/${item.id}?exportPDF=true`, '_blank');
+      return;
+    }
+
     const doc = new jsPDF();
     doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
     
     const body = [
       ['Customer', item.customerName],
-      [isInvoice ? 'Invoice Number' : 'DC Number', isInvoice ? item.invoiceNumber : (item.dcNo || item.challanNo)],
-      ['Date', item.date]
+      ['DC Number', item.dcNo || item.challanNo],
+      ['Date', item.date],
+      ['PO Reference', item.poReference || '-']
     ];
-    
-    if (isInvoice) {
-      body.push(['Grand Total', `INR ${item.grandTotal.toLocaleString()}`]);
-    } else {
-      body.push(['PO Reference', item.poReference || '-']);
-    }
 
     autoTable(doc, { startY: 55, body, theme: 'grid', styles: { cellPadding: 8, fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } } });
-    doc.save(`${isInvoice ? 'invoice' : 'inward'}_${isInvoice ? item.invoiceNumber : item.id}.pdf`);
+    doc.save(`record_${item.id}.pdf`);
   };
 
   const handleDeleteParams = (id: string, type: 'invoice' | 'inward') => { setDeleteModal({ isOpen: true, id, type }); };
@@ -98,13 +100,25 @@ const InvoiceTable: React.FC = () => {
   const totalPages = Math.ceil(displayItems.length / pagination.itemsPerPage);
   const paginatedItems = displayItems.slice((pagination.currentPage - 1) * pagination.itemsPerPage, pagination.currentPage * pagination.itemsPerPage);
 
+  const invoiceHeaders = {
+    invoiceNumber: "Invoice Number",
+    customerName: "Customer Name",
+    date: "Date",
+    grandTotal: "Grand Total",
+    status: "Status",
+    poNo: "PO Number",
+    dcNo: "DC Number"
+  };
+
   const renderTabs = () => (
-    <div className="d-flex text-uppercase pt-3 mb-0 px-3 bg-white border-bottom">
-      {['ADD_INVOICE', 'INVOICELIST', 'WOP_LIST', 'BOTH_LIST'].map(tab => (
-        <button key={tab} className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === tab ? 'border-bottom border-danger text-danger' : 'text-muted'}`} style={activeTab === tab ? { borderBottom: '2px solid #ff4081' } : {}} onClick={() => handleTabChange(tab)}>
-          {tab === 'ADD_INVOICE' ? 'Invoice Selection' : tab === 'INVOICELIST' ? 'WP List' : tab === 'WOP_LIST' ? 'WOP List' : 'Both List'}
-        </button>
-      ))}
+    <div className="d-flex text-uppercase pt-3 mb-0 px-3 bg-white border-bottom align-items-center">
+      <div className="d-flex">
+        {['ADD_INVOICE', 'INVOICELIST', 'WOP_LIST', 'BOTH_LIST'].map(tab => (
+          <button key={tab} className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === tab ? 'border-bottom border-danger text-danger' : 'text-muted'}`} style={activeTab === tab ? { borderBottom: '2px solid #ff4081' } : {}} onClick={() => handleTabChange(tab)}>
+            {tab === 'ADD_INVOICE' ? 'Invoice Selection' : tab === 'INVOICELIST' ? 'WP List' : tab === 'WOP_LIST' ? 'WOP List' : 'Both List'}
+          </button>
+        ))}
+      </div>
     </div>
   );
 
@@ -152,7 +166,6 @@ const InvoiceTable: React.FC = () => {
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
                            <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
-                           <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
                            {checkActionPermission(user, 'mod_invoice', 'delete') && (
                              <>
                                <li><hr className="dropdown-divider opacity-50" /></li>

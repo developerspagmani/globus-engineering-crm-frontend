@@ -11,6 +11,9 @@ import Loader from '@/components/Loader';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+import ExportExcel from '@/components/shared/ExportExcel';
+import Breadcrumb from '@/components/Breadcrumb';
+
 const PendingPaymentPage = () => {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -120,25 +123,40 @@ const PendingPaymentPage = () => {
 
   return (
     <ModuleGuard moduleId="mod_invoice">
-      <div className="container-fluid py-4 animate-fade-in">
-        <div className="card shadow-sm border-0 bg-white overflow-hidden rounded-4 mb-5">
-          <div className="card-header bg-white border-bottom-0 pb-2 px-4 d-flex align-items-center gap-2 mt-2">
-            <i className="bi bi-house-door-fill text-dark small"></i>
-            <span className="text-muted small">Home / Dashboard / Pending Payment</span>
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+          <div>
+            <Breadcrumb items={[{ label: 'Outstanding Collections', active: true }]} />
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Pending Payments</h2>
+            <p className="text-muted small mb-0">Track outstanding balances and overdue collections across all industrial accounts.</p>
           </div>
-
-          <div className="px-4 py-3 d-flex justify-content-between align-items-center">
-            <div>
-              <h4 className="fw-900 text-dark mb-1 fs-3">Pending Payments</h4>
-              <p className="text-muted small mb-0 tracking-tight">Track outstanding balances and overdue collections • {pendingInvoices.length} entries</p>
-            </div>
-            <button className="btn btn-link text-muted p-0 shadow-none" onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}><i className="bi bi-arrow-repeat fs-5"></i></button>
+          <div className="d-flex align-items-center gap-2">
+            <ExportExcel
+              data={pendingInvoices}
+              fileName="Pending_Payments_Report"
+              headers={{ customerName: 'Customer', invoiceNumber: 'Invoice No', grandTotal: 'Total', paidAmount: 'Paid', status: 'Status' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
+            <button 
+              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
+              onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}
+              style={{ height: '42px', borderRadius: '10px' }}
+            >
+              <i className="bi bi-arrow-repeat"></i>
+              <span className="fw-800 small text-uppercase">Refresh Data</span>
+            </button>
           </div>
-          
-          {/* Filter Bar */}
-          <div className="px-4 mb-3">
+        </div>
+        
+        {/* Filter Bar */}
+        <div className="card shadow-sm border-0 mb-4 overflow-hidden rounded-4">
+          <div className="card-body p-3 bg-white">
              <div className="row g-2">
-                <div className="col-md-5">
+                <div className="col-md-6">
                    <div className="position-relative">
                       <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                       <input 
@@ -151,7 +169,7 @@ const PendingPaymentPage = () => {
                       />
                    </div>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-6">
                    <select 
                       className="form-select border-0 bg-light px-3 fw-bold small text-muted"
                       value={selectedCustomerId}
@@ -166,6 +184,7 @@ const PendingPaymentPage = () => {
                 </div>
              </div>
           </div>
+        </div>
 
           <div className="table-responsive p-0 mt-3" style={{ minHeight: '400px', paddingBottom: '80px' }}>
             {loading ? (
@@ -234,12 +253,6 @@ const PendingPaymentPage = () => {
                                     <span className="small fw-semibold">Quick Print</span>
                                   </button>
                                 </li>
-                                <li>
-                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFPending(inv)}>
-                                    <i className="bi bi-file-earmark-pdf text-danger"></i>
-                                    <span className="small fw-semibold">Export PDF</span>
-                                  </button>
-                                </li>
                               </ul>
                             </div>
                           </div>
@@ -258,7 +271,6 @@ const PendingPaymentPage = () => {
               </table>
             )}
           </div>
-        </div>
       </div>
 
       <style jsx>{`

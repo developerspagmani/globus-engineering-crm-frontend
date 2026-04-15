@@ -66,25 +66,32 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsSubmitting(true);
       if (mode === 'create') {
-        (dispatch as any)(addEmployee(formData));
-        setModal({
-          isOpen: true,
-          type: 'success',
-          title: 'Employee Registered!',
-          message: `${formData.name} has been added to the system.`
-        });
+        const resultAction = await (dispatch as any)(addEmployee(formData));
+        if (addEmployee.fulfilled.match(resultAction)) {
+          setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Employee Registered!',
+            message: `${formData.name} has been added to the system.`
+          });
+        }
       } else {
-        (dispatch as any)(updateEmployee({ ...initialData!, ...formData }));
-        setModal({
-          isOpen: true,
-          type: 'success',
-          title: 'Profile Updated',
-          message: 'Employee details have been successfully modified.'
-        });
+        const resultAction = await (dispatch as any)(updateEmployee({ ...initialData!, ...formData }));
+        if (updateEmployee.fulfilled.match(resultAction)) {
+          setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Profile Updated',
+            message: 'Employee details have been successfully modified.'
+          });
+        }
       }
     } catch (err) {
       setModal({
@@ -93,6 +100,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
         title: 'Operation Failed',
         message: 'There was an error saving employee data.'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -223,8 +232,19 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
               {mode === 'view' ? 'Back' : 'Cancel'}
             </button>
             {mode !== 'view' && (
-              <button type="submit" className="btn btn-primary px-5">
-                {mode === 'create' ? 'Register Employee' : 'Save Changes'}
+              <button 
+                type="submit" 
+                className="btn btn-primary px-5 fw-bold rounded-pill shadow-accent d-flex align-items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>{mode === 'create' ? 'Registering...' : 'Saving...'}</span>
+                  </>
+                ) : (
+                  mode === 'create' ? 'Register Employee' : 'Save Changes'
+                )}
               </button>
             )}
           </div>

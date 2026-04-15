@@ -53,6 +53,8 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -66,6 +68,7 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
     };
 
     try {
+      setIsSubmitting(true);
       if (initialData?.id) {
         await (dispatch as any)(updateVisit({ ...payload, id: initialData.id as string })).unwrap();
       } else {
@@ -74,6 +77,8 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
       if (onSuccess) onSuccess();
     } catch (err) {
       alert('Failed to log visit: ' + err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -140,8 +145,19 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
             <button type="button" className="btn btn-light px-4 py-2 rounded-pill fw-800 text-muted border-0" onClick={onCancel}>
               {initialData ? 'CANCEL' : 'DISCARD'}
             </button>
-            <button type="submit" className="btn btn-primary px-5 py-2 rounded-pill shadow-accent fw-800 tracking-wider">
-              {initialData ? 'SAVE CHANGES' : 'SUBMIT REPORT'}
+            <button 
+              type="submit" 
+              className="btn btn-primary px-5 py-2 rounded-pill shadow-accent fw-800 tracking-wider d-flex align-items-center gap-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>SUBMITTING...</span>
+                </>
+              ) : (
+                initialData ? 'SAVE CHANGES' : 'SUBMIT REPORT'
+              )}
             </button>
           </div>
         </form>

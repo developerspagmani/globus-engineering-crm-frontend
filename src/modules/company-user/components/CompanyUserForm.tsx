@@ -92,10 +92,13 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
     });
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
+      setIsSubmitting(true);
       // Generate legacy permissions from the new module permissions for compatibility
       const legacyPermissions = modulePermissions
         .filter(p => p.canRead)
@@ -119,19 +122,16 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
         password: formData.password || 'password123'
       };
 
-      // console.log('CLIENT: Saving User with Payload:', userData);
-
       if (mode === 'create') {
-        const result = await (dispatch as any)(addUser(userData)).unwrap();
-        // console.log('CLIENT: Success creating user:', result);
+        await (dispatch as any)(addUser(userData)).unwrap();
       } else {
-        const result = await (dispatch as any)(updateUser({ id: initialData!.id, ...userData } as any)).unwrap();
-        // console.log('CLIENT: Success updating user:', result);
+        await (dispatch as any)(updateUser({ id: initialData!.id, ...userData } as any)).unwrap();
       }
       router.push('/users');
     } catch (err: any) {
-      // console.error('CLIENT: Failed to save user:', err);
       alert('Failed to save user: ' + (err.message || err));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -293,8 +293,19 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
 
           <div className="mt-5 pt-4 border-top d-flex gap-3">
             {mode !== 'view' && (
-              <button type="submit" className="btn btn-primary px-5 py-2 fw-bold shadow-accent rounded-pill">
-                {mode === 'create' ? 'Create User Account' : 'Save Changes'}
+              <button 
+                type="submit" 
+                className="btn btn-primary px-5 py-2 fw-bold shadow-accent rounded-pill d-flex align-items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>{mode === 'create' ? 'Creating...' : 'Saving...'}</span>
+                  </>
+                ) : (
+                  mode === 'create' ? 'Create User Account' : 'Save Changes'
+                )}
               </button>
             )}
             <button 

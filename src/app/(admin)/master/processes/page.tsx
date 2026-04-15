@@ -12,6 +12,8 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+import ExportExcel from '@/components/shared/ExportExcel';
+
 export default function ProcessDetailsPage() {
   const dispatch = useDispatch();
   const { processes, loading } = useSelector((state: RootState) => state.master);
@@ -33,17 +35,26 @@ export default function ProcessDetailsPage() {
     (dispatch as any)(fetchProcesses(company?.id));
   }, [dispatch, company?.id]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (company?.id) {
-      if (editingId) {
-        await (dispatch as any)(updateProcessThunk({ id: editingId, ...formData }));
-        setEditingId(null);
-      } else {
-        await (dispatch as any)(createProcessThunk({ ...formData, company_id: company.id }));
+      try {
+        setIsSubmitting(true);
+        if (editingId) {
+          await (dispatch as any)(updateProcessThunk({ id: editingId, ...formData })).unwrap();
+          setEditingId(null);
+        } else {
+          await (dispatch as any)(createProcessThunk({ ...formData, company_id: company.id })).unwrap();
+        }
+        setFormData({ processName: '' });
+        setView('list');
+      } catch (err) {
+        // Handle error
+      } finally {
+        setIsSubmitting(false);
       }
-      setFormData({ processName: '' });
-      setView('list');
     } else {
       alert("Please select a company from the top navigation first.");
     }
@@ -77,7 +88,7 @@ export default function ProcessDetailsPage() {
     printWindow.document.write('<html><head><title>Process Details</title>');
     printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header">');
+    printWindow.document.write('<div class="header text-center">');
     printWindow.document.write('<h1 style="margin: 0; color: #2563eb;">Globus Engineering CRM</h1>');
     printWindow.document.write('<p style="margin: 5px 0 0; color: #666;">Master Data - Process Entry</p>');
     printWindow.document.write('</div>');
@@ -125,54 +136,68 @@ export default function ProcessDetailsPage() {
 
   return (
     <ModuleGuard moduleId="mod_processes">
-      <div className="bg-white min-vh-100">
-        {/* Header Section */}
-        <div className="px-4 py-3 border-bottom d-flex align-items-center">
-          {view === 'add' && (
-            <button 
-              type="button" 
-              className="btn btn-outline-secondary border-0 p-0 me-3 d-flex align-items-center justify-content-center" 
-              onClick={() => setView('list')} 
-              title="Back to List"
-              style={{ width: '40px', height: '40px' }}
-            >
-              <i className="bi bi-arrow-left-circle fs-2 text-muted"></i>
-            </button>
-          )}
-          <h4 className="mb-0 text-dark fw-bold" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add New Process') : 'Workflow Hub'}</h4>
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+        {/* Header Section Standardized */}
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+          <div>
+            <Breadcrumb 
+              items={[
+                { label: 'Master Data', href: '/master/processes' },
+                { label: view === 'add' ? (editingId ? 'Process Detail' : 'New Process') : 'Workflow Hub', active: true }
+              ]} 
+            />
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+              {view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add New Process') : 'Workflow Hub'}
+            </h2>
+            <p className="text-muted small mb-0">
+              {view === 'add' ? 'Manage detailed technical steps and stages for industrial production.' : 'Manage your complete catalog of manufacturing and operational processes.'}
+            </p>
+          </div>
           
-          <div className="ms-auto d-flex gap-2">
+          <div className="d-flex align-items-center gap-2">
+            {view === 'list' && (
+              <ExportExcel 
+                data={processes} 
+                fileName="Workflow_Master_List" 
+                headers={{ processName: 'Process Name', id: 'Internal ID' }}
+                buttonText="Export List"
+              />
+            )}
             {view === 'add' && editingId && isViewOnly && mounted && checkActionPermission(user, 'mod_processes', 'edit') && (
               <button 
-                className="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-accent"
+                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
                 onClick={() => setIsViewOnly(false)}
+                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-pencil-square"></i>
-                <span>Edit</span>
+                <span className="fw-800 small text-uppercase">Edit Detail</span>
               </button>
             )}
             {view === 'list' && mounted && checkActionPermission(user, 'mod_processes', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ processName: '' }); }}
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
+                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-plus-lg fs-5"></i>
-                <span className="fw-bold">Add New Process</span>
+                <span className="fw-800 small text-uppercase">Add New Process</span>
+              </button>
+            )}
+            {view === 'add' && (
+              <button 
+                type="button" 
+                className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3" 
+                onClick={() => setView('list')} 
+                style={{ height: '42px', borderRadius: '10px' }}
+              >
+                <i className="bi bi-arrow-left"></i>
+                <span className="fw-800 small text-uppercase">Back</span>
               </button>
             )}
           </div>
         </div>
 
-        <div className="px-4 pt-3">
-          <Breadcrumb 
-            items={[
-              { label: 'Master Data', href: '/master/processes' },
-              { label: view === 'add' ? (editingId ? 'Process Detail' : 'New Process') : 'Workflow Hub', active: true }
-            ]} 
-          />
-        </div>
-
-        <div className="p-4 bg-light min-vh-100">
+        <div className="p-0">
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
               <form onSubmit={handleSubmit}>
@@ -197,13 +222,21 @@ export default function ProcessDetailsPage() {
                 <div className="d-flex justify-content-center gap-3 mt-5">
                   {!isViewOnly ? (
                     <>
-                      <button
-                        type="submit"
-                        className="btn px-4 py-2 text-white fw-bold rounded-1"
-                        style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '100px' }}
-                      >
-                        {editingId ? 'UPDATE' : 'ADD'}
-                      </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="btn px-4 py-2 text-white fw-bold rounded-1 d-flex align-items-center justify-content-center gap-2"
+                      style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '120px' }}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                          <span>{editingId ? 'UPDATING...' : 'ADDING...'}</span>
+                        </>
+                      ) : (
+                        editingId ? 'UPDATE' : 'ADD'
+                      )}
+                    </button>
                       <button
                         type="button"
                         onClick={() => { setFormData({ processName: '' }); setEditingId(null); setView('list'); }}

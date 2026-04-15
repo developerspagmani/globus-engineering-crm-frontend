@@ -107,9 +107,12 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
     }));
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsSubmitting(true);
       if (mode === 'create') {
         const uniqueId = `dc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const result = await dispatch(createChallan({ ...formData, id: uniqueId, company_id: activeCompany?.id || '' } as any) as any).unwrap();
@@ -137,6 +140,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
         title: 'Error Saving Challan',
         message: err || 'Something went wrong while saving the challan.'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -356,8 +361,19 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               {mode === 'view' ? 'Back' : 'Cancel'}
             </button>
             {mode !== 'view' && (
-              <button type="submit" className="btn btn-primary px-5">
-                {mode === 'create' ? 'Generate Challan' : 'Save Changes'}
+              <button 
+                type="submit" 
+                className="btn btn-primary px-5 fw-bold rounded-pill shadow-accent d-flex align-items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>{mode === 'create' ? 'Generating...' : 'Saving...'}</span>
+                  </>
+                ) : (
+                  mode === 'create' ? 'Generate Challan' : 'Save Changes'
+                )}
               </button>
             )}
           </div>

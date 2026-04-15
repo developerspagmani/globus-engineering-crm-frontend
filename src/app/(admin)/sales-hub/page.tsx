@@ -12,6 +12,8 @@ import Link from 'next/link';
 import StatusModal from '@/components/StatusModal';
 import { checkActionPermission } from '@/config/permissions';
 
+import ExportExcel from '@/components/shared/ExportExcel';
+
 const SalesHubPage = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
@@ -97,26 +99,34 @@ const SalesHubPage = () => {
   };
 
   return (
-    <div className="content-area animate-fade-in">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
           <Breadcrumb items={[{ label: 'Sales & Deal Hub', active: true }]} />
-          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">
+          <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
             {isAgent ? 'Personal Pipeline' : 'Enterprise Sales Hub'}
-          </h3>
+          </h2>
           <p className="text-muted small mb-0">Track engagement funnels and convert industrial prospects into clients.</p>
         </div>
-        <div className="d-flex gap-2">
-           {checkActionPermission(user, 'mod_lead', 'create') && (
-             <Link href="/leads/new" className="btn btn-outline-primary rounded-pill px-4 fw-700">
-               <i className="bi bi-funnel me-2"></i>New Lead
-             </Link>
-           )}
-           {checkActionPermission(user, 'mod_sales_hub', 'create') && (
-             <button className="btn btn-primary rounded-pill px-4 shadow-accent">
-               <i className="bi bi-plus-lg me-2"></i>New Deal
-             </button>
-           )}
+        <div className="d-flex align-items-center gap-2">
+          <ExportExcel
+            data={myDeals}
+            fileName="Sales_Pipeline_Report"
+            headers={{ title: 'Deal Title', value: 'Value', status: 'Status', expectedClosingDate: 'Target Date' }}
+            buttonText="Export List"
+          />
+          {checkActionPermission(user, 'mod_lead', 'create') && (
+            <Link href="/leads/new" className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-funnel-fill"></i>
+              <span className="fw-800 small text-uppercase">New Lead</span>
+            </Link>
+          )}
+          {checkActionPermission(user, 'mod_sales_hub', 'create') && (
+            <button className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-plus-lg"></i>
+              <span className="fw-800 small text-uppercase">New Deal</span>
+            </button>
+          )}
         </div>
       </div>
 

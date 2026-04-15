@@ -101,11 +101,14 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     });
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.customerId) return;
 
     try {
+      setIsSubmitting(true);
       const voucherPayload: Omit<Voucher, 'id' | 'createdAt'> = {
         voucherNo: `VCH-${Date.now().toString().slice(-6)}`,
         date: formData.date,
@@ -154,6 +157,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         title: 'Error',
         message: err.message || 'Failed to save payment.'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -276,7 +281,21 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           <div className="d-flex justify-content-center gap-3 mt-5">
             {mode !== 'view' ? (
               <>
-                <button type="submit" className="btn btn-success px-5 rounded-1 fw-bold border-0" style={{ backgroundColor: '#00a65a' }}>{mode === 'create' ? 'ADD' : 'SAVE'}</button>
+                <button 
+                  type="submit" 
+                  className="btn btn-success px-5 rounded-1 fw-bold border-0 d-flex align-items-center gap-2" 
+                  style={{ backgroundColor: '#00a65a', minWidth: '120px' }}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span>ADD...</span>
+                    </>
+                  ) : (
+                    mode === 'create' ? 'ADD' : 'SAVE'
+                  )}
+                </button>
                 <button type="button" className="btn btn-danger px-4 rounded-1 fw-bold border-0" style={{ backgroundColor: '#dd4b39' }} onClick={() => router.push(redirectPath)}>CANCEL</button>
               </>
             ) : (

@@ -9,6 +9,9 @@ import StoreVisitForm from './StoreVisitForm';
 import { useRouter } from 'next/navigation';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
+import ExportExcel from '@/components/shared/ExportExcel';
+import Breadcrumb from '@/components/Breadcrumb';
+
 const StoreList: React.FC = () => {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -58,30 +61,39 @@ const StoreList: React.FC = () => {
   if (!mounted || loading) return <div className="text-center p-5 mt-5"><div className="spinner-border text-primary"></div></div>;
 
   return (
-    <div className="container-fluid py-4">
-      {/* Header Section */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+      {/* Header Section Standardized */}
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-          <h4 className="fw-800 mb-1 text-dark tracking-tight">FIELD STORE MANAGEMENT</h4>
-          <p className="text-muted small fw-600 mb-0">Manage your assigned retail shops and field activity logs.</p>
+          <Breadcrumb items={[{ label: 'Retail & Field Hub', active: true }]} />
+          <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Field Store Management</h2>
+          <p className="text-muted small mb-0">Manage your assigned retail shops and field activity logs across all clusters.</p>
         </div>
         <div className="d-flex align-items-center gap-2">
+          <ExportExcel
+            data={stores}
+            fileName="Retail_Store_List"
+            headers={{ name: 'Shop Name', ownerName: 'Owner', phone: 'Phone', area: 'Area' }}
+            buttonText="Export List"
+          />
           {hasPermission('canCreate') && (
             <button 
-              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent" 
+              className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
               onClick={() => router.push('/stores/manage-visits')}
+              style={{ height: '42px', borderRadius: '10px' }}
             >
-              <i className="bi bi-clipboard2-check fw-800"></i>
-              <span className="fw-700">Register Visit</span>
+              <i className="bi bi-clipboard2-check-fill"></i>
+              <span className="fw-800 small text-uppercase">Register Visit</span>
             </button>
           )}
           {hasPermission('canCreate') && (
             <button 
-              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent" 
+              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" 
               onClick={() => router.push('/stores/new')}
+              style={{ height: '42px', borderRadius: '10px' }}
             >
-              <i className="bi bi-plus-lg fw-800"></i>
-              <span className="fw-700">Add New Store</span>
+              <i className="bi bi-shop-window"></i>
+              <span className="fw-800 small text-uppercase">Add New Store</span>
             </button>
           )}
         </div>

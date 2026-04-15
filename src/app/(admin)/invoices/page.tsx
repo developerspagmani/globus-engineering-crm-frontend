@@ -9,6 +9,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { checkActionPermission } from '@/config/permissions';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import ExportExcel from '@/components/shared/ExportExcel';
+
+import Breadcrumb from '@/components/Breadcrumb';
 
 export default function InvoiceHistoryPage() {
   const [mounted, setMounted] = React.useState(false);
@@ -37,21 +40,32 @@ export default function InvoiceHistoryPage() {
 
   return (
     <ModuleGuard moduleId="mod_invoice">
-      <div className="container-fluid py-4 animate-fade-in">
+      <div className="container-fluid py-4 animate-fade-in px-4">
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
-            <h2 className="fw-900 tracking-tight text-dark mb-1">Invoices</h2>
+            <Breadcrumb items={[{ label: 'Billing Hub', active: true }]} />
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Invoices</h2>
             <p className="text-muted small mb-0">Generate and manage industrial billing records • {filteredInvoices.length} total</p>
           </div>
-          <div className="d-flex gap-2">
+          <div className="d-flex align-items-center gap-2">
+            <ExportExcel 
+              data={filteredInvoices} 
+              fileName="Invoice_History" 
+              headers={{ invoiceNo: 'Invoice No', date: 'Date', customerName: 'Customer', grandTotal: 'Amount', status: 'Status' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
             {checkActionPermission(user, 'mod_invoice', 'create') && (
               <Link
                 href="/invoices/new"
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm rounded-4 fw-bold"
-                style={{ height: '48px' }}
+                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-file-earmark-plus"></i>
-                <span>Create New Invoice</span>
+                <span className="fw-800 small text-uppercase">Create New Invoice</span>
               </Link>
             )}
           </div>

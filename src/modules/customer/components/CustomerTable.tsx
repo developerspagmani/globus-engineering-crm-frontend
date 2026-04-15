@@ -129,7 +129,7 @@ const CustomerTable: React.FC = () => {
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${customer.id}`}>
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintCustomer(customer)}><i className="bi bi-printer text-primary"></i> <span className="small fw-semibold">Quick Print</span></button></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFCustomer(customer)}><i className="bi bi-file-earmark-pdf text-danger"></i> <span className="small fw-semibold">Export PDF</span></button></li>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintCustomer(customer)}><i className="bi bi-printer text-primary"></i> <span className="small fw-semibold">Quick Print</span></button></li>
                               {checkActionPermission(user, 'mod_customer', 'delete') && (
                                 <>
                                   <li><hr className="dropdown-divider opacity-50" /></li>

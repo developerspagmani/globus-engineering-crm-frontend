@@ -13,6 +13,7 @@ const InvoiceSettings: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const secondaryFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -27,14 +28,14 @@ const InvoiceSettings: React.FC = () => {
     dispatch(updateInvoiceSettings({ [name]: checked }));
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'logo' | 'logoSecondary') => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const logo = reader.result as string;
-        setFormData(prev => ({ ...prev, logo }));
-        dispatch(updateInvoiceSettings({ logo }));
+        const logoData = reader.result as string;
+        setFormData(prev => ({ ...prev, [field]: logoData }));
+        dispatch(updateInvoiceSettings({ [field]: logoData }));
       };
       reader.readAsDataURL(file);
     }
@@ -81,18 +82,19 @@ const InvoiceSettings: React.FC = () => {
                 </div>
                 
                 <div className="row g-4 align-items-center">
-                  <div className="col-md-3">
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold mb-2">Primary Logo (Left)</label>
                     <div 
-                      className="ratio ratio-1x1 bg-light rounded-4 border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
+                      className="ratio ratio-16x9 bg-light rounded-4 border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
                       style={{ borderStyle: 'dashed' }}
                     >
                       {formData.logo ? (
-                        <img src={formData.logo} alt="Logo Preview" className="img-fluid p-3 object-fit-contain" />
+                        <img src={formData.logo} alt="Logo Preview" className="img-fluid p-2 object-fit-contain" />
                       ) : (
-                        <div className="text-center text-muted p-3">
-                          <i className="bi bi-cloud-arrow-up fs-2 d-block mb-1"></i>
-                          <span className="x-small fw-bold">Upload Logo</span>
+                        <div className="text-center text-muted p-2">
+                          <i className="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
+                          <span className="x-small fw-bold">Upload Primary Logo</span>
                         </div>
                       )}
                     </div>
@@ -101,11 +103,36 @@ const InvoiceSettings: React.FC = () => {
                       ref={fileInputRef} 
                       className="d-none" 
                       accept="image/*" 
-                      onChange={handleLogoUpload} 
+                      onChange={(e) => handleLogoUpload(e, 'logo')} 
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold mb-2">Secondary Logo (Right)</label>
+                    <div 
+                      className="ratio ratio-16x9 bg-light rounded-4 border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
+                      onClick={() => secondaryFileInputRef.current?.click()}
+                      style={{ borderStyle: 'dashed' }}
+                    >
+                      {formData.logoSecondary ? (
+                        <img src={formData.logoSecondary} alt="Secondary Logo Preview" className="img-fluid p-2 object-fit-contain" />
+                      ) : (
+                        <div className="text-center text-muted p-2">
+                          <i className="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
+                          <span className="x-small fw-bold">Upload Secondary Logo</span>
+                        </div>
+                      )}
+                    </div>
+                    <input 
+                      type="file" 
+                      ref={secondaryFileInputRef} 
+                      className="d-none" 
+                      accept="image/*" 
+                      onChange={(e) => handleLogoUpload(e, 'logoSecondary')} 
                     />
                   </div>
                   
-                  <div className="col-md-9">
+                  <div className="col-12">
                     <div className="mb-3">
                       <div className="form-check form-switch custom-switch">
                         <input 
@@ -116,9 +143,9 @@ const InvoiceSettings: React.FC = () => {
                           checked={formData.showLogo}
                           onChange={handleCheckboxChange}
                         />
-                        <label className="form-check-label fw-bold small text-dark" htmlFor="showLogo">Display logo on invoice</label>
+                        <label className="form-check-label fw-bold small text-dark" htmlFor="showLogo">Display logos on invoice</label>
                       </div>
-                      <div className="text-muted x-small mt-1">Recommended size: 512x512px. Supports PNG, JPG, and SVG.</div>
+                      <div className="text-muted x-small mt-1">Recommended size: High resolution PNG/SVG. Primary logo is displayed on top-left, Secondary on top-right.</div>
                     </div>
 
                     <div>
@@ -194,6 +221,18 @@ const InvoiceSettings: React.FC = () => {
                 </div>
 
                 <div className="mb-4">
+                  <div className="form-check form-switch custom-switch mb-3">
+                    <input 
+                      className="form-check-input" 
+                      type="checkbox" 
+                      id="showDeclaration" 
+                      name="showDeclaration"
+                      checked={formData.showDeclaration}
+                      onChange={handleCheckboxChange}
+                    />
+                    <label className="form-check-label fw-bold small text-dark" htmlFor="showDeclaration">Show Declaration Section</label>
+                  </div>
+
                   <label className="form-label small text-muted text-uppercase fw-bold">Terms & Conditions</label>
                   <textarea 
                     className="form-control" 

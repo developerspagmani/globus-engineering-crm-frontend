@@ -110,9 +110,12 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsSubmitting(true);
       const finalData = { ...formData };
       
       // If user is a staff/admin with a fixed company, ensure it's set
@@ -134,6 +137,8 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
     } catch (err) {
       // console.error('Failed to save vendor:', err);
       alert('Failed to save vendor');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -302,8 +307,19 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
 
           {mode !== 'view' && (
             <div className="mt-5 pt-4 border-top d-flex gap-3">
-              <button type="submit" className="btn btn-primary px-4">
-                {mode === 'create' ? 'Register Vendor' : 'Update Vendor'}
+              <button 
+                type="submit" 
+                className="btn btn-primary px-4 fw-bold rounded-pill shadow-accent d-flex align-items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>{mode === 'create' ? 'Registering...' : 'Updating...'}</span>
+                  </>
+                ) : (
+                  mode === 'create' ? 'Register Vendor' : 'Update Vendor'
+                )}
               </button>
               <button 
                 type="button" 

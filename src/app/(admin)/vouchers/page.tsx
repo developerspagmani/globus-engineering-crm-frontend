@@ -11,12 +11,14 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ExportExcel from '@/components/shared/ExportExcel';
 
 const VoucherPage = () => {
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.voucher);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+
 
   React.useEffect(() => {
     if (activeCompany?.id) {
@@ -120,23 +122,35 @@ const VoucherPage = () => {
   };
 
   return (
-    <div className="content-area animate-fade-in">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
           <Breadcrumb 
             items={[
               { label: 'Voucher System', active: true }
             ]} 
           />
-          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Voucher Management</h3>
-          <p className="text-muted small mb-0">Record and track financial transactions</p>
+          <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Voucher Management</h2>
+          <p className="text-muted small mb-0">Record and track financial transactions for industrial accounts.</p>
         </div>
-        {checkActionPermission(user, 'mod_voucher', 'create') && (
-          <Link href="/vouchers/new" className="btn btn-primary d-flex align-items-center gap-2 py-2 px-4 shadow-accent">
-            <i className="bi bi-plus-lg fs-5"></i>
-            <span>New Voucher</span>
-          </Link>
-        )}
+          <div className="d-flex align-items-center gap-2">
+            <ExportExcel 
+              data={items} 
+              fileName="Voucher_Records" 
+              headers={{ voucherNo: 'Voucher No', type: 'Type', partyName: 'Party', totalAmount: 'Amount', date: 'Date', status: 'Status' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
+          {checkActionPermission(user, 'mod_voucher', 'create') && (
+            <Link href="/vouchers/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-plus-lg"></i>
+              <span className="fw-800 small text-uppercase">New Voucher</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Filters Card */}
@@ -150,19 +164,21 @@ const VoucherPage = () => {
                 </span>
                 <input 
                   type="text" 
-                  className="form-control border-start-0 ps-0 py-2 search-bar" 
+                  className="form-control border-start-0 ps-0 search-bar" 
                   placeholder="Search by voucher no, party..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setVoucherFilters({ search: e.target.value }))}
+                  style={{ height: '42px' }}
                 />
               </div>
             </div>
             
-            <div style={{ width: '150px' }}>
+            <div style={{ width: '180px' }}>
               <select 
-                className="form-select py-2" 
+                className="form-select" 
                 value={filters.type}
                 onChange={(e) => dispatch(setVoucherFilters({ type: e.target.value as any }))}
+                style={{ height: '42px', borderRadius: '8px' }}
               >
                 <option value="all">All Types</option>
                 <option value="payment">Payment</option>
@@ -187,27 +203,14 @@ const VoucherPage = () => {
                                 <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
 
                  <input 
-                   type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
-                   value={filters.toDate}
-                   onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))}
-                   style={{ width: '135px', fontSize: '0.85rem' }}
-                 />
+                  type="date" 
+                  className="form-control py-1 border-0 shadow-none bg-transparent" 
+                  value={filters.toDate}
+                  onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))}
+                  style={{ width: '135px', fontSize: '0.85rem' }}
+                />
                </div>
             </div>
-{/* 
-            <div className="ms-auto d-flex gap-2 align-items-center">
-              <div className="btn-group p-1 bg-light rounded-3 shadow-none me-2 d-none d-sm-flex" style={{ height: '42px' }}>
-                <button 
-                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'all' ? 'bg-white shadow-sm fw-700' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setVoucherFilters({ status: 'all' }))}
-                >All</button>
-                <button 
-                  className={`btn btn-sm rounded-pill px-3 ${filters.status === 'posted' ? 'bg-white shadow-sm fw-700 text-success' : 'text-muted border-0'}`}
-                  onClick={() => dispatch(setVoucherFilters({ status: 'posted' }))}
-                >Posted</button>
-              </div>
-            </div> */}
           </div>
         </div>
       </div>
@@ -286,12 +289,6 @@ const VoucherPage = () => {
                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintVoucherRecord(voucher)}>
                                     <i className="bi bi-printer text-primary"></i>
                                     <span className="small fw-semibold">Quick Print</span>
-                                  </button>
-                                </li>
-                                <li>
-                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFVoucherRecord(voucher)}>
-                                    <i className="bi bi-file-earmark-pdf text-danger"></i>
-                                    <span className="small fw-semibold">Export PDF</span>
                                   </button>
                                 </li>
                                 {checkActionPermission(user, 'mod_voucher', 'delete') && (

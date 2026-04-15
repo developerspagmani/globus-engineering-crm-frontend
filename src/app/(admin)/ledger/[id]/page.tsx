@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchLedgerEntries, resetLedgerState } from '@/redux/features/ledgerSlice';
@@ -11,21 +11,30 @@ import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import LedgerPrintTemplate from '@/modules/ledger/components/LedgerPrintTemplate';
+
+const reportRef = React.createRef<HTMLDivElement>();
 
 export default function LedgerDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
+  
+  const [dateFrom, setDateFrom] = useState<string>(searchParams.get('dateFrom') || '');
+  const [dateTo, setDateTo] = useState<string>(searchParams.get('dateTo') || '');
+
   const partyId = params.id as string;
+  const [exporting, setExporting] = useState(false);
+  const reportContainerRef = React.useRef<HTMLDivElement>(null);
 
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: allEntries, loading } = useSelector((state: RootState) => state.ledger);
+  const { items: allEntries, loading, filters } = useSelector((state: RootState) => state.ledger);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
-
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
 
   // 1. Identify Party
   const party = useMemo(() => {
@@ -50,44 +59,124 @@ export default function LedgerDetailPage() {
     };
   }, [dispatch, activeCompany?.id, partyId]);
 
+  const handleDownloadPDF = async () => {
+    if (!reportContainerRef.current) return;
+    setExporting(true);
+    
+    try {
+        const element = reportContainerRef.current;
+        const originalStyle = element.style.cssText;
+        
+        // Temporarily make it visible and properly sized for capture
+        element.style.display = 'block';
+        element.style.position = 'fixed';
+        element.style.top = '0';
+        element.style.left = '0';
+        element.style.width = '210mm';
+        element.style.zIndex = '-1';
+        element.style.backgroundColor = 'white';
+        element.style.visibility = 'visible';
+
+        // Wait a small moment for the layout to calculate after setting display: block
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: 1000, 
+            backgroundColor: '#ffffff'
+        });
+
+        // Restore original styles
+        element.style.cssText = originalStyle;
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const imgHeight = (canvasHeight * pdfWidth) / canvasWidth;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
+        pdf.save(`${(party?.name || 'Ledger').replace(/ /g, '_')}_Statement.pdf`);
+        
+        if (searchParams.get('export') === 'true') {
+            setTimeout(() => router.back(), 1000);
+        }
+    } catch (err) {
+        console.error('PDF export failed:', err);
+    } finally {
+        setExporting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchParams.get('print') === 'true' && !loading && party && allEntries.length > 0) {
+        const timer = setTimeout(() => {
+            window.print();
+        }, 1200); // 1.2s delay to ensure styles and data are fully rendered
+        return () => clearTimeout(timer);
+    }
+
+    if (searchParams.get('export') === 'true' && !loading && party && allEntries.length > 0) {
+        handleDownloadPDF();
+    }
+  }, [searchParams, loading, party, allEntries]);
+
   // 2. Process Ledger Calculations
   const { 
     processedEntries, 
     openingBalance, 
     totalDebit, 
     totalCredit, 
-    closingBalance 
+    closingBalance,
+    isDebitOpening
   } = useMemo(() => {
     const isVendor = party?.partyType === 'vendor';
-    let runningBalance = 0;
-    let debitSum = 0;
-    let creditSum = 0;
+    
+    const df = dateFrom || filters.dateFrom;
+    const dt = dateTo || filters.dateTo;
+    
+    // 1. Calculate Opening Balance (from entries before dateFrom)
+    let opBalance = 0;
+    if (df) {
+        const entriesBefore = allEntries.filter(e => new Date(e.date) < new Date(df));
+        entriesBefore.forEach(e => {
+            const amt = parseFloat(String(e.amount || 0));
+            if (isVendor) {
+                opBalance += (e.type === 'credit' ? amt : -amt);
+            } else {
+                opBalance += (e.type === 'debit' ? amt : -amt);
+            }
+        });
+    }
 
-    // Filter by date range (if provided)
+    let runningBalance = opBalance;
+    let periodDebitSum = 0;
+    let periodCreditSum = 0;
+
+    // Filter by date range
     const filtered = allEntries.filter(e => {
-        if (dateFrom && new Date(e.date) < new Date(dateFrom)) return false;
-        if (dateTo && new Date(e.date) > new Date(dateTo)) return false;
+        if (df && new Date(e.date) < new Date(df)) return false;
+        if (dt && new Date(e.date) > new Date(dt)) return false;
         return true;
-    });
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Chronological for processing
 
     const mapped = filtered.map(e => {
         const amt = parseFloat(String(e.amount || 0));
         const isDebit = e.type === 'debit';
         const isCredit = e.type === 'credit';
 
-        if (isDebit) debitSum += amt;
-        if (isCredit) creditSum += amt;
+        if (isDebit) periodDebitSum += amt;
+        if (isCredit) periodCreditSum += amt;
 
-        // Professional Accounting Logic:
-        // Vendor (Liability): Bal = Old + Credit - Debit
-        // Customer (Asset): Bal = Old + Debit - Credit
         if (isVendor) {
             runningBalance += (isCredit ? amt : -amt);
         } else {
             runningBalance += (isDebit ? amt : -amt);
         }
 
-        // SMART MAPPING FOR OLD DATA (Guesstimate VchType if missing)
         let vType = e.vchType;
         if (!vType) {
             const desc = e.description?.toLowerCase() || '';
@@ -106,11 +195,14 @@ export default function LedgerDetailPage() {
         };
     });
 
+    const isDebitOp = isVendor ? opBalance < 0 : opBalance >= 0;
+
     return {
-      processedEntries: [...mapped].reverse(), // Show newest at top for UI
-      openingBalance: 0,
-      totalDebit: debitSum,
-      totalCredit: creditSum,
+      processedEntries: [...mapped].reverse(), // UI shows newest first
+      openingBalance: Math.abs(opBalance),
+      isDebitOpening: opBalance !== 0 ? isDebitOp : (isVendor ? false : true),
+      totalDebit: periodDebitSum,
+      totalCredit: periodCreditSum,
       closingBalance: runningBalance
     };
   }, [allEntries, party, dateFrom, dateTo]);
@@ -139,11 +231,11 @@ export default function LedgerDetailPage() {
                     </div>
                     <p className="text-muted small fw-bold text-uppercase tracking-widest mb-0 opacity-75">Professional Account Ledger Statement</p>
                  </div>
-                 <div className="text-end hide-print">
+                  <div className="text-end hide-print">
                     <button onClick={handlePrint} className="btn btn-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
                         <i className="bi bi-printer-fill"></i> PRINT STATEMENT
                     </button>
-                 </div>
+                  </div>
               </div>
 
               <div className="row g-4 border-top pt-4">
@@ -215,8 +307,8 @@ export default function LedgerDetailPage() {
             </div>
         </div>
 
-        {/* LEDGER TABLE (Professional Design) */}
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+         {/* LEDGER TABLE (Professional Design) */}
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white hide-print">
             <div className="table-responsive" style={{ minHeight: '600px' }}>
                 <table className="table ledger-professional-table mb-0 align-middle">
                     <thead>
@@ -255,10 +347,7 @@ export default function LedgerDetailPage() {
                                 <td className="py-3 small fw-bold text-muted font-monospace">{e.vchNo || '-'}</td>
                                 <td className="py-3 text-center">
                                     {(() => {
-                                      // DYNAMIC STATUS CHECK: 
-                                      // 1. If it's an Invoice, check the actual invoice status in the DB
-                                      // 1. DYNAMIC STATUS CHECK: 
-                                      // If it's an Invoice OR a Payment/Receipt linked to an invoice
+                                      // DYNAMIC STATUS CHECK
                                       const linkedId = e.vchNo || e.referenceNo;
                                       const targetInv = allInvoices.find(inv => 
                                         String(inv.id) === String(linkedId) || 
@@ -274,11 +363,8 @@ export default function LedgerDetailPage() {
                                         );
                                       }
                                       
-                                      // 2. Fallback: If it's a general payment/receipt/journal credit (not linked)
                                       const isSettlement = isVendor ? e.debitValue > 0 : e.creditValue > 0;
-                                      const isManualCredit = !isVendor && e.type === 'credit';
-                                      
-                                      if (isSettlement || isManualCredit) {
+                                      if (isSettlement) {
                                         return (
                                           <span className="badge rounded-pill fw-900 x-small px-3 py-1 bg-success text-white">
                                             {e.vchType === 'JOURNAL' ? 'ADJUSTED' : 'PAID'}
@@ -286,7 +372,6 @@ export default function LedgerDetailPage() {
                                         );
                                       }
 
-                                      // 3. Fallback for other entries (like opening balance debits)
                                       return (
                                         <span className="badge rounded-pill fw-900 x-small px-3 py-1 bg-warning-subtle text-warning border border-warning-subtle">
                                           DUE
@@ -311,6 +396,17 @@ export default function LedgerDetailPage() {
             </div>
         </div>
 
+        {/* LEDGER PRINT VIEW (Standard Accounting Format) */}
+        <div className="show-print-only" ref={reportContainerRef}>
+            <LedgerPrintTemplate 
+                party={party!} 
+                entries={allEntries} 
+                company={activeCompany} 
+                dateFrom={dateFrom} 
+                dateTo={dateTo} 
+            />
+        </div>
+
         <style jsx>{`
             .fw-900 { font-weight: 900; }
             .fw-800 { font-weight: 800; }
@@ -323,17 +419,24 @@ export default function LedgerDetailPage() {
             .ledger-row:hover { background-color: #f7f9fc; }
             .show-print-only { display: none; }
             
+            .ledger-print-table { border-collapse: collapse; font-family: 'Arial', sans-serif; font-size: 9pt; }
+            .ledger-print-table th { font-weight: bold; border-color: #000 !important; }
+            .ledger-print-table td { padding: 4px; vertical-align: top; }
+
             @media print {
                 .hide-print { display: none !important; }
                 .show-print-only { display: block !important; }
-                body { padding: 0 !important; background: white !important; }
+                body { padding: 0 !important; background: white !important; color: black !important; }
                 .container-fluid { padding: 0 !important; }
                 .card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
-                .ledger-statement-header { border-left: none !important; border-bottom: 3px solid #000 !important; }
+                .ledger-statement-header { display: none !important; }
                 .bg-light-subtle { background-color: white !important; }
-                table th { background-color: #eee !important; color: black !important; -webkit-print-color-adjust: exact; }
+                .ledger-print-container { padding: 10mm; color: black; }
+                .ledger-print-table { color: black !important; border-color: black !important; }
+                .ledger-print-table th { background-color: transparent !important; color: black !important; }
                 .table-responsive { overflow: visible !important; }
-                @page { margin: 1cm; size: auto; }
+                @page { margin: 0.5cm; size: A4; }
+                .border-dark { border-color: black !important; }
             }
         `}</style>
       </div>

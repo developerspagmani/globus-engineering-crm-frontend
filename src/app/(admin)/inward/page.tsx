@@ -12,6 +12,7 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
+import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function InwardListPage() {
   const dispatch = useDispatch();
@@ -19,6 +20,7 @@ export default function InwardListPage() {
   const { company, user } = useSelector((state: RootState) => state.auth);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
+
 
   useEffect(() => {
     setMounted(true);
@@ -82,20 +84,32 @@ export default function InwardListPage() {
 
   return (
     <ModuleGuard moduleId="mod_inward">
-      <div className="container-fluid py-4 min-vh-100" style={{ backgroundColor: '#f8fafc' }}>
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
         {/* Header Section */}
-        <div className="d-flex justify-content-between align-items-start mb-4 px-3">
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
-            <h2 className="fw-bold mb-1">Inward Entries</h2>
-            <p className="text-muted fs-6">Manage incoming materials and vendor gate receipts.</p>
+            <Breadcrumb items={[{ label: 'Inward Logistics', active: true }]} />
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Inward Entries</h2>
+            <p className="text-muted small mb-0">Manage incoming materials and vendor gate receipts for industrial operations.</p>
           </div>
-          {mounted && checkActionPermission(user, 'mod_inward', 'create') && (
-            <Link href="/inward/new" className="btn d-flex align-items-center gap-2 px-4 shadow-sm text-white border-0 py-2 mt-2" 
-              style={{ background: 'linear-gradient(135deg, #ff4c00 0%, #ff8c00 100%)', borderRadius: '12px' }}>
-              <i className="bi bi-box-arrow-in-right fs-5"></i>
-              <span className="fw-bold fs-6">New Inward Entry</span>
-            </Link>
-          )}
+          <div className="d-flex align-items-center gap-2">
+            <ExportExcel 
+              data={filteredInwards} 
+              fileName="Inward_Records" 
+              headers={{ customerName: 'Customer', poReference: 'PO No', dcNo: 'DC No', date: 'Date' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
+            {mounted && checkActionPermission(user, 'mod_inward', 'create') && (
+              <Link href="/inward/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+                <i className="bi bi-box-arrow-in-right"></i>
+                <span className="fw-800 small text-uppercase">New Inward Entry</span>
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Filter Section - Aligned in one row */}
@@ -108,7 +122,7 @@ export default function InwardListPage() {
                   type="text"
                   placeholder="Search by Customer Name..."
                   className="form-control ps-5 border-light search-bar"
-                  style={{ height: '54px', borderRadius: '15px'}}
+                  style={{ height: '42px', borderRadius: '10px'}}
                   value={filters.search}
                   onChange={(e) => dispatch(setInwardFilters({ search: e.target.value }))}
                 />
@@ -116,7 +130,7 @@ export default function InwardListPage() {
             </div>
             <div className="col-lg-2 col-md-6">
               <select className="form-select border-light text-dark" 
-                style={{ height: '54px', borderRadius: '15px' }}
+                style={{ height: '42px', borderRadius: '10px' }}
                 value={filters.status} onChange={(e) => dispatch(setInwardFilters({ status: e.target.value as any }))}>
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -135,14 +149,14 @@ export default function InwardListPage() {
                 </div>
                 <span className="text-muted small fw-bold mx-1">TO</span>
                <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-                <input 
-                  type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
-                  style={{ fontSize: '0.85rem' }}
-                  value={filters.toDate}
-                  onChange={(e) => dispatch(setInwardFilters({ toDate: e.target.value }))}
-                />
-              </div>
+                 <input 
+                   type="date" 
+                    className="form-control py-1 border-0 shadow-none bg-transparent" 
+                   style={{ fontSize: '0.85rem' }}
+                   value={filters.toDate}
+                   onChange={(e) => dispatch(setInwardFilters({ toDate: e.target.value }))}
+                 />
+               </div>
             </div>
           </div>
         </div>
@@ -188,7 +202,7 @@ export default function InwardListPage() {
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintInward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handleExportPDFInward(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintInward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
                               {mounted && checkActionPermission(user, 'mod_inward', 'delete') && (
                                 <>
                                   <li><hr className="dropdown-divider opacity-50" /></li>

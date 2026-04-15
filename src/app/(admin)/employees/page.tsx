@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ExportExcel from '@/components/shared/ExportExcel';
 
 const EmployeesPage = () => {
   const [mounted, setMounted] = React.useState(false);
@@ -33,6 +34,7 @@ const EmployeesPage = () => {
     loading: boolean;
   };
   const [deleteModal, setDeleteModal] = React.useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+
 
   React.useEffect(() => {
     setMounted(true);
@@ -135,23 +137,35 @@ const EmployeesPage = () => {
   };
 
   return (
-    <div className="content-area animate-fade-in">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
           <Breadcrumb 
             items={[
               { label: 'Employee Hub', active: true }
             ]} 
           />
-          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Workforce Management</h3>
-          <p className="text-muted small mb-0">Monitor departments, payroll profiles, and industrial staff</p>
+          <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Workforce Management</h2>
+          <p className="text-muted small mb-0">Monitor departments, payroll profiles, and industrial staff records.</p>
         </div>
-        {checkActionPermission(user, 'mod_employee', 'create') && (
-          <Link href="/employees/new" className="btn btn-primary d-flex align-items-center gap-2 py-2 px-4 shadow-accent">
-            <i className="bi bi-person-plus fs-5"></i>
-            <span>Add Employee</span>
-          </Link>
-        )}
+          <div className="d-flex align-items-center gap-2">
+            <ExportExcel 
+              data={items} 
+              fileName="Workforce_Register" 
+              headers={{ firstName: 'First Name', lastName: 'Last Name', designation: 'Designation', department: 'Department', status: 'Status' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
+            {checkActionPermission(user, 'mod_employee', 'create') && (
+              <Link href="/employees/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+                <i className="bi bi-person-plus-fill"></i>
+                <span className="fw-800 small text-uppercase">Add Employee</span>
+              </Link>
+            )}
+          </div>
       </div>
 
       {/* Filters Card */}
@@ -165,10 +179,11 @@ const EmployeesPage = () => {
                 </span>
                 <input 
                   type="text" 
-                  className="form-control border-start-0 ps-0 py-2 search-bar" 
+                  className="form-control border-start-0 ps-0 search-bar" 
                   placeholder="Search employees..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setEmployeeFilters({ search: e.target.value }))}
+                  style={{ height: '42px' }}
                 />
               </div>
             </div>
@@ -187,9 +202,10 @@ const EmployeesPage = () => {
             </div>
             <div className="col-lg-2 col-md-3">
               <select 
-                className="form-select py-2" 
+                className="form-select" 
                 value={filters.department}
                 onChange={(e) => dispatch(setEmployeeFilters({ department: e.target.value as any }))}
+                style={{ height: '42px', borderRadius: '8px' }}
               >
                 <option value="all">Departments</option>
                 <option value="Engineering">Engineering</option>
@@ -212,20 +228,20 @@ const EmployeesPage = () => {
             </div>
                         <span className="text-muted small fw-bold">TO</span>
 
-               <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
-              <input 
-                type="date" 
-                   className="form-control py-1 border-0 shadow-none bg-transparent" 
-                value={filters.toDate}
-                onChange={(e) => dispatch(setEmployeeFilters({ toDate: e.target.value }))}
-              />
+             <div className="d-flex align-items-center gap-2 bg-white px-3 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '42px' }}>
+               <input 
+                 type="date" 
+                 className="form-control py-1 border-0 shadow-none bg-transparent" 
+                 value={filters.toDate}
+                 onChange={(e) => dispatch(setEmployeeFilters({ toDate: e.target.value }))}
+               />
             </div>
+          </div>
 
             
             
           </div>
         </div>
-      </div>
 
       <div className="card border-0 shadow-sm">
         <div className="card-body p-0">
@@ -315,9 +331,9 @@ const EmployeesPage = () => {
                                 </button>
                               </li>
                               <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFEmployee(emp)}>
-                                  <i className="bi bi-file-earmark-pdf text-danger"></i>
-                                  <span className="small fw-semibold">Export PDF</span>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintEmployee(emp)}>
+                                  <i className="bi bi-printer text-primary"></i>
+                                  <span className="small fw-semibold">Quick Print</span>
                                 </button>
                               </li>
                               {checkActionPermission(user, 'mod_employee', 'delete') && (

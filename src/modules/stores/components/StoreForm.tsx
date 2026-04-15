@@ -45,21 +45,29 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Map to backend snake_case if necessary
-    const payload = {
-      ...formData,
-      owner_name: formData.ownerName,
-    };
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    if (mode === 'create') {
-      (dispatch as any)(addStore(payload));
-    } else if (mode === 'edit' && initialData) {
-      (dispatch as any)(updateStore({ ...initialData, ...payload } as any));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      // Map to backend snake_case if necessary
+      const payload = {
+        ...formData,
+        owner_name: formData.ownerName,
+      };
+
+      if (mode === 'create') {
+        await (dispatch as any)(addStore(payload));
+      } else if (mode === 'edit' && initialData) {
+        await (dispatch as any)(updateStore({ ...initialData, ...payload } as any));
+      }
+      router.push('/stores');
+    } catch (err) {
+      // Handle error
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push('/stores');
   };
 
   return (
@@ -140,8 +148,19 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
               Cancel
             </button>
             {mode !== 'view' && (
-              <button type="submit" className="btn btn-primary px-5 rounded-pill shadow-sm">
-                {mode === 'create' ? 'Register Store' : 'Save Changes'}
+              <button 
+                type="submit" 
+                className="btn btn-primary px-5 rounded-pill shadow-sm d-flex align-items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>{mode === 'create' ? 'Registering...' : 'Saving...'}</span>
+                  </>
+                ) : (
+                  mode === 'create' ? 'Register Store' : 'Save Changes'
+                )}
               </button>
             )}
           </div>

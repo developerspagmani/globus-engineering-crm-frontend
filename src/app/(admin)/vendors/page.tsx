@@ -2,6 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import ExportExcel from '@/components/shared/ExportExcel';
 import VendorFilter from '@/modules/vendor/components/VendorFilter';
 import VendorTable from '@/modules/vendor/components/VendorTable';
 import ModuleGuard from '@/components/ModuleGuard';
@@ -12,6 +14,7 @@ import { checkActionPermission } from '@/config/permissions';
 export default function VendorListPage() {
   const [mounted, setMounted] = React.useState(false);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { items } = useSelector((state: RootState) => state.vendors);
 
   React.useEffect(() => {
     setMounted(true);
@@ -21,18 +24,35 @@ export default function VendorListPage() {
 
   return (
     <ModuleGuard moduleId="mod_vendor">
-      <div className="container-fluid py-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
-            <h2 className="fw-bold mb-1">Supplier Hub</h2>
+            <Breadcrumb items={[{ label: 'Supplier Hub', active: true }]} />
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Vendor Management</h2>
             <p className="text-muted small mb-0">Manage industrial vendors and manufacturing partners.</p>
           </div>
-          {checkActionPermission(user, 'mod_vendor', 'create') && (
-            <Link href="/vendors/new" className="btn btn-primary d-flex align-items-center gap-2">
-              <i className="bi bi-plus-circle-fill"></i>
-              <span>Add New Vendor</span>
-            </Link>
-          )}
+          <div className="d-flex align-items-center gap-2">
+            <ExportExcel 
+              data={items} 
+              fileName="Vendor_List" 
+              headers={{ name: 'Vendor Name', phone: 'Phone', email: 'Email', city: 'City', status: 'Status' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
+            {checkActionPermission(user, 'mod_vendor', 'create') && (
+              <Link
+                href="/vendors/new"
+                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+                style={{ height: '42px', borderRadius: '10px' }}
+              >
+                <i className="bi bi-plus-circle-fill"></i>
+                <span className="fw-800 small text-uppercase">Add New Vendor</span>
+              </Link>
+            )}
+          </div>
         </div>
 
         <VendorFilter />

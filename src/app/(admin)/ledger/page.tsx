@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
@@ -12,18 +13,33 @@ import Loader from '@/components/Loader';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
+import LedgerPrintTemplate from '@/modules/ledger/components/LedgerPrintTemplate';
+import { LedgerEntry } from '@/types/modules';
+import ExportExcel from '@/components/shared/ExportExcel';
+import Breadcrumb from '@/components/Breadcrumb';
 
 export default function LedgerPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { company: activeCompany, user: currentUser } = useSelector((state: RootState) => state.auth);
-  // console.log('[LEDGER FRONTEND DEBUG] Current Auth State (User/Company):', { currentUser, activeCompany });
   const { items: ledgerEntries, loading: ledgerLoading, filters } = useSelector((state: RootState) => state.ledger);
+  
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const [partyTypeFilter, setPartyTypeFilter] = React.useState<'all' | 'customer' | 'vendor'>('all');
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [mounted, setMounted] = React.useState(false);
+  const [exportingParty, setExportingParty] = useState<any>(null);
+  const [exportingEntries, setExportingEntries] = useState<LedgerEntry[]>([]);
+  const hiddenReportRef = useRef<HTMLDivElement>(null);
+  
+  // Date Modal State
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [modalDates, setModalDates] = useState({ from: '', to: '' });
+  const [targetParty, setTargetParty] = useState<any>(null);
+  const [actionType, setActionType] = useState<'pdf' | 'print' | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -161,24 +177,161 @@ export default function LedgerPage() {
     doc.save(`ledger_export_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  const handleExportClick = (party: any, type: 'pdf' | 'print') => {
+    setTargetParty(party);
+    setActionType(type);
+    setModalDates({ 
+        from: filters.dateFrom || '', 
+        to: filters.dateTo || new Date().toISOString().split('T')[0] 
+    });
+    setShowDateModal(true);
+  };
+
+  const handlePresetClick = (type: 'week' | 'month' | 'thisMonth' | 'year') => {
+    const today = new Date();
+    let from = new Date();
+    let to = today;
+
+    if (type === 'week') {
+      from.setDate(today.getDate() - 7);
+    } else if (type === 'month') {
+      from.setMonth(today.getMonth() - 1);
+    } else if (type === 'thisMonth') {
+      from = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else if (type === 'year') {
+      // Indian Financial Year (Apr to Mar)
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth(); // 0-indexed
+      if (currentMonth < 3) { // Jan-Mar
+        from = new Date(currentYear - 1, 3, 1);
+        to = new Date(currentYear, 2, 31);
+      } else {
+        from = new Date(currentYear, 3, 1);
+        to = new Date(currentYear + 1, 2, 31);
+      }
+    }
+
+    setModalDates({
+      from: from.toISOString().split('T')[0],
+      to: to.toISOString().split('T')[0]
+    });
+  };
+
+  const handleConfirmAction = () => {
+    if (!targetParty) return;
+    setShowDateModal(false);
+    
+    if (actionType === 'print') {
+        router.push(`/ledger/${targetParty.id}?print=true&dateFrom=${modalDates.from}&dateTo=${modalDates.to}`);
+    } else {
+        handleDirectPartyDownload(targetParty, modalDates.from, modalDates.to);
+    }
+  };
+
+  const handleDirectPartyDownload = async (party: any, dateFrom?: string, dateTo?: string) => {
+    if (!party?.id || !activeCompany?.id) {
+        console.error('Missing Party or Company ID');
+        return;
+    }
+
+    setExportingParty(party);
+    
+    try {
+        // 1. Fetch the actual entries for this specific party to ensure we have full data
+        // This is safer than relying on the list's summary entries
+        const resultAction = await (dispatch as any)(fetchLedgerEntries({ 
+            partyId: party.id, 
+            companyId: activeCompany.id 
+        }));
+        
+        if (fetchLedgerEntries.fulfilled.match(resultAction)) {
+            const partyEntries = resultAction.payload;
+            setExportingEntries(partyEntries);
+            
+            // 2. Wait for rendering to complete
+            setTimeout(async () => {
+                if (!hiddenReportRef.current) {
+                    console.error('Hidden report ref not found');
+                    setExportingParty(null);
+                    return;
+                }
+
+                try {
+                    const pageBoxes = hiddenReportRef.current?.querySelectorAll('.ledger-page-box');
+                    if (!pageBoxes || pageBoxes.length === 0) {
+                        console.error('No page boxes found for capture');
+                        return;
+                    }
+
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    for (let i = 0; i < pageBoxes.length; i++) {
+                        const canvas = await html2canvas(pageBoxes[i] as HTMLElement, { 
+                            scale: 2,
+                            useCORS: true,
+                            logging: false,
+                            backgroundColor: '#ffffff',
+                            windowWidth: 1200
+                        });
+
+                        const imgData = canvas.toDataURL('image/png');
+                        if (i > 0) pdf.addPage();
+                        
+                        // Fill the entire A4 page
+                        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+                    }
+                    
+                    pdf.save(`${party.name.replace(/ /g, '_')}_Statement_${new Date().toISOString().split('T')[0]}.pdf`);
+                } catch (err) {
+                    console.error('Canvas capture failed:', err);
+                    alert('Failed to generate PDF. Please try again.');
+                } finally {
+                    setExportingParty(null);
+                    setExportingEntries([]);
+                    // Optional: Refresh the full list in the background since we overwrote the cache
+                    (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany.id }));
+                }
+            }, 800);
+        } else {
+            throw new Error('Failed to fetch ledger entries for export');
+        }
+    } catch (err) {
+        console.error('Direct PDF export failed:', err);
+        alert('An error occurred while preparing the ledger export.');
+        setExportingParty(null);
+    }
+  };
+
 
   return (
     <ModuleGuard moduleId="mod_ledger">
-      <div className="container-fluid py-4 min-vh-100 bg-white">
-        {/* Header Section */}
-        <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+        {/* Header Section Standardized */}
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
-            <h2 className="fw-bold mb-1">Ledger Report</h2>
-            <p className="text-muted small mb-0">Total parties with transactions: {uniqueParties.length}</p>
+            <Breadcrumb items={[{ label: 'Financial Hub', active: true }]} />
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Account Ledger</h2>
+            <p className="text-muted small mb-0">Total parties with transactions: {uniqueParties.length} • Tracking industrial statements</p>
           </div>
-          <div className="d-flex gap-2 hide-print">
+          <div className="d-flex align-items-center gap-2 hide-print">
+            <ExportExcel 
+              data={ledgerEntries} 
+              fileName="Ledger_Party_List" 
+              headers={{ id: 'Entry ID', date: 'Date', detail: 'Description', debit: 'Debit', credit: 'Credit' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
             {mounted && checkActionPermission(currentUser, 'mod_ledger', 'create') && (
-              <Link 
+              <Link
                 href="/ledger/new-entry"
-                className="btn btn-primary d-flex align-items-center gap-2">
-              
+                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+                style={{ height: '42px', borderRadius: '10px' }}
+              >
                 <i className="bi bi-plus-lg"></i>
-                <span className="fw-bold text-uppercase small">Add New Ledger Entry</span>
+                <span className="fw-800 small text-uppercase">Add New Entry</span>
               </Link>
             )}
           </div>
@@ -196,29 +349,30 @@ export default function LedgerPage() {
                   </span>
                   <input 
                     type="text" 
-                    className="form-control border-start-0 py-2 search-bar shadow-none" 
+                    className="form-control border-start-0 ps-0 search-bar shadow-none" 
                     placeholder="Search by Party Name, City or State..." 
                     value={filters.search}
                     onChange={(e) => dispatch(setLedgerFilters({ search: e.target.value }))}
+                    style={{ height: '42px' }}
                   />
                 </div>
               </div>
               
               {/* Date Filters */}
-              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '44px' }}>
+              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '10px', height: '42px' }}>
                 <input 
                   type="date" 
-                  className="form-control py-1 border-0 shadow-none bg-transparent" 
+                  className="form-control border-0 shadow-none bg-transparent" 
                   value={filters.dateFrom}
                   onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
                   style={{ width: '135px' }}
                 />
               </div>
               <span className="text-muted small fw-bold mx-1">TO</span>
-              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '8px', height: '44px' }}>
+              <div className="d-flex align-items-center gap-2 bg-white px-2 py-1 shadow-sm border" style={{ borderRadius: '10px', height: '42px' }}>
                 <input 
                   type="date" 
-                  className="form-control py-1 border-0 shadow-none bg-transparent small" 
+                  className="form-control border-0 shadow-none bg-transparent small" 
                   value={filters.dateTo}
                   onChange={(e) => dispatch(setLedgerFilters({ dateTo: e.target.value }))}
                   style={{ width: '135px' }}
@@ -231,7 +385,7 @@ export default function LedgerPage() {
                     className="form-select border-0 shadow-sm bg-light fw-bold small text-primary"
                     value={partyTypeFilter}
                     onChange={(e) => setPartyTypeFilter(e.target.value as any)}
-                    style={{ width: '140px', borderRadius: '8px', height: '44px' }}
+                    style={{ width: '140px', borderRadius: '10px', height: '42px' }}
                  >
                     <option value="all">ALL PARTIES</option>
                     <option value="customer">CUSTOMERS</option>
@@ -300,15 +454,9 @@ export default function LedgerPage() {
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${party.id}`}>
                               <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={handlePrint}>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportClick(party, 'print')}>
                                   <i className="bi bi-printer text-primary"></i>
                                   <span className="small fw-semibold">Quick Print</span>
-                                </button>
-                              </li>
-                              <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={handleExportPDF}>
-                                  <i className="bi bi-file-earmark-pdf text-danger"></i>
-                                  <span className="small fw-semibold">Export PDF</span>
                                 </button>
                               </li>
                             </ul>
@@ -343,6 +491,75 @@ export default function LedgerPage() {
               </ul>
             </nav>
           </div>
+        )}
+
+        {/* HIDDEN TEMPLATE FOR DIRECT DOWNLOAD */}
+        {exportingParty && (
+            <div style={{ position: 'fixed', left: '-9999px', top: '0', zIndex: -1000 }}>
+                <div ref={hiddenReportRef}>
+                    <LedgerPrintTemplate 
+                        party={exportingParty} 
+                        entries={exportingEntries} 
+                        company={activeCompany} 
+                        dateFrom={modalDates.from || filters.dateFrom} 
+                        dateTo={modalDates.to || filters.dateTo} 
+                    />
+                </div>
+            </div>
+        )}
+
+        {/* CUSTOM DATE MODAL */}
+        {showDateModal && (
+            <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content shadow border-0">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title fw-bold">Select Date Range</h5>
+                            <button type="button" className="btn-close" onClick={() => setShowDateModal(false)}></button>
+                        </div>
+                        <div className="modal-body p-4">
+                            <p className="small text-muted mb-4">Select the period for <strong>{targetParty?.name}</strong>'s ledger {actionType === 'pdf' ? 'export' : 'print'}.</p>
+                            
+                            <div className="mb-4">
+                                <label className="form-label small fw-bold mb-2">Quick Presets</label>
+                                <div className="d-flex flex-wrap gap-2">
+                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('week')}>Last 7 Days</button>
+                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('month')}>Last Month</button>
+                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('thisMonth')}>This Month</button>
+                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('year')}>Financial Year</button>
+                                </div>
+                            </div>
+
+                            <div className="row g-3 border-top pt-4">
+                                <div className="col-6">
+                                    <label className="form-label small fw-bold">From</label>
+                                    <input 
+                                        type="date" 
+                                        className="form-control rounded-pill shadow-sm" 
+                                        value={modalDates.from} 
+                                        onChange={(e) => setModalDates({...modalDates, from: e.target.value})} 
+                                    />
+                                </div>
+                                <div className="col-6">
+                                    <label className="form-label small fw-bold">To</label>
+                                    <input 
+                                        type="date" 
+                                        className="form-control rounded-pill shadow-sm" 
+                                        value={modalDates.to} 
+                                        onChange={(e) => setModalDates({...modalDates, to: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer border-0 pt-0 p-4">
+                            <button type="button" className="btn btn-light rounded-pill px-4" onClick={() => setShowDateModal(false)}>Cancel</button>
+                            <button type="button" className="btn btn-dark rounded-pill px-4 fw-bold" onClick={handleConfirmAction}>
+                                {actionType === 'pdf' ? 'Download PDF' : 'Ready to Print'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         )}
       </div>
 

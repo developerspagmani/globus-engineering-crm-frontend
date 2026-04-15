@@ -105,28 +105,19 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('--- SUBMIT START (DEBUG) ---');
-    console.log('Full User Object from Redux:', user);
-    console.log('User company_id:', user?.company_id);
-    console.log('User companyId (camel):', (user as any)?.companyId);
-    console.log('Form raw company_id:', formData.company_id);
-
     try {
+      setIsSubmitting(true);
       const finalData = { ...formData };
-      
       const sessionCompanyId = user?.company_id || (user as any)?.companyId;
 
       if (!finalData.company_id && sessionCompanyId) {
-        console.log('Autocompleting missing company_id with:', sessionCompanyId);
         finalData.company_id = sessionCompanyId;
       }
 
-      console.log('Final Payload checking out:', finalData);
-      console.log('----------------------------');
-
-      // Auto-assign agent if role is sales_agent
       if (mode === 'create' && user?.role === 'sales_agent') {
         finalData.agentId = user.id;
       }
@@ -145,6 +136,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
     } catch (err) {
       console.error('Failed to save customer:', err);
       alert('Failed to save customer');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -287,8 +280,19 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
             <div className="mt-5 pt-4 border-top d-flex gap-3">
               {mode !== 'view' ? (
                 <>
-                  <button type="submit" className="btn btn-primary px-4 shadow-accent fw-bold rounded-pill">
-                    {mode === 'create' ? 'Register Customer' : 'Update Profile'}
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary px-4 shadow-accent fw-bold rounded-pill d-flex align-items-center gap-2"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>{mode === 'create' ? 'Registering...' : 'Updating...'}</span>
+                      </>
+                    ) : (
+                      mode === 'create' ? 'Register Customer' : 'Update Profile'
+                    )}
                   </button>
                   <button 
                     type="button" 

@@ -14,13 +14,15 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "d3": "^7.9.0",
+    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-redux": "^9.2.0",
-    "topojson-client": "^3.1.0"
+    "topojson-client": "^3.1.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",

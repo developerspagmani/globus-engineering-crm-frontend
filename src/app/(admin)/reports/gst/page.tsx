@@ -80,7 +80,7 @@ const GstReportPage = () => {
                 <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input 
                   type="text" 
-                  className="form-control border-0 bg-light-soft ps-5 search-bar" 
+                  className="form-control border bg-light-soft ps-5 search-bar shadow-none" 
                   placeholder="Search customer or invoice..." 
                   value={search} 
                   onChange={(e) => setSearch(e.target.value)} 
@@ -90,14 +90,14 @@ const GstReportPage = () => {
             </div>
             <div className="col-auto ms-auto d-flex align-items-center gap-1">
               {/* Rest of the filter bar... */}
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
+                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                 </div>
                 <span className="text-muted small fw-bold mx-1">TO</span>
-              <div className="d-flex align-items-center gap-2 bg-light-soft px-3" style={{ height: '42px', borderRadius: '10px' }}>
-                <input type="date" className="form-control border-0 bg-transparent p-0" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+              <div className="d-flex align-items-center gap-2 bg-light-soft px-3 border" style={{ height: '42px', borderRadius: '10px' }}>
+                <input type="date" className="form-control border-0 bg-transparent p-0 shadow-none" style={{ width: '130px', fontSize: '0.9rem' }} value={toDate} onChange={(e) => setToDate(e.target.value)} />
               </div>
-              <ReportActions />
+              <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="GST Analysis Report" />
             </div>
           </div>
         </div>

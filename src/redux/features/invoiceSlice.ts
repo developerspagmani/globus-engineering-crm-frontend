@@ -181,6 +181,7 @@ interface InvoiceState {
   };
   settings: {
     logo: string | null;
+    logoSecondary: string | null;
     termsAndConditions: string;
     footerText: string;
     prefix: string;
@@ -189,6 +190,7 @@ interface InvoiceState {
     accentColor: string;
     nextInvoice: string | null;
     nextChallan: string | null;
+    showDeclaration: boolean;
   };
 }
 
@@ -208,6 +210,7 @@ const initialState: InvoiceState = {
   },
   settings: {
     logo: null,
+    logoSecondary: null,
     termsAndConditions: '1. Please pay within 15 days from the date of invoice.\n2. Late payment is subject to interest of 2% per month.\n3. Goods once sold will not be taken back.',
     footerText: 'Thank you for your business!',
     prefix: 'INV',
@@ -216,6 +219,7 @@ const initialState: InvoiceState = {
     accentColor: '#0d6efd',
     nextInvoice: null,
     nextChallan: null,
+    showDeclaration: true,
   },
 };
 

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
+import ExportExcel from '@/components/shared/ExportExcel';
 import { RootState } from '@/redux/store';
 import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan } from '@/redux/features/challanSlice';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -18,6 +19,7 @@ const ChallanPage = () => {
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.challan);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = React.useState(false);
+
 
   React.useEffect(() => {
     setMounted(true);
@@ -121,23 +123,35 @@ const ChallanPage = () => {
   };
 
   return (
-    <div className="content-area animate-fade-in">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
           <Breadcrumb
             items={[
               { label: 'Challan System', active: true }
             ]}
           />
-          <h3 className="fw-800 tracking-tight text-dark mb-0 mt-2">Challan Management</h3>
-          <p className="text-muted small mb-0">Track material movement and delivery challans</p>
+          <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Challan Management</h2>
+          <p className="text-muted small mb-0">Track material movement and delivery challans across industrial sites.</p>
         </div>
-        {checkActionPermission(user, 'mod_challan', 'create') && (
-          <Link href="/challan/new" className="btn btn-primary d-flex align-items-center gap-2 py-2 px-4 shadow-accent">
-            <i className="bi bi-plus-lg fs-5"></i>
-            <span>Create Challan</span>
-          </Link>
-        )}
+          <div className="d-flex align-items-center gap-2">
+            <ExportExcel 
+              data={filteredItems} 
+              fileName="Challan_Records" 
+              headers={{ challanNo: 'Challan No', date: 'Date', partyName: 'Party Name', type: 'Type', status: 'Status' }}
+              buttonText="Export List"
+            />
+            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 shadow-sm" onClick={() => window.print()} style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-printer-fill"></i>
+              <span className="fw-800 small text-uppercase">Print List</span>
+            </button>
+          {checkActionPermission(user, 'mod_challan', 'create') && (
+            <Link href="/challan/new" className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm" style={{ height: '42px', borderRadius: '10px' }}>
+              <i className="bi bi-plus-lg"></i>
+              <span className="fw-800 small text-uppercase">Create Challan</span>
+            </Link>
+          )}
+        </div>
       </div>
 
         <div className="card shadow-sm border-0 mb-4 overflow-hidden">
@@ -150,19 +164,21 @@ const ChallanPage = () => {
                 </span>
                 <input
                   type="text"
-                  className="form-control border-start-0 ps-0 py-2 search-bar"
+                  className="form-control border-start-0 ps-0 search-bar"
                   placeholder="Search by challan or party..."
                   value={filters.search}
                   onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
+                  style={{ height: '42px' }}
                 />
               </div>
             </div>
             
-            <div style={{ width: '150px' }}>
+            <div style={{ width: '180px' }}>
               <select
-                className="form-select py-2"
+                className="form-select"
                 value={filters.type}
                 onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
+                style={{ height: '42px', borderRadius: '8px' }}
               >
                 <option value="all">All Types</option>
                 <option value="delivery">Delivery</option>
@@ -192,10 +208,10 @@ const ChallanPage = () => {
                    style={{ width: '135px', fontSize: '0.85rem' }}
                  />
                </div>
+               </div>
             </div>
           </div>
         </div>
-      </div>
 
       <div className="card border-0 shadow-sm">
         <div className="card-body p-0">
@@ -264,12 +280,6 @@ const ChallanPage = () => {
                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintChallanRecord(challan)}>
                                     <i className="bi bi-printer text-primary"></i>
                                     <span className="small fw-semibold">Quick Print</span>
-                                  </button>
-                                </li>
-                                <li>
-                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFChallanRecord(challan)}>
-                                    <i className="bi bi-file-earmark-pdf text-danger"></i>
-                                    <span className="small fw-semibold">Export PDF</span>
                                   </button>
                                 </li>
                                 {checkActionPermission(user, 'mod_challan', 'delete') && (

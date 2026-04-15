@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ExportExcel from '@/components/shared/ExportExcel';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -33,17 +34,26 @@ export default function ItemDetailsPage() {
     (dispatch as any)(fetchItems(company?.id));
   }, [dispatch, company?.id]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (company?.id) {
-      if (editingId) {
-        await (dispatch as any)(updateItemThunk({ id: editingId, ...formData }));
-        setEditingId(null);
-      } else {
-        await (dispatch as any)(createItemThunk({ ...formData, company_id: company.id }));
+      try {
+        setIsSubmitting(true);
+        if (editingId) {
+          await (dispatch as any)(updateItemThunk({ id: editingId, ...formData })).unwrap();
+          setEditingId(null);
+        } else {
+          await (dispatch as any)(createItemThunk({ ...formData, company_id: company.id })).unwrap();
+        }
+        setFormData({ itemCode: '', itemName: '' });
+        setView('list');
+      } catch (err) {
+        // Handle error
+      } finally {
+        setIsSubmitting(false);
       }
-      setFormData({ itemCode: '', itemName: '' });
-      setView('list');
     } else {
       alert("Please select a company from the top navigation first.");
     }
@@ -157,54 +167,68 @@ export default function ItemDetailsPage() {
 
   return (
     <ModuleGuard moduleId="mod_items">
-      <div className="bg-white min-vh-100">
-        {/* Header Section */}
-        <div className="px-4 py-3 border-bottom d-flex align-items-center">
-          {view === 'add' && (
-            <button 
-              type="button" 
-              className="btn btn-outline-secondary border-0 p-0 me-3 d-flex align-items-center justify-content-center" 
-              onClick={() => setView('list')} 
-              title="Back to List"
-              style={{ width: '40px', height: '40px' }}
-            >
-              <i className="bi bi-arrow-left-circle fs-2 text-muted"></i>
-            </button>
-          )}
-          <h4 className="mb-0 text-dark fw-bold" style={{ fontSize: '1.5rem' }}>{view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add New Item') : 'Item Hub'}</h4>
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+        {/* Header Section Standardized */}
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+          <div>
+            <Breadcrumb 
+              items={[
+                { label: 'Master Data', href: '/master/items' },
+                { label: view === 'add' ? (editingId ? 'Item Profile' : 'New Item') : 'Item Hub', active: true }
+              ]} 
+            />
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+              {view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add New Item') : 'Item Hub'}
+            </h2>
+            <p className="text-muted small mb-0">
+              {view === 'add' ? 'Manage detailed specifications and pricing for this industrial component.' : 'Manage your complete catalog of parts, tools, and industrial materials.'}
+            </p>
+          </div>
           
-          <div className="ms-auto d-flex gap-2">
+          <div className="d-flex align-items-center gap-2">
+            {view === 'list' && (
+              <ExportExcel 
+                data={items} 
+                fileName="Product_Master_List" 
+                headers={{ itemName: 'Item Name', itemCode: 'Item Code', id: 'Internal ID' }}
+                buttonText="Export List"
+              />
+            )}
             {view === 'add' && editingId && isViewOnly && mounted && checkActionPermission(user, 'mod_items', 'edit') && (
               <button 
-                className="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-accent"
+                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
                 onClick={() => setIsViewOnly(false)}
+                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-pencil-square"></i>
-                <span>Edit</span>
+                <span className="fw-800 small text-uppercase">Edit Profile</span>
               </button>
             )}
             {view === 'list' && mounted && checkActionPermission(user, 'mod_items', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ itemCode: '', itemName: '' }); }}
-                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
+                className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+                style={{ height: '42px', borderRadius: '10px' }}
               >
                 <i className="bi bi-plus-lg fs-5"></i>
-                <span className="fw-bold">Add New Item</span>
+                <span className="fw-800 small text-uppercase">Add New Item</span>
+              </button>
+            )}
+            {view === 'add' && (
+              <button 
+                type="button" 
+                className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3" 
+                onClick={() => setView('list')} 
+                style={{ height: '42px', borderRadius: '10px' }}
+              >
+                <i className="bi bi-arrow-left"></i>
+                <span className="fw-800 small text-uppercase">Back</span>
               </button>
             )}
           </div>
         </div>
 
-        <div className="px-4 pt-3">
-          <Breadcrumb 
-            items={[
-              { label: 'Master Data', href: '/master/items' },
-              { label: view === 'add' ? (editingId ? 'Item Profile' : 'New Item') : 'Item Hub', active: true }
-            ]} 
-          />
-        </div>
-
-        <div className="p-4 bg-light min-vh-100">
+        <div className="p-0">
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
               <form onSubmit={handleSubmit}>
@@ -251,10 +275,18 @@ export default function ItemDetailsPage() {
                   <div className="d-flex justify-content-center gap-3 mt-5">
                     <button
                       type="submit"
-                      className="btn px-4 py-2 text-white fw-bold rounded-1"
-                      style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '100px' }}
+                      disabled={isSubmitting}
+                      className="btn px-4 py-2 text-white fw-bold rounded-1 d-flex align-items-center justify-content-center gap-2"
+                      style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '120px' }}
                     >
-                      {editingId ? 'UPDATE' : 'ADD'}
+                      {isSubmitting ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                          <span>{editingId ? 'UPDATING...' : 'ADDING...'}</span>
+                        </>
+                      ) : (
+                        editingId ? 'UPDATE' : 'ADD'
+                      )}
                     </button>
                     <button
                       type="button"
@@ -282,7 +314,7 @@ export default function ItemDetailsPage() {
           ) : (
             <div className="animate-fade-in">
               <div className="d-flex align-items-center mb-4">
-                <div className="input-group" style={{ maxWidth: '300px' }}>
+                <div className="input-group" style={{ maxWidth: '350px' }}>
                   <span className="input-group-text bg-white border-end-0">
                     <i className="bi bi-search "></i>
                   </span>
@@ -292,6 +324,7 @@ export default function ItemDetailsPage() {
                     className="form-control border-start-0 shadow-none search-bar"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ height: '42px' }}
                   />
                 </div>
               </div>

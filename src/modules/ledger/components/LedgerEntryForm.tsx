@@ -63,11 +63,14 @@ const LedgerEntryForm: React.FC = () => {
     String(inw.customerId) === String(formData.customerId) && inw.status !== 'completed'
   );
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.customerId || !formData.amount) return;
 
     try {
+      setIsSubmitting(true);
       const selectedParty = formData.partyType === 'customer' 
         ? customers.find((c) => String(c.id) === String(formData.customerId))
         : vendors.find((v) => String(v.id) === String(formData.customerId));
@@ -112,6 +115,8 @@ const LedgerEntryForm: React.FC = () => {
         title: 'Error',
         message: err.message || 'Failed to save transaction.',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -253,8 +258,19 @@ const LedgerEntryForm: React.FC = () => {
               className="btn btn-light px-4 py-2 rounded-pill fw-800 text-muted border-0"
              > Discard
             </button>
-            <button type="submit" className="btn btn-primary d-flex align-items-center gap-2">
-              Record transaction
+            <button 
+              type="submit" 
+              className="btn btn-primary d-flex align-items-center gap-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>RECORDING...</span>
+                </>
+              ) : (
+                'Record transaction'
+              )}
             </button>
           </div>
         </div>

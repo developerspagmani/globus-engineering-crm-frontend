@@ -132,21 +132,19 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
     }));
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // console.log('🚀 Final Inward Data to submit:', formData);
     try {
+      setIsSubmitting(true);
       const finalData = { ...formData };
       if (!finalData.company_id && user?.company_id) {
         finalData.company_id = user.company_id;
       }
 
-      // console.log('📡 Sending to API:', finalData);
-
       if (mode === 'create') {
         const result = await (dispatch as any)(createInward(finalData)).unwrap();
-        // console.log('✅ API result:', result);
-
         setModal({
           isOpen: true,
           type: 'success',
@@ -164,18 +162,14 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         });
       }
     } catch (err: any) {
-      // console.error('❌ Failed to save inward:', err);
-      // Detailed error log
-      if (err.response) {
-        // console.error('Data:', err.response.data);
-        // console.error('Status:', err.response.status);
-      }
       setModal({
         isOpen: true,
         type: 'error',
         title: 'Error',
         message: err.message || 'Failed to save inward entry. Please try again.'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -298,11 +292,18 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                 <>
                   <button 
                     type="submit" 
-                    className="btn btn-success px-4 rounded-1" 
-                    style={{ minWidth: '100px' }}
-                    disabled={!formData.company_id || !formData.inwardNo}
+                    className="btn btn-success px-4 rounded-1 d-flex align-items-center gap-2" 
+                    style={{ minWidth: '120px' }}
+                    disabled={isSubmitting || !formData.company_id || !formData.inwardNo}
                   >
-                    {!formData.company_id ? 'Loading...' : (mode === 'create' ? 'ADD' : 'SAVE')}
+                    {isSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>SAVING...</span>
+                      </>
+                    ) : (
+                      !formData.company_id ? 'Loading...' : (mode === 'create' ? 'ADD' : 'SAVE')
+                    )}
                   </button>
                   <button type="button" className="btn btn-danger px-4 rounded-1" style={{ minWidth: '100px' }} onClick={() => mode === 'create' ? setFormData({ ...formData, poReference: '', dcNo: '', poDate: '', dcDate: '', items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }] } as any) : router.push('/inward')}>RESET</button>
                 </>
