@@ -159,10 +159,6 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                 </p>
            </div>
 
-           <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: '10pt', marginBottom: '2px' }}>
-                Page {pageIdx + 1}
-           </div>
-
            <table className="ledger-print-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ borderTop: '0.8pt solid black', borderBottom: '0.8pt solid black' }}>
@@ -241,6 +237,10 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                  </div>
              </div>
            )}
+
+           <div style={{ position: 'absolute', bottom: '10mm', right: '10mm', fontSize: '10pt', fontWeight: 'bold' }}>
+                Page {pageIdx + 1}
+           </div>
         </div>
       ))}
       

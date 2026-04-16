@@ -92,8 +92,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
 
       <style jsx>{`
         .print-area {
-          width: 210mm;
           margin-bottom: 50px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
         .switch {
           position: relative;
