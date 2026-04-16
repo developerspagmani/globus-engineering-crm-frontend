@@ -152,13 +152,9 @@ const EmployeesPage = () => {
             <ExportExcel 
               data={items} 
               fileName="Workforce_Register" 
-              headers={{ firstName: 'First Name', lastName: 'Last Name', designation: 'Designation', department: 'Department', status: 'Status' }}
+              headers={{ name: 'Name', employeeId: 'Emp ID', designation: 'Designation', department: 'Department', phone: 'Phone', email: 'Email', joiningDate: 'Joining Date', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             {checkActionPermission(user, 'mod_employee', 'create') && (
               <Link href="/employees/new" className="btn btn-primary btn-page-action px-4">
                 <i className="bi bi-person-plus-fill"></i>
@@ -300,18 +296,18 @@ const EmployeesPage = () => {
                               <i className="bi bi-three-dots-vertical fs-5"></i>
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${emp.id}`}>
-                              <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintEmployee(emp)}>
-                                  <i className="bi bi-printer text-primary"></i>
-                                  <span className="small fw-semibold">Quick Print</span>
-                                </button>
-                              </li>
-                              <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintEmployee(emp)}>
-                                  <i className="bi bi-printer text-primary"></i>
-                                  <span className="small fw-semibold">Quick Print</span>
-                                </button>
-                              </li>
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintEmployee(emp)}>
+                                    <i className="bi bi-printer text-primary"></i>
+                                    <span className="small fw-semibold">Quick Print</span>
+                                  </button>
+                                </li>
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFEmployee(emp)}>
+                                    <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                    <span className="small fw-semibold">Export PDF</span>
+                                  </button>
+                                </li>
                               {checkActionPermission(user, 'mod_employee', 'delete') && (
                                 <>
                                   <li><hr className="dropdown-divider opacity-50" /></li>

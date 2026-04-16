@@ -70,21 +70,50 @@ const PaymentReportPage = () => {
     return true;
   });
 
+  const totals = {
+    paymentCount: paymentData.length,
+    totalCollected: paymentData.reduce((sum, v) => sum + v.amount, 0),
+    pendingCount: filteredPending.length,
+    totalOutstanding: filteredPending.reduce((sum, inv) => sum + (inv.grandTotal - (inv.paidAmount || 0)), 0),
+    criticalOverdue: filteredPending.filter(inv => calculateDays(inv.date) > 90).length
+  };
+
   const handlePrintRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Payment Detail</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; }</style></head><body>');
-    printWindow.document.write('<h1>Globus Engineering</h1><p>Payment/Ageing Statement</p>');
-    printWindow.document.write(`<p><b>Customer:</b> ${type === 'PAYMENT' ? item.partyName : item.customerName}</p>`);
-    printWindow.document.write(`<p><b>Amount:</b> ₹${type === 'PAYMENT' ? item.amount.toLocaleString() : (item.grandTotal - (item.paidAmount || 0)).toLocaleString()}</p>`);
-    printWindow.document.write(`<p><b>Date:</b> ${item.date}</p>`);
-    printWindow.document.close(); printWindow.print();
+    const p = window.open('', '', 'height=600,width=800'); if (!p) return;
+    const amount = type === 'PAYMENT' ? item.amount : (item.grandTotal - (item.paidAmount || 0));
+    p.document.write('<html><head><title>Audit - Payment Detail</title>');
+    p.document.write('<style>body{font-family: Arial; padding: 20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:12px; text-align:left;} th{background:#f8f9fa; font-weight:bold;}</style></head><body>');
+    p.document.write(`<h2>GLOBUS ENGINEERING - Payment Audit</h2>`);
+    p.document.write(`<p><b>Reference No:</b> ${type === 'PAYMENT' ? item.voucherNo : item.invoiceNumber} | <b>Date:</b> ${item.date}</p>`);
+    p.document.write(`<table><tr><th>Audit Detail</th><th>Value</th></tr>`);
+    p.document.write(`<tr><td>Customer Name</td><td>${type === 'PAYMENT' ? item.partyName : item.customerName}</td></tr>`);
+    p.document.write(`<tr><td>Amount Involved</td><td style="font-weight:900;">₹${amount.toLocaleString()}</td></tr>`);
+    if (type === 'PENDING') {
+      p.document.write(`<tr><td>Ageing Period</td><td>${calculateDays(item.date)} Days</td></tr>`);
+    } else {
+      p.document.write(`<tr><td>Payment Mode</td><td>${item.paymentMode.toUpperCase()}</td></tr>`);
+    }
+    p.document.write(`</table></body></html>`);
+    p.document.close(); p.print();
   };
 
   const handleExportPDFRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
-    const doc = new jsPDF(); doc.text("GLOBUS ENGINEERING", 14, 20);
-    autoTable(doc, { startY: 30, body: [['Customer', type === 'PAYMENT' ? item.partyName : item.customerName], ['Amount', type === 'PAYMENT' ? `INR ${item.amount.toLocaleString()}` : `INR ${(item.grandTotal - (item.paidAmount || 0)).toLocaleString()}`], ['Date', item.date], ['Type', type]] });
-    doc.save(`payment_${item.id}.pdf`);
+    const doc = new jsPDF();
+    const amount = type === 'PAYMENT' ? item.amount : (item.grandTotal - (item.paidAmount || 0));
+    doc.setFontSize(18); doc.text(`GLOBUS ENGINEERING - ${type} AUDIT`, 14, 20);
+    autoTable(doc, {
+      startY: 30,
+      head: [['Category', 'Details']],
+      body: [
+        ['Customer', type === 'PAYMENT' ? item.partyName : item.customerName],
+        ['Reference No', type === 'PAYMENT' ? item.voucherNo : item.invoiceNumber],
+        ['Date', item.date],
+        ['Statement Amount', `INR ${amount.toLocaleString()}`],
+        ['Category', type]
+      ],
+      theme: 'grid'
+    });
+    doc.save(`audit_payment_${item.id}.pdf`);
   };
 
   return (
@@ -92,14 +121,38 @@ const PaymentReportPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Payment Report', active: true }]} /><h2 className="fw-900 mt-2">Payment Report</h2><p className="text-muted small mb-0">Track collection history and monitor outstanding dues.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Payment & Ageing Report" />
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Collection & Ageing Analysis" />
           <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchVouchers(activeCompany?.id)); (dispatch as any)(fetchPendingPayments(activeCompany?.id)); }}><i className="bi bi-arrow-repeat fw-bold" style={{ color: 'var(--accent-color)' }}></i>
             <span className="small fw-800 text-muted">Refresh</span>
           </button>
         </div>
       </div>
 
-      <div className="d-flex gap-2 mb-4">
+      {/* Audit Summary Cards */}
+      <div className="row g-3 mb-4">
+        {[
+          { label: 'Payments Recvd', val: totals.paymentCount, icon: 'shield-check', color: 'primary' },
+          { label: 'Total Collected', val: `₹${totals.totalCollected.toLocaleString()}`, icon: 'bank', color: 'success' },
+          { label: 'Total Outstanding', val: `₹${totals.totalOutstanding.toLocaleString()}`, icon: 'exclamation-diamond', color: 'danger' },
+          { label: 'Critical (>90D)', val: totals.criticalOverdue, icon: 'alarm', color: 'warning' }
+        ].map((item, i) => (
+          <div key={i} className="col-md-3">
+            <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div className="d-flex align-items-center gap-3">
+                <div className={`rounded-circle bg-${item.color} bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
+                  <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
+                </div>
+                <div>
+                  <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
+                  <h4 className="fw-900 mb-0">{item.val}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="d-flex gap-2 mb-3">
         <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PAYMENT' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => setActiveTab('PAYMENT')}>Payment History</button>
         <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PENDING' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => setActiveTab('PENDING')}>Pending Payments (Ageing)</button>
       </div>
@@ -190,6 +243,11 @@ const PaymentReportPage = () => {
                       </td>
                     </tr>
                   ))}
+                  <tr className="bg-light-soft fw-900 border-top border-dark">
+                    <td colSpan={5} className="text-center py-3 uppercase" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Audit Summary (Current View Balance)</td>
+                    <td className={`text-end py-3 px-4 ${activeTab === 'PAYMENT' ? 'text-success' : 'text-danger'}`}>₹{(activeTab === 'PAYMENT' ? totals.totalCollected : totals.totalOutstanding).toLocaleString()}</td>
+                    <td></td>
+                  </tr>
                   {(activeTab === 'PAYMENT' ? paymentData : filteredPending).length === 0 && (
                     <tr><td colSpan={7} className="text-center py-5 text-muted small">No payment records found.</td></tr>
                   )}

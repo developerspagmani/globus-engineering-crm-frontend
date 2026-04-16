@@ -40,26 +40,44 @@ const InwardReportPage = () => {
     return matchesSearch && matchesDate;
   });
 
+  const totals = filteredItems.reduce((acc, item) => {
+    return {
+      count: acc.count + 1,
+      completed: acc.completed + (item.status === 'completed' ? 1 : 0),
+      pending: acc.pending + (item.status === 'pending' ? 1 : 0),
+      parties: acc.parties.add(item.customerName || item.vendorName || 'N/A')
+    };
+  }, { count: 0, completed: 0, pending: 0, parties: new Set<string>() });
+
   const handlePrintRecord = (item: any) => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Inward Summary</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
-    printWindow.document.write('<div class="header"><h1>Globus Engineering</h1><p>Inward Summary Statement</p></div>');
-    printWindow.document.write('<div class="grid">');
-    printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${item.customerName || item.vendorName}</div></div>`);
-    printWindow.document.write(`<div><div class="label">DC No</div><div class="value">${item.dcNo || item.challanNo || '-'}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${item.date}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Status</div><div class="value">${(item.status || 'PENDING').toUpperCase()}</div></div>`);
-    printWindow.document.write('</div>');
-    printWindow.document.close(); printWindow.print();
+    const p = window.open('', '', 'height=600,width=800'); if (!p) return;
+    p.document.write('<html><head><title>Audit - Inward Summary</title>');
+    p.document.write('<style>body{font-family: Arial; padding: 20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:12px; text-align:left;} th{background:#f8f9fa; font-weight:bold;}</style></head><body>');
+    p.document.write(`<h2>GLOBUS ENGINEERING - Inward Audit</h2>`);
+    p.document.write(`<p><b>DC/Challan No:</b> ${item.dcNo || item.challanNo || '-'} | <b>Date:</b> ${item.date}</p>`);
+    p.document.write(`<table><tr><th>Audit Detail</th><th>Value</th></tr>`);
+    p.document.write(`<tr><td>Customer/Vendor</td><td>${item.customerName || item.vendorName}</td></tr>`);
+    p.document.write(`<tr><td>Address</td><td>${item.address || '-'}</td></tr>`);
+    p.document.write(`<tr><td>Status</td><td style="text-transform:uppercase; font-weight:bold;">${item.status || 'pending'}</td></tr>`);
+    p.document.write(`</table></body></html>`);
+    p.document.close(); p.print();
   };
 
   const handleExportPDFRecord = (item: any) => {
     const doc = new jsPDF();
-    doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255); doc.text("GLOBUS ENGINEERING", 14, 25);
-    autoTable(doc, { startY: 55, body: [['Customer', item.customerName || item.vendorName], ['DC No', item.dcNo || item.challanNo || '-'], ['Date', item.date], ['Status', (item.status || 'PENDING').toUpperCase()]], theme: 'grid' });
-    doc.save(`inward_${item.dcNo || 'record'}.pdf`);
+    doc.setFontSize(18); doc.text("GLOBUS ENGINEERING - INWARD AUDIT", 14, 20);
+    autoTable(doc, { 
+       startY: 30, 
+       head: [['Field', 'Value']],
+       body: [
+          ['Party Name', item.customerName || item.vendorName], 
+          ['DC No', item.dcNo || item.challanNo || '-'], 
+          ['Date', item.date], 
+          ['Status', (item.status || 'pending').toUpperCase()]
+       ],
+       theme: 'grid'
+    });
+    doc.save(`audit_inward_${item.dcNo || 'record'}.pdf`);
   };
 
   return (
@@ -71,7 +89,7 @@ const InwardReportPage = () => {
           <p className="text-muted small mb-0 font-weight-500">History of all incoming material receipts and industrial logistics entries.</p>
         </div>
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Inward Report" />
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Inward History Report" />
           <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => (dispatch as any)(fetchInwards(activeCompany?.id))}><i className="bi bi-arrow-repeat text-primary fw-bold"></i> <span className="small fw-800 text-muted">Refresh</span></button>
         </div>
       </div>
@@ -95,6 +113,30 @@ const InwardReportPage = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Audit Summary Cards */}
+      <div className="row g-3 mb-4">
+        {[
+          { label: 'Total Receipts', val: totals.count, icon: 'box-seam', color: 'primary' },
+          { label: 'Completed', val: totals.completed, icon: 'check-circle', color: 'success' },
+          { label: 'Pending Entries', val: totals.pending, icon: 'clock-history', color: 'warning' },
+          { label: 'Active Parties', val: totals.parties.size, icon: 'people', color: 'info' }
+        ].map((item, i) => (
+          <div key={i} className="col-md-3">
+            <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div className="d-flex align-items-center gap-3">
+                <div className={`rounded-circle bg-${item.color} bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
+                  <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
+                </div>
+                <div>
+                  <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
+                  <h4 className="fw-900 mb-0">{item.val}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card border-0 shadow-sm overflow-hidden rounded-4">
@@ -140,6 +182,10 @@ const InwardReportPage = () => {
                       </td>
                     </tr>
                   ))}
+                  <tr className="bg-light-soft fw-900 border-top border-dark">
+                    <td colSpan={5} className="text-center py-3">Audit Summary (Cumulative Receipts)</td>
+                    <td colSpan={2} className="text-center py-3">{totals.count} Inwards Listed</td>
+                  </tr>
                   {filteredItems.length === 0 && (
                     <tr><td colSpan={7} className="text-center py-5 text-muted small">No inward records found matching filters.</td></tr>
                   )}

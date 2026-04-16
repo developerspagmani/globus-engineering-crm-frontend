@@ -141,10 +141,6 @@ const ChallanPage = () => {
               headers={{ challanNo: 'Challan No', date: 'Date', partyName: 'Party Name', type: 'Type', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
           {checkActionPermission(user, 'mod_challan', 'create') && (
             <Link href="/challan/new" className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-plus-lg"></i>

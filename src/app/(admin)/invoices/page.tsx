@@ -51,13 +51,9 @@ export default function InvoiceHistoryPage() {
             <ExportExcel 
               data={filteredInvoices} 
               fileName="Invoice_History" 
-              headers={{ invoiceNo: 'Invoice No', date: 'Date', customerName: 'Customer', grandTotal: 'Amount', status: 'Status' }}
+              headers={{ invoiceNumber: 'Invoice No', date: 'Date', customerName: 'Customer', grandTotal: 'Amount', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             {checkActionPermission(user, 'mod_invoice', 'create') && (
               <Link
                 href="/invoices/new"

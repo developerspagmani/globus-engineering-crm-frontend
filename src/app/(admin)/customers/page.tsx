@@ -39,10 +39,6 @@ export default function CustomerListPage() {
               headers={{ name: 'Customer Name', company: 'Company', email: 'Email', phone: 'Phone', industry: 'Industry', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             {(checkActionPermission(user, 'mod_customer', 'create') || user?.role === 'company_admin') && (
               <Link
                 href="/customers/new"

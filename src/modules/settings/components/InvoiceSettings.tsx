@@ -211,56 +211,32 @@ const InvoiceSettings: React.FC = () => {
 
               <hr className="my-2 opacity-5" />
 
-                <div className="mb-4">
-                  <div className="form-check form-switch custom-switch mb-3">
-                    <input 
-                      className="form-check-input" 
-                      type="checkbox" 
-                      id="showDeclaration" 
-                      name="showDeclaration"
-                      checked={formData.showDeclaration}
-                      onChange={handleCheckboxChange}
-                    />
-                    <label className="form-check-label fw-bold small text-dark" htmlFor="showDeclaration">Show Declaration Section</label>
-                  </div>
-
-                  <label className="form-label small text-muted text-uppercase fw-bold">Terms & Conditions</label>
-                  <textarea 
-                    className="form-control" 
-                    rows={5} 
-                    placeholder="Enter default terms..."
-                    name="termsAndConditions"
-                    value={formData.termsAndConditions}
-                    onChange={handleInputChange}
-                  ></textarea>
-                  <div className="text-muted x-small mt-1 text-end">This will appear at the bottom-left of your invoices.</div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="form-label small text-muted text-uppercase fw-bold">Footer Note</label>
+              <div className="col-12">
+                <div className="form-check form-switch custom-switch mb-3">
                   <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="e.g. Thank you for your business!" 
-                    name="footerText"
-                    value={formData.footerText}
-                    onChange={handleInputChange}
+                    className="form-check-input" 
+                    type="checkbox" 
+                    id="showDeclaration" 
+                    name="showDeclaration"
+                    checked={formData.showDeclaration}
+                    onChange={handleCheckboxChange}
                   />
-                  <div className="text-muted x-small mt-1 text-end">A short closing message centered at the very bottom.</div>
+                  <label className="form-check-label fw-bold small text-dark" htmlFor="showDeclaration">Show Declaration Section</label>
+                </div>
+              </div>
+
+              <hr className="my-2 opacity-5" />
+
+              {/* Banking Section */}
+              <div className="col-12">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <div className="bg-primary bg-opacity-10 p-2 text-primary">
+                    <i className="bi bi-bank fs-5"></i>
+                  </div>
+                  <h6 className="fw-bold mb-0">Banking & Company Details</h6>
                 </div>
 
-                <hr className="my-2 opacity-5" />
-
-                <div className="row g-4 mt-2">
-                  <div className="col-12">
-                    <div className="d-flex align-items-center gap-2 mb-3">
-                      <div className="bg-primary bg-opacity-10 p-2 text-primary">
-                        <i className="bi bi-bank fs-5"></i>
-                      </div>
-                      <h6 className="fw-bold mb-0">Banking & Company Details</h6>
-                    </div>
-                  </div>
-
+                <div className="row g-4">
                   <div className="col-md-4">
                     <label className="form-label small text-muted text-uppercase fw-bold">VAT TIN</label>
                     <input type="text" className="form-control" name="vatTin" value={(formData as any).vatTin} onChange={handleInputChange} />
@@ -287,6 +263,7 @@ const InvoiceSettings: React.FC = () => {
                     <input type="text" className="form-control" name="bankBranchIfsc" value={(formData as any).bankBranchIfsc} onChange={handleInputChange} />
                   </div>
                 </div>
+              </div>
 
               <div className="col-12 mt-4 pt-2">
                 <button 

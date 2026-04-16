@@ -96,13 +96,9 @@ export default function InwardListPage() {
             <ExportExcel 
               data={filteredInwards} 
               fileName="Inward_Records" 
-              headers={{ customerName: 'Customer', poReference: 'PO No', dcNo: 'DC No', date: 'Date' }}
+              headers={{ inwardNo: 'Inward No', customerName: 'Customer', poReference: 'PO No', dcNo: 'DC No', date: 'Date' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             {mounted && checkActionPermission(user, 'mod_inward', 'create') && (
               <Link href="/inward/new" className="btn btn-primary btn-page-action px-4">
                 <i className="bi bi-box-arrow-in-right"></i>
@@ -196,7 +192,7 @@ export default function InwardListPage() {
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintInward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintInward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handleExportPDFInward(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
                               {mounted && checkActionPermission(user, 'mod_inward', 'delete') && (
                                 <>
                                   <li><hr className="dropdown-divider opacity-50" /></li>

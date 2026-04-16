@@ -932,4 +932,3 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 };
 
 export default InvoiceForm;
-Form;

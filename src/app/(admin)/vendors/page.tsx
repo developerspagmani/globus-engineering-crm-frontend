@@ -38,10 +38,6 @@ export default function VendorListPage() {
               headers={{ name: 'Vendor Name', phone: 'Phone', email: 'Email', city: 'City', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             {checkActionPermission(user, 'mod_vendor', 'create') && (
               <Link
                 href="/vendors/new"

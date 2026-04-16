@@ -137,10 +137,6 @@ const PendingPaymentPage = () => {
               headers={{ customerName: 'Customer', invoiceNumber: 'Invoice No', grandTotal: 'Total', paidAmount: 'Paid', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             <button 
               className="btn btn-primary btn-page-action px-4" 
               onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}

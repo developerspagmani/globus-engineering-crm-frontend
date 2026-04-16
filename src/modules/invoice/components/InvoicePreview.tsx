@@ -147,14 +147,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
           .print-area { 
             margin: 0 !important; 
             padding: 0 !important;
-            width: 198mm !important;
+            width: 100% !important;
             height: auto !important;
-            max-width: none !important; 
-            float: left !important;
-          }
-          body {
-            margin: 0 !important;
-            padding: 0 !important;
           }
         }
       `}</style>

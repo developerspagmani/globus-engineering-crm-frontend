@@ -48,17 +48,52 @@ const GstReportPage = () => {
     return matchesSearch && matchesDate;
   });
 
+  const totals = filteredItems.reduce((acc, inv) => {
+    const taxable = inv.subTotal || (inv.grandTotal - (inv.taxTotal || 0));
+    return {
+      taxable: acc.taxable + taxable,
+      tax: acc.tax + (inv.taxTotal || 0),
+      grand: acc.grand + inv.grandTotal,
+      count: acc.count + 1
+    };
+  }, { taxable: 0, tax: 0, grand: 0, count: 0 });
+
   const handlePrint = (item: any) => {
     const p = window.open('', '', 'height=600,width=800'); if (!p) return;
-    p.document.write('<html><body><h1>Globus Engineering</h1><p>GST Report Record</p>');
-    p.document.write(`<p><b>Customer:</b> ${item.customerName}</p><p><b>Invoice:</b> ${item.invoiceNumber}</p><p><b>Grand Total:</b> ₹${item.grandTotal.toLocaleString()}</p>`);
+    const taxable = item.subTotal || (item.grandTotal - (item.taxTotal || 0));
+    p.document.write('<html><head><title>Audit Record - Globus</title>');
+    p.document.write('<style>body{font-family: Arial; padding: 20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:12px; text-align:left;} th{background:#f8f9fa;}</style></head><body>');
+    p.document.write(`<h2>GLOBUS ENGINEERING - Audit Record</h2>`);
+    p.document.write(`<p><b>Invoice No:</b> ${item.invoiceNumber} | <b>Date:</b> ${item.date}</p>`);
+    p.document.write(`<table><tr><th>Audit Detail</th><th>Value</th></tr>`);
+    p.document.write(`<tr><td>Customer Name</td><td>${item.customerName}</td></tr>`);
+    p.document.write(`<tr><td>Taxable Amount</td><td>₹${taxable.toLocaleString()}</td></tr>`);
+    p.document.write(`<tr><td>GST Amount</td><td>₹${(item.taxTotal || 0).toLocaleString()}</td></tr>`);
+    p.document.write(`<tr><td>Grand Total</td><td>₹${item.grandTotal.toLocaleString()}</td></tr>`);
+    p.document.write(`</table></body></html>`);
     p.document.close(); p.print();
   };
 
   const handleExport = (item: any) => {
-    const doc = new jsPDF(); doc.text("GLOBUS ENGINEERING - GST REPORT", 14, 20);
-    autoTable(doc, { startY: 30, body: [['Customer', item.customerName], ['Invoice No', item.invoiceNumber], ['Date', item.date], ['Grand Total', `INR ${item.grandTotal.toLocaleString()}`]] });
-    doc.save(`gst_record_${item.invoiceNumber}.pdf`);
+    const doc = new jsPDF();
+    const taxable = item.subTotal || (item.grandTotal - (item.taxTotal || 0));
+    doc.setFontSize(18);
+    doc.text("GLOBUS ENGINEERING - AUDIT RECORD", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Invoice Number: ${item.invoiceNumber}`, 14, 30);
+    doc.text(`Date: ${item.date}`, 14, 35);
+    autoTable(doc, { 
+      startY: 45, 
+      head: [['Audit Category', 'Value']],
+      body: [
+        ['Customer Name', item.customerName], 
+        ['GSTIN', item.gstin || '-'],
+        ['Taxable Amount', `INR ${taxable.toLocaleString()}`], 
+        ['GST Amount', `INR ${(item.taxTotal || 0).toLocaleString()}`], 
+        ['Grand Total', `INR ${item.grandTotal.toLocaleString()}`]
+      ] 
+    });
+    doc.save(`audit_${item.invoiceNumber}.pdf`);
   };
 
   return (
@@ -99,6 +134,30 @@ const GstReportPage = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Audit Summary Section - Taxable, Tax, Grand Total, Count */}
+      <div className="row g-3 mb-4">
+        {[
+          { label: 'Total Invoices', val: totals.count, icon: 'receipt', color: 'primary' },
+          { label: 'Taxable Amount', val: `₹${totals.taxable.toLocaleString()}`, icon: 'cash-stack', color: 'info' },
+          { label: 'Tax Collected', val: `₹${totals.tax.toLocaleString()}`, icon: 'percent', color: 'warning' },
+          { label: 'Grand Revenue', val: `₹${totals.grand.toLocaleString()}`, icon: 'wallet2', color: 'success' }
+        ].map((item, i) => (
+          <div key={i} className="col-md-3">
+            <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div className="d-flex align-items-center gap-3">
+                <div className={`rounded-circle bg-${item.color} bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
+                  <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
+                </div>
+                <div>
+                  <p className="text-muted small mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
+                  <h4 className="fw-900 mb-0">{item.val}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
@@ -153,6 +212,17 @@ const GstReportPage = () => {
                       </tr>
                     );
                   })}
+                  <tr className="bg-light-soft fw-900 border-top border-dark">
+                    <td colSpan={5} className="text-center py-3">Audit Summary (Grand Totals)</td>
+                    <td className="text-end py-3 px-2">₹{totals.grand.toLocaleString()}</td>
+                    <td className="text-center py-3">₹{totals.tax.toLocaleString()}</td>
+                    <td></td>
+                  </tr>
+                  <tr className="bg-white small text-muted text-uppercase">
+                    <td colSpan={5} className="text-center py-1">Cumulative Taxable Value</td>
+                    <td colSpan={2} className="text-center py-1 fw-bold text-info border-start border-end">₹{totals.taxable.toLocaleString()}</td>
+                    <td></td>
+                  </tr>
                   {filteredItems.length === 0 && (
                     <tr><td colSpan={8} className="text-center py-5 text-muted small">No records found matching filters.</td></tr>
                   )}

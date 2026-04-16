@@ -316,14 +316,10 @@ export default function LedgerPage() {
           <div className="d-flex align-items-center gap-2 hide-print">
             <ExportExcel 
               data={ledgerEntries} 
-              fileName="Ledger_Party_List" 
-              headers={{ id: 'Entry ID', date: 'Date', detail: 'Description', debit: 'Debit', credit: 'Credit' }}
+              fileName="Ledger_Report" 
+              headers={{ partyName: 'Party Name', date: 'Date', description: 'Description', debit: 'Debit', credit: 'Credit', balance: 'Balance' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             {mounted && checkActionPermission(currentUser, 'mod_ledger', 'create') && (
               <Link
                 href="/ledger/new-entry"

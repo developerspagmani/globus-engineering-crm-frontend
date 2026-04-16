@@ -93,10 +93,6 @@ export default function OutwardListPage() {
               headers={{ outwardNo: 'Outward No', partyType: 'Type', customerName: 'Customer', vendorName: 'Vendor', invoiceReference: 'Invoice Ref', date: 'Date' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
             {mounted && checkActionPermission(user, 'mod_outward', 'create') && (
               <Link href="/outward/new" className="btn btn-primary btn-page-action px-4">
                 <i className="bi bi-box-arrow-right"></i>

@@ -137,13 +137,9 @@ const VoucherPage = () => {
             <ExportExcel 
               data={items} 
               fileName="Voucher_Records" 
-              headers={{ voucherNo: 'Voucher No', type: 'Type', partyName: 'Party', totalAmount: 'Amount', date: 'Date', status: 'Status' }}
+              headers={{ voucherNo: 'Voucher No', type: 'Type', partyName: 'Party', amount: 'Amount', date: 'Date', status: 'Status' }}
               buttonText="Export List"
             />
-            <button className="btn btn-outline-dark btn-page-action" onClick={() => window.print()}>
-              <i className="bi bi-printer-fill"></i>
-              <span>Print List</span>
-            </button>
           {checkActionPermission(user, 'mod_voucher', 'create') && (
             <Link href="/vouchers/new" className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-plus-lg"></i>
