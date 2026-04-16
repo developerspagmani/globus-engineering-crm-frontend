@@ -82,4 +82,3 @@ const EditEmployeePage = () => {
 };
 
 export default EditEmployeePage;
-Page;

@@ -13,7 +13,7 @@ const InvoiceStatusPage = () => {
             <h4 className="fw-800 text-dark mb-1">Invoice Status Tracking</h4>
             <Breadcrumb 
               items={[
-                { label: 'Invoices', path: '/invoices' },
+                { label: 'Invoices', href: '/invoices' },
                 { label: 'Status Tracking', active: true }
               ]} 
             />

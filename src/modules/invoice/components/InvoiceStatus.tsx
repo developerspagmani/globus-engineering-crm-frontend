@@ -126,7 +126,7 @@ const InvoiceStatus = () => {
                   </tr>
                 ) : (
                   filteredInvoices.map((inv) => (
-                    <tr key={inv.id || inv._id}>
+                    <tr key={inv.id}>
                       <td className="ps-4 fw-600 border-end border-light" style={{ color: '#475569' }}>
                         {formatDate(inv.date)}
                       </td>
@@ -143,7 +143,7 @@ const InvoiceStatus = () => {
                       <td className="text-center">
                         <span className={`badge rounded-pill px-3 py-2 fw-800 text-uppercase tracking-wider ${
                           inv.status === 'paid' ? 'bg-success-subtle text-success' : 
-                          inv.status === 'partially paid' ? 'bg-warning-subtle text-warning' : 
+                          inv.status === 'sent' ? 'bg-warning-subtle text-warning' :
                           'bg-danger-subtle text-danger'
                         }`} style={{ fontSize: '0.7rem' }}>
                           {inv.status}
@@ -152,7 +152,7 @@ const InvoiceStatus = () => {
                       <td className="pe-4 text-center">
                         <div className="d-flex justify-content-center gap-2">
                           <Link 
-                            href={`/invoices/${inv.id || inv._id}`}
+                            href={`/invoices/${inv.id}`}
                             className="btn-action shadow-sm"
                             style={{ 
                               width: '32px', 

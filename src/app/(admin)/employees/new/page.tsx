@@ -38,5 +38,3 @@ const NewEmployeePage = () => {
 
 export default NewEmployeePage;
 
-ge;
-

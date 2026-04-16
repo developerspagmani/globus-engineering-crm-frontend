@@ -88,14 +88,7 @@ const SettingsPage = () => {
                   <InvoicePreview 
                     invoice={mockInvoices[0]} 
                     company={company}
-                    settings={{
-                      ...invoiceSettings,
-                      logo: invoiceSettings.logo || company?.logo || null,
-                      logoSecondary: invoiceSettings.logoSecondary || company?.logoSecondary || null,
-                    }}
-                    onClose={() => {}}
-                    onPrint={() => {}}
-                    onDownloadPDF={() => {}}
+                    hideControls={true}
                   />
                 </div>
               </div>

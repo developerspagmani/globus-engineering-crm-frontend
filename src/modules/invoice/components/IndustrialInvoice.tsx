@@ -78,7 +78,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                totalPages={totalPages}
                isLastPage={idx === totalPages - 1}
                totalInWords={totalInWords}
-               startSno={pagesData.slice(0, idx).reduce((sum, p) => sum + p.length, 0) + 1}
+               startSno={pagesData.slice(0, idx).reduce((sum: number, p: any[]) => sum + p.length, 0) + 1}
                maxRows={idx === totalPages - 1 ? rowsOnLastPage : rowsOnMiddlePage}
             />
          ))}
@@ -323,7 +323,7 @@ const InvoicePage = ({ invoice, company, settings, items, pageNo, totalPages, is
                            <tr className="total-row">
                               <td colSpan={2} style={{ textAlign: 'right', fontWeight: '900' }}>SUB TOTAL (Taxable Value)</td>
                               <td>&nbsp;</td>
-                              <td style={{ textAlign: 'center' }}>{invoice.items.reduce((sum, item) => sum + item.quantity, 0)}</td>
+                              <td style={{ textAlign: 'center' }}>{invoice.items.reduce((sum: number, item: any) => sum + item.quantity, 0)}</td>
                               <td>&nbsp;</td>
                               <td style={{ textAlign: 'right', fontWeight: '900' }}>₹ {invoice.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || invoice.sub_total?.toLocaleString('en-IN')}</td>
                            </tr>

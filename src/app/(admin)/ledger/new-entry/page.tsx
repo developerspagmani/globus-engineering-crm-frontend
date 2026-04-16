@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import ModuleGuard from '@/components/ModuleGuard';
 import LedgerEntryForm from '@/modules/ledger/components/LedgerEntryForm';
+import Link from 'next/link';
 
 export default function NewLedgerEntryPage() {
   const router = useRouter();

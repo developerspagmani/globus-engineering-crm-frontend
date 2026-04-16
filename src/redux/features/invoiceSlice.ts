@@ -179,19 +179,25 @@ interface InvoiceState {
     currentPage: number;
     itemsPerPage: number;
   };
-  settings: {
-    logo: string | null;
-    logoSecondary: string | null;
-    termsAndConditions: string;
-    footerText: string;
-    prefix: string;
-    nextNumber: number;
-    showLogo: boolean;
-    accentColor: string;
-    nextInvoice: string | null;
-    nextChallan: string | null;
-    showDeclaration: boolean;
-  };
+    settings: {
+      logo: string | null;
+      logoSecondary: string | null;
+      termsAndConditions: string;
+      footerText: string;
+      prefix: string;
+      nextNumber: number;
+      showLogo: boolean;
+      accentColor: string;
+      nextInvoice: string | null;
+      nextChallan: string | null;
+      showDeclaration: boolean;
+      vatTin?: string;
+      cstNo?: string;
+      panNo?: string;
+      bankName?: string;
+      bankAcc?: string;
+      bankBranchIfsc?: string;
+    };
 }
 
 const initialState: InvoiceState = {

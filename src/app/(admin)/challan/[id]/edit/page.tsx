@@ -81,4 +81,3 @@ const EditChallanPage = () => {
 };
 
 export default EditChallanPage;
-Page;

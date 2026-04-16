@@ -71,4 +71,3 @@ const EditVoucherPage = () => {
 };
 
 export default EditVoucherPage;
-Page;
