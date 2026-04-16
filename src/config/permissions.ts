@@ -23,7 +23,16 @@ export const navigationConfig: NavItem[] = [
   { name: 'Outward', icon: 'bi-box-arrow-up-right', path: '/outward', moduleId: 'mod_outward' },
   { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
   { name: 'Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
-  { name: 'Invoice', icon: 'bi-file-earmark-spreadsheet', path: '/invoices', moduleId: 'mod_invoice' },
+  { 
+    name: 'Invoice', 
+    icon: 'bi-file-earmark-spreadsheet', 
+    path: '/invoices', 
+    moduleId: 'mod_invoice',
+    children: [
+      { name: 'All Invoices', icon: 'bi-list-ul', path: '/invoices', moduleId: 'mod_invoice' },
+      { name: 'Invoice Status', icon: 'bi-graph-up', path: '/invoices/status', moduleId: 'mod_invoice' },
+    ]
+  },
   { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
   { name: 'Active Sales Area', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_hub' },

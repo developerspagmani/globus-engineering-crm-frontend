@@ -36,11 +36,13 @@
   /* Deep Slate */
   --accent-color: #f97316;
   /* Primary Orange */
-  --accent-blue: #ea580c; /* Formerly blue, now dark orange for accents */
+  --accent-blue: #ea580c;
+  /* Formerly blue, now dark orange for accents */
   --accent-soft: rgba(249, 115, 22, 0.1);
   --primary-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 
-  --bg-body: #fafaf9; /* Warm off-white */
+  --bg-body: #fafaf9;
+  /* Warm off-white */
   --bg-sidebar: #ffffff;
   /* Subtle premium tint */
   --bg-card: #ffffff;
@@ -207,12 +209,12 @@ body {
   white-space: nowrap !important;
   line-height: 1 !important;
   transition: var(--transition-smooth) !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.07) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07) !important;
 }
 
 .btn-page-action:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.10) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.10) !important;
 }
 
 .btn-page-action i {
@@ -269,7 +271,7 @@ body {
 /* Filter card styling for consistency */
 .filter-card {
   border: none !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
   border-radius: 0.75rem !important;
   margin-bottom: 1.5rem !important;
 }
@@ -280,7 +282,25 @@ body {
 
 /* Standardized Button Styles - ENFORCED CONSISTENCY */
 
-.btn, button, .btn-action, .btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-warning, .btn-info, .btn-light, .btn-dark, .btn-outline-primary, .btn-outline-secondary, .btn-outline-success, .btn-outline-danger, .btn-outline-warning, .btn-outline-info, .btn-outline-light, .btn-outline-dark {
+.btn,
+button,
+.btn-action,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-light,
+.btn-dark,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-dark {
 
   text-transform: capitalize !important;
 
@@ -288,7 +308,8 @@ body {
 
   letter-spacing: 0.025em !important;
 
-  border-radius: 0.5rem !important; /* Consistent medium rounded corners */
+  border-radius: 0.5rem !important;
+  /* Consistent medium rounded corners */
 
   transition: var(--transition-smooth) !important;
 
@@ -305,22 +326,34 @@ body {
 }
 
 /* Override any inline styles or conflicting classes */
-.btn[style*="border-radius"], button[style*="border-radius"], .btn-action[style*="border-radius"] {
+.btn[style*="border-radius"],
+button[style*="border-radius"],
+.btn-action[style*="border-radius"] {
   border-radius: 0.5rem !important;
 }
 
-.btn[style*="text-transform"], button[style*="text-transform"], .btn-action[style*="text-transform"] {
+.btn[style*="text-transform"],
+button[style*="text-transform"],
+.btn-action[style*="text-transform"] {
   text-transform: capitalize !important;
 }
 
 /* GLOBAL OVERRIDES FOR CONSISTENCY - FORCE UNIFORM STYLING */
-.rounded-pill, .rounded-4, .rounded-3, .rounded-5, .rounded-circle {
+.rounded-pill,
+.rounded-4,
+.rounded-3,
+.rounded-5,
+.rounded-circle {
   border-radius: 0.5rem !important;
 }
 
 /* Premium Form Controls - ENSURE VISIBILITY */
-.form-control, .form-select, .form-textarea, textarea.form-control {
-  border: 1px solid #cbd5e1 !important; /* Clearly visible slate border */
+.form-control,
+.form-select,
+.form-textarea,
+textarea.form-control {
+  border: 1px solid #cbd5e1 !important;
+  /* Clearly visible slate border */
   background-color: #ffffff !important;
   border-radius: 0.5rem !important;
   padding: 0.6rem 0.85rem !important;
@@ -329,7 +362,8 @@ body {
   color: #334155 !important;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   border-color: var(--accent-color) !important;
   box-shadow: 0 0 0 3px var(--accent-soft) !important;
   background-color: #fff !important;
@@ -345,23 +379,57 @@ body {
 }
 
 /* Force consistent text capitalization */
-.text-uppercase, .uppercase, [style*="text-transform: uppercase"], [style*="TEXT-TRANSFORM: UPPERCASE"], span.text-uppercase, small.text-uppercase, .fw-800.text-uppercase, .small.text-uppercase {
+.text-uppercase,
+.uppercase,
+[style*="text-transform: uppercase"],
+[style*="TEXT-TRANSFORM: UPPERCASE"],
+span.text-uppercase,
+small.text-uppercase,
+.fw-800.text-uppercase,
+.small.text-uppercase {
   text-transform: capitalize !important;
 }
 
 /* Override all button-like elements */
-button, .btn, input[type="button"], input[type="submit"], .btn-action, .btn-primary, .btn-secondary, .btn-success, .btn-danger, .btn-warning, .btn-info, .btn-light, .btn-dark, .btn-outline-primary, .btn-outline-secondary, .btn-outline-success, .btn-outline-danger, .btn-outline-warning, .btn-outline-info, .btn-outline-light, .btn-outline-dark, .dropdown-item, .nav-link {
+button,
+.btn,
+input[type="button"],
+input[type="submit"],
+.btn-action,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-light,
+.btn-dark,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-dark,
+.dropdown-item,
+.nav-link {
   text-transform: capitalize !important;
   border-radius: 0.5rem !important;
 }
 
 /* Override card and container border radius */
-.card, .card-header, .card-body, .card-footer {
+.card,
+.card-header,
+.card-body,
+.card-footer {
   border-radius: 0.5rem !important;
 }
 
 /* Override form controls */
-.form-control, .form-select, .form-check-input {
+.form-control,
+.form-select,
+.form-check-input {
   border-radius: 0.5rem !important;
   text-transform: capitalize !important;
 }
@@ -373,7 +441,8 @@ button, .btn, input[type="button"], input[type="submit"], .btn-action, .btn-prim
 }
 
 /* Override dropdown menus */
-.dropdown-menu, .dropdown-item {
+.dropdown-menu,
+.dropdown-item {
   border-radius: 0.5rem !important;
   text-transform: capitalize !important;
 }
@@ -530,7 +599,8 @@ button, .btn, input[type="button"], input[type="submit"], .btn-action, .btn-prim
 
 /* Form Controls */
 
-.form-control, .form-select {
+.form-control,
+.form-select {
 
   border-radius: var(--radius-lg);
 
@@ -544,7 +614,8 @@ button, .btn, input[type="button"], input[type="submit"], .btn-action, .btn-prim
 
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
 
   border-color: var(--accent-blue);
 
@@ -2012,36 +2083,42 @@ button, .btn, input[type="button"], input[type="submit"], .btn-action, .btn-prim
 
 @media print {
 
-  .no-print {
-
-    display: none !important;
-
-  }
-
-
-
-  .main-wrapper {
-
-    margin-left: 0 !important;
-
-    padding: 0 !important;
-
-  }
-
-
-
+  .no-print,
+  .btn,
+  button,
+  .navbar,
   .sidebar,
-
-  .navbar-custom,
-
-  .breadcrumb,
-
-  button {
-
+  .sidebar-wrapper,
+  .breadcrumb {
     display: none !important;
-
   }
 
+  .main-wrapper,
+  .content-area,
+  .content-wrapper,
+  .page-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    position: static !important;
+  }
+
+  body {
+    background: white !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  .invoice-preview-page, .print-area {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+  }
 }
 
 
@@ -2051,10 +2128,21 @@ button, .btn, input[type="button"], input[type="submit"], .btn-action, .btn-prim
   font-size: 0.9rem !important;
 }
 
-.text-primary { color: var(--accent-blue) !important; }
-.bg-primary { background-color: var(--accent-blue) !important; }
-.bg-primary-subtle { background-color: var(--accent-soft) !important; }
-.border-primary { border-color: var(--accent-blue) !important; }
+.text-primary {
+  color: var(--accent-blue) !important;
+}
+
+.bg-primary {
+  background-color: var(--accent-blue) !important;
+}
+
+.bg-primary-subtle {
+  background-color: var(--accent-soft) !important;
+}
+
+.border-primary {
+  border-color: var(--accent-blue) !important;
+}
 
 
 /* Standardized Filter Bar Layouts */
@@ -2100,13 +2188,15 @@ button, .btn, input[type="button"], input[type="submit"], .btn-action, .btn-prim
 }
 
 /* Premium Search Bar - Matching user second screenshot */
-.form-control, .form-select {
-  border: 1px solid rgba(0,0,0,0.1) !important;
+.form-control,
+.form-select {
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
   background-color: #fcfcfc !important;
   transition: all 0.2s ease;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   background-color: #fff !important;
   border-color: var(--accent-color) !important;
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1) !important;
