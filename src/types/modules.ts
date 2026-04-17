@@ -65,6 +65,7 @@ export interface InwardEntry {
   challanNo?: string;
   dcNo?: string;
   dcDate?: string;
+  dueDate?: string; // NEW: Manual due date field
   vehicleNo?: string;
   company_id: string;
   date: string;

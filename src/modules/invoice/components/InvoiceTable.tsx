@@ -147,7 +147,7 @@ const InvoiceTable: React.FC = () => {
                   <td className="text-muted small">{item.date}</td>
                   <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>{activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : `₹${item.grandTotal.toLocaleString()}`}</td>
                   <td className="text-center pe-4">
-                    <div className="d-flex justify-content-center gap-1">
+                    <div className="d-flex justify-content-center gap-1 align-items-center">
                       <Link 
                         href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}` : `/invoices/${item.id}`} 
                         className="btn-action-view"

@@ -35,6 +35,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
     challanNo: '',
     dcNo: '',
     dcDate: '',
+    dueDate: '',
     vehicleNo: '',
     company_id: '',
     date: new Date().toISOString().split('T')[0],
@@ -82,6 +83,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         challanNo: initialData.challanNo || '',
         dcNo: initialData.dcNo || '',
         dcDate: initialData.dcDate || '',
+        dueDate: initialData.dueDate || '',
         vehicleNo: initialData.vehicleNo || '',
         company_id: initialData.company_id || '',
         date: initialData.date,
@@ -230,6 +232,10 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
               <div className="col-md-6 d-flex">
                 <label className="form-label mb-0 align-self-center text-muted col-3">Dc Date</label>
                 <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dcDate" value={formData.dcDate} onChange={handleChange} disabled={mode === 'view'} />
+              </div>
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Due Date *</label>
+                <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dueDate" value={formData.dueDate} onChange={handleChange} disabled={mode === 'view'} required />
               </div>
             </div>
   

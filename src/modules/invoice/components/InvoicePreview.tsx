@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import IndustrialInvoice from './IndustrialInvoice';
 import { updateInvoiceSettings } from '@/redux/features/invoiceSlice';
+import InvoiceEmailReminderToggle from './InvoiceEmailReminderToggle';
 
 interface InvoicePreviewProps {
   invoice: Invoice;
@@ -76,6 +77,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
                 <i className="bi bi-pencil"></i> Edit
               </Link>
             )}
+            <InvoiceEmailReminderToggle invoice={invoice} />
             <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill" onClick={handlePrint}>
               <i className="bi bi-printer"></i> Print
             </button>
@@ -87,15 +89,20 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
       )}
 
       <div ref={invoiceRef} className="print-area">
-        <IndustrialInvoice invoice={invoice} company={company} settings={settings} />
+        <div className="print-wrapper">
+          <IndustrialInvoice invoice={invoice} company={company} settings={settings} />
+        </div>
       </div>
 
       <style jsx>{`
         .print-area {
-          margin-bottom: 50px;
+          margin: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
+        }
+        .print-wrapper {
+          display: inline-block;
         }
         .switch {
           position: relative;
@@ -141,17 +148,39 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
             margin: 0 !important; 
             padding: 0 !important; 
             -webkit-print-color-adjust: exact !important;
+            height: auto !important;
+            overflow: visible !important;
           }
           .invoice-preview-page {
             padding: 0 !important;
             margin: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
           }
           .print-area { 
             margin: 0 !important; 
             padding: 0 !important;
             width: 100% !important;
             height: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            overflow: visible !important;
           }
+          .print-wrapper {
+            display: inline-block !important;
+          }
+          .industrial-print-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .industrial-print-container > :last-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
     </div>

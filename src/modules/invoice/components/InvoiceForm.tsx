@@ -38,7 +38,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       customerName: '',
       company_id: company?.id || '',
       date: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      dueDate: '', // Manual due date entry
       type: 'INVOICE',
       billType: defaultBillType,
       inwardId: inwardId || undefined,
@@ -396,42 +396,42 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div className="card-body p-4 p-lg-5">
                <form onSubmit={handleSubmit}>
-            <div className="d-flex align-items-center justify-content-between mb-5 pb-2 gap-4 flex-wrap">
-               <div className="d-flex align-items-center">
-                  <button
-                     type="button"
-                     className="btn btn-outline-secondary border-0 p-0 me-3"
-                     onClick={() => {
-                        const tab = searchParams.get('tab');
-                        if (tab) {
-                           router.push(`/invoices?tab=${tab}`);
-                        } else {
-                           router.back();
-                        }
-                     }}
-                     title="Back to Invoices"
-                  >
-                     <i className="bi bi-arrow-left fs-3 text-muted"></i>
-                  </button>
-                  <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
-               </div>
-
-               {mode === 'create' && !inwardId && (
-                  <div className="d-flex align-items-center gap-3 ms-auto">
-                     <div
-                        className="d-flex align-items-center p-1"
-                        style={{
-                           background: 'var(--bs-secondary-bg, #f1f3f5)',
-                           borderRadius: '999px',
-                           border: '0.5px solid rgba(0,0,0,0.08)',
-                           gap: '2px',
-                        }}
-                     >
+                  <div className="d-flex align-items-center justify-content-between mb-5 pb-2 gap-4 flex-wrap">
+                     <div className="d-flex align-items-center">
                         <button
                            type="button"
-                           onClick={() => setSelectionMode('CUSTOMER')}
-                           style={{
-                              padding: '6px 18px',
+                           className="btn btn-outline-secondary border-0 p-0 me-3"
+                           onClick={() => {
+                              const tab = searchParams.get('tab');
+                              if (tab) {
+                                 router.push(`/invoices?tab=${tab}`);
+                              } else {
+                                 router.back();
+                              }
+                           }}
+                           title="Back to Invoices"
+                        >
+                           <i className="bi bi-arrow-left fs-3 text-muted"></i>
+                        </button>
+                        <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
+                     </div>
+
+                     {mode === 'create' && !inwardId && (
+                        <div className="d-flex align-items-center gap-3 ms-auto">
+                           <div
+                              className="d-flex align-items-center p-1"
+                              style={{
+                                 background: 'var(--bs-secondary-bg, #f1f3f5)',
+                                 borderRadius: '999px',
+                                 border: '0.5px solid rgba(0,0,0,0.08)',
+                                 gap: '2px',
+                              }}
+                           >
+                              <button
+                                 type="button"
+                                 onClick={() => setSelectionMode('CUSTOMER')}
+                                 style={{
+                                    padding: '6px 18px',
                               borderRadius: '999px',
                               border: 'none',
                               fontSize: '13px',
@@ -908,25 +908,25 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      'SUBMIT'
                   )}
                </button>
-               <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.back()}>CLEAR</button>
+               <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.back()}>CANCEL</button>
             </div>
          </form>
       </div>
    </div>
 
-         <StatusModal
-            isOpen={modal.isOpen}
-            onClose={() => {
-               setModal(prev => ({ ...prev, isOpen: false }));
-               if (modal.type === 'success') {
-                  const tab = searchParams.get('tab');
-                  router.push(`/invoices${tab ? '?tab=' + tab : ''}`);
-               }
-            }}
-            type={modal.type}
-            title={modal.title}
-            message={modal.message}
-         />
+   <StatusModal
+      isOpen={modal.isOpen}
+      onClose={() => {
+         setModal(prev => ({ ...prev, isOpen: false }));
+         if (modal.type === 'success') {
+            const tab = searchParams.get('tab');
+            router.push(`/invoices${tab ? '?tab=' + tab : ''}`);
+         }
+      }}
+      type={modal.type}
+      title={modal.title}
+      message={modal.message}
+   />
       </>
    );
 };
