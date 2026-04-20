@@ -81,94 +81,95 @@ const InvoiceSettings: React.FC = () => {
                   <h6 className="fw-bold mb-0">Branding & Identity</h6>
                 </div>
                 
-                <div className="row g-4 align-items-center">
-                  <div className="col-md-6">
-                    <label className="form-label small text-muted text-uppercase fw-bold mb-2">Primary Logo (Left)</label>
+                <div className="row g-3 align-items-center">
+                  <div className="col-md-3">
+                    <label className="form-label small text-muted text-uppercase fw-bold mb-2">Primary Logo</label>
                     <div 
-                      className="ratio ratio-16x9 bg-light border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
+                      className="ratio ratio-1x1 bg-light border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer rounded-3"
                       onClick={() => fileInputRef.current?.click()}
-                      style={{ borderStyle: 'dashed' }}
+                      style={{ borderStyle: 'dashed', maxWidth: '120px' }}
                     >
                       {formData.logo ? (
                         <img src={formData.logo} alt="Logo Preview" className="img-fluid p-2 object-fit-contain" />
                       ) : (
                         <div className="text-center text-muted p-2">
-                          <i className="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
-                          <span className="x-small fw-bold">Upload Primary Logo</span>
+                          <i className="bi bi-plus fs-4 d-block"></i>
+                          <span className="x-small fw-bold">Left</span>
                         </div>
                       )}
                     </div>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="d-none" 
-                      accept="image/*" 
-                      onChange={(e) => handleLogoUpload(e, 'logo')} 
-                    />
+                    <input type="file" ref={fileInputRef} className="d-none" accept="image/*" onChange={(e) => handleLogoUpload(e, 'logo')} />
                   </div>
 
-                  <div className="col-md-6">
-                    <label className="form-label small text-muted text-uppercase fw-bold mb-2">Secondary Logo (Right)</label>
+                  <div className="col-md-3">
+                    <label className="form-label small text-muted text-uppercase fw-bold mb-2">Secondary Logo</label>
                     <div 
-                      className="ratio ratio-16x9 bg-light border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer"
+                      className="ratio ratio-1x1 bg-light border border-2 border-dashed d-flex align-items-center justify-content-center overflow-hidden cursor-pointer rounded-3"
                       onClick={() => secondaryFileInputRef.current?.click()}
-                      style={{ borderStyle: 'dashed' }}
+                      style={{ borderStyle: 'dashed', maxWidth: '120px' }}
                     >
                       {formData.logoSecondary ? (
                         <img src={formData.logoSecondary} alt="Secondary Logo Preview" className="img-fluid p-2 object-fit-contain" />
                       ) : (
                         <div className="text-center text-muted p-2">
-                          <i className="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
-                          <span className="x-small fw-bold">Upload Secondary Logo</span>
+                          <i className="bi bi-plus fs-4 d-block"></i>
+                          <span className="x-small fw-bold">Right</span>
                         </div>
                       )}
                     </div>
-                    <input 
-                      type="file" 
-                      ref={secondaryFileInputRef} 
-                      className="d-none" 
-                      accept="image/*" 
-                      onChange={(e) => handleLogoUpload(e, 'logoSecondary')} 
-                    />
+                    <input type="file" ref={secondaryFileInputRef} className="d-none" accept="image/*" onChange={(e) => handleLogoUpload(e, 'logoSecondary')} />
                   </div>
                   
-                  <div className="col-12">
+                  <div className="col-md-6">
                     <div className="mb-3">
                       <div className="form-check form-switch custom-switch">
-                        <input 
-                          className="form-check-input" 
-                          type="checkbox" 
-                          id="showLogo" 
-                          name="showLogo"
-                          checked={formData.showLogo}
-                          onChange={handleCheckboxChange}
-                        />
+                        <input className="form-check-input" type="checkbox" id="showLogo" name="showLogo" checked={formData.showLogo} onChange={handleCheckboxChange} />
                         <label className="form-check-label fw-bold small text-dark" htmlFor="showLogo">Display logos on invoice</label>
                       </div>
-                      <div className="text-muted x-small mt-1">Recommended size: High resolution PNG/SVG. Primary logo is displayed on top-left, Secondary on top-right.</div>
                     </div>
 
                     <div>
                       <label className="form-label small text-muted text-uppercase fw-bold">Brand Accent Color</label>
-                      <div className="d-flex align-items-center gap-3">
-                        <input 
-                          type="color" 
-                          className="form-control form-control-color border-0 p-1" 
-                          title="Choose your color"
-                          name="accentColor"
-                          value={formData.accentColor}
-                          onChange={handleInputChange}
-                          style={{ width: '45px', height: '45px' }}
-                        />
-                        <input 
-                          type="text" 
-                          className="form-control form-control-sm w-auto fw-mono" 
-                          value={formData.accentColor}
-                          onChange={handleInputChange}
-                          name="accentColor"
-                        />
+                      <div className="d-flex align-items-center gap-2">
+                        <input type="color" className="form-control form-control-color border-0 p-1" name="accentColor" value={formData.accentColor} onChange={handleInputChange} style={{ width: '38px', height: '38px' }} />
+                        <input type="text" className="form-control form-control-sm w-auto fw-mono" value={formData.accentColor} onChange={handleInputChange} name="accentColor" />
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <hr className="my-2 opacity-5" />
+
+              {/* Company Details Section */}
+              <div className="col-12">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <div className="bg-info bg-opacity-10 p-2 text-info">
+                    <i className="bi bi-building fs-5"></i>
+                  </div>
+                  <h6 className="fw-bold mb-0">Supplier & Header Details</h6>
+                </div>
+
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Company Name (Invoice Header)</label>
+                    <input type="text" className="form-control fw-bold" name="companyName" value={(formData as any).companyName || ''} onChange={handleInputChange} placeholder="e.g. GLOBUS ENGINEERING MAIN" />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Sub-Header (Certifications)</label>
+                    <input type="text" className="form-control" name="companySubHeader" value={(formData as any).companySubHeader || ''} onChange={handleInputChange} placeholder="An ISO 9001: 2015 Certified Company" />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Supplier Address</label>
+                    <textarea className="form-control" rows={2} name="companyAddress" value={(formData as any).companyAddress || ''} onChange={handleInputChange} placeholder="Full address to be printed under Supplier Details"></textarea>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold">GST Number</label>
+                    <input type="text" className="form-control" name="gstNo" value={(formData as any).gstNo || ''} onChange={handleInputChange} placeholder="GSTIN" />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold">State & Code</label>
+                    <input type="text" className="form-control" name="stateDetails" value={(formData as any).stateDetails || ''} onChange={handleInputChange} placeholder="e.g. Tamilnadu - Code: 33" />
                   </div>
                 </div>
               </div>
@@ -187,41 +188,12 @@ const InvoiceSettings: React.FC = () => {
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold">Invoice Prefix</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      placeholder="e.g. INV" 
-                      name="prefix"
-                      value={formData.prefix}
-                      onChange={handleInputChange}
-                    />
+                    <input type="text" className="form-control" placeholder="e.g. INV" name="prefix" value={formData.prefix} onChange={handleInputChange} />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold">Next Number</label>
-                    <input 
-                      type="number" 
-                      className="form-control" 
-                      name="nextNumber"
-                      value={formData.nextNumber}
-                      onChange={handleInputChange}
-                    />
+                    <input type="number" className="form-control" name="nextNumber" value={formData.nextNumber} onChange={handleInputChange} />
                   </div>
-                </div>
-              </div>
-
-              <hr className="my-2 opacity-5" />
-
-              <div className="col-12">
-                <div className="form-check form-switch custom-switch mb-3">
-                  <input 
-                    className="form-check-input" 
-                    type="checkbox" 
-                    id="showDeclaration" 
-                    name="showDeclaration"
-                    checked={formData.showDeclaration}
-                    onChange={handleCheckboxChange}
-                  />
-                  <label className="form-check-label fw-bold small text-dark" htmlFor="showDeclaration">Show Declaration Section</label>
                 </div>
               </div>
 
@@ -233,10 +205,10 @@ const InvoiceSettings: React.FC = () => {
                   <div className="bg-primary bg-opacity-10 p-2 text-primary">
                     <i className="bi bi-bank fs-5"></i>
                   </div>
-                  <h6 className="fw-bold mb-0">Banking & Company Details</h6>
+                  <h6 className="fw-bold mb-0">Banking & Statutory</h6>
                 </div>
 
-                <div className="row g-4">
+                <div className="row g-3">
                   <div className="col-md-4">
                     <label className="form-label small text-muted text-uppercase fw-bold">VAT TIN</label>
                     <input type="text" className="form-control" name="vatTin" value={(formData as any).vatTin} onChange={handleInputChange} />
@@ -259,28 +231,45 @@ const InvoiceSettings: React.FC = () => {
                     <input type="text" className="form-control" name="bankAcc" value={(formData as any).bankAcc} onChange={handleInputChange} />
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label small text-muted text-uppercase fw-bold">Branch & IFSC Code</label>
+                    <label className="form-label small text-muted text-uppercase fw-bold">Branch & IFSC</label>
                     <input type="text" className="form-control" name="bankBranchIfsc" value={(formData as any).bankBranchIfsc} onChange={handleInputChange} />
                   </div>
                 </div>
               </div>
 
+              <hr className="my-2 opacity-5" />
+
+              {/* Declaration Section */}
+              <div className="col-12">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <div className="bg-warning bg-opacity-10 p-2 text-warning">
+                    <i className="bi bi-card-text fs-5"></i>
+                  </div>
+                  <h6 className="fw-bold mb-0">Legal Declarations & Notes</h6>
+                </div>
+
+                <div className="mb-3">
+                  <div className="form-check form-switch custom-switch mb-2">
+                    <input className="form-check-input" type="checkbox" id="showDeclaration" name="showDeclaration" checked={formData.showDeclaration} onChange={handleCheckboxChange} />
+                    <label className="form-check-label fw-bold small text-dark" htmlFor="showDeclaration">Show Declaration Section</label>
+                  </div>
+                  <textarea 
+                    className="form-control bg-light x-small" 
+                    rows={6} 
+                    name="declarationText" 
+                    value={(formData as any).declarationText || ''} 
+                    onChange={handleInputChange}
+                    placeholder="Enter the full declaration text..."
+                  ></textarea>
+                </div>
+              </div>
+
               <div className="col-12 mt-4 pt-2">
-                <button 
-                  type="submit" 
-                  className="btn btn-dark px-5 py-2 shadow-sm d-flex align-items-center gap-2"
-                  disabled={saving}
-                >
+                <button type="submit" className="btn btn-dark px-5 py-2 shadow-sm d-flex align-items-center gap-2" disabled={saving}>
                   {saving ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm"></span>
-                      Saving...
-                    </>
+                    <><span className="spinner-border spinner-border-sm"></span> Saving...</>
                   ) : (
-                    <>
-                      <i className="bi bi-save"></i>
-                      Save Configuration
-                    </>
+                    <><i className="bi bi-save"></i> Save Configuration</>
                   )}
                 </button>
               </div>

@@ -25,6 +25,7 @@ export const fetchInwards = createAsyncThunk(
         vehicleNo: item.vehicle_no || '',
         company_id: item.company_id?.toString() || '',
         date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
+        dueDate: item.due_date ? new Date(item.due_date).toISOString().split('T')[0] : '',
         status: item.status || 'pending',
         items: item.items || [],
         totalRemaining: item.totalRemaining,
@@ -55,6 +56,7 @@ export const createInward = createAsyncThunk(
         vehicle_no: data.vehicleNo,
         status: data.status,
         items: data.items,
+        due_date: data.dueDate,
         company_id: data.company_id
       });
       const c = response.data;
@@ -74,6 +76,7 @@ export const createInward = createAsyncThunk(
         vehicleNo: c.vehicle_no || data.vehicleNo || '',
         company_id: c.company_id?.toString() || data.company_id || '',
         date: c.date ? new Date(c.date).toISOString().split('T')[0] : data.date,
+        dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : data.dueDate,
         status: c.status || data.status || 'pending',
         items: c.items || data.items || [],
         createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
@@ -103,6 +106,7 @@ export const updateInward = createAsyncThunk(
         vehicle_no: data.vehicleNo,
         status: data.status,
         items: data.items,
+        due_date: data.dueDate,
         company_id: data.company_id
       });
       const c = response.data || data;
@@ -122,6 +126,7 @@ export const updateInward = createAsyncThunk(
         vehicleNo: c.vehicle_no || data.vehicleNo || '',
         company_id: c.company_id?.toString() || data.company_id || '',
         date: c.date ? new Date(c.date).toISOString().split('T')[0] : data.date,
+        dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : data.dueDate,
         status: c.status || data.status || 'pending',
         items: c.items || data.items || [],
         createdAt: c.app_created_at || c.created_at || c.createdAt || data.createdAt

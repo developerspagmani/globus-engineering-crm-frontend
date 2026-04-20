@@ -2087,37 +2087,79 @@ input[type="submit"],
   .btn,
   button,
   .navbar,
+  .navbar-custom,
   .sidebar,
   .sidebar-wrapper,
   .breadcrumb {
     display: none !important;
   }
 
+  /* Collapse every layout shell so nothing bleeds past the invoice page */
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset all height-forcing utilities so hidden content doesn't create blank pages */
+  .min-vh-100,
+  .min-h-100 {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  /* Collapse every admin layout shell */
+  .admin-container,
   .main-wrapper,
+  .main-wrapper.expanded,
   .content-area,
   .content-wrapper,
   .page-wrapper {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    position: static !important;
+    background: transparent !important;
+  }
+
+  /* Any container-fluid used as a page wrapper must not force height */
+  .container-fluid,
+  .container {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  .invoice-preview-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .print-area {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: auto !important;
-    overflow: visible !important;
-    display: block !important;
-    position: static !important;
-  }
-
-  body {
-    background: white !important;
-    height: auto !important;
-    min-height: auto !important;
     overflow: visible !important;
   }
 
-  .invoice-preview-page, .print-area {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
+  /* Kill the ModuleGuard wrapper and any extra padding wrappers */
+  .py-4, .py-3, .py-5 {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 }
 

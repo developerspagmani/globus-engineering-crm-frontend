@@ -107,6 +107,7 @@ export async function GET(request: NextRequest) {
       }
 
       const reminderDates = calculateReminderDates(invoice.dcDate);
+      if (!reminderDates) continue;
       
       // Check each reminder type
       for (const [reminderType, targetDate] of Object.entries(reminderDates)) {

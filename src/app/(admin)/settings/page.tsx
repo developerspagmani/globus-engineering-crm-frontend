@@ -13,10 +13,44 @@ import LedgerSettings from '@/modules/settings/components/LedgerSettings';
 import LedgerSettingsPreview from '@/modules/ledger/components/LedgerSettingsPreview';
 import InvoicePreview from '@/modules/invoice/components/InvoicePreview';
 import { mockInvoices } from '@/data/mockModules';
+import BackButton from '@/components/BackButton';
+
+// Modern Modal Component
+const PreviewModal = ({ isOpen, onClose, title, children }: { isOpen: boolean, onClose: () => void, title: string, children: React.ReactNode }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1060 }}>
+      <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div className="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+          <div className="modal-header bg-dark text-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <h5 className="modal-title fw-900 mb-0 d-flex align-items-center gap-2">
+              <i className="bi bi-eye-fill text-accent"></i> {title}
+            </h5>
+            <div className="d-flex gap-2">
+              <button className="btn btn-sm btn-outline-light rounded-circle p-2 border-0" title="Print Preview">
+                <i className="bi bi-printer fs-5"></i>
+              </button>
+              <button onClick={onClose} className="btn-close btn-close-white" aria-label="Close"></button>
+            </div>
+          </div>
+          <div className="modal-body p-0 bg-secondary bg-opacity-10">
+            <div className="p-4 d-flex justify-content-center">
+              <div className="shadow-lg bg-white rounded-1 overflow-hidden" style={{ width: '100%', maxWidth: '1000px' }}>
+                {children}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [mounted, setMounted] = useState(false);
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [showLedgerPreview, setShowLedgerPreview] = useState(false);
   const [ledgerSettings, setLedgerSettings] = useState({
     showLogo: true,
     showCompanyAddress: true,
@@ -64,70 +98,18 @@ const SettingsPage = () => {
       case 'company': return <CompanySettings />;
       case 'invoice': return (
         <div className="row g-4">
-          <div className="col-xl-4">
+          <div className="col-12">
             <InvoiceSettings />
-          </div>
-          <div className="col-xl-8">
-            <div className="sticky-top" style={{ top: '20px' }}>
-              <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div className="card-header bg-dark text-white py-2 px-3 d-flex justify-content-between align-items-center">
-                  <div className="d-flex align-items-center gap-2">
-                    <div className="spinner-grow spinner-grow-sm text-secondary" role="status" style={{ width: '8px', height: '8px' }}></div>
-                    <span className="fw-bold small">Live Preview</span>
-                  </div>
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-light">
-                      <i className="bi bi-printer"></i>
-                    </button>
-                    <button className="btn btn-sm btn-outline-light">
-                      <i className="bi bi-download"></i>
-                    </button>
-                  </div>
-                </div>
-                <div className="card-body p-0">
-                  <InvoicePreview 
-                    invoice={mockInvoices[0]} 
-                    company={company}
-                    hideControls={true}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       );
       case 'ledger': return (
         <div className="row g-4">
-          <div className="col-xl-4">
+          <div className="col-12">
             <LedgerSettings 
               settings={ledgerSettings}
               onSettingsChange={setLedgerSettings}
             />
-          </div>
-          <div className="col-xl-8">
-            <div className="sticky-top" style={{ top: '20px' }}>
-              <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div className="card-header bg-dark text-white py-2 px-3 d-flex justify-content-between align-items-center">
-                  <div className="d-flex align-items-center gap-2">
-                    <div className="spinner-grow spinner-grow-sm text-secondary" role="status" style={{ width: '8px', height: '8px' }}></div>
-                    <span className="fw-bold small">Live Preview</span>
-                  </div>
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-light">
-                      <i className="bi bi-printer"></i>
-                    </button>
-                    <button className="btn btn-sm btn-outline-light">
-                      <i className="bi bi-download"></i>
-                    </button>
-                  </div>
-                </div>
-                <div className="card-body p-0">
-                  <LedgerSettingsPreview 
-                    company={company}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       );
@@ -142,14 +124,45 @@ const SettingsPage = () => {
       <div className="container-fluid px-4 py-4 animate-fade-in bg-light min-vh-100">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h3 className="fw-900 tracking-tight text-dark mb-1">Invoice Configuration</h3>
-            <p className="text-muted small mb-0">Professionalize your industrial billing templates with live-preview editing.</p>
+            <h3 className="fw-900 tracking-tight text-dark mb-1">
+              {activeTab === 'invoice' ? 'Invoice Configuration' : 'Ledger Configuration'}
+            </h3>
+            <p className="text-muted small mb-0">Professionalize your industrial templates with high-precision configuration.</p>
           </div>
-          <button onClick={() => setActiveTab('profile')} className="btn btn-dark rounded-4 px-4 py-2 shadow-sm fw-bold d-flex align-items-center gap-2">
-            <i className="bi bi-arrow-left"></i> Back to Main Settings
-          </button>
+          <div className="d-flex gap-2 align-items-center">
+            <button 
+              onClick={() => activeTab === 'invoice' ? setShowInvoicePreview(true) : setShowLedgerPreview(true)} 
+              className="btn btn-white border rounded-4 px-4 py-2 shadow-sm fw-bold d-flex align-items-center gap-2"
+            >
+              <i className="bi bi-eye-fill text-primary"></i> Live Preview
+            </button>
+            <BackButton onClick={() => setActiveTab('profile')} title="Back to Main Settings" />
+          </div>
         </div>
         {renderContent()}
+
+        {/* Preview Modals */}
+        <PreviewModal 
+          isOpen={showInvoicePreview} 
+          onClose={() => setShowInvoicePreview(false)} 
+          title="Invoice Template Preview"
+        >
+          <InvoicePreview 
+            invoice={mockInvoices[0]} 
+            company={company}
+            hideControls={true}
+          />
+        </PreviewModal>
+
+        <PreviewModal 
+          isOpen={showLedgerPreview} 
+          onClose={() => setShowLedgerPreview(false)} 
+          title="Ledger Report Preview"
+        >
+          <LedgerSettingsPreview 
+            company={company}
+          />
+        </PreviewModal>
       </div>
     );
   }

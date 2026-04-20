@@ -10,6 +10,7 @@ import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { Invoice } from '@/types/modules';
 import StatusModal from '@/components/StatusModal';
+import BackButton from '@/components/BackButton';
 
 interface InvoiceFormProps {
    initialData?: Invoice;
@@ -398,9 +399,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                <form onSubmit={handleSubmit}>
                   <div className="d-flex align-items-center justify-content-between mb-5 pb-2 gap-4 flex-wrap">
                      <div className="d-flex align-items-center">
-                        <button
-                           type="button"
-                           className="btn btn-outline-secondary border-0 p-0 me-3"
+                        <BackButton
                            onClick={() => {
                               const tab = searchParams.get('tab');
                               if (tab) {
@@ -410,9 +409,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               }
                            }}
                            title="Back to Invoices"
-                        >
-                           <i className="bi bi-arrow-left fs-3 text-muted"></i>
-                        </button>
+                        />
                         <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
                      </div>
 

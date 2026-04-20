@@ -58,18 +58,8 @@ const InvoiceReportPage = () => {
   }, { count: 0, taxable: 0, tax: 0, grand: 0 });
 
   const handlePrintRecord = (inv: any) => {
-    const p = window.open('', '', 'height=600,width=800'); if (!p) return;
-    p.document.write('<html><head><title>Invoice Audit Record</title>');
-    p.document.write('<style>body{font-family: Arial; padding: 20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:12px; text-align:left;} th{background:#f8f9fa; font-weight:bold;}</style></head><body>');
-    p.document.write(`<h2>GLOBUS ENGINEERING - Invoice Audit</h2>`);
-    p.document.write(`<p><b>Invoice No:</b> ${inv.invoiceNumber} | <b>Date:</b> ${inv.date}</p>`);
-    p.document.write(`<table><tr><th>Entry Detail</th><th>Value</th></tr>`);
-    p.document.write(`<tr><td>Customer Name</td><td>${inv.customerName}</td></tr>`);
-    p.document.write(`<tr><td>Taxable Value</td><td>₹${(inv.subTotal || 0).toLocaleString()}</td></tr>`);
-    p.document.write(`<tr><td>Tax Total</td><td>₹${(inv.taxTotal || 0).toLocaleString()}</td></tr>`);
-    p.document.write(`<tr><td>Grand Total</td><td style="font-weight:900;">₹${(inv.grandTotal || 0).toLocaleString()}</td></tr>`);
-    p.document.write(`</table></body></html>`);
-    p.document.close(); p.print();
+    // Redirect to the professional industrial invoice preview with auto-print
+    window.open(`/invoices/${inv.id}?print=true`, '_blank');
   };
 
   const handleExportPDFRecord = (inv: any) => {

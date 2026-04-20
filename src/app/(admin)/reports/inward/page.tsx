@@ -49,18 +49,87 @@ const InwardReportPage = () => {
     };
   }, { count: 0, completed: 0, pending: 0, parties: new Set<string>() });
 
+  const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
+  
   const handlePrintRecord = (item: any) => {
-    const p = window.open('', '', 'height=600,width=800'); if (!p) return;
-    p.document.write('<html><head><title>Audit - Inward Summary</title>');
-    p.document.write('<style>body{font-family: Arial; padding: 20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:12px; text-align:left;} th{background:#f8f9fa; font-weight:bold;}</style></head><body>');
-    p.document.write(`<h2>GLOBUS ENGINEERING - Inward Audit</h2>`);
-    p.document.write(`<p><b>DC/Challan No:</b> ${item.dcNo || item.challanNo || '-'} | <b>Date:</b> ${item.date}</p>`);
-    p.document.write(`<table><tr><th>Audit Detail</th><th>Value</th></tr>`);
-    p.document.write(`<tr><td>Customer/Vendor</td><td>${item.customerName || item.vendorName}</td></tr>`);
-    p.document.write(`<tr><td>Address</td><td>${item.address || '-'}</td></tr>`);
-    p.document.write(`<tr><td>Status</td><td style="text-transform:uppercase; font-weight:bold;">${item.status || 'pending'}</td></tr>`);
-    p.document.write(`</table></body></html>`);
-    p.document.close(); p.print();
+    const p = window.open('', '', 'height=800,width=1000'); if (!p) return;
+    const accentColor = invSettings?.accentColor || '#0d6efd';
+    
+    p.document.write(`
+      <html>
+        <head>
+          <title>Inward Receipt - ${item.dcNo || item.challanNo}</title>
+          <style>
+            @page { size: A4; margin: 10mm; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
+            .header { border-bottom: 2px solid ${accentColor}; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+            .company-name { font-size: 24px; font-weight: 900; color: #000; }
+            .receipt-label { background: #333; color: white; padding: 5px 15px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 14px; }
+            .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+            .meta-item { font-size: 13px; }
+            .meta-label { color: #666; font-weight: bold; text-transform: uppercase; font-size: 10px; display: block; margin-bottom: 2px; }
+            .meta-value { font-weight: 800; font-size: 14px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #666; }
+            td { border: 1px solid #dee2e6; padding: 15px; text-align: left; font-size: 14px; }
+            .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+            .status-completed { background: #d1fae5; color: #065f46; }
+            .footer { margin-top: 60px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 15px; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">${activeCompany?.name || 'GLOBUS ENGINEERING'}</div>
+            <div class="receipt-label">Inward Material Receipt</div>
+          </div>
+          
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span class="meta-label">Customer / Vendor</span>
+              <span class="meta-value">${item.customerName || item.vendorName}</span>
+            </div>
+            <div class="meta-item" style="text-align: right;">
+              <span class="meta-label">Reference DC No</span>
+              <span class="meta-value">${item.dcNo || item.challanNo || '-'}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Receipt Date</span>
+              <span class="meta-value">${item.date}</span>
+            </div>
+            <div class="meta-item" style="text-align: right;">
+              <span class="meta-label">Material Status</span>
+              <span class="status-badge status-completed">${item.status || 'Success'}</span>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Logistics Entry Detail</th>
+                <th>Information</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Supplier Address</td>
+                <td>${item.address || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td>Receipt Identification</td>
+                <td>${item.dcNo || item.challanNo || 'N/A'}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="footer">
+            Material received and verified in good condition.<br/>
+            ${activeCompany?.name || 'Globus Engineering Main'}
+          </div>
+        </body>
+      </html>
+    `);
+    p.document.close();
+    setTimeout(() => { p.print(); }, 500);
   };
 
   const handleExportPDFRecord = (item: any) => {

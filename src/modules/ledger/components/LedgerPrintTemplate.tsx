@@ -21,7 +21,7 @@ interface LedgerPrintTemplateProps {
   dateTo?: string;
 }
 
-const ITEMS_PER_PAGE = 35; 
+const ITEMS_PER_PAGE = 50; 
 
 const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({ 
   party, 
@@ -101,15 +101,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
     };
   }, [entries, party, dateFrom, dateTo, isVendor]);
 
-  const chunkEntries = (items: any[], size: number) => {
-    const chunks = [];
-    for (let i = 0; i < items.length; i += size) {
-      chunks.push(items.slice(i, i + size));
-    }
-    return chunks.length > 0 ? chunks : [[]];
-  };
-
-  const pages = chunkEntries(processedEntries, ITEMS_PER_PAGE);
+  const allEntries = processedEntries;
   const drTotalWithOp = totalDebit + (isDebitOpening ? openingBalance : 0);
   const crTotalWithOp = totalCredit + (!isDebitOpening ? openingBalance : 0);
   const diff = drTotalWithOp - crTotalWithOp;
@@ -132,117 +124,95 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
 
   return (
     <div className="ledger-master-print-container" style={{ background: 'white' }}>
-      {pages.map((pageEntries, pageIdx) => (
-        <div key={pageIdx} className="ledger-page-box" style={{ 
-            width: '198mm', 
-            margin: '0 auto', 
-            background: 'white', 
-            padding: '10mm', 
-            boxSizing: 'border-box',
-            position: 'relative',
-            color: 'black',
-            fontFamily: 'Arial, sans-serif'
-        }}>
-           {/* Header Section Matches Image */}
-           <div className="print-header text-center" style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <h1 style={{ fontSize: '15pt', fontWeight: 'bold', margin: '0 0 2px 0', textTransform: 'uppercase' }}>{party?.name || 'ACCOUNT NAME'}</h1>
-                <p style={{ fontSize: '10pt', margin: '0 0 12px 0', lineHeight: '1.2' }}>{party?.street1 || ''} {party?.street2 || ''}<br />{party?.city || ''} {party?.state || ''} - {party?.pinCode || ''}</p>
-                
-                <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0' }}>{company?.name || 'Globus Engineering Tools'}</h2>
-                <h3 style={{ fontSize: '9pt', margin: '0', fontWeight: 'normal' }}>Ledger Account</h3>
-                <p style={{ fontSize: '9pt', margin: '4px auto 10px auto', maxWidth: '80%', lineHeight: '1.2' }}>
-                    {(company as any)?.address || 'No 24, Annaiyappan Street,\nSS Nagar, Nallampalayam, Ganapathy Post,\nCoimbatore'}
-                </p>
-                
-                <p className="fw-bold" style={{ fontSize: '10pt', fontWeight: 'bold' }}>
-                    {formatLedgerDate(dateFrom || '')} to {formatLedgerDate(dateTo || '2026-03-31')}
-                </p>
-           </div>
+      <div className="ledger-page-box">
+         {/* Header Section Matches Image */}
+         <div className="print-header text-center" style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <h1 style={{ fontSize: '15pt', fontWeight: 'bold', margin: '0 0 2px 0', textTransform: 'uppercase' }}>{party?.name || 'ACCOUNT NAME'}</h1>
+              <p style={{ fontSize: '10pt', margin: '0 0 12px 0', lineHeight: '1.2' }}>{party?.street1 || ''} {party?.street2 || ''}<br />{party?.city || ''} {party?.state || ''} - {party?.pinCode || ''}</p>
+              
+              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0' }}>{company?.name || 'Globus Engineering Tools'}</h2>
+              <h3 style={{ fontSize: '9pt', margin: '0', fontWeight: 'normal' }}>Ledger Account</h3>
+              <p style={{ fontSize: '9pt', margin: '4px auto 10px auto', maxWidth: '80%', lineHeight: '1.2' }}>
+                  {(company as any)?.address || 'No 24, Annaiyappan Street,\nSS Nagar, Nallampalayam, Ganapathy Post,\nCoimbatore'}
+              </p>
+              
+              <p className="fw-bold" style={{ fontSize: '10pt', fontWeight: 'bold' }}>
+                  {formatLedgerDate(dateFrom || '')} to {formatLedgerDate(dateTo || '2026-03-31')}
+              </p>
+         </div>
 
-           <table className="ledger-print-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt', tableLayout: 'fixed' }}>
-              <thead>
-                <tr style={{ borderTop: '0.8pt solid black', borderBottom: '0.8pt solid black' }}>
-                    <th style={{ textAlign: 'left', padding: '10px 4px', width: '13%' }}>Date</th>
-                    <th style={{ textAlign: 'left', padding: '10px 4px', width: '37%' }}>Particulars</th>
-                    <th style={{ textAlign: 'left', padding: '10px 4px', width: '14%' }}>Vch Type</th>
-                    <th style={{ textAlign: 'left', padding: '10px 4px', width: '10%' }}>Vch No.</th>
-                    <th style={{ textAlign: 'right', padding: '10px 4px', width: '13%' }}>Debit</th>
-                    <th style={{ textAlign: 'right', padding: '10px 4px', width: '13%' }}>Credit</th>
+         <table className="ledger-print-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt', tableLayout: 'fixed' }}>
+            <thead>
+              <tr style={{ borderTop: '0.8pt solid black', borderBottom: '0.8pt solid black' }}>
+                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '13%' }}>Date</th>
+                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '37%' }}>Particulars</th>
+                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '14%' }}>Vch Type</th>
+                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '10%' }}>Vch No.</th>
+                  <th style={{ textAlign: 'right', padding: '10px 4px', width: '13%' }}>Debit</th>
+                  <th style={{ textAlign: 'right', padding: '10px 4px', width: '13%' }}>Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Opening Balance */}
+              <tr style={{ fontWeight: 'bold' }}>
+                <td style={{ padding: '8px 4px' }}>{dateFrom ? formatLedgerDate(dateFrom) : ''}</td>
+                <td style={{ padding: '8px 4px' }}>{isDebitOpening ? 'To ' : 'By '} Opening Balance</td>
+                <td></td>
+                <td></td>
+                <td style={{ textAlign: 'right', padding: '8px 4px' }}>{isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                <td style={{ textAlign: 'right', padding: '8px 4px' }}>{!isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+              </tr>
+
+              {/* Entry Rows */}
+              {allEntries.map((e: any, idx: number) => (
+                <tr key={idx}>
+                  <td style={{ padding: '4px', verticalAlign: 'top' }}>{formatLedgerDate(e.date)}</td>
+                  <td style={{ padding: '4px', verticalAlign: 'top' }}>
+                      <span style={{ display: 'inline-block', width: '25px' }}>{e.debitValue > 0 ? 'To' : 'By'}</span>
+                      {e.description}
+                  </td>
+                  <td style={{ padding: '4px', verticalAlign: 'top' }}>{e.vchType}</td>
+                  <td style={{ padding: '4px', verticalAlign: 'top' }}>{e.vchNo || '-'}</td>
+                  <td style={{ textAlign: 'right', padding: '4px', verticalAlign: 'top' }}>{e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                  <td style={{ textAlign: 'right', padding: '4px', verticalAlign: 'top' }}>{e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {/* Opening Balance (Only Page 1) */}
-                {pageIdx === 0 && (
-                  <tr style={{ fontWeight: 'bold' }}>
-                    <td style={{ padding: '8px 4px' }}>{dateFrom ? formatLedgerDate(dateFrom) : ''}</td>
-                    <td style={{ padding: '8px 4px' }}>{isDebitOpening ? 'To ' : 'By '} Opening Balance</td>
-                    <td></td>
-                    <td></td>
-                    <td style={{ textAlign: 'right', padding: '8px 4px' }}>{isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                    <td style={{ textAlign: 'right', padding: '8px 4px' }}>{!isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                  </tr>
-                )}
+              ))}
 
-                {/* Entry Rows */}
-                {pageEntries.map((e: any, idx: number) => (
-                  <tr key={idx}>
-                    <td style={{ padding: '4px', verticalAlign: 'top' }}>{formatLedgerDate(e.date)}</td>
-                    <td style={{ padding: '4px', verticalAlign: 'top' }}>
-                        <span style={{ display: 'inline-block', width: '25px' }}>{e.debitValue > 0 ? 'To' : 'By'}</span>
-                        {e.description}
-                    </td>
-                    <td style={{ padding: '4px', verticalAlign: 'top' }}>{e.vchType}</td>
-                    <td style={{ padding: '4px', verticalAlign: 'top' }}>{e.vchNo || '-'}</td>
-                    <td style={{ textAlign: 'right', padding: '4px', verticalAlign: 'top' }}>{e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                    <td style={{ textAlign: 'right', padding: '4px', verticalAlign: 'top' }}>{e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                  </tr>
-                ))}
+              {/* Totals Section */}
+              <tr style={{ borderTop: '0.8pt solid black' }}>
+                  <td colSpan={4}></td>
+                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{ drTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{ crTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+              </tr>
+              <tr>
+                  <td></td>
+                  <td style={{ padding: '6px 4px', fontWeight: 'bold' }}>
+                      <span style={{ display: 'inline-block', width: '25px' }}>{diff > 0 ? 'By' : 'To'}</span>
+                      Closing Balance
+                  </td>
+                  <td></td>
+                  <td></td>
+                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{diff < 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{diff > 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+              </tr>
+              <tr style={{ borderTop: '0.8pt solid black', borderBottom: '0.8pt solid black', fontWeight: 'bold' }}>
+                  <td colSpan={4}></td>
+                  <td style={{ textAlign: 'right', padding: '6px 4px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+                  <td style={{ textAlign: 'right', padding: '6px 4px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+              </tr>
+              {/* Double line at the very bottom as seen in accounting */}
+              <tr style={{ borderTop: '0.5pt solid black' }}><td colSpan={6} style={{ height: '1px', padding: '0' }}></td></tr>
+            </tbody>
+         </table>
 
-                {/* Totals Section (Only Page LAST) */}
-                {pageIdx === pages.length - 1 && (
-                  <>
-                    <tr style={{ borderTop: '0.8pt solid black' }}>
-                        <td colSpan={4}></td>
-                        <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{ drTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                        <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{ crTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style={{ padding: '6px 4px', fontWeight: 'bold' }}>
-                            <span style={{ display: 'inline-block', width: '25px' }}>{diff > 0 ? 'By' : 'To'}</span>
-                            Closing Balance
-                        </td>
-                        <td></td>
-                        <td></td>
-                        <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{diff < 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                        <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{diff > 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                    </tr>
-                    <tr style={{ borderTop: '0.8pt solid black', borderBottom: '0.8pt solid black', fontWeight: 'bold' }}>
-                        <td colSpan={4}></td>
-                        <td style={{ textAlign: 'right', padding: '6px 4px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                        <td style={{ textAlign: 'right', padding: '6px 4px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                    </tr>
-                    {/* Double line at the very bottom as seen in accounting */}
-                    <tr style={{ borderTop: '0.5pt solid black' }}><td colSpan={6} style={{ height: '1px', padding: '0' }}></td></tr>
-                  </>
-                )}
-              </tbody>
-           </table>
-
-           {/* Footer Section for Ledger - only on last page */}
-           {pageIdx === pages.length - 1 && (
-             <div className="ledger-footer-details mt-4 border-top pt-3" style={{ fontSize: '8.5pt' }}>
-                 <div className="mt-4 text-center" style={{ fontWeight: 'bold', fontStyle: 'italic' }}>
-                    --- End of Ledger Account ---
-                 </div>
+         {/* Footer Section for Ledger */}
+         <div className="ledger-footer-details mt-4 pt-3" style={{ fontSize: '8.5pt' }}>
+             <div className="mt-4 text-center" style={{ fontWeight: 'bold', fontStyle: 'italic' }}>
+                --- End of Ledger Account ---
              </div>
-           )}
+         </div>
 
-           <div style={{ position: 'absolute', bottom: '10mm', right: '10mm', fontSize: '10pt', fontWeight: 'bold' }}>
-                Page {pageIdx + 1}
-           </div>
-        </div>
-      ))}
+      </div>
       
       <style jsx>{`
         @media print {
@@ -255,16 +225,22 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
             padding: 0 !important;
             margin: 0 !important;
             width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
           }
           .ledger-page-box { 
             box-shadow: none !important; 
             margin: 0 !important; 
             padding: 0 !important;
             width: 100% !important;
-            break-after: page !important;
-            page-break-after: always !important;
+            box-sizing: border-box !important;
+            background: white;
+            color: black;
+            font-family: Arial, sans-serif;
+            height: auto !important;
+            min-height: 0 !important;
           }
-           /* Ensure table fits */
+          /* Ensure table fits */
           .ledger-print-table {
             width: 100% !important;
             table-layout: fixed !important;

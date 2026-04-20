@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import IndustrialInvoice from './IndustrialInvoice';
 import { updateInvoiceSettings } from '@/redux/features/invoiceSlice';
 import InvoiceEmailReminderToggle from './InvoiceEmailReminderToggle';
+import BackButton from '@/components/BackButton';
 
 interface InvoicePreviewProps {
   invoice: Invoice;
@@ -48,14 +49,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
       {!hideControls && (
         <div className="d-flex justify-content-between align-items-center mb-4 no-print flex-wrap gap-3 p-3 bg-white rounded-4 shadow-sm border">
           <div className="d-flex align-items-center gap-3">
-            <button
-              onClick={() => router.back()}
-              className="btn btn-light rounded-circle border-0 d-flex align-items-center justify-content-center"
-              style={{ width: '40px', height: '40px' }}
-              title="Back"
-            >
-              <i className="bi bi-chevron-left"></i>
-            </button>
+            <BackButton />
             <h4 className="m-0 fw-bold text-dark">Invoice Preview</h4>
             
             <div className="declaration-toggle-wrapper ms-3">
@@ -140,21 +134,24 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
         @media print {
           @page { 
             size: A4; 
-            margin: 0 !important; 
+            margin: 0mm !important; 
           }
           .no-print, .declaration-toggle-wrapper { display: none !important; }
-          body { 
+          html, body { 
             background: white !important; 
             margin: 0 !important; 
             padding: 0 !important; 
             -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
             height: auto !important;
+            min-height: 0 !important;
             overflow: visible !important;
           }
           .invoice-preview-page {
             padding: 0 !important;
             margin: 0 !important;
             height: auto !important;
+            min-height: 0 !important;
             overflow: visible !important;
           }
           .print-area { 
@@ -162,18 +159,21 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
             padding: 0 !important;
             width: 100% !important;
             height: auto !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
+            min-height: 0 !important;
+            display: block !important;
             overflow: visible !important;
           }
           .print-wrapper {
-            display: inline-block !important;
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
           }
           .industrial-print-container {
             margin: 0 !important;
             padding: 0 !important;
             height: auto !important;
+            min-height: 0 !important;
             overflow: visible !important;
           }
           .industrial-print-container > :last-child {

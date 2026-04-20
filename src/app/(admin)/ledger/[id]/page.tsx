@@ -11,6 +11,7 @@ import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import Link from 'next/link';
+import BackButton from '@/components/BackButton';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import LedgerPrintTemplate from '@/modules/ledger/components/LedgerPrintTemplate';
@@ -223,7 +224,7 @@ export default function LedgerDetailPage() {
               <div className="d-flex justify-content-between align-items-start mb-5">
                  <div>
                     <div className="d-flex align-items-center gap-3 mb-2">
-                        <Link href="/ledger" className="btn btn-sm btn-light rounded-circle hide-print"><i className="bi bi-chevron-left"></i></Link>
+                        <BackButton href="/ledger" title="Back to Ledger" className="hide-print" />
                         <h1 className="fw-900 mb-0 tracking-tight" style={{ color: 'var(--accent-color)' }}>GLOBUS ENGINEERING</h1>
                         {/* <span className={`badge rounded-pill px-3 py-2 ms-2 fw-bold ${isVendor ? 'bg-purple-subtle text-purple' : 'bg-primary-subtle text-primary'}`}>
                             {isVendor ? 'VENDOR / SUPPLIER' : 'CUSTOMER STATEMENT'}
@@ -426,8 +427,26 @@ export default function LedgerDetailPage() {
             @media print {
                 .hide-print { display: none !important; }
                 .show-print-only { display: block !important; }
-                body { padding: 0 !important; background: white !important; color: black !important; }
-                .container-fluid { padding: 0 !important; }
+
+                /* Collapse the page shell — no height, no padding, no min-height */
+                html, body {
+                    height: auto !important;
+                    min-height: 0 !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    background: white !important;
+                    color: black !important;
+                }
+                .container-fluid {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    height: auto !important;
+                    min-height: 0 !important;
+                }
+                .min-vh-100 {
+                    min-height: 0 !important;
+                    height: auto !important;
+                }
                 .card { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
                 .ledger-statement-header { display: none !important; }
                 .bg-light-subtle { background-color: white !important; }
@@ -435,7 +454,6 @@ export default function LedgerDetailPage() {
                 .ledger-print-table { color: black !important; border-color: black !important; }
                 .ledger-print-table th { background-color: transparent !important; color: black !important; }
                 .table-responsive { overflow: visible !important; }
-                @page { margin: 0.5cm; size: A4; }
                 .border-dark { border-color: black !important; }
             }
         `}</style>

@@ -7,6 +7,7 @@ import CompanyUserForm from '@/modules/company-user/components/CompanyUserForm';
 import Breadcrumb from '@/components/Breadcrumb';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import BackButton from '@/components/BackButton';
 
 export default function EditUserPage() {
   const { id } = useParams();
@@ -24,9 +25,7 @@ export default function EditUserPage() {
   return (
     <div className="container-fluid py-4 animate-fade-in">
       <div className="mb-4 d-flex align-items-center">
-        <Link href="/users" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to User Management">
-          <i className="bi bi-arrow-left fs-3 text-muted"></i>
-        </Link>
+        <BackButton href="/users" title="Back to User Management" />
         <div>
           <Breadcrumb 
             items={[

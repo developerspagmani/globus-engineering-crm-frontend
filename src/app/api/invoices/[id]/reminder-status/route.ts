@@ -6,12 +6,12 @@ const reminderStates: Record<string, { enabled: boolean; lastChecked?: string }>
 // GET /api/invoices/[id]/reminder-status - Get reminder status for an invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
     const company_id = searchParams.get('company_id');
-    const invoiceId = params.id;
+    const { id: invoiceId } = await params;
 
     if (!company_id) {
       return NextResponse.json(
@@ -36,12 +36,12 @@ export async function GET(
 // PUT /api/invoices/[id]/reminder-status - Update reminder status for an invoice
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
     const { company_id, enabled } = body;
-    const invoiceId = params.id;
+    const { id: invoiceId } = await params;
 
     if (!company_id || typeof enabled !== 'boolean') {
       return NextResponse.json(

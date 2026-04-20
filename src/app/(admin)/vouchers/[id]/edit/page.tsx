@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import VoucherForm from '@/modules/voucher/components/VoucherForm';
 import Link from 'next/link';
+import BackButton from '@/components/BackButton';
 
 const EditVoucherPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -39,13 +40,7 @@ const EditVoucherPage = () => {
   return (
     <div className="content-area animate-fade-in">
       <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-        <button 
-          onClick={() => router.back()} 
-          className="btn btn-outline-secondary border-0 p-0 me-3" 
-          title="Back to Previous Page"
-        >
-          <i className="bi bi-arrow-left fs-3 text-muted"></i>
-        </button>
+        <BackButton />
         <div>
           <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Voucher: {voucher.voucherNo}</h2>
           <p className="text-muted small mb-0">{isEdit ? 'Update transaction details and narration.' : 'Review transaction details and narration.'}</p>

@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import Link from 'next/link';
+import BackButton from '@/components/BackButton';
 
 const NewVoucherPageContent = () => {
   const searchParams = useSearchParams();
@@ -36,13 +37,7 @@ const NewVoucherPageContent = () => {
   return (
     <div className="content-area animate-fade-in">
       <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-        <button 
-          onClick={() => router.back()} 
-          className="back-btn-standard" 
-          title="Back to Previous Page"
-        >
-          <i className="bi bi-arrow-left fs-4"></i>
-        </button>
+        <BackButton />
         <div>
           <h2 className="fw-bold mb-0 text-dark">Create New Voucher</h2>
           <p className="text-muted small mb-0">Record a new payment, receipt, or journal entry.</p>
