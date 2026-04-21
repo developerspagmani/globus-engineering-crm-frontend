@@ -89,7 +89,10 @@ const authSlice = createSlice({
       const processedCompany: Company | null = rawCompany ? {
         ...rawCompany,
         id: rawCompany.id || (rawCompany as any).id,
-        activeModules: rawCompany.activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || []
+        activeModules: rawCompany.activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || [],
+        logo: rawCompany.logo || (rawCompany as any).logo,
+        logoSecondary: rawCompany.logoSecondary || (rawCompany as any).logo_secondary,
+        invoiceSettings: rawCompany.invoiceSettings || (typeof (rawCompany as any).invoice_settings === 'string' ? JSON.parse((rawCompany as any).invoice_settings) : (rawCompany as any).invoice_settings) || null
       } as any : null;
 
       state.loading = false;

@@ -167,10 +167,11 @@ export interface Company {
   phone?: string;
   email?: string;
   gstin?: string;
-  plan: 'basic' | 'premium' | 'enterprise';
+  plan: 'basic' | 'premium' | 'enterprise' | 'Free' | 'Standard';
   activeModules: string[];
   logo?: string | null;
   logoSecondary?: string | null;
+  invoiceSettings?: any | null;
 }
 
 export interface ModulePermission {

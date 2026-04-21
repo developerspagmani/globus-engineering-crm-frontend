@@ -830,16 +830,24 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
          <div className={`page-border-box${isLastPage ? ' last-page' : ''}`}>
             {/* Header - Always full on every page */}
             <div className="p-header">
-               <div style={{ width: '85px', height: '85px' }}>
-                  <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
-                     <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" strokeWidth="2" />
-                     <circle cx="50" cy="50" r="28" fill="none" stroke="#000" strokeWidth="2" />
-                     <circle cx="50" cy="50" r="22" fill="none" stroke="#000" strokeWidth="1.2" />
-                     <path d="M50 20 L50 10 M50 80 L50 90 M20 50 L10 50 M80 50 L90 50" stroke="#000" strokeWidth="2" />
-                     <text x="50" y="62" fontSize="32" fontWeight="900" textAnchor="middle" fill="#000" fontFamily="Arial, sans-serif">S</text>
-                  </svg>
+               <div style={{ width: '85px', height: '85px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {settings.showLogo && settings.logo ? (
+                     <img 
+                        src={settings.logo} 
+                        alt="Logo" 
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                     />
+                  ) : settings.showLogo ? (
+                     <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
+                        <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" strokeWidth="2" />
+                        <circle cx="50" cy="50" r="28" fill="none" stroke="#000" strokeWidth="2" />
+                        <circle cx="50" cy="50" r="22" fill="none" stroke="#000" strokeWidth="1.2" />
+                        <path d="M50 20 L50 10 M50 80 L50 90 M20 50 L10 50 M80 50 L90 50" stroke="#000" strokeWidth="2" />
+                        <text x="50" y="62" fontSize="32" fontWeight="900" textAnchor="middle" fill="#000" fontFamily="Arial, sans-serif">S</text>
+                     </svg>
+                  ) : null}
                </div>
- 
+
                <div style={{ textAlign: 'center', flex: 1 }}>
                   <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '900', letterSpacing: '0.8pt' }}>
                      {settings.companyName || company?.name?.toUpperCase() || 'GLOBUS ENGINEERING MAIN'}
@@ -847,16 +855,24 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>{settings.companySubHeader || 'An ISO 9001: 2015 Certified Company'}</div>
                   <div style={{ fontSize: '10px', fontWeight: '900', marginTop: '1px' }}>Precision Machining & Quality Engineering Solutions</div>
                </div>
- 
-               <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end' }}>
-                  <div style={{ width: '65px', border: '1.5pt solid #000', textAlign: 'center' }}>
-                     <div style={{ fontSize: '10px', fontWeight: '900', borderBottom: '1.2pt solid #000', background: '#f0f0f0', padding: '1px 0' }}>Q</div>
-                     <div style={{ padding: '3px 0' }}>
-                        <div style={{ fontSize: '18px', fontWeight: '900', lineHeight: 1 }}>TÜV</div>
-                        <div style={{ fontSize: '11px', fontWeight: '900' }}>SÜD</div>
+
+               <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                  {settings.showLogo && settings.logoSecondary ? (
+                     <img 
+                        src={settings.logoSecondary} 
+                        alt="Secondary Logo" 
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                     />
+                  ) : settings.showLogo ? (
+                     <div style={{ width: '65px', border: '1.5pt solid #000', textAlign: 'center' }}>
+                        <div style={{ fontSize: '10px', fontWeight: '900', borderBottom: '1.2pt solid #000', background: '#f0f0f0', padding: '1px 0' }}>Q</div>
+                        <div style={{ padding: '3px 0' }}>
+                           <div style={{ fontSize: '18px', fontWeight: '900', lineHeight: 1 }}>TÜV</div>
+                           <div style={{ fontSize: '11px', fontWeight: '900' }}>SÜD</div>
+                        </div>
+                        <div style={{ fontSize: '8px', fontWeight: '900', borderTop: '1.2pt solid #000', padding: '1px 0' }}>ISO 9001</div>
                      </div>
-                     <div style={{ fontSize: '8px', fontWeight: '900', borderTop: '1.2pt solid #000', padding: '1px 0' }}>ISO 9001</div>
-                  </div>
+                  ) : null}
                </div>
             </div>
  

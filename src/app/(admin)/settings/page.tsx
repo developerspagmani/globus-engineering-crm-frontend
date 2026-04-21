@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import Breadcrumb from '@/components/Breadcrumb';
 import ProfileSettings from '@/modules/settings/components/ProfileSettings';
@@ -46,38 +47,27 @@ const PreviewModal = ({ isOpen, onClose, title, children }: { isOpen: boolean, o
   );
 };
 
-const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState('profile');
+const SettingsContent = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
   const [mounted, setMounted] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
-  const [showLedgerPreview, setShowLedgerPreview] = useState(false);
-  const [ledgerSettings, setLedgerSettings] = useState({
-    showLogo: true,
-    showCompanyAddress: true,
-    showPartyAddress: true,
-    showVchType: true,
-    showVchNo: true,
-    showOpeningBalance: true,
-    showClosingBalance: true,
-    showPageNumbers: true,
-    showDateRange: true,
-    itemsPerPage: 35,
-    fontSize: 'medium' as 'small' | 'medium' | 'large',
-    colorTheme: 'blue' as 'blue' | 'black' | 'green',
-    showCompanyGST: false,
-    showPartyGST: false,
-    showWatermark: false,
-    watermarkText: 'CONFIDENTIAL',
-    accentColor: '#ea580c',
-    logo: null,
-    logoSecondary: null
-  });
-  const { user, company } = useSelector((state: RootState) => state.auth);
-  const { settings: invoiceSettings } = useSelector((state: RootState) => state.invoices);
   
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl) setActiveTab(tabFromUrl);
+  }, [searchParams]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tabId);
+    router.push(`/settings?${params.toString()}`);
+  };
+
+  const { user, company } = useSelector((state: RootState) => state.auth);
 
   if (!mounted) return null;
 
@@ -87,7 +77,6 @@ const SettingsPage = () => {
     { id: 'profile', label: 'My Profile', icon: 'bi-person' },
     { id: 'company', label: 'Company Profile', icon: 'bi-building', hidden: !canManageCompany },
     { id: 'invoice', label: 'Invoice Configuration', icon: 'bi-file-earmark-text', hidden: !canManageCompany },
-    { id: 'ledger', label: 'Ledger Configuration', icon: 'bi-journal-text', hidden: !canManageCompany },
     { id: 'security', label: 'Security', icon: 'bi-shield-lock' },
     { id: 'appearance', label: 'Appearance', icon: 'bi-palette' },
   ];
@@ -103,16 +92,6 @@ const SettingsPage = () => {
           </div>
         </div>
       );
-      case 'ledger': return (
-        <div className="row g-4">
-          <div className="col-12">
-            <LedgerSettings 
-              settings={ledgerSettings}
-              onSettingsChange={setLedgerSettings}
-            />
-          </div>
-        </div>
-      );
       case 'security': return <SecuritySettings />;
       case 'appearance': return <AppearanceSettings />;
       default: return <ProfileSettings />;
@@ -125,23 +104,23 @@ const SettingsPage = () => {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h3 className="fw-900 tracking-tight text-dark mb-1">
-              {activeTab === 'invoice' ? 'Invoice Configuration' : 'Ledger Configuration'}
+               Invoice Configuration
             </h3>
             <p className="text-muted small mb-0">Professionalize your industrial templates with high-precision configuration.</p>
           </div>
           <div className="d-flex gap-2 align-items-center">
             <button 
-              onClick={() => activeTab === 'invoice' ? setShowInvoicePreview(true) : setShowLedgerPreview(true)} 
+              onClick={() => setShowInvoicePreview(true)} 
               className="btn btn-white border rounded-4 px-4 py-2 shadow-sm fw-bold d-flex align-items-center gap-2"
             >
               <i className="bi bi-eye-fill text-primary"></i> Live Preview
             </button>
-            <BackButton onClick={() => setActiveTab('profile')} title="Back to Main Settings" />
+            <BackButton onClick={() => handleTabChange('profile')} title="Back to Main Settings" />
           </div>
         </div>
         {renderContent()}
 
-        {/* Preview Modals */}
+        {/* Preview Modal */}
         <PreviewModal 
           isOpen={showInvoicePreview} 
           onClose={() => setShowInvoicePreview(false)} 
@@ -151,16 +130,6 @@ const SettingsPage = () => {
             invoice={mockInvoices[0]} 
             company={company}
             hideControls={true}
-          />
-        </PreviewModal>
-
-        <PreviewModal 
-          isOpen={showLedgerPreview} 
-          onClose={() => setShowLedgerPreview(false)} 
-          title="Ledger Report Preview"
-        >
-          <LedgerSettingsPreview 
-            company={company}
           />
         </PreviewModal>
       </div>
@@ -182,18 +151,23 @@ const SettingsPage = () => {
               {tabs.filter(t => !t.hidden).map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`list-group-item list-group-item-action border-0 px-4 py-3 d-flex align-items-center gap-3 ${activeTab === tab.id ? 'active fw-bold' : 'text-muted'}`}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`list-group-item list-group-item-action border-0 px-3 py-3 d-flex align-items-center justify-content-start ${activeTab === tab.id ? 'active' : 'text-muted'}`}
                   style={{ 
                     backgroundColor: activeTab === tab.id ? 'var(--accent-soft)' : 'transparent',
                     color: activeTab === tab.id ? 'var(--accent-color)' : '',
-                    borderRadius: '12px',
-                    margin: '2px 0'
+                    borderRadius: '0',
+                    borderLeft: activeTab === tab.id ? '4px solid var(--accent-color)' : '4px solid transparent',
+                    margin: '0',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
                   }}
                 >
-                  <i className={`bi ${tab.icon} fs-5`}></i>
-                  <span>{tab.label}</span>
-                  {activeTab === tab.id && <i className="bi bi-chevron-right ms-auto small"></i>}
+                  <div className="d-flex align-items-center justify-content-center" style={{ width: '40px', minWidth: '40px' }}>
+                    <i className={`bi ${tab.icon} ${activeTab === tab.id ? 'opacity-100' : 'opacity-70'}`} style={{ fontSize: '1.25rem' }}></i>
+                  </div>
+                  <span className={`ms-2 ${activeTab === tab.id ? 'fw-bold' : 'fw-500'}`} style={{ fontSize: '0.95rem' }}>{tab.label}</span>
+                  {activeTab === tab.id && <i className="bi bi-chevron-right ms-auto small opacity-50"></i>}
                 </button>
               ))}
             </div>
@@ -217,6 +191,20 @@ const SettingsPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const SettingsPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading Settings...</span>
+        </div>
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 };
 

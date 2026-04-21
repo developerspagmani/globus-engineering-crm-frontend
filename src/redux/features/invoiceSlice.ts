@@ -165,6 +165,25 @@ export const fetchNextNumbers = createAsyncThunk(
   }
 );
 
+export const saveInvoiceSettings = createAsyncThunk(
+  'invoices/saveSettings',
+  async ({ companyId, settings }: { companyId: string, settings: any }, { rejectWithValue }) => {
+    try {
+      // The backend stores invoice settings in the Company model
+      // We extract the logo fields for top-level company storage and put the rest in invoice_settings JSON
+      const { logo, logoSecondary, ...otherSettings } = settings;
+      const response = await api.put(`/companies/${companyId}`, {
+        logo: logo,
+        logoSecondary: logoSecondary,
+        invoiceSettings: otherSettings
+      });
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to save settings');
+    }
+  }
+);
+
 interface InvoiceState {
   items: Invoice[];
   loading: boolean;

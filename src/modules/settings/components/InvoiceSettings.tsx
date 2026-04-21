@@ -3,13 +3,21 @@
 import React, { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { updateInvoiceSettings } from '@/redux/features/invoiceSlice';
+import { updateInvoiceSettings, saveInvoiceSettings } from '@/redux/features/invoiceSlice';
+import { setCompanyContext } from '@/redux/features/authSlice';
 
 const InvoiceSettings: React.FC = () => {
   const dispatch = useDispatch();
   const { settings } = useSelector((state: RootState) => state.invoices);
+  const { company } = useSelector((state: RootState) => state.auth);
   
-  const [formData, setFormData] = useState({ ...settings });
+  // Initialize with Redux settings, then merge with company-specific settings from backend if available
+  const [formData, setFormData] = useState({ 
+    ...settings,
+    ...(company?.invoiceSettings || {}),
+    logo: company?.logo || settings.logo,
+    logoSecondary: company?.logoSecondary || settings.logoSecondary
+  });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,7 +32,7 @@ const InvoiceSettings: React.FC = () => {
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
+    setFormData((prev: any) => ({ ...prev, [name]: checked }));
     dispatch(updateInvoiceSettings({ [name]: checked }));
   };
 
@@ -34,24 +42,38 @@ const InvoiceSettings: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const logoData = reader.result as string;
-        setFormData(prev => ({ ...prev, [field]: logoData }));
+        setFormData((prev: any) => ({ ...prev, [field]: logoData }));
         dispatch(updateInvoiceSettings({ [field]: logoData }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    if (!company) return;
     
-    // Simulate API call
-    setTimeout(() => {
-      dispatch(updateInvoiceSettings(formData));
+    setSaving(true);
+    try {
+      // Save to backend via Company model Update
+      const resultAction: any = await (dispatch as any)(saveInvoiceSettings({ 
+        companyId: company.id, 
+        settings: formData 
+      }));
+      
+      if (saveInvoiceSettings.fulfilled.match(resultAction)) {
+        // Update local company context in auth slice to keep synced on refresh
+        dispatch(setCompanyContext(resultAction.payload));
+        setMessage('Invoice configuration persisted to database!');
+      } else {
+        setMessage('Failed to save to database: ' + (resultAction.payload || 'Unknown error'));
+      }
+    } catch (err) {
+      setMessage('An error occurred while saving.');
+    } finally {
       setSaving(false);
-      setMessage('Invoice configuration saved successfully!');
       setTimeout(() => setMessage(''), 3000);
-    }, 800);
+    }
   };
 
   return (
