@@ -7,7 +7,7 @@ import { Invoice, Company } from '@/types/modules';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import IndustrialInvoice from './IndustrialInvoice';
-import { updateInvoiceSettings } from '@/redux/features/invoiceSlice';
+import { updateInvoiceSettings, initializeInvoiceSettings } from '@/redux/features/invoiceSlice';
 import InvoiceEmailReminderToggle from './InvoiceEmailReminderToggle';
 import BackButton from '@/components/BackButton';
 
@@ -41,6 +41,19 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   const toggleDeclaration = () => {
     dispatch(updateInvoiceSettings({ showDeclaration: !settings.showDeclaration }));
   };
+
+  // Sync settings from company context if they aren't loaded in Redux yet (handles direct navigation/refresh)
+  React.useEffect(() => {
+    if (company && (!settings.companyName || settings.companyName === 'GLOBUS ENGINEERING MAIN')) {
+      const initialSettings = {
+        ...settings,
+        ...(company.invoiceSettings || {}),
+        logo: company.logo || settings.logo,
+        logoSecondary: company.logoSecondary || settings.logoSecondary
+      };
+      dispatch(initializeInvoiceSettings(initialSettings));
+    }
+  }, [company?.id, dispatch, settings.companyName]);
 
   const accentColor = settings.accentColor || '#0d6efd';
 

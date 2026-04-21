@@ -130,7 +130,17 @@ const authSlice = createSlice({
       }
     },
     setCompanyContext: (state, action: PayloadAction<Company | null>) => {
-      state.company = action.payload;
+      const rawCompany = action.payload;
+      const processedCompany: Company | null = rawCompany ? {
+        ...rawCompany,
+        id: rawCompany.id || (rawCompany as any).id,
+        activeModules: (rawCompany as any).activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || [],
+        logo: rawCompany.logo || (rawCompany as any).logo,
+        logoSecondary: (rawCompany as any).logoSecondary || (rawCompany as any).logo_secondary,
+        invoiceSettings: (rawCompany as any).invoiceSettings || (typeof (rawCompany as any).invoice_settings === 'string' ? JSON.parse((rawCompany as any).invoice_settings) : (rawCompany as any).invoice_settings) || null
+      } as any : null;
+
+      state.company = processedCompany;
       if (typeof window !== 'undefined') {
         const savedAuth = localStorage.getItem('globus_auth');
         if (savedAuth) {
@@ -138,7 +148,7 @@ const authSlice = createSlice({
             const parsed = JSON.parse(savedAuth);
             localStorage.setItem('globus_auth', JSON.stringify({
               ...parsed,
-              company: action.payload
+              company: processedCompany
             }));
           } catch (e) {
             console.error('Failed to update persisted company context', e);

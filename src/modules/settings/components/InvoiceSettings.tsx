@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { updateInvoiceSettings, saveInvoiceSettings } from '@/redux/features/invoiceSlice';
+import { updateInvoiceSettings, saveInvoiceSettings, initializeInvoiceSettings } from '@/redux/features/invoiceSlice';
 import { setCompanyContext } from '@/redux/features/authSlice';
 
 const InvoiceSettings: React.FC = () => {
@@ -11,7 +11,6 @@ const InvoiceSettings: React.FC = () => {
   const { settings } = useSelector((state: RootState) => state.invoices);
   const { company } = useSelector((state: RootState) => state.auth);
   
-  // Initialize with Redux settings, then merge with company-specific settings from backend if available
   const [formData, setFormData] = useState({ 
     ...settings,
     ...(company?.invoiceSettings || {}),
@@ -22,6 +21,20 @@ const InvoiceSettings: React.FC = () => {
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const secondaryFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync Redux settings with company data on mount
+  React.useEffect(() => {
+    if (company) {
+      const initialSettings = {
+        ...settings,
+        ...(company.invoiceSettings || {}),
+        logo: company.logo || settings.logo,
+        logoSecondary: company.logoSecondary || settings.logoSecondary
+      };
+      dispatch(initializeInvoiceSettings(initialSettings));
+      setFormData(initialSettings);
+    }
+  }, [company?.id]); // Re-run if company changes
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

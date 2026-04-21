@@ -251,17 +251,17 @@ const initialState: InvoiceState = {
     nextInvoice: null,
     nextChallan: null,
     showDeclaration: true,
-    vatTin: '33132028969',
-    cstNo: '1091562',
-    panNo: 'AAIFG6568K',
-    bankName: 'INDIAN OVERSEAS BANK',
-    bankAcc: '170902000000962',
-    bankBranchIfsc: 'IOBA0001709',
-    companyName: 'GLOBUS ENGINEERING MAIN',
-    companySubHeader: 'An ISO 9001: 2015 Certified Company',
-    companyAddress: 'No:24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Coimbatore - 641006',
-    gstNo: '33AAIFG6568K1ZZ',
-    stateDetails: 'Tamilnadu - Code: 33',
+    vatTin: '',
+    cstNo: '',
+    panNo: '',
+    bankName: '',
+    bankAcc: '',
+    bankBranchIfsc: '',
+    companyName: '',
+    companySubHeader: '',
+    companyAddress: '',
+    gstNo: '',
+    stateDetails: '',
     declarationText: 'Supplied to Special Economic Zone-Duties & Taxes Are Exempted\n(Folio-No.8/3/2007 Suzlon ON INFRA SEZ DT.24.9.2007)\n\nUNDER EPCG LICENCE NO\n\n"Supply Meant For export/supply yo SEZ Unit or Sez developer for authorised Operations under Bond or Letter of Undertaking without Payment of Integrated Tax"\n(Export Covered Under LUT NO AD330625078562X v Dated 25/06/2025)\n\nDeclartion: We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct'
   },
 };
@@ -278,6 +278,9 @@ const invoiceSlice = createSlice({
       state.pagination.currentPage = action.payload;
     },
     updateInvoiceSettings: (state, action: PayloadAction<Partial<InvoiceState['settings']>>) => {
+      state.settings = { ...state.settings, ...action.payload };
+    },
+    initializeInvoiceSettings: (state, action: PayloadAction<Partial<InvoiceState['settings']>>) => {
       state.settings = { ...state.settings, ...action.payload };
     },
   },
@@ -310,6 +313,20 @@ const invoiceSlice = createSlice({
       .addCase(fetchNextNumbers.fulfilled, (state, action) => {
         state.settings.nextInvoice = String(action.payload.nextInvoice || '').padStart(4, '0');
         state.settings.nextChallan = String(action.payload.nextChallan || '').padStart(4, '0');
+      })
+      .addCase(saveInvoiceSettings.fulfilled, (state, action) => {
+        const company = action.payload;
+        // Process snake_case from backend if present
+        const invoiceSettings = company.invoiceSettings || (company.invoice_settings ? JSON.parse(company.invoice_settings) : {});
+        const logo = (company as any).logo || (company as any).logo;
+        const logoSecondary = (company as any).logoSecondary || (company as any).logo_secondary;
+        
+        state.settings = {
+          ...state.settings,
+          ...invoiceSettings,
+          logo,
+          logoSecondary
+        };
       });
   }
 });
@@ -317,7 +334,8 @@ const invoiceSlice = createSlice({
 export const { 
   setInvoiceFilters, 
   setInvoicePage,
-  updateInvoiceSettings 
+  updateInvoiceSettings,
+  initializeInvoiceSettings
 } = invoiceSlice.actions;
 
 export const addInvoice = createInvoice;
