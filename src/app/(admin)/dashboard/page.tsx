@@ -97,7 +97,7 @@ export default function DashboardPage() {
                           <th className="border-0 small fw-bold">Customer</th>
                           <th className="border-0 small fw-bold text-end">Amount</th>
                           <th className="border-0 small fw-bold text-center">Status</th>
-                          <th className="border-0 pe-3 small fw-bold text-center">Action</th>
+
                         </tr>
                       </thead>
                       <tbody>
@@ -111,16 +111,7 @@ export default function DashboardPage() {
                                 {inv.status}
                               </span>
                             </td>
-                            <td className="pe-3 text-center">
-                              <div className="d-flex justify-content-center gap-2">
-                                <Link href={`/invoices/${inv.id}`} className="btn btn-sm btn-light rounded-circle shadow-none p-1" title="View Detail">
-                                  <i className="bi bi-eye text-primary"></i>
-                                </Link>
-                                <Link href={`/invoices/${inv.id}/edit`} className="btn btn-sm btn-light rounded-circle shadow-none p-1" title="Edit Record">
-                                  <i className="bi bi-pencil text-success"></i>
-                                </Link>
-                              </div>
-                            </td>
+
                           </tr>
                         )) : (
                           <tr>
@@ -150,7 +141,7 @@ export default function DashboardPage() {
                           <th className="border-0 small fw-bold">Party</th>
                           <th className="border-0 small fw-bold">Date</th>
                           <th className="border-0 small fw-bold text-center">Status</th>
-                          <th className="border-0 pe-3 small fw-bold text-center">Action</th>
+
                         </tr>
                       </thead>
                       <tbody>
@@ -164,11 +155,7 @@ export default function DashboardPage() {
                                 {inw.status || 'Received'}
                               </span>
                             </td>
-                            <td className="pe-3 text-center">
-                               <Link href={`/inward/${inw.id}/edit`} className="btn btn-sm btn-light rounded-circle shadow-none p-1" title="Manage Inward">
-                                  <i className="bi bi-pencil-square text-info"></i>
-                               </Link>
-                            </td>
+
                           </tr>
                         )) : (
                           <tr>

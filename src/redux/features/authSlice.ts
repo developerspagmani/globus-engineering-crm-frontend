@@ -27,6 +27,18 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
+export const refreshCompanyContext = createAsyncThunk(
+  'auth/refreshCompany',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/companies/${id}`);
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to refresh company context');
+    }
+  }
+);
+
 interface AuthState {
   user: User | null;
   company: Company | null;
@@ -214,6 +226,33 @@ const authSlice = createSlice({
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      .addCase(refreshCompanyContext.fulfilled, (state, action) => {
+        const rawCompany = action.payload;
+        const processedCompany: Company | null = rawCompany ? {
+          ...rawCompany,
+          id: rawCompany.id || (rawCompany as any).id,
+          activeModules: (rawCompany as any).activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || [],
+          logo: rawCompany.logo || (rawCompany as any).logo,
+          logoSecondary: (rawCompany as any).logoSecondary || (rawCompany as any).logo_secondary,
+          invoiceSettings: (rawCompany as any).invoiceSettings || (typeof (rawCompany as any).invoice_settings === 'string' ? JSON.parse((rawCompany as any).invoice_settings) : (rawCompany as any).invoice_settings) || null
+        } as any : null;
+
+        state.company = processedCompany;
+        if (typeof window !== 'undefined') {
+          const savedAuth = localStorage.getItem('globus_auth');
+          if (savedAuth) {
+            try {
+              const parsed = JSON.parse(savedAuth);
+              localStorage.setItem('globus_auth', JSON.stringify({
+                ...parsed,
+                company: processedCompany
+              }));
+            } catch (e) {
+              console.error('Failed to update persisted company context', e);
+            }
+          }
+        }
       });
   },
 });

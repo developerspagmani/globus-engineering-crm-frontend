@@ -850,9 +850,9 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
             {/* Header - Always full on every page */}
             <div className="p-header">
                <div style={{ width: '85px', height: '85px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {settings.showLogo && settings.logo ? (
+                  {(settings.logo || company?.logo) && settings.showLogo ? (
                      <img
-                        src={settings.logo}
+                        src={settings.logo || company?.logo}
                         alt="Logo"
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                      />
@@ -876,9 +876,9 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                </div>
 
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                  {settings.showLogo && settings.logoSecondary ? (
+                  {(settings.logoSecondary || company?.logoSecondary) && settings.showLogo ? (
                      <img
-                        src={settings.logoSecondary}
+                        src={settings.logoSecondary || company?.logoSecondary}
                         alt="Secondary Logo"
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                      />
