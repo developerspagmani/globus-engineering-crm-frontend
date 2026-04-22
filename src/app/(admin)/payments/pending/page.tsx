@@ -130,7 +130,7 @@ const PendingPaymentPage = () => {
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Pending Payments</h2>
             <p className="text-muted small mb-0">Track outstanding balances and overdue collections across all industrial accounts.</p>
           </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             <ExportExcel
               data={pendingInvoices}
               fileName="Pending_Payments_Report"
@@ -182,91 +182,95 @@ const PendingPaymentPage = () => {
           </div>
         </div>
 
-          <div className="table-responsive p-0 mt-3" style={{ minHeight: '400px', paddingBottom: '80px' }}>
-            {loading ? (
-              <div className="py-2">
-                <Loader text="Fetching Pending Payments..." />
-              </div>
-            ) : (
-              <table className="table align-middle mb-0 table-hover">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Sno</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Customer</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Po No</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Dc No</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice No</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice Date</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider">Pending Amount</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider text-danger">Over Due</th>
-                    <th className="fw-900 small py-3 text-capitalize tracking-wider text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="border-top-0">
-                  {pendingInvoices.map((inv, index) => {
-                    const overdueDays = calculateOverdueDays(inv.dueDate);
-                    return (
-                      <tr key={inv.id} className="border-bottom border-light">
-                        <td className="text-dark small">{index + 1}</td>
-                        <td className="text-dark fw-bold small text-capitalize">{inv.customerName}</td>
-                        <td className="text-muted small">{inv.poNo || '-'}</td>
-                        <td className="text-muted small">{inv.dcNo || '-'}</td>
-                        <td className="text-dark fw-bold small">{inv.invoiceNumber}</td>
-                        <td className="text-dark small">{new Date(inv.date).toLocaleDateString()}</td>
-                        <td className="text-dark fw-bold small font-monospace">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
-                        <td className="text-center">
-                          {overdueDays > 0 ? (
-                            <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{overdueDays} Days</span>
-                          ) : (
-                            <span className="badge rounded-pill bg-success-subtle text-success px-3">On Time</span>
-                          )}
-                        </td>
-                        <td className="text-center px-4 text-nowrap">
-                          <div className="d-flex justify-content-center gap-1">
-                            <button
-                              className="btn-action-edit"
-                              title="Add Payment"
-                              onClick={() => router.push(`/vouchers/new?customerId=${inv.customerId}&invoiceId=${inv.id}&redirect=/payments/pending`)}
-                            >
-                              <i className="bi bi-wallet2 px-1"></i>
-                            </button>
-
-                            <div className="dropdown">
+        <div className="card shadow-sm border-0 overflow-hidden mt-3">
+          <div className="card-body p-0">
+            <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
+              {loading ? (
+                <div className="py-2">
+                  <Loader text="Fetching Pending Payments..." />
+                </div>
+              ) : (
+                <table className="table align-middle mb-0 table-hover">
+                  <thead className="bg-light">
+                    <tr>
+                      <th className="fw-900 small py-3 px-4 text-capitalize tracking-wider">Sno</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Customer</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Po No</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Dc No</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice No</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice Date</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Pending Amount</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider text-danger text-center">Over Due</th>
+                      <th className="fw-900 small py-3 text-capitalize tracking-wider text-center px-4">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="border-top-0">
+                    {pendingInvoices.map((inv, index) => {
+                      const overdueDays = calculateOverdueDays(inv.dueDate);
+                      return (
+                        <tr key={inv.id} className="border-bottom border-light">
+                          <td className="text-dark small px-4">{index + 1}</td>
+                          <td className="text-dark fw-bold small text-capitalize">{inv.customerName}</td>
+                          <td className="text-muted small">{inv.poNo || '-'}</td>
+                          <td className="text-muted small">{inv.dcNo || '-'}</td>
+                          <td className="text-dark fw-bold small">{inv.invoiceNumber}</td>
+                          <td className="text-dark small">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
+                          <td className="text-dark fw-bold small font-monospace">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
+                          <td className="text-center">
+                            {overdueDays > 0 ? (
+                              <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{overdueDays} Days</span>
+                            ) : (
+                              <span className="badge rounded-pill bg-success-subtle text-success px-3">On Time</span>
+                            )}
+                          </td>
+                          <td className="text-center px-4 text-nowrap">
+                            <div className="d-flex justify-content-center gap-1">
                               <button
-                                className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
-                                type="button"
-                                id={`actions-${inv.id}`}
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                                style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+                                className="btn-action-edit"
+                                title="Add Payment"
+                                onClick={() => router.push(`/vouchers/new?customerId=${inv.customerId}&invoiceId=${inv.id}&redirect=/payments/pending`)}
                               >
-                                <i className="bi bi-three-dots-vertical fs-5"></i>
+                                <i className="bi bi-wallet2 px-1"></i>
                               </button>
-                              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${inv.id}`}>
-                                <li>
-                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintPending(inv)}>
-                                    <i className="bi bi-printer text-primary"></i>
-                                    <span className="small fw-semibold">Quick Print</span>
-                                  </button>
-                                </li>
-                              </ul>
+  
+                              <div className="dropdown">
+                                <button
+                                  className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
+                                  type="button"
+                                  id={`actions-${inv.id}`}
+                                  data-bs-toggle="dropdown"
+                                  aria-expanded="false"
+                                  style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+                                >
+                                  <i className="bi bi-three-dots-vertical fs-5"></i>
+                                </button>
+                                <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${inv.id}`}>
+                                  <li>
+                                    <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintPending(inv)}>
+                                      <i className="bi bi-printer text-primary"></i>
+                                      <span className="small fw-semibold">Quick Print</span>
+                                    </button>
+                                  </li>
+                                </ul>
+                              </div>
                             </div>
-                          </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {pendingInvoices.length === 0 && (
+                      <tr>
+                        <td colSpan={9} className="text-center py-5 text-muted">
+                          <h6 className="fw-normal">No pending payments found</h6>
                         </td>
                       </tr>
-                    );
-                  })}
-                  {pendingInvoices.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="text-center py-5 text-muted">
-                        <h6 className="fw-normal">No pending payments found</h6>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
+        </div>
       </div>
 
       <style jsx>{`

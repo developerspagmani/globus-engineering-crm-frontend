@@ -152,7 +152,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({ setFromDate, setToDate, t
   };
 
   return (
-    <div className="d-flex align-items-center gap-2">
+    <div className="d-flex align-items-center gap-3">
        {/* Presets - Only show if date setters are available */}
        {setFromDate && setToDate && (
          <div className="d-flex gap-1 me-2 bg-white p-1 rounded-pill border shadow-sm px-2">

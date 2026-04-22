@@ -133,7 +133,7 @@ const VoucherPage = () => {
           <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Voucher Management</h2>
           <p className="text-muted small mb-0">Record and track financial transactions for industrial accounts.</p>
         </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             <ExportExcel 
               data={items} 
               fileName="Voucher_Records" 

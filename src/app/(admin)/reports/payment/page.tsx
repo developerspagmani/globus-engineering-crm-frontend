@@ -190,7 +190,7 @@ const PaymentReportPage = () => {
     <div className="container-fluid py-4 bg-light min-vh-100 animate-fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Payment Report', active: true }]} /><h2 className="fw-900 mt-2">Payment Report</h2><p className="text-muted small mb-0">Track collection history and monitor outstanding dues.</p></div>
-        <div className="d-flex flex-wrap align-items-center gap-2">
+        <div className="d-flex flex-wrap align-items-center gap-3">
           <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Collection & Ageing Analysis" />
           <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchVouchers(activeCompany?.id)); (dispatch as any)(fetchPendingPayments(activeCompany?.id)); }}><i className="bi bi-arrow-repeat fw-bold" style={{ color: 'var(--accent-color)' }}></i>
             <span className="small fw-800 text-muted">Refresh</span>

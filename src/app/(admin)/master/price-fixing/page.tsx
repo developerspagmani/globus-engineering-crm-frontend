@@ -196,7 +196,7 @@ export default function PriceFixingPage() {
             </p>
           </div>
           
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             {view === 'list' && (
               <ExportExcel 
                 data={priceFixings} 
@@ -388,7 +388,7 @@ export default function PriceFixingPage() {
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light">
                         <tr>
-                          <th className="px-4 py-2 text-capitalize small fw-bold" style={{ width: '60px' }}>Sno</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '60px' }}>Sno</th>
                           <th className="px-4 py-3 text-capitalize small fw-bold">Customer</th>
                           <th className="px-4 py-3 text-capitalize small fw-bold">Item</th>
                           <th className="px-4 py-3 text-capitalize small fw-bold">Process</th>
