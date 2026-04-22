@@ -3,7 +3,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import OutwardForm from '@/modules/outward/components/OutwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
@@ -12,7 +12,8 @@ import { checkActionPermission } from '@/config/permissions';
 export default function EditOutwardPage() {
   const params = useParams();
   const id = params.id as string;
-  const [isEdit, setIsEdit] = React.useState(false);
+  const searchParams = useSearchParams();
+  const [isEdit, setIsEdit] = React.useState(searchParams.get('edit') === 'true');
   
   const { user } = useSelector((state: RootState) => state.auth);
   const outward = useSelector((state: RootState) => 

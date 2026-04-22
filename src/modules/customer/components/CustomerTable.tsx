@@ -123,6 +123,9 @@ const CustomerTable: React.FC = () => {
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center gap-1">
                           <Link href={`/customers/${customer.id}/edit`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
+                          {checkActionPermission(user, 'mod_customer', 'edit') && (
+                            <Link href={`/customers/${customer.id}/edit?edit=true`} className="btn-action-edit" title="Edit Customer"><i className="bi bi-pencil-fill"></i></Link>
+                          )}
                           <div className="dropdown">
                             <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${customer.id}`} data-bs-toggle="dropdown" aria-expanded="false" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
                               <i className="bi bi-three-dots-vertical fs-5"></i>

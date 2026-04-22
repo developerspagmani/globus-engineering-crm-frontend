@@ -153,8 +153,18 @@ const InvoiceTable: React.FC = () => {
                         className="btn-action-view"
                         title={activeTab === 'ADD_INVOICE' ? "Create Invoice" : "View Invoice"}
                       >
-                        <i className="bi bi-eye-fill"></i>
+                        <i className={activeTab === 'ADD_INVOICE' ? "bi bi-plus-lg" : "bi bi-eye-fill"}></i>
                       </Link>
+
+                      {activeTab !== 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'edit') && (
+                        <Link 
+                          href={`/invoices/${item.id}/edit`} 
+                          className="btn-action-edit mx-1"
+                          title="Edit Invoice"
+                        >
+                          <i className="bi bi-pencil-fill"></i>
+                        </Link>
+                      )}
 
                       <div className="dropdown">
                         <button 

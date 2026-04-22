@@ -260,6 +260,11 @@ const LeadsPage = () => {
                         <Link href={`/leads/${lead.id}/edit`} className="btn-action-view" title="View Profile">
                           <i className="bi bi-eye-fill"></i>
                         </Link>
+                        {checkActionPermission(user, 'mod_lead', 'edit') && (
+                          <Link href={`/leads/${lead.id}/edit?edit=true`} className="btn-action-edit" title="Edit Lead">
+                            <i className="bi bi-pencil-fill"></i>
+                          </Link>
+                        )}
                         
                         <div className="dropdown">
                           <button 

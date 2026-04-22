@@ -96,19 +96,30 @@ export default function DashboardPage() {
                           <th className="border-0 ps-3 small fw-bold">Invoice #</th>
                           <th className="border-0 small fw-bold">Customer</th>
                           <th className="border-0 small fw-bold text-end">Amount</th>
-                          <th className="border-0 pe-3 small fw-bold text-center">Status</th>
+                          <th className="border-0 small fw-bold text-center">Status</th>
+                          <th className="border-0 pe-3 small fw-bold text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {realStats?.latestInvoices && realStats.latestInvoices.length > 0 ? realStats.latestInvoices.map((inv) => (
+                        {realStats?.latestInvoices && realStats.latestInvoices.length > 0 ? realStats.latestInvoices.slice(0, 10).map((inv) => (
                           <tr key={inv.id}>
                             <td className="ps-3 small fw-medium text-primary">#{inv.invoice_no}</td>
                             <td className="small text-truncate" style={{ maxWidth: '150px' }}>{inv.customer_name}</td>
                             <td className="small text-end fw-bold">₹{parseFloat(inv.grand_total || '0').toLocaleString()}</td>
-                            <td className="pe-3 text-center">
+                            <td className="text-center">
                               <span className={`badge ${inv.status === 'PAID' ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${inv.status === 'PAID' ? 'success' : 'warning'} rounded-pill extra-small px-2`}>
                                 {inv.status}
                               </span>
+                            </td>
+                            <td className="pe-3 text-center">
+                              <div className="d-flex justify-content-center gap-2">
+                                <Link href={`/invoices/${inv.id}`} className="btn btn-sm btn-light rounded-circle shadow-none p-1" title="View Detail">
+                                  <i className="bi bi-eye text-primary"></i>
+                                </Link>
+                                <Link href={`/invoices/${inv.id}/edit`} className="btn btn-sm btn-light rounded-circle shadow-none p-1" title="Edit Record">
+                                  <i className="bi bi-pencil text-success"></i>
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         )) : (
@@ -138,19 +149,25 @@ export default function DashboardPage() {
                           <th className="border-0 ps-3 small fw-bold">Inward #</th>
                           <th className="border-0 small fw-bold">Party</th>
                           <th className="border-0 small fw-bold">Date</th>
-                          <th className="border-0 pe-3 small fw-bold text-center">Status</th>
+                          <th className="border-0 small fw-bold text-center">Status</th>
+                          <th className="border-0 pe-3 small fw-bold text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {realStats?.latestInwards && realStats.latestInwards.length > 0 ? realStats.latestInwards.map((inw) => (
+                        {realStats?.latestInwards && realStats.latestInwards.length > 0 ? realStats.latestInwards.slice(0, 10).map((inw) => (
                           <tr key={inw.id}>
                             <td className="ps-3 small fw-medium text-primary">{inw.inward_no}</td>
                             <td className="small text-truncate" style={{ maxWidth: '150px' }}>{inw.vendor_name || inw.customer_name || 'N/A'}</td>
                             <td className="small text-muted">{inw.date ? new Date(inw.date).toLocaleDateString() : 'N/A'}</td>
-                            <td className="pe-3 text-center">
+                            <td className="text-center">
                               <span className="badge bg-info bg-opacity-10 text-info rounded-pill extra-small px-2">
                                 {inw.status || 'Received'}
                               </span>
+                            </td>
+                            <td className="pe-3 text-center">
+                               <Link href={`/inward/${inw.id}/edit`} className="btn btn-sm btn-light rounded-circle shadow-none p-1" title="Manage Inward">
+                                  <i className="bi bi-pencil-square text-info"></i>
+                               </Link>
                             </td>
                           </tr>
                         )) : (
@@ -185,7 +202,7 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {auditLogs.length > 0 ? auditLogs.map((log) => (
+                        {auditLogs.length > 0 ? auditLogs.slice(0, 10).map((log) => (
                            <tr key={log.id}>
                              <td>
                                <div className="d-flex align-items-center">

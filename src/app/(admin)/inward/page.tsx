@@ -186,6 +186,9 @@ export default function InwardListPage() {
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
                           <Link href={`/inward/${item.id}/edit`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
+                          {mounted && checkActionPermission(user, 'mod_inward', 'edit') && (
+                            <Link href={`/inward/${item.id}/edit?edit=true`} className="btn-action-edit" title="Edit Inward"><i className="bi bi-pencil-fill"></i></Link>
+                          )}
                           <div className="dropdown">
                             <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
                               <i className="bi bi-three-dots-vertical fs-5"></i>

@@ -113,7 +113,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                      </div>
                      <div className="p-meta-row">
                         <div className="p-meta-col"><span>Invoice Date</span><span>: <span className="p-meta-val">{(invoice.date) ? new Date(invoice.date as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
-                        <div className="p-meta-col"><span>DC Dte</span><span>: <span className="p-meta-val">{(invoice.dcDate || invoice.dc_date) ? new Date((invoice.dcDate || invoice.dc_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
+                        <div className="p-meta-col"><span></span><span>: <span className="p-meta-val">{(invoice.dcDate || invoice.dc_date) ? new Date((invoice.dcDate || invoice.dc_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
                         <div className="p-meta-col"><span>PO Date</span><span>: <span className="p-meta-val">{(invoice.poDate || invoice.po_date) ? new Date((invoice.poDate || invoice.po_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
                         <div className="p-meta-col"><span>Reverse Charge (Y/N)</span><span>: <span className="p-meta-val">N</span></span></div>
                      </div>
@@ -175,14 +175,33 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                               <td>&nbsp;</td>
                               <td style={{ textAlign: 'right' }}>{invoice.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 }) || '0.00'}</td>
                            </tr>
-                           <tr style={{ height: '22px' }}>
-                              <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>CGST (9%)</td>
-                              <td style={{ textAlign: 'right' }}>{(invoice.taxTotal / 2).toFixed(2) || '0.00'}</td>
-                           </tr>
-                           <tr style={{ height: '22px' }}>
-                              <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>SGST (9%)</td>
-                              <td style={{ textAlign: 'right' }}>{(invoice.taxTotal / 2).toFixed(2) || '0.00'}</td>
-                           </tr>
+                            {(() => {
+                               const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
+                               const taxRate = invoice.taxRate || 0;
+                               const taxTotal = invoice.taxTotal || 0;
+
+                               if (isIntraState) {
+                                  return (
+                                     <>
+                                        <tr style={{ height: '22px' }}>
+                                           <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>CGST ({taxRate / 2}%)</td>
+                                           <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2) || '0.00'}</td>
+                                        </tr>
+                                        <tr style={{ height: '22px' }}>
+                                           <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>SGST ({taxRate / 2}%)</td>
+                                           <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2) || '0.00'}</td>
+                                        </tr>
+                                     </>
+                                  );
+                               } else {
+                                  return (
+                                     <tr style={{ height: '22px' }}>
+                                        <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>IGST ({taxRate}%)</td>
+                                        <td style={{ textAlign: 'right' }}>{taxTotal.toFixed(2) || '0.00'}</td>
+                                     </tr>
+                                  );
+                               }
+                            })()}
                            <tr className="total-row" style={{ height: '30px' }}>
                               <td colSpan={5} style={{ textAlign: 'right', fontSize: '13px' }}>GRAND TOTAL</td>
                               <td style={{ textAlign: 'right', fontSize: '13px' }}>{invoice.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 }) || '0.00'}</td>
@@ -194,7 +213,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                   {/* Footer */}
                   <div className="p-footer">
                      <div className="p-words">Amount (in words) : <strong>{totalInWords} Only</strong></div>
-                     
+
                      <div className="p-details-row">
                         <div className="p-details-box">
                            <div className="p-details-head">Company Details</div>
@@ -220,10 +239,10 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                         </div>
                         <div className="p-sign-box">
                            <div>For <strong>{settings.companyName || company?.name || 'Globus Engineering Tools'}</strong></div>
-                           <img 
-                              src="/seal.png" 
-                              className="seal" 
-                              alt="seal" 
+                           <img
+                              src="/seal.png"
+                              className="seal"
+                              alt="seal"
                               onError={(e: any) => e.target.style.display = 'none'}
                            />
                         </div>
@@ -236,7 +255,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                                  <div><strong>Declaration:</strong>Supplied to Special Economic Zone-Duties & Taxes Are Exempted</div>
                                  <div>(Folio-No.8/3/2007 Suzlon ON INFRA SEZ DT.24.9.2007)</div>
                                  <div style={{ marginBottom: '2px' }}>UNDER EPCG LICENCE NO</div>
-                                 
+
                                  <div style={{ textAlign: 'center', fontSize: '8.5px' }}>
                                     "Supply Meant For export/supply yo SEZ Unit or Sez developer for authorised<br />
                                     Operations under Bond or Letter of Undertaking without Payment of Integrated Tax"<br />
@@ -814,13 +833,13 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
 const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWords, startSno, capacity, footerSpaceNeeded }: any) => {
    const isFirstPage = startSno === 1;
-   
+
    // Filler rows to reach full page height
    const targetRows = isLastPage ? (capacity - footerSpaceNeeded) : capacity;
    const fillerCount = Math.max(0, targetRows - items.length);
-   
+
    return (
-      <div 
+      <div
          className="invoice-page"
          style={{
             pageBreakAfter: isLastPage ? 'avoid' : 'always',
@@ -832,10 +851,10 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
             <div className="p-header">
                <div style={{ width: '85px', height: '85px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {settings.showLogo && settings.logo ? (
-                     <img 
-                        src={settings.logo} 
-                        alt="Logo" 
-                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                     <img
+                        src={settings.logo}
+                        alt="Logo"
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                      />
                   ) : settings.showLogo ? (
                      <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
@@ -858,10 +877,10 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
 
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                   {settings.showLogo && settings.logoSecondary ? (
-                     <img 
-                        src={settings.logoSecondary} 
-                        alt="Secondary Logo" 
-                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                     <img
+                        src={settings.logoSecondary}
+                        alt="Secondary Logo"
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                      />
                   ) : settings.showLogo ? (
                      <div style={{ width: '65px', border: '1.5pt solid #000', textAlign: 'center' }}>
@@ -875,7 +894,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   ) : null}
                </div>
             </div>
- 
+
             {/* Meta Grid - Always on every page */}
             <div className="p-meta">
                <div className="p-meta-row">
@@ -886,16 +905,16 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                </div>
                <div className="p-meta-row">
                   <div className="p-meta-col"><span>Invoice Date</span><span>: <span className="p-meta-val">{(invoice.date) ? new Date(invoice.date as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
-                  <div className="p-meta-col"><span>DC Dte</span><span>: <span className="p-meta-val">{(invoice.dcDate || invoice.dc_date) ? new Date((invoice.dcDate || invoice.dc_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
+                  <div className="p-meta-col"><span>DC Date</span><span>: <span className="p-meta-val">{(invoice.dcDate || invoice.dc_date) ? new Date((invoice.dcDate || invoice.dc_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
                   <div className="p-meta-col"><span>PO Date</span><span>: <span className="p-meta-val">{(invoice.poDate || invoice.po_date) ? new Date((invoice.poDate || invoice.po_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
                   <div className="p-meta-col">
                      <span>Reverse Charge</span><span>: <span className="p-meta-val">N</span></span>
                   </div>
                </div>
             </div>
- 
+
             <div className="tax-invoice-label">Tax Invoice</div>
- 
+
             {/* Address Row - Always on every page */}
             <div className="p-address">
                <div className="p-addr-box">
@@ -975,14 +994,33 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                               <td>&nbsp;</td>
                               <td style={{ textAlign: 'right' }}>{invoice.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                            </tr>
-                           <tr style={{ height: '22px' }}>
-                              <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>CGST (9%)</td>
-                              <td style={{ textAlign: 'right' }}>{(invoice.taxTotal / 2).toFixed(2)}</td>
-                           </tr>
-                           <tr style={{ height: '22px' }}>
-                              <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>SGST (9%)</td>
-                              <td style={{ textAlign: 'right' }}>{(invoice.taxTotal / 2).toFixed(2)}</td>
-                           </tr>
+                           {(() => {
+                              const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
+                              const taxRate = invoice.taxRate || 0;
+                              const taxTotal = invoice.taxTotal || 0;
+
+                              if (isIntraState) {
+                                 return (
+                                    <>
+                                       <tr style={{ height: '22px' }}>
+                                          <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>CGST ({taxRate / 2}%)</td>
+                                          <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2)}</td>
+                                       </tr>
+                                       <tr style={{ height: '22px' }}>
+                                          <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>SGST ({taxRate / 2}%)</td>
+                                          <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2)}</td>
+                                       </tr>
+                                    </>
+                                 );
+                              } else {
+                                 return (
+                                    <tr style={{ height: '22px' }}>
+                                       <td colSpan={5} style={{ textAlign: 'right', fontSize: '9px' }}>IGST ({taxRate}%)</td>
+                                       <td style={{ textAlign: 'right' }}>{taxTotal.toFixed(2)}</td>
+                                    </tr>
+                                 );
+                              }
+                           })()}
                            <tr className="total-row" style={{ height: '30px' }}>
                               <td colSpan={5} style={{ textAlign: 'right', fontSize: '13px' }}>GRAND TOTAL</td>
                               <td style={{ textAlign: 'right', fontSize: '13px' }}>{invoice.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -997,7 +1035,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
             {isLastPage && (
                <div className="p-footer">
                   <div className="p-words">Amount (in words) : <strong>{totalInWords.toUpperCase()}</strong></div>
-                  
+
                   <div className="p-details-row">
                      <div className="p-details-box">
                         <div className="p-details-head">Company Details</div>
@@ -1023,36 +1061,36 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                      </div>
                      <div className="p-sign-box">
                         <div>For <strong>{settings.companyName || company?.name || 'Globus Engineering Tools'}</strong></div>
-                        <img 
-                           src="/seal.png" 
-                           className="seal" 
-                           alt="seal" 
+                        <img
+                           src="/seal.png"
+                           className="seal"
+                           alt="seal"
                            onError={(e: any) => e.target.style.display = 'none'}
                         />
                      </div>
                   </div>
 
                   {settings.showDeclaration && (
-                  <div className="p-declaration" style={{ whiteSpace: 'pre-line' }}>
-                     {settings.declarationText || (
-                        <>
-                           <div><strong>Declaration:</strong>Supplied to Special Economic Zone-Duties & Taxes Are Exempted</div>
-                           <div>(Folio-No.8/3/2007 Suzlon ON INFRA SEZ DT.24.9.2007)</div>
-                           <div style={{ marginBottom: '2px' }}>UNDER EPCG LICENCE NO</div>
-                           
-                           <div style={{ textAlign: 'center', fontSize: '8.5px' }}>
-                              "Supply Meant For export/supply yo SEZ Unit or Sez developer for authorised<br />
-                              Operations under Bond or Letter of Undertaking without Payment of Integrated Tax"<br />
-                              (Export Covered Under LUT NO AD330625078562X v Dated 25/06/2025)
-                           </div>
+                     <div className="p-declaration" style={{ whiteSpace: 'pre-line' }}>
+                        {settings.declarationText || (
+                           <>
+                              <div><strong>Declaration:</strong>Supplied to Special Economic Zone-Duties & Taxes Are Exempted</div>
+                              <div>(Folio-No.8/3/2007 Suzlon ON INFRA SEZ DT.24.9.2007)</div>
+                              <div style={{ marginBottom: '2px' }}>UNDER EPCG LICENCE NO</div>
 
-                           <div style={{ marginTop: '3px' }}>
-                              Declartion: We declare that this invoice shows the actual price of the goods described and that all particulars are true and<br />
-                              correct
-                           </div>
-                        </>
-                     )}
-                  </div>
+                              <div style={{ textAlign: 'center', fontSize: '8.5px' }}>
+                                 "Supply Meant For export/supply yo SEZ Unit or Sez developer for authorised<br />
+                                 Operations under Bond or Letter of Undertaking without Payment of Integrated Tax"<br />
+                                 (Export Covered Under LUT NO AD330625078562X v Dated 25/06/2025)
+                              </div>
+
+                              <div style={{ marginTop: '3px' }}>
+                                 Declartion: We declare that this invoice shows the actual price of the goods described and that all particulars are true and<br />
+                                 correct
+                              </div>
+                           </>
+                        )}
+                     </div>
                   )}
                </div>
             )}

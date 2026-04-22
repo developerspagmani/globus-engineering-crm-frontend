@@ -248,6 +248,11 @@ const ChallanPage = () => {
                             <Link href={`/challan/${challan.id}/edit`} className="btn-action-view" title="View Profile">
                               <i className="bi bi-eye-fill"></i>
                             </Link>
+                            {checkActionPermission(user, 'mod_challan', 'edit') && (
+                              <Link href={`/challan/${challan.id}/edit?edit=true`} className="btn-action-edit" title="Edit Record">
+                                <i className="bi bi-pencil-fill"></i>
+                              </Link>
+                            )}
                             
                             <div className="dropdown">
                               <button 

@@ -13,7 +13,7 @@ const EditVoucherPage = () => {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isEdit, setIsEdit] = useState(false);
+  const [isEdit, setIsEdit] = useState(searchParams.get('edit') === 'true');
   const isReadOnly = searchParams.get('readonly') === 'true';
 
   const { items } = useSelector((state: RootState) => state.voucher);

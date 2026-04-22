@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import ChallanForm from '@/modules/challan/components/ChallanForm';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -14,11 +14,12 @@ import Loader from '@/components/Loader';
 
 const EditChallanPage = () => {
   const { id } = useParams();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { items, loading } = useSelector((state: RootState) => state.challan);
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const challan = items.find(item => String(item.id) === String(id));
-  const [isEdit, setIsEdit] = React.useState(false);
+  const [isEdit, setIsEdit] = React.useState(searchParams.get('edit') === 'true');
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {

@@ -252,9 +252,14 @@ const VoucherPage = () => {
                         <td className="text-center px-4 text-nowrap">
                           <div className="d-flex justify-content-center gap-1">
                             {checkActionPermission(user, 'mod_voucher', 'edit') && (
-                              <Link href={`/vouchers/${voucher.id}/edit`} className="btn-action-view" title="View Profile">
-                                <i className="bi bi-eye-fill"></i>
-                              </Link>
+                              <>
+                                <Link href={`/vouchers/${voucher.id}/edit`} className="btn-action-view" title="View Detail">
+                                  <i className="bi bi-eye-fill"></i>
+                                </Link>
+                                <Link href={`/vouchers/${voucher.id}/edit?edit=true`} className="btn-action-edit" title="Edit Voucher">
+                                  <i className="bi bi-pencil-fill"></i>
+                                </Link>
+                              </>
                             )}
                             
                             <div className="dropdown">

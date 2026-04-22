@@ -128,6 +128,11 @@ const CompanyUserTable: React.FC = () => {
                         <Link href={`/users/${user.id}`} className="btn-action-view" title="View Detail">
                           <i className="bi bi-eye-fill"></i>
                         </Link>
+                        {checkActionPermission(currentUser, 'mod_user_management', 'edit') && (
+                          <Link href={`/users/${user.id}/edit`} className="btn-action-edit" title="Edit Permissions">
+                            <i className="bi bi-pencil-fill"></i>
+                          </Link>
+                        )}
                         <div className="dropdown">
                           <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${user.id}`} data-bs-toggle="dropdown" aria-expanded="false" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
                             <i className="bi bi-three-dots-vertical fs-5"></i>

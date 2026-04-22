@@ -283,6 +283,11 @@ const EmployeesPage = () => {
                           <Link href={`/employees/${emp.id}/edit`} className="btn-action-view" title="View Profile">
                             <i className="bi bi-eye-fill"></i>
                           </Link>
+                          {checkActionPermission(user, 'mod_employee', 'edit') && (
+                            <Link href={`/employees/${emp.id}/edit?edit=true`} className="btn-action-edit" title="Edit Employee">
+                              <i className="bi bi-pencil-fill"></i>
+                            </Link>
+                          )}
                           
                           <div className="dropdown">
                             <button 

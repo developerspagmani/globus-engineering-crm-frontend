@@ -363,6 +363,15 @@ export default function ItemDetailsPage() {
                                   <button onClick={() => handleEdit(item)} className="btn-action-view" title="View Profile">
                                     <i className="bi bi-eye-fill"></i>
                                   </button>
+                                  {mounted && checkActionPermission(user, 'mod_items', 'edit') && (
+                                    <button 
+                                      onClick={() => { setEditingId(item.id); setFormData({ itemCode: item.itemCode, itemName: item.itemName }); setIsViewOnly(false); setView('add'); }} 
+                                      className="btn-action-edit" 
+                                      title="Edit Item"
+                                    >
+                                      <i className="bi bi-pencil-fill"></i>
+                                    </button>
+                                  )}
                                   <div className="dropdown">
                                     <button 
                                       className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 

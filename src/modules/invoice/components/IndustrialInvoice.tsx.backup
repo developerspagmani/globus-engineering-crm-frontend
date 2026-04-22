@@ -92,7 +92,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                 <span>: &nbsp; {invoice.date ? new Date(invoice.date).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span>
               </div>
               <div className="ps-2 fw-bold d-flex align-items-center" style={{ fontSize: '11px', width: '45%' }}>
-                <span style={{ minWidth: '60px' }}>DC Dte</span>
+                <span style={{ minWidth: '60px' }}>DC Date</span>
                 <span>: &nbsp; {invoice.dcDate ? new Date(invoice.dcDate).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span>
               </div>
             </div>

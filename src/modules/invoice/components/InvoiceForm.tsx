@@ -856,25 +856,77 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </div>
                      </div>
 
-                     <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
-                        <div className="d-flex align-items-center gap-4">
-                           <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) IGST</h6>
-                           <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '80px' }}>
-                              <input
-                                 type="number"
-                                 className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
-                                 style={{ fontSize: '14px' }}
-                                 value={formData.taxRate}
-                                 onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
-                              />
-                              <span className="small fw-bold">%</span>
-                           </div>
-                        </div>
-                        <div className="d-flex align-items-center gap-2 text-dark fs-5 fw-bold">
-                           <span>₹</span>
-                           <span>{formData.taxTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                     </div>
+                     {(() => {
+                        const isIntraState = (formData.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
+                        const taxRate = formData.taxRate || 0;
+                        const taxTotal = formData.taxTotal || 0;
+
+                        if (isIntraState) {
+                           return (
+                              <>
+                                 <div className="d-flex align-items-center justify-content-between mb-3 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                                    <div className="d-flex align-items-center gap-4">
+                                       <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) CGST</h6>
+                                       <div className="d-flex align-items-center gap-1">
+                                          <span className="small fw-bold">{taxRate / 2}%</span>
+                                       </div>
+                                    </div>
+                                    <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
+                                       <span>₹</span>
+                                       <span>{(taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                 </div>
+                                 <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                                    <div className="d-flex align-items-center gap-4">
+                                       <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) SGST</h6>
+                                       <div className="d-flex align-items-center gap-1">
+                                          <span className="small fw-bold">{taxRate / 2}%</span>
+                                       </div>
+                                    </div>
+                                    <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
+                                       <span>₹</span>
+                                       <span>{(taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                 </div>
+                                 <div className="d-flex align-items-center justify-content-between mb-4">
+                                    <h6 className="text-muted fw-bold small text-uppercase mb-0">GST Percentage</h6>
+                                    <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '80px' }}>
+                                       <input
+                                          type="number"
+                                          className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
+                                          style={{ fontSize: '14px' }}
+                                          value={formData.taxRate}
+                                          onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                                       />
+                                       <span className="small fw-bold">%</span>
+                                    </div>
+                                 </div>
+                              </>
+                           );
+                        } else {
+                           return (
+                              <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                                 <div className="d-flex align-items-center gap-4">
+                                    <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) IGST</h6>
+                                    <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '80px' }}>
+                                       <input
+                                          type="number"
+                                          className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
+                                          style={{ fontSize: '14px' }}
+                                          value={formData.taxRate}
+                                          onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                                       />
+                                       <span className="small fw-bold">%</span>
+                                    </div>
+                                 </div>
+                                 <div className="d-flex align-items-center gap-2 text-dark fs-5 fw-bold">
+                                    <span>₹</span>
+                                    <span>{formData.taxTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                 </div>
+                              </div>
+                           );
+                        }
+                     })()}
 
                      <div className="d-flex align-items-center justify-content-between pt-3 pb-2" style={{ borderBottom: '2.5px solid #212529' }}>
                         <h4 className="fw-bold mb-0 text-dark text-uppercase small" style={{ letterSpacing: '1px' }}>Grand Total</h4>

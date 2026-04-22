@@ -13,7 +13,7 @@ export default function EditInwardPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const id = params.id as string;
-  const [isEdit, setIsEdit] = React.useState(false);
+  const [isEdit, setIsEdit] = React.useState(searchParams.get('edit') === 'true');
   const isReadOnly = searchParams.get('readonly') === 'true';
   const router = useRouter()
   const { user } = useSelector((state: RootState) => state.auth);

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import CustomerForm from '@/modules/customer/components/CustomerForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
@@ -13,7 +13,8 @@ export default function EditCustomerPage() {
   const params = useParams();
   const id = params.id as string;
   const router = useRouter();
-  const [isEdit, setIsEdit] = React.useState(false);
+  const searchParams = useSearchParams();
+  const [isEdit, setIsEdit] = React.useState(searchParams.get('edit') === 'true');
 
   const { user } = useSelector((state: RootState) => state.auth);
   const customer = useSelector((state: RootState) =>

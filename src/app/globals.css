@@ -356,7 +356,7 @@ textarea.form-control {
   /* Clearly visible slate border */
   background-color: #ffffff !important;
   border-radius: 0.5rem !important;
-  padding: 0.6rem 0.85rem !important;
+  padding: 0.6rem 0.85rem;
   transition: var(--transition-smooth) !important;
   min-height: 42px !important;
   color: #334155 !important;
@@ -1995,88 +1995,71 @@ input[type="submit"],
 
   color: var(--accent-color);
 
+}/* Premium Modal & Backdrop Overrides */
+.modal-backdrop.show {
+  opacity: 0.7 !important;
+  background-color: #0f172a !important;
+  backdrop-filter: blur(8px) !important;
 }
 
-
-
-/* Premium Modal & Backdrop Overrides */
-
-/* .modal-backdrop.show {
-
-  opacity: 0.6;
-
-  background-color: #0f172a;
-
-  backdrop-filter: blur(4px);
-
-}
-
-
-
-.modal.show {
-
+/* Ensure modals are always truly centered and have premium aesthetics */
+.modal.show.d-block {
   display: flex !important;
-
-  align-items: center;
-
-  justify-content: center;
-
+  align-items: center !important;
+  justify-content: center !important;
   padding-right: 0 !important;
-
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(4px);
+  z-index: 1060;
 }
 
-
+.modal-dialog {
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  pointer-events: none;
+}
 
 .modal-dialog-centered {
-
-  display: flex;
-
-  align-items: center;
-
-  min-height: calc(100% - var(--bs-modal-margin) * 2);
-
-  justify-content: center;
-
-  margin: 0 auto;
-
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
-
-
 
 .modal-content {
-
-  border-radius: 24px;
-
-  border: 1px solid rgba(255, 255, 255, 0.2);
-
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-
-  animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+  animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  pointer-events: auto;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-
-
 @keyframes modalSlideUp {
-
   from {
-
     opacity: 0;
-
     transform: translateY(30px) scale(0.95);
-
   }
-
   to {
-
     opacity: 1;
-
     transform: translateY(0) scale(1);
-
   }
+}
 
-} */
-
+/* Custom scrollbar for modal content */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
 
 
 /* Print Utilities */
@@ -2251,22 +2234,30 @@ input[type="submit"],
   box-shadow: var(--shadow-sm);
   border: 1px solid #e2e8f0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  position: relative;
+  background-color: #fff;
 }
 
 .search-group .input-group-text {
-  background-color: #f8fafc !important;
-  border: none !important;
-  padding-left: 15px;
-  padding-right: 10px;
-  color: #64748b;
-  display: flex;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 45px;
+  display: flex !important;
   align-items: center;
+  justify-content: center;
+  background-color: transparent !important;
+  border: none !important;
+  color: #64748b;
+  z-index: 5;
+  pointer-events: none;
 }
 
 .search-group .form-control.search-bar {
   border: none !important;
-  padding-left: 10px !important;
+  padding-left: 45px !important;
   background-color: #fff !important;
   height: 45px !important;
   font-weight: 500;
@@ -2282,4 +2273,15 @@ input[type="submit"],
 
 .search-group i {
   font-size: 1.1rem;
+}
+
+/* Remove number input spinners globally */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
 }

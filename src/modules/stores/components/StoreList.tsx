@@ -168,6 +168,15 @@ const StoreList: React.FC = () => {
                         <i className="bi bi-eye"></i>
                       </button>
                     )}
+                    {hasPermission('canEdit') && (
+                      <button 
+                        className="btn btn-action-edit" 
+                        title="Edit Store Profile"
+                        onClick={() => router.push(`/stores/edit/${store.id}`)}
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </button>
+                    )}
                     <div className="dropdown">
                       <button className="btn btn-link text-muted p-0 px-2" data-bs-toggle="dropdown" aria-expanded="false">
                         <i className="bi bi-three-dots-vertical fs-5"></i>

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import VendorForm from '@/modules/vendor/components/VendorForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
@@ -12,7 +12,8 @@ import { checkActionPermission } from '@/config/permissions';
 export default function EditVendorPage() {
   const params = useParams();
   const id = params.id as string;
-  const [isEdit, setIsEdit] = React.useState(false);
+  const searchParams = useSearchParams();
+  const [isEdit, setIsEdit] = React.useState(searchParams.get('edit') === 'true');
   const { user } = useSelector((state: RootState) => state.auth);
   
   const vendor = useSelector((state: RootState) => 

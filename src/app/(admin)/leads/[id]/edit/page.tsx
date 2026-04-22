@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -13,7 +13,8 @@ export default function EditLeadPage() {
   const [mounted, setMounted] = useState(false);
   const { id } = useParams();
   const router = useRouter();
-  const [isEdit, setIsEdit] = useState(false);
+  const searchParams = useSearchParams();
+  const [isEdit, setIsEdit] = useState(searchParams.get('edit') === 'true');
 
   const { user } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.leads);

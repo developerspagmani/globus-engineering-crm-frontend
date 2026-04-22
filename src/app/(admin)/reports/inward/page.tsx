@@ -19,6 +19,7 @@ const InwardReportPage = () => {
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, loading } = useSelector((state: RootState) => state.inward);
+  const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
 
   useEffect(() => {
     setMounted(true);
@@ -48,8 +49,6 @@ const InwardReportPage = () => {
       parties: acc.parties.add(item.customerName || item.vendorName || 'N/A')
     };
   }, { count: 0, completed: 0, pending: 0, parties: new Set<string>() });
-
-  const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
   
   const handlePrintRecord = (item: any) => {
     const p = window.open('', '', 'height=800,width=1000'); if (!p) return;

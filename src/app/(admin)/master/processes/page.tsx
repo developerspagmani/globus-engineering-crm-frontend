@@ -288,6 +288,15 @@ export default function ProcessDetailsPage() {
                                   <button onClick={() => handleEdit(p)} className="btn-action-view" title="View Profile">
                                     <i className="bi bi-eye-fill"></i>
                                   </button>
+                                  {mounted && checkActionPermission(user, 'mod_processes', 'edit') && (
+                                    <button 
+                                      onClick={() => { setEditingId(p.id); setFormData({ processName: p.processName }); setIsViewOnly(false); setView('add'); }} 
+                                      className="btn-action-edit" 
+                                      title="Edit Process"
+                                    >
+                                      <i className="bi bi-pencil-fill"></i>
+                                    </button>
+                                  )}
                                   <div className="dropdown">
                                     <button 
                                       className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
