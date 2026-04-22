@@ -852,7 +852,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                <div style={{ width: '85px', height: '85px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {(settings.logo || company?.logo) && settings.showLogo ? (
                      <img
-                        src={settings.logo || company?.logo}
+                        src={settings.logo && settings.logo.length > 10 ? settings.logo : company?.logo}
                         alt="Logo"
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                      />
@@ -878,7 +878,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                   {(settings.logoSecondary || company?.logoSecondary) && settings.showLogo ? (
                      <img
-                        src={settings.logoSecondary || company?.logoSecondary}
+                        src={settings.logoSecondary && settings.logoSecondary.length > 10 ? settings.logoSecondary : company?.logoSecondary}
                         alt="Secondary Logo"
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                      />

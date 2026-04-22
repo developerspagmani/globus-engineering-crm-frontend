@@ -45,11 +45,13 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   // Sync settings from company context if they aren't loaded in Redux yet (handles direct navigation/refresh)
   React.useEffect(() => {
     if (company && (!settings.companyName || settings.companyName === 'GLOBUS ENGINEERING MAIN')) {
+      const dbSettings = company.invoiceSettings || {};
       const initialSettings = {
         ...settings,
-        ...(company.invoiceSettings || {}),
-        logo: company.logo || settings.logo,
-        logoSecondary: company.logoSecondary || settings.logoSecondary
+        ...dbSettings,
+        // Prioritize actual database columns for logos if JSON settings are empty or invalid
+        logo: (dbSettings.logo && dbSettings.logo.length > 10) ? dbSettings.logo : (company.logo || settings.logo),
+        logoSecondary: (dbSettings.logoSecondary && dbSettings.logoSecondary.length > 10) ? dbSettings.logoSecondary : (company.logoSecondary || settings.logoSecondary)
       };
       dispatch(initializeInvoiceSettings(initialSettings));
     }
