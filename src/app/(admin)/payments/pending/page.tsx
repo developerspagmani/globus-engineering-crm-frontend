@@ -149,36 +149,36 @@ const PendingPaymentPage = () => {
         
         {/* Filter Bar */}
         <div className="card filter-card">
-          <div className="card-body">
-             <div className="d-flex flex-wrap align-items-center gap-2">
-                <div className="search-bar-container">
-                   <div className="input-group">
-                      <span className="search-icon">
-                         <i className="bi bi-search"></i>
-                      </span>
-                      <input 
-                         type="text" 
-                         className="form-control search-bar border-start-0" 
-                         placeholder="Search customer, invoice, or PO no..."
-                         value={searchTerm}
-                         onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                   </div>
+          <div className="card-body p-3">
+            <div className="filter-bar-row">
+              <div className="filter-item-search">
+                <div className="search-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    className="form-control search-bar" 
+                    placeholder="Search customer, invoice, or PO no..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-                <div className="col-md-6">
-                   <select 
-                      className="form-select border-0 bg-light px-3 fw-bold small text-muted"
-                      value={selectedCustomerId}
-                      onChange={(e) => setSelectedCustomerId(e.target.value)}
-                      style={{ height: '42px', borderRadius: '10px' }}
-                   >
-                      <option value="">-- ALL CUSTOMERS --</option>
-                      {customers.map(c => (
-                         <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                      ))}
-                   </select>
-                </div>
-             </div>
+              </div>
+              
+              <div className="filter-item-select">
+                <select 
+                  className="form-select search-bar"
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                >
+                  <option value="">-- ALL CUSTOMERS --</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.company || c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 

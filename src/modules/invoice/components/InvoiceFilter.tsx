@@ -17,6 +17,7 @@ const InvoiceFilter: React.FC = () => {
 
   return (
     <div className="card filter-card">
+      <div className="card-body">
         <div className="filter-bar-row">
           <div className="filter-item-search">
             <div className="search-group">
@@ -58,7 +59,7 @@ const InvoiceFilter: React.FC = () => {
               value={filters.fromDate}
               onChange={handleChange}
             />
-            <span className="text-muted small fw-bold mx-1">To</span>
+            <span className="text-muted small fw-bold mx-1">TO</span>
             <input 
               type="date" 
               className="text-muted" 
@@ -68,6 +69,7 @@ const InvoiceFilter: React.FC = () => {
             />
           </div>
         </div>
+      </div>
     </div>
   );
 };

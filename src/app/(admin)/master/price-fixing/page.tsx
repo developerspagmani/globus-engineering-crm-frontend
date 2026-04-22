@@ -361,19 +361,25 @@ export default function PriceFixingPage() {
             </div>
           ) : (
             <div className="animate-fade-in">
-              <div className="d-flex align-items-center mb-4">
-              <div className="search-group" style={{ maxWidth: '300px' }}>
-                <span className="input-group-text">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search pricing..."
-                  className="form-control search-bar"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <div className="card filter-card mb-4">
+                <div className="card-body p-3">
+                  <div className="filter-bar-row">
+                    <div className="filter-item-search">
+                      <div className="search-group">
+                        <span className="input-group-text">
+                          <i className="bi bi-search"></i>
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Search pricing..."
+                          className="form-control search-bar"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="card shadow-sm border-0 overflow-hidden">

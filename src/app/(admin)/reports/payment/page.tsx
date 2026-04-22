@@ -228,9 +228,10 @@ const PaymentReportPage = () => {
       </div>
 
       <div className="card shadow-sm border-0 mb-4 rounded-4 overflow-hidden">
+        <div className="card-body p-3">
           <div className="filter-bar-row">
-            <div className="filter-item-search">
-              <div className="search-group">
+            <div className="filter-item-search" style={{ maxWidth: '260px' }}>
+              <div className="search-group" style={{width:"260px"}}>
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
@@ -244,12 +245,12 @@ const PaymentReportPage = () => {
               </div>
             </div>
 
-            <div className="filter-item-select">
+            <div className="filter-item-select" style={{ minWidth: '220px' }}>
               <select 
-                className="form-select border-light-soft px-3 shadow-none fw-bold small text-muted text-capitalize"
+                className="form-select search-bar"
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
-                style={{ height: '42px', borderRadius: '10px' }}
+                style={{width:"340px"}}
               >
                 <option value="">-- All Customers --</option>
                 {customers.map(c => (
@@ -258,12 +259,13 @@ const PaymentReportPage = () => {
               </select>
             </div>
             
-            <div className="date-filter-group">
+            <div className="date-filter-group ms-auto">
               <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-              <span className="text-muted small fw-bold mx-1">To</span>
+              <span className="text-muted small fw-bold mx-1">TO</span>
               <input type="date" className="text-muted" value={toDate} onChange={(e) => setToDate(e.target.value)} />
             </div>
           </div>
+        </div>
       </div>
 
       <div className="card shadow-sm border-0 rounded-4 overflow-hidden">

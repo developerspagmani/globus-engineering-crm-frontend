@@ -149,8 +149,9 @@ const VoucherPage = () => {
         </div>
       </div>
 
-      {/* Filters Card */}
+      {/* Filters Card */}      
       <div className="card filter-card">
+        <div className="card-body p-3">
           <div className="filter-bar-row">
             <div className="filter-item-search">
               <div className="search-group">
@@ -188,7 +189,7 @@ const VoucherPage = () => {
                 value={filters.fromDate}
                 onChange={(e) => dispatch(setVoucherFilters({ fromDate: e.target.value }))}
               />
-              <span className="text-muted small fw-bold mx-1">To</span>
+              <span className="text-muted small fw-bold mx-1">TO</span>
               <input 
                 type="date" 
                 className="text-muted" 
@@ -197,6 +198,7 @@ const VoucherPage = () => {
               />
             </div>
           </div>
+        </div>
       </div>
 
       <div className="card border-0 shadow-sm">

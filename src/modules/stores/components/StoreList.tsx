@@ -85,6 +85,7 @@ const StoreList: React.FC = () => {
 
       {/* Filter Bar */}
       <div className="card filter-card">
+        <div className="card-body">
           <div className="filter-bar-row">
             <div className="filter-item-search">
               <div className="search-group">
@@ -112,6 +113,7 @@ const StoreList: React.FC = () => {
               </select>
             </div>
           </div>
+        </div>
       </div>
 
       {/* Data Table */}

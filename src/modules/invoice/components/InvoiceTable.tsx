@@ -111,10 +111,14 @@ const InvoiceTable: React.FC = () => {
   };
 
   const renderTabs = () => (
-    <div className="d-flex text-uppercase pt-3 mb-0 px-3 bg-white border-bottom align-items-center">
-      <div className="d-flex">
+    <div className="d-flex text-uppercase py-2 mb-0 px-3 bg-white border-bottom align-items-center">
+      <div className="d-flex gap-2">
         {['ADD_INVOICE', 'INVOICELIST', 'WOP_LIST', 'BOTH_LIST'].map(tab => (
-          <button key={tab} className={`btn shadow-none border-0 rounded-0 pb-3 px-3 fw-bold small ${activeTab === tab ? 'border-bottom border-danger text-danger' : 'text-muted'}`} style={activeTab === tab ? { borderBottom: '2px solid #ff4081' } : {}} onClick={() => handleTabChange(tab)}>
+          <button 
+            key={tab} 
+            className={`btn shadow-none border-0 rounded-3 py-2 px-3 fw-bold small transition-all ${activeTab === tab ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'text-muted'}`} 
+            onClick={() => handleTabChange(tab)}
+          >
             {tab === 'ADD_INVOICE' ? 'Invoice Selection' : tab === 'INVOICELIST' ? 'WP List' : tab === 'WOP_LIST' ? 'WOP List' : 'Both List'}
           </button>
         ))}

@@ -311,19 +311,21 @@ export default function ItemDetailsPage() {
           ) : (
             <div className="animate-fade-in">
               <div className="card filter-card mb-4">
-                <div className="filter-bar-row">
-                  <div className="filter-item-search">
-                    <div className="search-group">
-                      <span className="input-group-text">
-                        <i className="bi bi-search"></i>
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Search items..."
-                        className="form-control search-bar"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
+                <div className="card-body p-3">
+                  <div className="filter-bar-row">
+                    <div className="filter-item-search">
+                      <div className="search-group">
+                        <span className="input-group-text">
+                          <i className="bi bi-search"></i>
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Search items..."
+                          className="form-control search-bar"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

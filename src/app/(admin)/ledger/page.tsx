@@ -334,6 +334,7 @@ export default function LedgerPage() {
 
         {/* Filter Row */}
         <div className="card filter-card">
+          <div className="card-body p-3">
             <div className="filter-bar-row">
               <div className="filter-item-search">
                 <div className="search-group">
@@ -369,7 +370,7 @@ export default function LedgerPage() {
                   value={filters.dateFrom}
                   onChange={(e) => dispatch(setLedgerFilters({ dateFrom: e.target.value }))}
                 />
-                <span className="text-muted small fw-bold mx-1">To</span>
+                <span className="text-muted small fw-bold mx-1">TO</span>
                 <input 
                   type="date" 
                   className="text-muted"
@@ -378,6 +379,7 @@ export default function LedgerPage() {
                 />
               </div>
             </div>
+          </div>
         </div>
 
         {/* Dynamic Table from Ledger */}

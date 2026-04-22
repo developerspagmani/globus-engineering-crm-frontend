@@ -110,6 +110,7 @@ export default function InwardListPage() {
 
         {/* Filter Section - Aligned in one row */}
         <div className="card filter-card">
+          <div className="card-body">
             <div className="filter-bar-row">
               <div className="filter-item-search">
                 <div className="search-group">
@@ -140,7 +141,7 @@ export default function InwardListPage() {
                   value={filters.fromDate}
                   onChange={(e) => dispatch(setInwardFilters({ fromDate: e.target.value }))}
                 />
-                <span className="text-muted small fw-bold mx-1">To</span>
+                <span className="text-muted small fw-bold mx-1">TO</span>
                 <input 
                   type="date" 
                   className="text-muted" 
@@ -149,6 +150,7 @@ export default function InwardListPage() {
                 />
               </div>
             </div>
+          </div>
         </div>
 
         {/* Table Section */}

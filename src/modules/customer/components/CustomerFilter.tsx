@@ -73,7 +73,7 @@ const CustomerFilter: React.FC = () => {
               value={filters.fromDate}
               onChange={handleChange}
             />
-            <span className="text-muted small fw-bold mx-1">To</span>
+            <span className="text-muted small fw-bold mx-1">TO</span>
             <input 
               type="date" 
               className="text-muted" 
