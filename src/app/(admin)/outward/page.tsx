@@ -104,6 +104,7 @@ export default function OutwardListPage() {
 
         {/* Filter Section - Aligned in one row */}
         <div className="card filter-card">
+          <div className="card-body p-3">
             <div className="filter-bar-row">
               <div className="filter-item-search">
                 <div className="search-group">
@@ -144,6 +145,7 @@ export default function OutwardListPage() {
                 />
               </div>
             </div>
+          </div>
         </div>
 
         <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">

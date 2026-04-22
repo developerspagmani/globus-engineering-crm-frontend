@@ -151,49 +151,51 @@ const ChallanPage = () => {
       </div>
 
         <div className="card filter-card">
-          <div className="filter-bar-row">
-            <div className="filter-item-search">
-              <div className="search-group">
-                <span className="input-group-text">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  className="form-control search-bar"
-                  placeholder="Search by challan or party..."
-                  value={filters.search}
-                  onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
+          <div className="card-body p-3">
+            <div className="filter-bar-row">
+              <div className="filter-item-search">
+                <div className="search-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control search-bar"
+                    placeholder="Search by challan or party..."
+                    value={filters.search}
+                    onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div className="filter-item-select">
+                <select
+                  className="form-select search-bar"
+                  value={filters.type}
+                  onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
+                >
+                  <option value="all">All Types</option>
+                  <option value="delivery">Delivery</option>
+                  <option value="returnable">Returnable</option>
+                  <option value="job_work">Job Work</option>
+                </select>
+              </div>
+
+              <div className="date-filter-group">
+                <input 
+                  type="date" 
+                  className="text-muted" 
+                  value={filters.fromDate}
+                  onChange={(e) => dispatch(setChallanFilters({ fromDate: e.target.value }))}
+                />
+                <span className="text-muted small fw-bold mx-1">TO</span>
+                <input 
+                  type="date" 
+                  className="text-muted" 
+                  value={filters.toDate}
+                  onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
                 />
               </div>
-            </div>
-            
-            <div className="filter-item-select">
-              <select
-                className="form-select search-bar"
-                value={filters.type}
-                onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
-              >
-                <option value="all">All Types</option>
-                <option value="delivery">Delivery</option>
-                <option value="returnable">Returnable</option>
-                <option value="job_work">Job Work</option>
-              </select>
-            </div>
-
-            <div className="date-filter-group">
-              <input 
-                type="date" 
-                className="text-muted" 
-                value={filters.fromDate}
-                onChange={(e) => dispatch(setChallanFilters({ fromDate: e.target.value }))}
-              />
-              <span className="text-muted small fw-bold mx-1">To</span>
-              <input 
-                type="date" 
-                className="text-muted" 
-                value={filters.toDate}
-                onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
-              />
             </div>
           </div>
         </div>

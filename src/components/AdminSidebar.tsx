@@ -58,7 +58,11 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           {filteredItems.map((item) => {
             const hasChildren = item.children && item.children.length > 0;
             const isExpanded = expandedItems.includes(item.name);
-            const isActive = pathname === item.path || (hasChildren && item.children?.some(c => pathname === c.path));
+            
+            // Precise active check for parent
+            const isActive = pathname === item.path || 
+                           (pathname.startsWith(item.path + '/') && !filteredItems.some(other => other.path !== item.path && pathname.startsWith(other.path) && other.path.length > item.path.length)) ||
+                           (hasChildren && item.children?.some(c => pathname === c.path || pathname.startsWith(c.path + '/')));
 
             if (hasChildren) {
               return (
@@ -78,20 +82,31 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                   </button>
                   {isExpanded && !collapsed && (
                     <div className="ms-4 my-1 d-flex flex-column gap-1 border-start ps-2">
-                      {item.children?.map(child => (
-                        <Link
-                          key={child.path}
-                          href={child.path}
-                          className={`nav-link py-1 small rounded-2 ${pathname === child.path || pathname.startsWith(child.path + '/') ? 'active fw-bold' : 'text-muted'}`}
-                          style={{ 
-                            fontSize: '0.85rem',
-                            backgroundColor: (pathname === child.path || pathname.startsWith(child.path + '/')) ? 'var(--accent-soft)' : 'transparent',
-                            color: (pathname === child.path || pathname.startsWith(child.path + '/')) ? 'var(--accent-color)' : ''
-                          }}
-                        >
-                          {child.name}
-                        </Link>
-                      ))}
+                      {item.children?.map(child => {
+                        const isChildActive = pathname === child.path || (
+                          pathname.startsWith(child.path + '/') && 
+                          !item.children?.some(sibling => 
+                            sibling.path !== child.path && 
+                            pathname.startsWith(sibling.path) && 
+                            sibling.path.length > child.path.length
+                          )
+                        );
+                        
+                        return (
+                          <Link
+                            key={child.path}
+                            href={child.path}
+                            className={`nav-link py-1 small rounded-2 ${isChildActive ? 'active fw-bold' : 'text-muted'}`}
+                            style={{ 
+                              fontSize: '0.85rem',
+                              backgroundColor: isChildActive ? 'var(--accent-soft)' : 'transparent',
+                              color: isChildActive ? 'var(--accent-color)' : ''
+                            }}
+                          >
+                            {child.name}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

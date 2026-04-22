@@ -110,7 +110,7 @@ const InvoiceReportPage = () => {
             
             <div className="date-filter-group">
               <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-              <span className="text-muted small fw-bold mx-1">To</span>
+              <span className="text-muted small fw-bold mx-1">TO</span>
               <input type="date" className="text-muted" value={toDate} onChange={(e) => setToDate(e.target.value)} />
             </div>
           </div>
