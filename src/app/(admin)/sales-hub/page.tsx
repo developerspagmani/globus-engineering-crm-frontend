@@ -108,7 +108,7 @@ const SalesHubPage = () => {
           </h2>
           <p className="text-muted small mb-0">Track engagement funnels and convert industrial prospects into clients.</p>
         </div>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-3">
           <ExportExcel
             data={myDeals}
             fileName="Sales_Pipeline_Report"

@@ -47,7 +47,7 @@ export default function InvoiceHistoryPage() {
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Invoices</h2>
             <p className="text-muted small mb-0">Generate and manage industrial billing records • {filteredInvoices.length} total</p>
           </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             <ExportExcel 
               data={filteredInvoices} 
               fileName="Invoice_History" 

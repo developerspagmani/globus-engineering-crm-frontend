@@ -154,7 +154,7 @@ export default function ProcessDetailsPage() {
             </p>
           </div>
           
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             {view === 'list' && mounted && checkActionPermission(user, 'mod_processes', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ processName: '' }); }}
@@ -268,8 +268,8 @@ export default function ProcessDetailsPage() {
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light">
                         <tr>
-                          <th className="px-4 py-2 text-capitalize small fw-bold" style={{ width: '80px' }}>Sno</th>
-                          <th className="px-4 py-2 text-capitalize small fw-bold">Process Name</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '80px' }}>Sno</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold">Process Name</th>
                           <th className="px-4 py-3 text-capitalize small fw-bold text-end" style={{ width: '180px' }}>Actions</th>
                         </tr>
                       </thead>

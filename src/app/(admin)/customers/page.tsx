@@ -32,7 +32,7 @@ export default function CustomerListPage() {
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Customer Management</h2>
             <p className="text-muted small mb-0">Manage industrial clients and sales leads in one place.</p>
           </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             <ExportExcel
               data={customers}
               fileName="Customer_List"

@@ -31,7 +31,7 @@ export default function VendorListPage() {
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Vendor Management</h2>
             <p className="text-muted small mb-0">Manage industrial vendors and manufacturing partners.</p>
           </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             <ExportExcel 
               data={items} 
               fileName="Vendor_List" 

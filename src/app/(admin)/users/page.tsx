@@ -33,7 +33,7 @@ export default function CompanyUserListPage() {
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Company Workforce</h2>
             <p className="text-muted small mb-0">Manage roles, module access, and granular CRUD permissions for your team.</p>
           </div>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-3">
             <ExportExcel
               data={companyUsers}
               fileName="Workforce_List"

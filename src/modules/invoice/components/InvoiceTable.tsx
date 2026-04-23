@@ -131,14 +131,14 @@ const InvoiceTable: React.FC = () => {
       {renderTabs()}
       <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
         <table className="table align-middle mb-0 table-hover bg-white mb-0">
-          <thead className="table-light text-muted small">
+          <thead className="bg-light text-muted small">
             <tr className="border-bottom">
               <th className="fw-semibold px-4 py-3">Sno</th>
-              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'Customer' : 'Customer Name'}</th>
-              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'Dc No' : 'Invoice No'}</th>
-              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'}</th>
-              <th className="fw-semibold">{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
-              <th className="text-center fw-semibold pe-4">Action</th>
+              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Customer' : 'Customer Name'}</th>
+              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Dc No' : 'Invoice No'}</th>
+              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'}</th>
+              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
+              <th className="text-center fw-semibold px-4 py-3 pe-4">Action</th>
             </tr>
           </thead>
           <tbody>
