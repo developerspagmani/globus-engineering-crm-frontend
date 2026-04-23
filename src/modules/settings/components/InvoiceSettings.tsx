@@ -34,7 +34,7 @@ const InvoiceSettings: React.FC = () => {
       dispatch(initializeInvoiceSettings(initialSettings));
       setFormData(initialSettings);
     }
-  }, [company?.id]); // Re-run if company changes
+  }, [company]); // Re-run if company object changes (including after background refresh)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

@@ -102,8 +102,8 @@ const authSlice = createSlice({
         ...rawCompany,
         id: rawCompany.id || (rawCompany as any).id,
         activeModules: rawCompany.activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || [],
-        logo: rawCompany.logo || (rawCompany as any).logo,
-        logoSecondary: rawCompany.logoSecondary || (rawCompany as any).logo_secondary,
+        logo: rawCompany.logo ?? (rawCompany as any).logo,
+        logoSecondary: rawCompany.logoSecondary ?? (rawCompany as any).logo_secondary,
         invoiceSettings: rawCompany.invoiceSettings || (typeof (rawCompany as any).invoice_settings === 'string' ? JSON.parse((rawCompany as any).invoice_settings) : (rawCompany as any).invoice_settings) || null
       } as any : null;
 
@@ -147,8 +147,8 @@ const authSlice = createSlice({
         ...rawCompany,
         id: rawCompany.id || (rawCompany as any).id,
         activeModules: (rawCompany as any).activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || [],
-        logo: rawCompany.logo || (rawCompany as any).logo,
-        logoSecondary: (rawCompany as any).logoSecondary || (rawCompany as any).logo_secondary,
+        logo: rawCompany.logo ?? (rawCompany as any).logo,
+        logoSecondary: (rawCompany as any).logoSecondary ?? (rawCompany as any).logo_secondary,
         invoiceSettings: (rawCompany as any).invoiceSettings || (typeof (rawCompany as any).invoice_settings === 'string' ? JSON.parse((rawCompany as any).invoice_settings) : (rawCompany as any).invoice_settings) || null
       } as any : null;
 
@@ -233,8 +233,8 @@ const authSlice = createSlice({
           ...rawCompany,
           id: rawCompany.id || (rawCompany as any).id,
           activeModules: (rawCompany as any).activeModules || (typeof (rawCompany as any).active_modules === 'string' ? JSON.parse((rawCompany as any).active_modules) : (rawCompany as any).active_modules) || [],
-          logo: rawCompany.logo || (rawCompany as any).logo,
-          logoSecondary: (rawCompany as any).logoSecondary || (rawCompany as any).logo_secondary,
+          logo: rawCompany.logo ?? (rawCompany as any).logo,
+          logoSecondary: (rawCompany as any).logoSecondary ?? (rawCompany as any).logo_secondary,
           invoiceSettings: (rawCompany as any).invoiceSettings || (typeof (rawCompany as any).invoice_settings === 'string' ? JSON.parse((rawCompany as any).invoice_settings) : (rawCompany as any).invoice_settings) || null
         } as any : null;
 

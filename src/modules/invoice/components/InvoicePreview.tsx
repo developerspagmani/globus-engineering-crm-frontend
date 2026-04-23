@@ -55,7 +55,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
       };
       dispatch(initializeInvoiceSettings(initialSettings));
     }
-  }, [company?.id, dispatch, settings.companyName]);
+  }, [company, dispatch, settings.companyName]);
 
   const accentColor = settings.accentColor || '#0d6efd';
 
