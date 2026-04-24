@@ -116,7 +116,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
   const handleItemChange = (index: number, field: string, value: any) => {
     const newItems = [...formData.items];
-    (newItems[index] as any)[field] = value;
+    newItems[index] = { ...newItems[index], [field]: value };
     setFormData(prev => ({ ...prev, items: newItems }));
   };
 

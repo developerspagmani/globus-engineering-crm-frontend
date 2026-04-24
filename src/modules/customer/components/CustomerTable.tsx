@@ -105,6 +105,7 @@ const CustomerTable: React.FC = () => {
                 <th className="py-3 border-0 small fw-bold text-muted">Email</th>
                 <th className="py-3 border-0 small fw-bold text-muted">Phone Number</th>
                 <th className="py-3 border-0 small fw-bold text-muted">GST Identification</th>
+                <th className="py-3 border-0 small fw-bold text-muted">Created On</th>
                 <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
               </tr>
             </thead>
@@ -120,6 +121,7 @@ const CustomerTable: React.FC = () => {
                       <td className="text-muted small">{customer.email || customer.emailId1 || '-'}</td>
                       <td className="text-muted small">{customer.phone || customer.phoneNumber1 || '-'}</td>
                       <td><span className="badge bg-light text-dark border-0 shadow-sm fw-semibold p-2">{customer.gst || '-'}</span></td>
+                      <td className="text-muted small">{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center gap-1">
                           <Link href={`/customers/${customer.id}/edit`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>

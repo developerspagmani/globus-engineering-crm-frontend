@@ -102,7 +102,13 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Auto-lowercase email fields
+    if (name.toLowerCase().includes('email')) {
+      setFormData(prev => ({ ...prev, [name]: value.toLowerCase() }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -228,6 +234,12 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
+              {(mode === 'edit' || mode === 'view') && initialData?.createdAt && (
+                <div className="col-md-6 mb-3">
+                  <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Created On</label>
+                  <input type="text" className="form-control" value={new Date(initialData.createdAt).toLocaleString()} disabled />
+                </div>
+              )}
             </div>
   
             <h5 className="mb-4 text-primary border-bottom pb-2">Address Details</h5>
