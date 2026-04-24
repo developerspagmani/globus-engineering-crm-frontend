@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { addEmployee, updateEmployee } from '@/redux/features/employeeSlice';
 import { Employee } from '@/types/modules';
-import StatusModal from '@/components/StatusModal';
+import FullPageStatus from '@/components/FullPageStatus';
+
+
 
 interface EmployeeFormProps {
   initialData?: Employee;
@@ -38,6 +40,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
     title: '',
     message: ''
   });
+
+
 
   useEffect(() => {
     if (initialData) {
@@ -78,8 +82,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
           setModal({
             isOpen: true,
             type: 'success',
-            title: 'Employee Registered!',
-            message: `${formData.name} has been added to the system.`
+            title: 'Success!',
+            message: "Employee profile registered successfully."
           });
         }
       } else {
@@ -88,11 +92,13 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
           setModal({
             isOpen: true,
             type: 'success',
-            title: 'Profile Updated',
-            message: 'Employee details have been successfully modified.'
+            title: 'Success!',
+            message: "Employee profile updated successfully."
           });
         }
       }
+
+
     } catch (err) {
       setModal({
         isOpen: true,
@@ -105,7 +111,10 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
     }
   };
 
+
+
   return (
+
     <div className="card shadow-sm border-0 animate-fade-in">
       <div className="card-body p-4 p-md-5">
         <form onSubmit={handleSubmit}>
@@ -251,16 +260,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
         </form>
       </div>
 
-      <StatusModal 
-        isOpen={modal.isOpen}
-        onClose={() => {
-          setModal(prev => ({ ...prev, isOpen: false }));
-          if (modal.type === 'success') router.push('/employees');
-        }}
-        type={modal.type}
-        title={modal.title}
-        message={modal.message}
-      />
+      {modal.isOpen && (
+        <FullPageStatus
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/employees');
+          }}
+        />
+      )}
+
     </div>
   );
 };

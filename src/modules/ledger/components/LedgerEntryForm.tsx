@@ -9,7 +9,8 @@ import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
-import StatusModal from '@/components/StatusModal';
+import FullPageStatus from '@/components/FullPageStatus';
+
 
 const LedgerEntryForm: React.FC = () => {
   const dispatch = useDispatch();
@@ -276,19 +277,21 @@ const LedgerEntryForm: React.FC = () => {
         </div>
       </form>
 
-      <StatusModal
-        isOpen={modal.isOpen}
-        onClose={() => {
-          setModal((p) => ({ ...p, isOpen: false }));
-          if (modal.type === 'success') {
-            (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany?.id }));
-            router.push('/ledger');
-          }
-        }}
-        type={modal.type}
-        title={modal.title}
-        message={modal.message}
-      />
+      {modal.isOpen && (
+        <FullPageStatus
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal((p) => ({ ...p, isOpen: false }));
+            if (modal.type === 'success') {
+              (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany?.id }));
+              router.push('/ledger');
+            }
+          }}
+        />
+      )}
+
 
       <style jsx>{`
         .lef-card {

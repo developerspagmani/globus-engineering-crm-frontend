@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { createVendor, updateVendor } from '@/redux/features/vendorSlice';
 import { fetchCompanies } from '@/redux/features/companySlice';
 import { Vendor } from '@/types/modules';
+import FullPageStatus from '@/components/FullPageStatus';
+
 
 interface VendorFormProps {
   initialData?: Vendor;
@@ -52,6 +54,14 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
     tin: '',
     cst: ''
   });
+
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+  }>({ isOpen: false, type: 'success', title: '', message: '' });
+
 
   useEffect(() => {
     if (user?.role === 'super_admin') {
@@ -112,6 +122,8 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -126,14 +138,26 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
       if (mode === 'create') {
         const resultAction = await (dispatch as any)(createVendor(finalData as any));
         if (createVendor.fulfilled.match(resultAction)) {
-          router.push('/vendors');
+          setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Success!',
+            message: "Vendor profile registered successfully."
+          });
         }
       } else if (mode === 'edit' && initialData) {
         const resultAction = await (dispatch as any)(updateVendor({ ...initialData, ...finalData } as any));
         if (updateVendor.fulfilled.match(resultAction)) {
-          router.push('/vendors');
+          setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Success!',
+            message: "Vendor profile updated successfully."
+          });
         }
       }
+
+
     } catch (err) {
       // console.error('Failed to save vendor:', err);
       alert('Failed to save vendor');
@@ -199,17 +223,13 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
   );
 
   return (
+
     <div className="card border-0 shadow-sm">
       <div className="card-body p-4">
         <form onSubmit={handleSubmit}>
           
           <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
             <h5 className="text-primary mb-0">Basic Details</h5>
-            {/* {mode === 'create' && (
-              <button type="button" onClick={fillMockData} className="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 rounded-pill px-3">
-                <i className="bi bi-magic"></i> Auto-Fill Test Data
-              </button>
-            )} */}
           </div>
           <div className="row g-3 mb-4">
             {user?.role === 'super_admin' && (
@@ -329,6 +349,17 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
                 Cancel
               </button>
             </div>
+          )}
+          {modal.isOpen && (
+            <FullPageStatus
+              type={modal.type}
+              title={modal.title}
+              message={modal.message}
+              onClose={() => {
+                setModal(prev => ({ ...prev, isOpen: false }));
+                if (modal.type === 'success') router.push('/vendors');
+              }}
+            />
           )}
         </form>
       </div>

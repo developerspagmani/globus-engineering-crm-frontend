@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { createCustomer, updateCustomer } from '@/redux/features/customerSlice';
 import { Customer } from '@/types/modules';
+import FullPageStatus from '@/components/FullPageStatus';
+
 
 interface CustomerFormProps {
   initialData?: Customer;
@@ -113,6 +115,15 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+  }>({ isOpen: false, type: 'success', title: '', message: '' });
+
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -129,64 +140,38 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
       }
 
       if (mode === 'create') {
-        const resultAction = await (dispatch as any)(createCustomer(finalData as any));
+        const resultAction = await (dispatch as any)(createCustomer(formData));
         if (createCustomer.fulfilled.match(resultAction)) {
-          router.push('/customers');
+          setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Success!',
+            message: "Customer profile registered successfully."
+          });
         }
-      } else if (mode === 'edit' && initialData) {
-        const resultAction = await (dispatch as any)(updateCustomer({ ...initialData, ...finalData } as any));
+      } else {
+        const resultAction = await (dispatch as any)(updateCustomer({ ...initialData!, ...formData }));
         if (updateCustomer.fulfilled.match(resultAction)) {
-          router.push('/customers');
+          setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Success!',
+            message: "Customer profile updated successfully."
+          });
         }
       }
+
     } catch (err) {
       console.error('Failed to save customer:', err);
-      alert('Failed to save customer');
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to save customer'
+      });
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const fillMockData = () => {
-    setFormData({
-      customerType: 'Distributor',
-      name: 'Test Tech Corp',
-      company: 'Testing Innovations Ltd',
-      email: 'testing@innovations.com',
-      phone: '+91 9876543210',
-      industry: 'Electronics',
-      status: 'active',
-      agentId: user?.id || '',
-      street1: 'No 45, Developer Lane',
-      street2: 'Phase 3, Sector 5',
-      city: 'Bangalore',
-      area: 'Whitefield',
-      state: 'KARNATAKA',
-      stateCode: '29',
-      pinCode: '560066',
-      contactPerson1: 'Rahul Sharma',
-      designation1: 'Managing Director',
-      emailId1: 'rahul@innovations.com',
-      phoneNumber1: '+91 9988776655',
-      contactPerson2: 'Priya Patel',
-      designation2: 'Purchasing Head',
-      emailId2: 'priya@innovations.com',
-      phoneNumber2: '+91 9988776644',
-      contactPerson3: 'Arun Kumar',
-      designation3: 'Technical Lead',
-      emailId3: 'arun@innovations.com',
-      phoneNumber3: '+91 9988776633',
-      landline: '080-23456789',
-      fax: '080-23456780',
-      gst: '29ABCDE1234F2Z5',
-      tin: 'TIN987654321',
-      cst: 'CST123456789',
-      tc: 'TC-500',
-      vmc: 'VMC-800',
-      hmc: 'HMC-1200',
-      paymentTerms: 'Net 45 Days',
-      company_id: user?.company_id || ''
-    });
   };
 
   const renderInput = (label: string, name: keyof typeof formData, type = 'text', required = false) => (
@@ -208,6 +193,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   );
 
    return (
+
     <>
       <div className="card border-0 shadow-sm">
         <div className="card-body p-4">
@@ -327,6 +313,17 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
           </form>
         </div>
       </div>
+      {modal.isOpen && (
+        <FullPageStatus
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/customers');
+          }}
+        />
+      )}
       <style jsx>{`
         .form-control {
           font-size: 0.85rem !important;

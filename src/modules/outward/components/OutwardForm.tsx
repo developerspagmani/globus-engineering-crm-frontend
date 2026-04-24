@@ -11,6 +11,8 @@ import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchProcesses } from '@/redux/features/masterSlice';
 import { OutwardEntry } from '@/types/modules';
 import StatusModal from '@/components/StatusModal';
+import FullPageStatus from '@/components/FullPageStatus';
+
 
 interface OutwardFormProps {
   initialData?: OutwardEntry;
@@ -38,6 +40,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
     title: '',
     message: ''
   });
+
 
   const [formData, setFormData] = useState<Omit<OutwardEntry, 'id' | 'createdAt'>>({
     outwardNo: initialData?.outwardNo || `CH-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -188,38 +191,35 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
     e.preventDefault();
     try {
       setSaving(true);
+      const finalData = {
+        ...formData,
+        inward_id: formData.inwardId,
+        inward_no: formData.inwardNo,
+        invoice_reference: formData.invoiceReference,
+        challan_no: formData.challanNo,
+        vehicle_no: formData.vehicleNo,
+        driver_name: formData.driverName,
+        notes: formData.notes,
+        process_name: formData.processName
+      };
+
       if (mode === 'create') {
-        const payload = {
-          ...formData,
-          inward_id: formData.inwardId,
-          inward_no: formData.inwardNo,
-          invoice_reference: formData.invoiceReference,
-          challan_no: formData.challanNo,
-          vehicle_no: formData.vehicleNo,
-          driver_name: formData.driverName,
-          notes: formData.notes,
-          process_name: formData.processName
-        };
-        await (dispatch as any)(createOutward(payload)).unwrap();
+        await (dispatch as any)(createOutward(finalData)).unwrap();
         setModal({
           isOpen: true,
           type: 'success',
           title: 'Success!',
-          message: 'Dispatch recorded successfully.'
+          message: "Dispatch recorded successfully."
         });
       } else {
-        await (dispatch as any)(updateOutward({ ...initialData!, ...formData })).unwrap();
+        await (dispatch as any)(updateOutward({ ...initialData!, ...finalData })).unwrap();
         setModal({
           isOpen: true,
           type: 'success',
           title: 'Success!',
-          message: 'Dispatch updated successfully.'
+          message: "Dispatch updated successfully."
         });
       }
-      
-      setTimeout(() => {
-        router.push('/outward');
-      }, 1500);
     } catch (error) {
       setModal({
         isOpen: true,
@@ -306,7 +306,6 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                                 <option key={i.id} value={i.id}>{i.inwardNo} - Bal: {i.totalRemaining ?? 'New'} ({i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})</option>
                              ))}
                           </select>
-                           {/* <small className="text-muted mt-1 d-block ms-2">Linking a batch auto-fills available quantities.</small> */}
                        </div>
                     </div>
                  </div>
@@ -341,7 +340,6 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                         <label className="col-4 text-muted small fw-bold text-danger">JOB VALUE (INR)</label>
                         <div className="col-8">
                             <input type="number" className="form-control border-danger-subtle bg-danger-light rounded-pill px-3 py-2 fw-bold text-danger" name="amount" value={(formData as any).amount || ''} onChange={handleChange} placeholder="Value for Ledger" disabled={mode === 'view'} />
-                             {/* <small className="text-muted d-block mt-1 ms-2">This amount will be recorded in the Vendor's Ledger.</small> */}
                         </div>
                       </div>
                     )}
@@ -436,13 +434,17 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
          .x-small { font-size: 0.70rem; }
       `}</style>
 
-      <StatusModal 
-        isOpen={modal.isOpen}
-        onClose={() => setModal({ ...modal, isOpen: false })}
-        type={modal.type}
-        title={modal.title}
-        message={modal.message}
-      />
+      {modal.isOpen && (
+        <FullPageStatus
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/outward');
+          }}
+        />
+      )}
     </div>
   );
 };

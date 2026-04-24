@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { Lead } from '@/types/modules';
 import { addLead, updateLead } from '@/redux/features/leadSlice';
+import FullPageStatus from '@/components/FullPageStatus';
+
 
 interface LeadFormProps {
   initialData?: Lead;
@@ -30,6 +32,14 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
     notes: '',
     assignedArea: '',
   });
+
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+  }>({ isOpen: false, type: 'success', title: '', message: '' });
+
 
   useEffect(() => {
     if (initialData) {
@@ -65,14 +75,31 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
         assigned_area: formData.assignedArea,
       };
       if (mode === 'create') {
-        await (dispatch as any)(addLead(payload));
+        await (dispatch as any)(addLead(payload)).unwrap();
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Success!',
+          message: "Lead incorporated successfully."
+        });
       } else if (mode === 'edit' && initialData) {
-        await (dispatch as any)(updateLead({ ...initialData, ...payload }));
+        await (dispatch as any)(updateLead({ ...initialData, ...payload })).unwrap();
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Success!',
+          message: "Prospect updated successfully."
+        });
       }
-      router.push('/leads');
-    } catch (err) {
-      // Handle error
+    } catch (err: any) {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: err.message || "Failed to save lead."
+      });
     } finally {
+
       setIsSubmitting(false);
     }
   };
@@ -220,7 +247,19 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           </div>
         </form>
       </div>
+      {modal.isOpen && (
+        <FullPageStatus
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/leads');
+          }}
+        />
+      )}
     </div>
+
   );
 };
 

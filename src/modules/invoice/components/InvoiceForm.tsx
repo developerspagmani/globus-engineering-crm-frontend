@@ -9,8 +9,9 @@ import { fetchItems, fetchProcesses, fetchPriceFixings } from '@/redux/features/
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { Invoice } from '@/types/modules';
-import StatusModal from '@/components/StatusModal';
 import BackButton from '@/components/BackButton';
+import FullPageStatus from '@/components/FullPageStatus';
+
 
 interface InvoiceFormProps {
    initialData?: Invoice;
@@ -82,6 +83,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    });
 
    const [loading, setLoading] = useState(false);
+
+
 
    useEffect(() => {
       if (company?.id) {
@@ -371,15 +374,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                isOpen: true,
                type: 'success',
                title: 'Success!',
-               message: 'Invoice created successfully.'
+               message: "Invoice created successfully."
             });
          } else {
             await (dispatch as any)(updateInvoice({ ...formData, id: initialData?.id || '' })).unwrap();
+            setModal({
+               isOpen: true,
+               type: 'success',
+               title: 'Success!',
+               message: "Invoice updated successfully."
+            });
          }
-         setTimeout(() => {
-            const tab = searchParams.get('tab');
-            router.push(`/invoices?tab=${tab || 'all'}`);
-         }, 1500);
+
       } catch (error: any) {
          setModal({
             isOpen: true,
@@ -392,7 +398,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
    };
 
+
+
    return (
+
       <>
          <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div className="card-body p-4 p-lg-5">
@@ -963,20 +972,22 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       </div>
    </div>
 
-   <StatusModal
-      isOpen={modal.isOpen}
-      onClose={() => {
-         setModal(prev => ({ ...prev, isOpen: false }));
-         if (modal.type === 'success') {
-            const tab = searchParams.get('tab');
-            router.push(`/invoices${tab ? '?tab=' + tab : ''}`);
-         }
-      }}
-      type={modal.type}
-      title={modal.title}
-      message={modal.message}
-   />
+   {modal.isOpen && (
+      <FullPageStatus
+         type={modal.type}
+         title={modal.title}
+         message={modal.message}
+         onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') {
+               const tab = searchParams.get('tab');
+               router.push(`/invoices?tab=${tab || 'all'}`);
+            }
+         }}
+      />
+   )}
       </>
+
    );
 };
 

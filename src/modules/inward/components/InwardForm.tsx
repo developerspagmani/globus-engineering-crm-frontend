@@ -9,7 +9,9 @@ import { addLedgerEntry } from '@/redux/features/ledgerSlice';
 import { fetchItems, fetchProcesses } from '@/redux/features/masterSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { InwardEntry } from '@/types/modules';
-import StatusModal from '@/components/StatusModal';
+import FullPageStatus from '@/components/FullPageStatus';
+
+
 
 interface InwardFormProps {
   initialData?: InwardEntry;
@@ -48,8 +50,10 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
     type: 'success',
     title: '',
     message: '',
-    confirmLabel: 'Success'
+    confirmLabel: 'OK'
   });
+
+
 
   useEffect(() => {
     if (activeCompany?.id) {
@@ -151,19 +155,20 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
           isOpen: true,
           type: 'success',
           title: 'Success!',
-          message: 'Inward entry has been created successfully.',
-          confirmLabel: 'OK'
+          message: "Inward entry created successfully."
         });
       } else {
         await (dispatch as any)(updateInward({ ...initialData!, ...finalData })).unwrap();
         setModal({
           isOpen: true,
           type: 'success',
-          title: 'Updated!',
-          message: 'Inward entry has been updated successfully.'
+          title: 'Success!',
+          message: "Inward entry updated successfully."
         });
       }
+
     } catch (err: any) {
+
       setModal({
         isOpen: true,
         type: 'error',
@@ -190,6 +195,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
   };
 
    return (
+
     <>
       <div className="card border-0 shadow-sm bg-white pb-5">
         <div className="card-body p-4 p-md-5">
@@ -321,16 +327,18 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
           </form>
         </div>
   
-        <StatusModal
-          isOpen={modal.isOpen}
-          onClose={() => {
-            setModal(prev => ({ ...prev, isOpen: false }));
-            if (modal.type === 'success') router.push('/inward');
-          }}
-          type={modal.type}
-          title={modal.title}
-          message={modal.message}
-        />
+        {modal.isOpen && (
+          <FullPageStatus
+            type={modal.type}
+            title={modal.title}
+            message={modal.message}
+            onClose={() => {
+              setModal(prev => ({ ...prev, isOpen: false }));
+              if (modal.type === 'success') router.push('/inward');
+            }}
+          />
+        )}
+
       </div>
       <style jsx>{`
           

@@ -8,7 +8,9 @@ import { createVoucher, updateVoucher } from '@/redux/features/voucherSlice';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { Voucher } from '@/types/modules';
-import StatusModal from '@/components/StatusModal';
+import FullPageStatus from '@/components/FullPageStatus';
+
+
 
 interface VoucherFormProps {
   initialData?: Voucher;
@@ -39,6 +41,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     title: '',
     message: ''
   });
+
+
 
   useEffect(() => {
     if (activeCompany?.id) {
@@ -138,18 +142,20 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         setModal({
           isOpen: true,
           type: 'success',
-          title: 'Voucher Added!',
-          message: 'The payment has been successfully recorded.'
+          title: 'Success!',
+          message: "Voucher recorded successfully."
         });
       } else {
         await (dispatch as any)(updateVoucher({ ...initialData!, ...voucherPayload } as any)).unwrap();
         setModal({
           isOpen: true,
           type: 'success',
-          title: 'Voucher Updated',
-          message: 'The payment details have been saved.'
+          title: 'Success!',
+          message: "Voucher updated successfully."
         });
       }
+
+
     } catch (err: any) {
       setModal({
         isOpen: true,
@@ -173,6 +179,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   });
 
   return (
+
     <>
       <div className="card shadow-sm border-0 bg-white p-4">
         {/* form content ... */}
@@ -301,27 +308,29 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           </div>
         </form>
   
-        <StatusModal
-          isOpen={modal.isOpen}
-          onClose={() => {
-            setModal(prev => ({ ...prev, isOpen: false }));
-            if (modal.type === 'success') {
-              // Reset local state if successful
-              setFormData({
-                date: new Date().toISOString().split('T')[0],
-                chequeNo: '',
-                customerId: '',
-                customerName: '',
-                selectedInvoices: [],
-                totalAmount: 0
-              });
-              router.push(redirectPath);
-            }
-          }}
-          type={modal.type}
-          title={modal.title}
-          message={modal.message}
-        />
+        {modal.isOpen && (
+          <FullPageStatus
+            type={modal.type}
+            title={modal.title}
+            message={modal.message}
+            onClose={() => {
+              setModal(prev => ({ ...prev, isOpen: false }));
+              if (modal.type === 'success') {
+                // Reset local state if successful
+                setFormData({
+                  date: new Date().toISOString().split('T')[0],
+                  chequeNo: '',
+                  customerId: '',
+                  customerName: '',
+                  selectedInvoices: [],
+                  totalAmount: 0
+                });
+                router.push(redirectPath);
+              }
+            }}
+          />
+        )}
+
       </div>
       <style jsx>{`
         .form-control {

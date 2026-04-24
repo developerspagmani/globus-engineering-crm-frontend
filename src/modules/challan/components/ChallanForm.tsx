@@ -8,7 +8,8 @@ import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import { createChallan, updateChallan } from '@/redux/features/challanSlice';
 import { Challan } from '@/types/modules';
-import StatusModal from '@/components/StatusModal';
+import FullPageStatus from '@/components/FullPageStatus';
+
 
 interface ChallanFormProps {
   initialData?: Challan;
@@ -378,16 +379,18 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
         </form>
       </div>
 
-      <StatusModal 
-        isOpen={modal.isOpen}
-        onClose={() => {
-          setModal(prev => ({ ...prev, isOpen: false }));
-          if (modal.type === 'success') router.push('/challan');
-        }}
-        type={modal.type}
-        title={modal.title}
-        message={modal.message}
-      />
+      {modal.isOpen && (
+        <FullPageStatus
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/challan');
+          }}
+        />
+      )}
+
     </div>
   );
 };
