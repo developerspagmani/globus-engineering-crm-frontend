@@ -193,6 +193,10 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
       setSaving(true);
       const finalData = {
         ...formData,
+        outward_no: formData.outwardNo,
+        party_type: formData.partyType,
+        customer_id: formData.customerId,
+        vendor_id: formData.vendorId,
         inward_id: formData.inwardId,
         inward_no: formData.inwardNo,
         invoice_reference: formData.invoiceReference,
