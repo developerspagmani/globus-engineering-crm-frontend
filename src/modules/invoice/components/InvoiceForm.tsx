@@ -625,7 +625,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                <div className="row g-4">
                   <div className="col-md-6">
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Customer</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Customer <span className="text-danger">*</span></label>
                         <div className="col-sm-9">
                            <input
                               type="text"
@@ -634,6 +634,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               value={formData.customerName || ''}
                               readOnly
                               placeholder="Select customer to view name..."
+                              required
                            />
                         </div>
                      </div>
@@ -716,36 +717,36 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         </>
                      )}
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po No</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po No <span className="text-danger">*</span></label>
                         <div className="col-sm-9">
-                           <input type="text" className="form-control shadow-none px-2" name="poNo" value={formData.poNo} onChange={handleInputChange} placeholder="Po No" style={{ height: '42px' }} />
+                           <input type="text" className="form-control shadow-none px-2" name="poNo" value={formData.poNo} onChange={handleInputChange} placeholder="Po No" style={{ height: '42px' }} required />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc No</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc No <span className="text-danger">*</span></label>
                         <div className="col-sm-9">
-                           <input type="text" className="form-control shadow-none px-2" name="dcNo" value={formData.dcNo} onChange={handleInputChange} placeholder="Dc No" style={{ height: '42px' }} />
+                           <input type="text" className="form-control shadow-none px-2" name="dcNo" value={formData.dcNo} onChange={handleInputChange} placeholder="Dc No" style={{ height: '42px' }} required />
                         </div>
                      </div>
                   </div>
 
                   <div className="col-md-6">
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Date</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Date <span className="text-danger">*</span></label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="date" value={formData.date} onChange={handleInputChange} style={{ height: '42px' }} />
+                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="date" value={formData.date} onChange={handleInputChange} style={{ height: '42px' }} required />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po Date</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Po Date <span className="text-danger">*</span></label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="poDate" value={formData.poDate} onChange={handleInputChange} style={{ height: '42px' }} />
+                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="poDate" value={formData.poDate} onChange={handleInputChange} style={{ height: '42px' }} required />
                         </div>
                      </div>
                      <div className="row mb-3 align-items-center">
-                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc Date</label>
+                        <label className="col-sm-3 text-muted small text-uppercase fw-bold p-0">Dc Date <span className="text-danger">*</span></label>
                         <div className="col-sm-9">
-                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="dcDate" value={formData.dcDate} onChange={handleInputChange} style={{ height: '42px' }} />
+                           <input type="date" className="form-control shadow-none px-2 bg-transparent" name="dcDate" value={formData.dcDate} onChange={handleInputChange} style={{ height: '42px' }} required />
                         </div>
                      </div>
                   </div>
@@ -756,13 +757,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                <table className="table table-borderless align-middle">
                   <thead>
                      <tr className="text-muted border-bottom small text-uppercase">
-                        <th className="py-3">Item</th>
-                        <th className="py-3">Process</th>
-                        <th className="py-3" style={{ width: '80px' }}>Qty</th>
+                        <th className="py-3">Item <span className="text-danger">*</span></th>
+                        <th className="py-3">Process <span className="text-danger">*</span></th>
+                        <th className="py-3" style={{ width: '80px' }}>Qty <span className="text-danger">*</span></th>
                         {formData.billType === 'Both' && <th className="py-3" style={{ width: '100px' }}>Wop-Qty</th>}
                         {formData.billType !== 'Without Process' && (
                            <>
-                              <th className="py-3" style={{ width: '120px' }}>Price</th>
+                              <th className="py-3" style={{ width: '120px' }}>Price <span className="text-danger">*</span></th>
                               <th className="py-3 text-end" style={{ width: '150px' }}>Amount</th>
                            </>
                         )}

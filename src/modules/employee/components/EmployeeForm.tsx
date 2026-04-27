@@ -120,7 +120,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
         <form onSubmit={handleSubmit}>
           <div className="row g-4 mb-4">
             <div className="col-md-4">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Employee ID</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Employee ID <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -132,7 +133,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-8">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Full Name</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Full Name <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -147,7 +149,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
 
           <div className="row g-4 mb-4">
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Email Address</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Email Address <span className="text-danger">*</span></label>
+
               <input 
                 type="email" 
                 className="form-control" 
@@ -159,7 +162,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Phone Number</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Phone Number <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -185,7 +189,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Designation</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Designation <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -197,7 +202,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Monthly Salary</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Monthly Salary <span className="text-danger">*</span></label>
+
               <div className="input-group">
                 <span className="input-group-text bg-light fw-bold">₹</span>
                 <input 
@@ -215,7 +221,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
 
           <div className="row g-4 mb-4">
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Joining Date</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Joining Date <span className="text-danger">*</span></label>
+
               <input 
                 type="date" 
                 className="form-control" 

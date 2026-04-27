@@ -245,8 +245,9 @@ export default function PriceFixingPage() {
               <form onSubmit={handleSubmit}>
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Customer</label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Customer <span className="text-danger">*</span></label>
                   </div>
+
                   <div className="col-md-9">
                     <select
                       required
@@ -264,8 +265,9 @@ export default function PriceFixingPage() {
 
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item</label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item <span className="text-danger">*</span></label>
                   </div>
+
                   <div className="col-md-9">
                     <select
                       required
@@ -283,8 +285,9 @@ export default function PriceFixingPage() {
 
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Process</label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Process <span className="text-danger">*</span></label>
                   </div>
+
                   <div className="col-md-9">
                     <select
                       required
@@ -302,8 +305,9 @@ export default function PriceFixingPage() {
 
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Price</label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Price <span className="text-danger">*</span></label>
                   </div>
+
                   <div className="col-md-9">
                     <input
                       type="number"

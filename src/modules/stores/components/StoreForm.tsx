@@ -76,7 +76,8 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
         <form onSubmit={handleSubmit}>
           <div className="row g-4 mb-4">
             <div className="col-md-6">
-              <label className="form-label small fw-bold text-uppercase text-muted">Store / Shop Name</label>
+              <label className="form-label small fw-bold text-uppercase text-muted">Store / Shop Name <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -89,7 +90,8 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label small fw-bold text-uppercase text-muted">Owner Name</label>
+              <label className="form-label small fw-bold text-uppercase text-muted">Owner Name <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -97,14 +99,17 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
                 value={formData.ownerName} 
                 onChange={handleChange} 
                 placeholder="Ex. Mr. Srinivasan"
+                required
                 disabled={mode === 'view'}
               />
+
             </div>
           </div>
 
           <div className="row g-4 mb-4">
             <div className="col-md-6">
-              <label className="form-label small fw-bold text-uppercase text-muted">Contact Phone</label>
+              <label className="form-label small fw-bold text-uppercase text-muted">Contact Phone <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -117,7 +122,8 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label small fw-bold text-uppercase text-muted">Area / Cluster</label>
+              <label className="form-label small fw-bold text-uppercase text-muted">Area / Cluster <span className="text-danger">*</span></label>
+
               <input 
                 type="text" 
                 className="form-control" 
@@ -125,13 +131,16 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
                 value={formData.area} 
                 onChange={handleChange} 
                 placeholder="Ex. Ambattur Industrial Estate"
+                required
                 disabled={mode === 'view'}
+
               />
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="form-label small fw-bold text-uppercase text-muted">Complete Address</label>
+            <label className="form-label small fw-bold text-uppercase text-muted">Complete Address <span className="text-danger">*</span></label>
+
             <textarea 
               className="form-control" 
               name="address" 
@@ -139,8 +148,10 @@ const StoreForm: React.FC<StoreFormProps> = ({ initialData, mode }) => {
               value={formData.address} 
               onChange={handleChange}
               placeholder="Door No, Street, Landmark..."
+              required
               disabled={mode === 'view'}
             ></textarea>
+
           </div>
 
           <div className="text-end pt-4 border-top">

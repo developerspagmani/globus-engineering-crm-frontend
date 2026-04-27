@@ -187,25 +187,28 @@ const InvoiceSettings: React.FC = () => {
 
                 <div className="row g-3">
                   <div className="col-md-6">
-                    <label className="form-label small text-muted text-uppercase fw-bold">Company Name (Invoice Header)</label>
-                    <input type="text" className="form-control fw-bold" name="companyName" value={(formData as any).companyName || ''} onChange={handleInputChange} placeholder="e.g. GLOBUS ENGINEERING MAIN" />
+                    <label className="form-label small text-muted text-uppercase fw-bold">Company Name (Invoice Header) <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control fw-bold" name="companyName" value={(formData as any).companyName || ''} onChange={handleInputChange} placeholder="e.g. GLOBUS ENGINEERING MAIN" required />
                   </div>
+
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold">Sub-Header (Certifications)</label>
                     <input type="text" className="form-control" name="companySubHeader" value={(formData as any).companySubHeader || ''} onChange={handleInputChange} placeholder="An ISO 9001: 2015 Certified Company" />
                   </div>
                   <div className="col-12">
-                    <label className="form-label small text-muted text-uppercase fw-bold">Supplier Address</label>
-                    <textarea className="form-control" rows={2} name="companyAddress" value={(formData as any).companyAddress || ''} onChange={handleInputChange} placeholder="Full address to be printed under Supplier Details"></textarea>
+                    <label className="form-label small text-muted text-uppercase fw-bold">Supplier Address <span className="text-danger">*</span></label>
+                    <textarea className="form-control" rows={2} name="companyAddress" value={(formData as any).companyAddress || ''} onChange={handleInputChange} placeholder="Full address to be printed under Supplier Details" required></textarea>
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold">GST Number <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="gstNo" value={(formData as any).gstNo || ''} onChange={handleInputChange} placeholder="GSTIN" required />
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label small text-muted text-uppercase fw-bold">GST Number</label>
-                    <input type="text" className="form-control" name="gstNo" value={(formData as any).gstNo || ''} onChange={handleInputChange} placeholder="GSTIN" />
+                    <label className="form-label small text-muted text-uppercase fw-bold">State & Code <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="stateDetails" value={(formData as any).stateDetails || ''} onChange={handleInputChange} placeholder="e.g. Tamilnadu - Code: 33" required />
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label small text-muted text-uppercase fw-bold">State & Code</label>
-                    <input type="text" className="form-control" name="stateDetails" value={(formData as any).stateDetails || ''} onChange={handleInputChange} placeholder="e.g. Tamilnadu - Code: 33" />
-                  </div>
+
                 </div>
               </div>
 
@@ -245,30 +248,32 @@ const InvoiceSettings: React.FC = () => {
 
                 <div className="row g-3">
                   <div className="col-md-4">
-                    <label className="form-label small text-muted text-uppercase fw-bold">VAT TIN</label>
-                    <input type="text" className="form-control" name="vatTin" value={(formData as any).vatTin} onChange={handleInputChange} />
+                    <label className="form-label small text-muted text-uppercase fw-bold">VAT TIN <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="vatTin" value={(formData as any).vatTin} onChange={handleInputChange} required />
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label small text-muted text-uppercase fw-bold">CST NO</label>
-                    <input type="text" className="form-control" name="cstNo" value={(formData as any).cstNo} onChange={handleInputChange} />
+                    <label className="form-label small text-muted text-uppercase fw-bold">CST NO <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="cstNo" value={(formData as any).cstNo} onChange={handleInputChange} required />
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label small text-muted text-uppercase fw-bold">PAN NO</label>
-                    <input type="text" className="form-control" name="panNo" value={(formData as any).panNo} onChange={handleInputChange} />
+                    <label className="form-label small text-muted text-uppercase fw-bold">PAN NO <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="panNo" value={(formData as any).panNo} onChange={handleInputChange} required />
                   </div>
 
+
                   <div className="col-md-4">
-                    <label className="form-label small text-muted text-uppercase fw-bold">Bank Name</label>
-                    <input type="text" className="form-control" name="bankName" value={(formData as any).bankName} onChange={handleInputChange} />
+                    <label className="form-label small text-muted text-uppercase fw-bold">Bank Name <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="bankName" value={(formData as any).bankName} onChange={handleInputChange} required />
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label small text-muted text-uppercase fw-bold">Bank Account Number</label>
-                    <input type="text" className="form-control" name="bankAcc" value={(formData as any).bankAcc} onChange={handleInputChange} />
+                    <label className="form-label small text-muted text-uppercase fw-bold">Bank Account Number <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="bankAcc" value={(formData as any).bankAcc} onChange={handleInputChange} required />
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label small text-muted text-uppercase fw-bold">Branch & IFSC</label>
-                    <input type="text" className="form-control" name="bankBranchIfsc" value={(formData as any).bankBranchIfsc} onChange={handleInputChange} />
+                    <label className="form-label small text-muted text-uppercase fw-bold">Branch & IFSC <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control" name="bankBranchIfsc" value={(formData as any).bankBranchIfsc} onChange={handleInputChange} required />
                   </div>
+
                 </div>
               </div>
 

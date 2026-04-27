@@ -177,8 +177,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   const renderInput = (label: string, name: keyof typeof formData, type = 'text', required = false) => (
     <div className="col-md-6 mb-3">
       <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">
-        {label}
+        {label} {required && <span className="text-danger">*</span>}
       </label>
+
       <input
         type={type}
         className="form-control"
@@ -204,7 +205,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
             </div>
             <div className="row g-3 mb-4">
               <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Customer Type</label>
+                <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Customer Type <span className="text-danger">*</span></label>
                 <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} required disabled={mode === 'view'}>
                   <option value="Customer">Customer</option>
                   <option value="Dealer">Dealer</option>
@@ -212,6 +213,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
                 </select>
               </div>
               {renderInput('Customer Name', 'name', 'text', true)}
+
               <div className="col-md-6 mb-3">
                 <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status</label>
                 <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
@@ -230,21 +232,24 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   
             <h5 className="mb-4 text-primary border-bottom pb-2">Address Details</h5>
             <div className="row g-3 mb-4">
-              {renderInput('Street 1', 'street1')}
+              {renderInput('Street 1', 'street1', 'text', true)}
               {renderInput('Street 2', 'street2')}
-              {renderInput('City', 'city')}
+              {renderInput('City', 'city', 'text', true)}
               {renderInput('Area', 'area')}
-              {renderInput('State', 'state')}
-              {renderInput('State Code', 'stateCode')}
-              {renderInput('Pin code', 'pinCode')}
+              {renderInput('State', 'state', 'text', true)}
+              {renderInput('State Code', 'stateCode', 'text', true)}
+              {renderInput('Pin code', 'pinCode', 'text', true)}
+
             </div>
+
   
             <h5 className="mb-4 text-primary border-bottom pb-2">Contact Persons</h5>
             <div className="row g-3 mb-4">
-              {renderInput('Contact Person 1', 'contactPerson1')}
+              {renderInput('Contact Person 1', 'contactPerson1', 'text', true)}
               {renderInput('Designation 1', 'designation1')}
-              {renderInput('Email Id 1', 'emailId1', 'email')}
-              {renderInput('Phone Number 1', 'phoneNumber1')}
+              {renderInput('Email Id 1', 'emailId1', 'email', true)}
+              {renderInput('Phone Number 1', 'phoneNumber1', 'text', true)}
+
               
               {renderInput('Contact Person 2', 'contactPerson2')}
               {renderInput('Designation 2', 'designation2')}
@@ -262,10 +267,11 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   
             <h5 className="mb-4 text-primary border-bottom pb-2">Tax Details</h5>
             <div className="row g-3 mb-4">
-              {renderInput('GST', 'gst')}
-              {renderInput('TIN', 'tin')}
-              {renderInput('CST', 'cst')}
+              {renderInput('GST', 'gst', 'text', true)}
+              {renderInput('TIN', 'tin', 'text', true)}
+              {renderInput('CST', 'cst', 'text', true)}
             </div>
+
   
             <h5 className="mb-4 text-primary border-bottom pb-2">Machine Details</h5>
             <div className="row g-3 mb-4">

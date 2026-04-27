@@ -247,7 +247,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
               <div className="row g-4">
                  <div className="col-md-6 border-end">
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">CHALLAN NO</label>
+                        <label className="col-4 text-muted small fw-bold">CHALLAN NO <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="text" className="form-control fw-bold px-3 py-2" name="outwardNo" value={formData.outwardNo} onChange={handleChange} required disabled={mode === 'view'} />
                        </div>
@@ -269,7 +269,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
                     {formData.partyType === 'customer' ? (
                       <div className="row mb-3 align-items-center">
-                         <label className="col-4 text-muted small fw-bold">CUSTOMER</label>
+                          <label className="col-4 text-muted small fw-bold">CUSTOMER <span className="text-danger">*</span></label>
                          <div className="col-8">
                              <select className="form-select px-3 py-2 fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required={formData.partyType === 'customer'} disabled={mode === 'view'}>
                                <option value="">Select Customer</option>
@@ -280,7 +280,8 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                     ) : (
                       <>
                         <div className="row mb-3 align-items-center">
-                           <label className="col-4 text-muted small fw-bold">VENDOR</label>
+                           <label className="col-4 text-muted small fw-bold">VENDOR <span className="text-danger">*</span></label>
+
                            <div className="col-8">
                                <select className="form-select px-3 py-2 fw-bold" name="vendorId" value={formData.vendorId} onChange={handleChange} required={formData.partyType === 'vendor'} disabled={mode === 'view'}>
                                  <option value="">Select Vendor</option>
@@ -302,27 +303,28 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
                     {/* NEW SMART INWARD SELECTOR */}
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold text-warning">INWARD REF</label>
+                       <label className="col-4 text-muted small fw-bold text-warning">INWARD REF <span className="text-danger">*</span></label>
                        <div className="col-8">
-                           <select className="form-select border-warning-subtle bg-warning-light rounded-pill px-3 py-2 fw-bold" name="inwardId" value={formData.inwardId} onChange={handleChange} disabled={mode === 'view' || (formData.partyType === 'customer' && !formData.customerId) || (formData.partyType === 'vendor' && !formData.vendorId)}>
-                             <option value="">Select Inward Batch (Optional)</option>
+                           <select className="form-select border-warning-subtle bg-warning-light rounded-pill px-3 py-2 fw-bold" name="inwardId" value={formData.inwardId} onChange={handleChange} required disabled={mode === 'view' || (formData.partyType === 'customer' && !formData.customerId) || (formData.partyType === 'vendor' && !formData.vendorId)}>
+                             <option value="">Select Inward Batch</option>
                              {availableInwards.filter(i => (i.totalRemaining !== undefined ? i.totalRemaining > 0 : true)).map(i => (
                                 <option key={i.id} value={i.id}>{i.inwardNo} - Bal: {i.totalRemaining ?? 'New'} ({i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})</option>
                              ))}
                           </select>
                        </div>
                     </div>
+
                  </div>
 
                  <div className="col-md-6 px-lg-5">
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">DISPATCH DATE</label>
+                        <label className="col-4 text-muted small fw-bold">DISPATCH DATE <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="date" className="form-control px-3 py-2" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">VEHICLE NO</label>
+                        <label className="col-4 text-muted small fw-bold">VEHICLE NO <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="text" className="form-control px-3 py-2" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="TN-01-AB-1234" required disabled={mode === 'view'} />
                        </div>
@@ -334,11 +336,12 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">DOC REF NO</label>
+                       <label className="col-4 text-muted small fw-bold">DOC REF NO <span className="text-danger">*</span></label>
                        <div className="col-8">
-                           <input type="text" className="form-control px-3 py-2" name="challanNo" value={formData.challanNo} onChange={handleChange} placeholder="Ext Challan / PO" disabled={mode === 'view'} />
+                           <input type="text" className="form-control px-3 py-2" name="challanNo" value={formData.challanNo} onChange={handleChange} placeholder="Ext Challan / PO" required disabled={mode === 'view'} />
                        </div>
                     </div>
+
                     {formData.partyType === 'vendor' && (
                       <div className="row mb-3 align-items-center">
                         <label className="col-4 text-muted small fw-bold text-danger">JOB VALUE (INR)</label>
@@ -364,9 +367,10 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                <table className="table table-borderless align-middle">
                   <thead>
                      <tr className="small text-muted fw-bold border-bottom">
-                        <th className="pb-3 px-3">DESCRIPTION / PART NO</th>
-                        <th className="pb-3 text-center" style={{ width: '150px' }}>QUANTITY</th>
-                        <th className="pb-3 text-center" style={{ width: '150px' }}>UNIT</th>
+                         <th className="pb-3 px-3">DESCRIPTION / PART NO <span className="text-danger">*</span></th>
+                         <th className="pb-3 text-center" style={{ width: '150px' }}>QUANTITY <span className="text-danger">*</span></th>
+                         <th className="pb-3 text-center" style={{ width: '150px' }}>UNIT <span className="text-danger">*</span></th>
+
                         {mode !== 'view' && <th className="pb-3 text-end" style={{ width: '50px' }}></th>}
                      </tr>
                   </thead>
