@@ -252,7 +252,7 @@ const PaymentReportPage = () => {
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
                 style={{width:"340px"}}
               >
-                <option value="">-- All Customers --</option>
+                <option value=""> All Customers </option>
                 {customers.map(c => (
                   <option key={c.id} value={c.id}>{c.company || c.name}</option>
                 ))}

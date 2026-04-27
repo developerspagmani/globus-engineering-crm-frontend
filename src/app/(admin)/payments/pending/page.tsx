@@ -172,7 +172,7 @@ const PendingPaymentPage = () => {
                   value={selectedCustomerId}
                   onChange={(e) => setSelectedCustomerId(e.target.value)}
                 >
-                  <option value="">-- ALL CUSTOMERS --</option>
+                  <option value="">-- All Customers --</option>
                   {customers.map(c => (
                     <option key={c.id} value={c.id}>{c.company || c.name}</option>
                   ))}
