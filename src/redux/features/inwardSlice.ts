@@ -57,6 +57,7 @@ export const createInward = createAsyncThunk(
         status: data.status,
         items: data.items,
         due_date: data.dueDate,
+        date: data.date,
         company_id: data.company_id
       });
       const c = response.data;
@@ -107,6 +108,7 @@ export const updateInward = createAsyncThunk(
         status: data.status,
         items: data.items,
         due_date: data.dueDate,
+        date: data.date,
         company_id: data.company_id
       });
       const c = response.data || data;
