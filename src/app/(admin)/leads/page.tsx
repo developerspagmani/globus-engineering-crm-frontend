@@ -256,7 +256,7 @@ const LeadsPage = () => {
                     <div className="d-flex align-items-center gap-2">
                        {/* <span className="text-muted tiny fw-bold">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</span> */}
                        <div>
-                          <div className="fw-800 text-dark mb-0 fs-6 ">{lead.name}</div>
+                          <div className="fw-800 text-dark mb-0 fs-5">{lead.name}</div>
                           <div className="small text-muted fw-600">{lead.company}</div>
                        </div>
                     </div>
