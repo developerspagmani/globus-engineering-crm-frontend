@@ -240,7 +240,7 @@ export default function ItemDetailsPage() {
                 {/* Item Code Field */}
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item Code</label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item Code <span className="text-danger">*</span></label>
                   </div>
                   <div className="col-md-9">
                     <input
@@ -259,7 +259,7 @@ export default function ItemDetailsPage() {
                 {/* Item Name Field */}
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item Name</label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item Name <span className="text-danger">*</span></label>
                   </div>
                   <div className="col-md-9">
                     <input

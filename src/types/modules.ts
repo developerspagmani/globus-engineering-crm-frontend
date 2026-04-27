@@ -321,6 +321,7 @@ export interface Vendor {
   tc?: string;
   vmc?: string;
   hmc?: string;
+  paymentTerms?: string;
   createdAt: string;
 }
 export interface DashboardStats {

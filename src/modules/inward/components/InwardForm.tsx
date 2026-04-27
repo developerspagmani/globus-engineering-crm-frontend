@@ -209,7 +209,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
   
             <div className="row g-4 mb-5 align-items-center">
               <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Customer</label>
+                <label className="form-label mb-0 align-self-center text-muted col-3">Customer <span className="text-danger">*</span></label>
                 <select className="form-select border-bottom rounded-0 px-2 shadow-none" name="customerId" value={formData.customerId} onChange={handleChange} required disabled={mode === 'view'}>
                   <option value="">{customersLoading ? 'Loading Customers...' : 'Choose Customer'}</option>
                   {customers.map(c => (
@@ -218,30 +218,34 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                 </select>
               </div>
               <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Date</label>
+                <label className="form-label mb-0 align-self-center text-muted col-3">Date <span className="text-danger">*</span></label>
                 <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
               </div>
   
               <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Po No</label>
-                <input type="text" className="form-control border-bottom rounded-0 px-2 shadow-none" name="poReference" value={formData.poReference} onChange={handleChange} placeholder="Po No" disabled={mode === 'view'} />
+                <label className="form-label mb-0 align-self-center text-muted col-3">Po No <span className="text-danger">*</span></label>
+                <input type="text" className="form-control border-bottom rounded-0 px-2 shadow-none" name="poReference" value={formData.poReference} onChange={handleChange} placeholder="Po No" required disabled={mode === 'view'} />
               </div>
               <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Po Date</label>
-                <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="poDate" value={formData.poDate} onChange={handleChange} disabled={mode === 'view'} />
+                <label className="form-label mb-0 align-self-center text-muted col-3">Po Date <span className="text-danger">*</span></label>
+                <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="poDate" value={formData.poDate} onChange={handleChange} required disabled={mode === 'view'} />
               </div>
   
               <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Dc No</label>
-                <input type="text" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dcNo" value={formData.dcNo} onChange={handleChange} placeholder="Dc No" disabled={mode === 'view'} />
+                <label className="form-label mb-0 align-self-center text-muted col-3">Dc No <span className="text-danger">*</span></label>
+                <input type="text" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dcNo" value={formData.dcNo} onChange={handleChange} placeholder="Dc No" required disabled={mode === 'view'} />
               </div>
               <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Dc Date</label>
-                <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dcDate" value={formData.dcDate} onChange={handleChange} disabled={mode === 'view'} />
+                <label className="form-label mb-0 align-self-center text-muted col-3">Dc Date <span className="text-danger">*</span></label>
+                <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dcDate" value={formData.dcDate} onChange={handleChange} required disabled={mode === 'view'} />
               </div>
               <div className="col-md-6 d-flex">
                 <label className="form-label mb-0 align-self-center text-muted col-3">Due Date *</label>
                 <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dueDate" value={formData.dueDate} onChange={handleChange} disabled={mode === 'view'} required />
+              </div>
+              <div className="col-md-6 d-flex">
+                <label className="form-label mb-0 align-self-center text-muted col-3">Vehicle No <span className="text-danger">*</span></label>
+                <input type="text" className="form-control border-bottom rounded-0 px-2 shadow-none" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="Vehicle No" required disabled={mode === 'view'} />
               </div>
             </div>
   

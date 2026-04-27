@@ -111,7 +111,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
         <form onSubmit={handleSubmit}>
           <div className="row g-4 mb-4">
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Prospect Name</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Prospect Name <span className="text-danger">*</span></label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -124,7 +124,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Company Name</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Company Name <span className="text-danger">*</span></label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -140,7 +140,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
 
           <div className="row g-4 mb-4">
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Email Address</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Email Address <span className="text-danger">*</span></label>
               <input 
                 type="email" 
                 className="form-control" 
@@ -152,7 +152,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Phone Number</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Phone Number <span className="text-danger">*</span></label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -176,8 +176,9 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Lead Source</label>
-              <select className="form-select" name="source" value={formData.source} onChange={handleChange} disabled={mode === 'view'}>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Lead Source <span className="text-danger">*</span></label>
+              <select className="form-select" name="source" value={formData.source} onChange={handleChange} required disabled={mode === 'view'}>
+                <option value="">Select Source</option>
                 <option value="Web">Website / Organic</option>
                 <option value="Exhibition">Engineering Exhibition</option>
                 <option value="Referral">Client Referral</option>
@@ -185,8 +186,9 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Current Status</label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleChange} disabled={mode === 'view'}>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Current Status <span className="text-danger">*</span></label>
+              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
+                <option value="">Select Status</option>
                 <option value="new">New Entry</option>
                 <option value="contacted">Attempted Contact</option>
                 <option value="qualified">Qualified Lead</option>
@@ -196,7 +198,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           </div>
 
           <div className="row g-4 mb-4">
-            <div className="col-md-12">
+            <div className="col-md-6">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Geographic Area / Cluster</label>
               <input 
                 type="text" 
@@ -205,6 +207,18 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
                 value={formData.assignedArea} 
                 onChange={handleChange} 
                 placeholder="Ex. Coimbatore Industrial Area"
+                disabled={mode === 'view'}
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Next Visit Date <span className="text-danger">*</span></label>
+              <input 
+                type="date" 
+                className="form-control" 
+                name="next_visit_date" 
+                value={(formData as any).next_visit_date || ''} 
+                onChange={handleChange} 
+                required
                 disabled={mode === 'view'}
               />
             </div>

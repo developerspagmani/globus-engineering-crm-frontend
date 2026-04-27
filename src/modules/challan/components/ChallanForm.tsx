@@ -153,7 +153,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
           {/* Header Info */}
           <div className="row g-4 mb-5">
             <div className="col-md-3">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Challan #</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Challan # <span className="text-danger">*</span></label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -165,7 +165,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-3">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Party Type</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Party Type <span className="text-danger">*</span></label>
               <select 
                 className="form-select" 
                 name="partyType" 
@@ -178,7 +178,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Party / Company</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Party / Company <span className="text-danger">*</span></label>
               <select 
                 className="form-select" 
                 name="partyId" 
@@ -195,7 +195,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-3">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Date</label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Date <span className="text-danger">*</span></label>
               <input 
                 type="date" 
                 className="form-control" 
@@ -322,7 +322,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                <span className="x-small fw-800 text-uppercase tracking-widest text-muted d-block mb-3">Transport & Logistics</span>
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-700">Vehicle Number</label>
+              <label className="form-label small fw-700">Vehicle Number <span className="text-danger">*</span></label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -330,17 +330,19 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 placeholder="MH-12-XX-0000"
                 value={formData.vehicleNo} 
                 onChange={handleInputChange} 
+                required
                 disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-700">Driver Name</label>
+              <label className="form-label small fw-700">Driver Name <span className="text-danger">*</span></label>
               <input 
                 type="text" 
                 className="form-control" 
                 name="driverName" 
                 value={formData.driverName} 
                 onChange={handleInputChange} 
+                required
                 disabled={mode === 'view'}
               />
             </div>
