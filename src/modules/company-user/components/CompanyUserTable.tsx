@@ -3,7 +3,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { deleteUserAsync, resetUserPasswordAsync } from '@/redux/features/companyUserSlice';
+import { deleteUserAsync, resetUserPasswordAsync, setUserPage } from '@/redux/features/companyUserSlice';
 import Link from 'next/link';
 import { checkActionPermission } from '@/config/permissions';
 import Loader from '@/components/Loader';
@@ -11,7 +11,7 @@ import Loader from '@/components/Loader';
 const CompanyUserTable: React.FC = () => {
   const dispatch = useDispatch();
   const { user: currentUser, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, loading } = useSelector((state: RootState) => state.companyUsers);
+  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.companyUsers);
 
   const [resetModalUser, setResetModalUser] = React.useState<string | null>(null);
   const [newPassword, setNewPassword] = React.useState('');
@@ -33,6 +33,12 @@ const CompanyUserTable: React.FC = () => {
     
     return matchesSearch && matchesRole;
   });
+
+  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
+  const paginatedItems = filteredItems.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const handleDelete = (id: string) => {
     if (id === currentUser?.id) {
@@ -100,7 +106,7 @@ const CompanyUserTable: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map((user) => (
+                paginatedItems.map((user) => (
                   <tr key={user.id} className="border-bottom-0">
                     <td className="px-4 py-3">
                       <div className="d-flex align-items-center">
@@ -176,6 +182,30 @@ const CompanyUserTable: React.FC = () => {
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+            <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+            <nav>
+              <ul className="pagination pagination-sm mb-0">
+                <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => dispatch(setUserPage(pagination.currentPage - 1))}>
+                    <i className="bi bi-chevron-left"></i>
+                  </button>
+                </li>
+                {[...Array(totalPages)].map((_, i) => (
+                  <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setUserPage(i + 1))}>{i + 1}</button>
+                  </li>
+                ))}
+                <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => dispatch(setUserPage(pagination.currentPage + 1))}>
+                    <i className="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        )}
       </div>
     </div>
 

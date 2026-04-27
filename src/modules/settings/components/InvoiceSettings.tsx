@@ -110,7 +110,7 @@ const InvoiceSettings: React.FC = () => {
               {/* Branding Section */}
               <div className="col-12">
                 <div className="d-flex align-items-center gap-2 mb-3">
-                  <div className="bg-primary bg-opacity-10 p-2 text-primary">
+                  <div className=" bg-opacity-10 p-2 text-primary">
                     <i className="bi bi-brush fs-5"></i>
                   </div>
                   <h6 className="fw-bold mb-0">Branding & Identity</h6>
@@ -237,7 +237,7 @@ const InvoiceSettings: React.FC = () => {
               {/* Banking Section */}
               <div className="col-12">
                 <div className="d-flex align-items-center gap-2 mb-3">
-                  <div className="bg-primary bg-opacity-10 p-2 text-primary">
+                  <div className=" bg-opacity-10 p-2 text-primary">
                     <i className="bi bi-bank fs-5"></i>
                   </div>
                   <h6 className="fw-bold mb-0">Banking & Statutory</h6>

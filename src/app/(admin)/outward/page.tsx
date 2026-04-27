@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchOutwards, deleteOutward, setOutwardFilters } from '@/redux/features/outwardSlice';
+import { fetchOutwards, deleteOutward, setOutwardFilters, setOutwardPage } from '@/redux/features/outwardSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -16,7 +16,7 @@ import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function OutwardListPage() {
   const dispatch = useDispatch();
-  const { items: outwards, filters, loading } = useSelector((state: RootState) => state.outward);
+  const { items: outwards, filters, pagination, loading } = useSelector((state: RootState) => state.outward);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
@@ -44,6 +44,12 @@ export default function OutwardListPage() {
 
     return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredOutwards.length / pagination.itemsPerPage);
+  const paginatedOutwards = filteredOutwards.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const handleDeleteParams = (id: string) => { setDeleteModal({ isOpen: true, id }); };
   const confirmDelete = () => { if (deleteModal.id) (dispatch as any)(deleteOutward(deleteModal.id)); };
@@ -166,12 +172,13 @@ export default function OutwardListPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOutwards.map((item, index) => (
+                  {paginatedOutwards.map((item, index) => (
                     <tr key={item.id} className="border-bottom border-light">
-                      <td className="px-4 text-muted fw-bold">{index+1}</td>
+                      <td className="px-4 text-muted fw-bold">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td className="fw-900 text-dark fs-6">{item.outwardNo || 'N/A'}</td>
-                      <td className="text-muted small ">
-                         {item.partyType === 'vendor' ? item.vendorName : item.customerName}
+                      <td>
+                        <div className="fw-900 text-dark fs-6 mb-0">{item.customerName || item.vendorName}</div>
+                        <div className="x-small text-muted text-capitalize">{item.processName || (item.items?.[0]?.description) || '-'}</div>
                       </td>
                       <td>
                          <span className={`badge rounded-pill px-2 py-1 small fw-bold ${item.partyType === 'vendor' ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary'}`}>
@@ -217,6 +224,30 @@ export default function OutwardListPage() {
               </table>
             )}
           </div>
+          {totalPages > 1 && (
+            <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredOutwards.length)} of {filteredOutwards.length} entries</span>
+              <nav>
+                <ul className="pagination pagination-sm mb-0">
+                  <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setOutwardPage(pagination.currentPage - 1))}>
+                      <i className="bi bi-chevron-left"></i>
+                    </button>
+                  </li>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setOutwardPage(i + 1))}>{i + 1}</button>
+                    </li>
+                  ))}
+                  <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setOutwardPage(pagination.currentPage + 1))}>
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          )}
         </div>
       </div>
       <ConfirmationModal isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, id: null })} onConfirm={confirmDelete} title="Remove Outward Record" message="Are you sure you want to delete this record? This action is permanent and cannot be undone." />

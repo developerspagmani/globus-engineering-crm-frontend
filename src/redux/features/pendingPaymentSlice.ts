@@ -44,6 +44,10 @@ interface PendingPaymentState {
     ageingRange: 'all' | '0-30' | '31-60' | '61-90' | '90+';
     minAmount: number;
   };
+  pagination: {
+    currentPage: number;
+    itemsPerPage: number;
+  };
 }
 
 const initialState: PendingPaymentState = {
@@ -55,6 +59,10 @@ const initialState: PendingPaymentState = {
     ageingRange: 'all',
     minAmount: 0,
   },
+  pagination: {
+    currentPage: 1,
+    itemsPerPage: 10,
+  },
 };
 
 const pendingPaymentSlice = createSlice({
@@ -63,6 +71,10 @@ const pendingPaymentSlice = createSlice({
   reducers: {
     setPendingPaymentFilters: (state, action: PayloadAction<Partial<PendingPaymentState['filters']>>) => {
       state.filters = { ...state.filters, ...action.payload };
+      state.pagination.currentPage = 1;
+    },
+    setPendingPaymentPage: (state, action: PayloadAction<number>) => {
+      state.pagination.currentPage = action.payload;
     },
     refreshPendingPayments: (state, action: PayloadAction<Invoice[]>) => {
       state.items = action.payload.filter(inv => inv.grandTotal > inv.paidAmount && (inv.type === 'INVOICE' || inv.type === 'BOTH'));
@@ -85,5 +97,5 @@ const pendingPaymentSlice = createSlice({
   }
 });
 
-export const { setPendingPaymentFilters, refreshPendingPayments } = pendingPaymentSlice.actions;
+export const { setPendingPaymentFilters, refreshPendingPayments, setPendingPaymentPage } = pendingPaymentSlice.actions;
 export default pendingPaymentSlice.reducer;

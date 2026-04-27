@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchVouchers } from '@/redux/features/voucherSlice';
-import { fetchPendingPayments } from '@/redux/features/pendingPaymentSlice';
+import { fetchVouchers, setVoucherPage } from '@/redux/features/voucherSlice';
+import { fetchPendingPayments, setPendingPaymentPage } from '@/redux/features/pendingPaymentSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
@@ -23,8 +23,8 @@ const PaymentReportPage = () => {
   const [toDate, setToDate] = useState("");
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: vouchers, loading: vLoading } = useSelector((state: RootState) => state.voucher);
-  const { items: pending, loading: pLoading } = useSelector((state: RootState) => state.pendingPayments);
+  const { items: vouchers, pagination: vPagination, loading: vLoading } = useSelector((state: RootState) => state.voucher);
+  const { items: pending, pagination: pPagination, loading: pLoading } = useSelector((state: RootState) => state.pendingPayments);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
 
@@ -70,6 +70,14 @@ const PaymentReportPage = () => {
     if (ageingFilter === '90+') return days > 90;
     return true;
   });
+
+  const activeData = activeTab === 'PAYMENT' ? paymentData : filteredPending;
+  const activePagination = activeTab === 'PAYMENT' ? vPagination : pPagination;
+  const totalPages = Math.ceil(activeData.length / activePagination.itemsPerPage);
+  const paginatedItems = activeData.slice(
+    (activePagination.currentPage - 1) * activePagination.itemsPerPage,
+    activePagination.currentPage * activePagination.itemsPerPage
+  );
 
   const totals = {
     paymentCount: paymentData.length,
@@ -209,7 +217,7 @@ const PaymentReportPage = () => {
           <div key={i} className="col-md-3">
             <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
               <div className="d-flex align-items-center gap-3">
-                <div className={`rounded-circle bg-${item.color} bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
+                <div className={`rounded-circle bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
                   <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
                 </div>
                 <div>
@@ -275,6 +283,7 @@ const PaymentReportPage = () => {
               <Loader text="Compiling Records..." />
             </div>
           ) : (
+            <>
             <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
@@ -289,14 +298,16 @@ const PaymentReportPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(activeTab === 'PAYMENT' ? paymentData : filteredPending).map((item: any, idx) => (
+                  {paginatedItems.map((item: any, idx) => (
                     <tr key={item.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted font-monospace">{idx + 1}</td>
+                      <td className="px-4 small text-muted ">
+                        {(activePagination.currentPage - 1) * activePagination.itemsPerPage + idx + 1}
+                      </td>
                       <td className="small text-muted">{item.date}</td>
-                      <td className="text-center small fw-bold text-dark font-monospace">{activeTab === 'PAYMENT' ? item.voucherNo : item.invoiceNumber}</td>
+                      <td className="text-center small fw-bold text-dark ">{activeTab === 'PAYMENT' ? item.voucherNo : item.invoiceNumber}</td>
                       <td className="fw-800 text-dark small text-capitalize">{activeTab === 'PAYMENT' ? item.partyName : item.customerName}</td>
                       <td className="text-center">{activeTab === 'PAYMENT' ? <span className="badge bg-light text-dark shadow-sm border-0 px-3">{item.paymentMode}</span> : <span className={`badge rounded-pill fw-bold px-3 ${calculateDays(item.date) > 60 ? 'bg-danger' : calculateDays(item.date) > 30 ? 'bg-warning text-dark' : 'bg-success'}`}>{calculateDays(item.date)} Days</span>}</td>
-                      <td className={`text-end fw-900 px-4 font-monospace ${activeTab === 'PAYMENT' ? 'text-success' : 'text-danger'}`}>₹{(activeTab === 'PAYMENT' ? item.amount : (item.grandTotal - (item.paidAmount || 0))).toLocaleString()}</td>
+                      <td className={`text-end fw-900 px-4  ${activeTab === 'PAYMENT' ? 'text-success' : 'text-danger'}`}>₹{(activeTab === 'PAYMENT' ? item.amount : (item.grandTotal - (item.paidAmount || 0))).toLocaleString()}</td>
                       <td className="text-center">
                         <div className="d-flex justify-content-center gap-1">
                           <Link href={activeTab === 'PAYMENT' ? `/vouchers/${item.id}/edit?readonly=true` : `/invoices/${item.id}?readonly=true`} className="btn-action-view">
@@ -320,12 +331,37 @@ const PaymentReportPage = () => {
                     <td className={`text-end py-3 px-4 ${activeTab === 'PAYMENT' ? 'text-success' : 'text-danger'}`}>₹{(activeTab === 'PAYMENT' ? totals.totalCollected : totals.totalOutstanding).toLocaleString()}</td>
                     <td></td>
                   </tr>
-                  {(activeTab === 'PAYMENT' ? paymentData : filteredPending).length === 0 && (
+                  {activeData.length === 0 && (
                     <tr><td colSpan={7} className="text-center py-5 text-muted small">No payment records found.</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
+            {totalPages > 1 && (
+              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                <span className="text-muted small">Showing {(activePagination.currentPage - 1) * activePagination.itemsPerPage + 1} to {Math.min(activePagination.currentPage * activePagination.itemsPerPage, activeData.length)} of {activeData.length} entries</span>
+                <nav>
+                  <ul className="pagination pagination-sm mb-0">
+                    <li className={`page-item ${activePagination.currentPage === 1 ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch((activeTab === 'PAYMENT' ? setVoucherPage : setPendingPaymentPage)(activePagination.currentPage - 1))}>
+                        <i className="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    {[...Array(totalPages)].map((_, i) => (
+                      <li key={i} className={`page-item ${activePagination.currentPage === i + 1 ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => dispatch((activeTab === 'PAYMENT' ? setVoucherPage : setPendingPaymentPage)(i + 1))}>{i + 1}</button>
+                      </li>
+                    ))}
+                    <li className={`page-item ${activePagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch((activeTab === 'PAYMENT' ? setVoucherPage : setPendingPaymentPage)(activePagination.currentPage + 1))}>
+                        <i className="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

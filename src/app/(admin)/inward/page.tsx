@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInwards, deleteInward, setInwardFilters } from '@/redux/features/inwardSlice';
+import { fetchInwards, deleteInward, setInwardFilters, setInwardPage } from '@/redux/features/inwardSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -16,7 +16,7 @@ import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function InwardListPage() {
   const dispatch = useDispatch();
-  const { items: inwards, filters, loading } = useSelector((state: RootState) => state.inward);
+  const { items: inwards, filters, pagination, loading } = useSelector((state: RootState) => state.inward);
   const { company, user } = useSelector((state: RootState) => state.auth);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
@@ -45,6 +45,12 @@ export default function InwardListPage() {
 
     return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredInwards.length / pagination.itemsPerPage);
+  const paginatedInwards = filteredInwards.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const handleDeleteParams = (id: string) => {
     setDeleteModal({ isOpen: true, id });
@@ -171,12 +177,12 @@ export default function InwardListPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInwards.map((item, index) => (
+                  {paginatedInwards.map((item, index) => (
                     <tr key={item.id} className="border-bottom border-light">
-                      <td className="px-4 text-muted">{index + 1}</td>
+                      <td className="px-4 text-muted">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td>
                         <div className="fw-900 text-dark fs-6 mb-0">{item.customerName || item.vendorName}</div>
-                        <div className="x-small text-muted">{item.address || '-'}</div>
+                        <div className="x-small text-muted text-capitalize">{item.address || (item.items?.[0]?.description) || '-'}</div>
                       </td>
                       <td className="text-dark fs-7">{item.poReference || '-'}</td>
                       <td>
@@ -217,6 +223,30 @@ export default function InwardListPage() {
               </table>
             )}
           </div>
+          {totalPages > 1 && (
+            <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredInwards.length)} of {filteredInwards.length} entries</span>
+              <nav>
+                <ul className="pagination pagination-sm mb-0">
+                  <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setInwardPage(pagination.currentPage - 1))}>
+                      <i className="bi bi-chevron-left"></i>
+                    </button>
+                  </li>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setInwardPage(i + 1))}>{i + 1}</button>
+                    </li>
+                  ))}
+                  <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setInwardPage(pagination.currentPage + 1))}>
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          )}
         </div>
       </div>
 

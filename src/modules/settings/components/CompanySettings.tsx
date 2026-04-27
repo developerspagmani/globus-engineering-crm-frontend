@@ -91,7 +91,7 @@ const CompanySettings: React.FC = () => {
             <div className="col-md-6">
               <label className="form-label small text-muted text-uppercase fw-bold">Active Plan</label>
               <div className="d-flex align-items-center gap-2">
-                <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold">
+                <span className="badge bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold">
                   {formData.plan.toUpperCase()}
                 </span>
                 <button type="button" className="btn btn-link btn-sm text-primary fw-bold text-decoration-none">Upgrade Plan</button>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import { fetchInvoices, setInvoicePage } from '@/redux/features/invoiceSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useRouter } from 'next/navigation';
@@ -21,7 +21,7 @@ const PendingPaymentPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, loading } = useSelector((state: RootState) => state.invoices);
+  const { items, pagination, loading } = useSelector((state: RootState) => state.invoices);
   const { items: customers } = useSelector((state: RootState) => state.customers);
 
   useEffect(() => {
@@ -46,6 +46,12 @@ const PendingPaymentPage = () => {
 
     return matchesSearch && matchesCustomer;
   });
+
+  const totalPages = Math.ceil(pendingInvoices.length / pagination.itemsPerPage);
+  const paginatedItems = pendingInvoices.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const calculateOverdueDays = (dueDate: string) => {
     if (!dueDate) return 0;
@@ -205,17 +211,19 @@ const PendingPaymentPage = () => {
                     </tr>
                   </thead>
                   <tbody className="border-top-0">
-                    {pendingInvoices.map((inv, index) => {
+                    {paginatedItems.map((inv, index) => {
                       const overdueDays = calculateOverdueDays(inv.dueDate);
                       return (
                         <tr key={inv.id} className="border-bottom border-light">
-                          <td className="text-dark small px-4">{index + 1}</td>
+                          <td className="text-dark small px-4">
+                            {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
+                          </td>
                           <td className="text-dark fw-bold small text-capitalize">{inv.customerName}</td>
                           <td className="text-muted small">{inv.poNo || '-'}</td>
                           <td className="text-muted small">{inv.dcNo || '-'}</td>
                           <td className="text-dark fw-bold small">{inv.invoiceNumber}</td>
                           <td className="text-dark small">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
-                          <td className="text-dark fw-bold small font-monospace">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
+                          <td className="text-dark fw-bold small ">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
                           <td className="text-center">
                             {overdueDays > 0 ? (
                               <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{overdueDays} Days</span>
@@ -265,13 +273,37 @@ const PendingPaymentPage = () => {
                         </td>
                       </tr>
                     )}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                </tbody>
+              </table>
+            )}
           </div>
+          {totalPages > 1 && (
+            <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pendingInvoices.length)} of {pendingInvoices.length} entries</span>
+              <nav>
+                <ul className="pagination pagination-sm mb-0">
+                  <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setInvoicePage(pagination.currentPage - 1))}>
+                      <i className="bi bi-chevron-left"></i>
+                    </button>
+                  </li>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setInvoicePage(i + 1))}>{i + 1}</button>
+                    </li>
+                  ))}
+                  <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setInvoicePage(pagination.currentPage + 1))}>
+                      <i className="bi bi-chevron-right"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          )}
         </div>
       </div>
+    </div>
 
       <style jsx>{`
         .fw-900 { font-weight: 900; }

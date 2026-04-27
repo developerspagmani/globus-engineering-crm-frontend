@@ -32,6 +32,12 @@ interface MasterState {
   priceFixings: PriceFixing[];
   loading: boolean;
   error: string | null;
+  pagination: {
+    itemsPerPage: number;
+    itemPage: number;
+    processPage: number;
+    priceFixingPage: number;
+  };
 }
 
 const initialState: MasterState = {
@@ -40,6 +46,12 @@ const initialState: MasterState = {
   priceFixings: [],
   loading: false,
   error: null,
+  pagination: {
+    itemsPerPage: 10,
+    itemPage: 1,
+    processPage: 1,
+    priceFixingPage: 1,
+  }
 };
 
 export const fetchItems = createAsyncThunk('master/fetchItems', async (company_id: string | undefined) => {
@@ -174,7 +186,17 @@ export const deletePriceFixingThunk = createAsyncThunk('master/deletePriceFixing
 const masterSlice = createSlice({
   name: 'master',
   initialState,
-  reducers: {},
+  reducers: {
+    setItemPage: (state, action: PayloadAction<number>) => {
+      state.pagination.itemPage = action.payload;
+    },
+    setProcessPage: (state, action: PayloadAction<number>) => {
+      state.pagination.processPage = action.payload;
+    },
+    setPriceFixingPage: (state, action: PayloadAction<number>) => {
+      state.pagination.priceFixingPage = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchItems.pending, (state) => { state.loading = true; })
@@ -225,4 +247,5 @@ const masterSlice = createSlice({
   },
 });
 
+export const { setItemPage, setProcessPage, setPriceFixingPage } = masterSlice.actions;
 export default masterSlice.reducer;

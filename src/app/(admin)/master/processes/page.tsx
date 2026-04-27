@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk } from '@/redux/features/masterSlice';
+import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk, setProcessPage } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -16,7 +16,7 @@ import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function ProcessDetailsPage() {
   const dispatch = useDispatch();
-  const { processes, loading } = useSelector((state: RootState) => state.master);
+  const { processes, pagination, loading } = useSelector((state: RootState) => state.master);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
@@ -81,6 +81,12 @@ export default function ProcessDetailsPage() {
     p.processName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredProcesses.length / pagination.itemsPerPage);
+  const paginatedProcesses = filteredProcesses.slice(
+    (pagination.processPage - 1) * pagination.itemsPerPage,
+    pagination.processPage * pagination.itemsPerPage
+  );
+
   const handlePrintProcess = (p: any) => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
@@ -139,19 +145,30 @@ export default function ProcessDetailsPage() {
       <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
         {/* Header Section Standardized */}
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-          <div>
-            <Breadcrumb 
-              items={[
-                { label: 'Master Data', href: '/master/processes' },
-                { label: view === 'add' ? (editingId ? 'Process Detail' : 'Add Process') : 'Workflow Hub', active: true }
-              ]} 
-            />
-            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
-              {view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add Process') : 'Workflow Hub'}
-            </h2>
-            <p className="text-muted small mb-0">
-              {view === 'add' ? 'Manage detailed technical steps and stages for industrial production.' : 'Manage your complete catalog of manufacturing and operational processes.'}
-            </p>
+          <div className="d-flex align-items-center">
+            {view === 'add' && (
+              <button 
+                className="back-btn-standard" 
+                onClick={() => setView('list')}
+                title="Back to List"
+              >
+                <i className="bi bi-arrow-left fs-4"></i>
+              </button>
+            )}
+            <div>
+              <Breadcrumb 
+                items={[
+                  { label: 'Master Data', href: '/master/processes' },
+                  { label: view === 'add' ? (editingId ? 'Process Detail' : 'Add Process') : 'Workflow Hub', active: true }
+                ]} 
+              />
+              <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+                {view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add Process') : 'Workflow Hub'}
+              </h2>
+              <p className="text-muted small mb-0">
+                {view === 'add' ? 'Manage detailed technical steps and stages for industrial production.' : 'Manage your complete catalog of manufacturing and operational processes.'}
+              </p>
+            </div>
           </div>
           
           <div className="d-flex align-items-center gap-3">
@@ -164,16 +181,7 @@ export default function ProcessDetailsPage() {
                 <span>Add Process</span>
               </button>
             )}
-            {view === 'add' && (
-              <button 
-                type="button" 
-                className="btn btn-outline-secondary btn-page-action px-3" 
-                onClick={() => setView('list')} 
-              >
-                <i className="bi bi-arrow-left"></i>
-                <span>Back</span>
-              </button>
-            )}
+
           </div>
         </div>
 
@@ -285,9 +293,9 @@ export default function ProcessDetailsPage() {
                             <td colSpan={3} className="text-center py-5 text-muted">No processes found</td>
                           </tr>
                         ) : (
-                          filteredProcesses.map((p, index) => (
+                          paginatedProcesses.map((p, index) => (
                             <tr key={p.id}>
-                              <td className="px-4 py-3 text-muted">{index + 1}</td>
+                              <td className="px-4 py-3 text-muted">{(pagination.processPage - 1) * pagination.itemsPerPage + index + 1}</td>
                               <td className="px-4 py-3">{p.processName}</td>
                               <td className="px-4 py-3 text-end">
                                 <div className="d-flex justify-content-end align-items-center gap-1">
@@ -352,6 +360,30 @@ export default function ProcessDetailsPage() {
                       </tbody>
                     </table>
                   </div>
+                  {totalPages > 1 && (
+                    <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                      <span className="text-muted small">Showing {(pagination.processPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.processPage * pagination.itemsPerPage, filteredProcesses.length)} of {filteredProcesses.length} entries</span>
+                      <nav>
+                        <ul className="pagination pagination-sm mb-0">
+                          <li className={`page-item ${pagination.processPage === 1 ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => dispatch(setProcessPage(pagination.processPage - 1))}>
+                              <i className="bi bi-chevron-left"></i>
+                            </button>
+                          </li>
+                          {[...Array(totalPages)].map((_, i) => (
+                            <li key={i} className={`page-item ${pagination.processPage === i + 1 ? 'active' : ''}`}>
+                              <button className="page-link" onClick={() => dispatch(setProcessPage(i + 1))}>{i + 1}</button>
+                            </li>
+                          ))}
+                          <li className={`page-item ${pagination.processPage === totalPages ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => dispatch(setProcessPage(pagination.processPage + 1))}>
+                              <i className="bi bi-chevron-right"></i>
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

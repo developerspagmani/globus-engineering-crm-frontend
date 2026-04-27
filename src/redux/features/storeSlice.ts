@@ -94,6 +94,10 @@ interface StoreState {
     search: string;
     area: string;
   };
+  pagination: {
+    currentPage: number;
+    itemsPerPage: number;
+  };
 }
 
 const initialState: StoreState = {
@@ -104,6 +108,10 @@ const initialState: StoreState = {
     search: '',
     area: 'all',
   },
+  pagination: {
+    currentPage: 1,
+    itemsPerPage: 10,
+  },
 };
 
 const storeSlice = createSlice({
@@ -112,6 +120,10 @@ const storeSlice = createSlice({
   reducers: {
     setStoreFilters: (state, action: PayloadAction<Partial<StoreState['filters']>>) => {
       state.filters = { ...state.filters, ...action.payload };
+      state.pagination.currentPage = 1;
+    },
+    setStorePage: (state, action: PayloadAction<number>) => {
+      state.pagination.currentPage = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -148,5 +160,5 @@ const storeSlice = createSlice({
   }
 });
 
-export const { setStoreFilters } = storeSlice.actions;
+export const { setStoreFilters, setStorePage } = storeSlice.actions;
 export default storeSlice.reducer;
