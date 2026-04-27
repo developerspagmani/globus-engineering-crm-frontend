@@ -264,7 +264,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             </div>
             {renderInput('Vendor Name', 'name', 'text', true)}
             {renderInput('Company Name', 'company', 'text', true)}
-            {renderInput('Email Address', 'email', 'email', true)}
+            {renderInput('Email Address', 'email', 'text', true)}
             {renderInput('Phone Number', 'phone', 'text', true)}
 
             
@@ -305,18 +305,18 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
           <div className="row g-3 mb-4">
             {renderInput('Contact Person 1', 'contactPerson1', 'text', true)}
             {renderInput('Designation 1', 'designation1')}
-            {renderInput('Email Id 1', 'emailId1', 'email', true)}
+            {renderInput('Email Id 1', 'emailId1', 'text', true)}
             {renderInput('Phone Number 1', 'phoneNumber1', 'text', true)}
 
             
             {renderInput('Contact Person 2', 'contactPerson2')}
             {renderInput('Designation 2', 'designation2')}
-            {renderInput('Email Id 2', 'emailId2', 'email')}
+            {renderInput('Email Id 2', 'emailId2', 'text')}
             {renderInput('Phone Number 2', 'phoneNumber2')}
             
             {renderInput('Contact Person 3', 'contactPerson3')}
             {renderInput('Designation 3', 'designation3')}
-            {renderInput('Email Id 3', 'emailId3', 'email')}
+            {renderInput('Email Id 3', 'emailId3', 'text')}
             {renderInput('Phone Number 3', 'phoneNumber3')}
             
             {renderInput('Landline', 'landline')}

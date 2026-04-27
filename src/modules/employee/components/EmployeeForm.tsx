@@ -152,7 +152,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
               <label className="form-label small fw-800 text-uppercase tracking-wider">Email Address <span className="text-danger">*</span></label>
 
               <input 
-                type="email" 
+                type="text" 
                 className="form-control" 
                 name="email" 
                 value={formData.email} 
