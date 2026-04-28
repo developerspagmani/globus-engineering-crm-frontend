@@ -61,6 +61,7 @@ export const navigationConfig: NavItem[] = [
   },
 
   { name: 'Companies', icon: 'bi-building', path: '/admin/companies', moduleId: 'super_admin' },
+  { name: 'Data Migration', icon: 'bi-database-fill-up', path: '/migration', moduleId: 'super_admin' },
   { name: 'Settings', icon: 'bi-gear', path: '/settings', moduleId: 'default' },
 ];
 
@@ -92,11 +93,11 @@ export const hasPermission = (
   // 1. Super Admin Role Check (Always has access to everything)
   if (user.role === 'super_admin') return true;
 
-  // 3. Special Case: super_admin only items (like Companies)
-  if (item.moduleId === 'super_admin') return false; // Non-super-admins cannot see this
-
-  // 4. Company Admin Role Check (Bypasses regular module/read permissions)
+  // 2. Company Admin Role Check (Bypasses regular module/read permissions)
   if (user.role === 'company_admin') return true;
+
+  // 3. Special Case: super_admin only items (like Companies)
+  if (item.moduleId === 'super_admin') return false; // Non-admins cannot see this
 
   // 5. Default Access (items like Dashboard/Settings that don't belong to a specific paid module)
   if (item.moduleId === 'default') {
