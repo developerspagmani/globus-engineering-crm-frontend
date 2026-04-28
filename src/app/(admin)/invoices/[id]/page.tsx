@@ -39,21 +39,7 @@ export default function InvoiceDetailPage() {
   return (
     <ModuleGuard moduleId="mod_invoice">
       <div className="container py-4">
-        <div className="d-flex align-items-center mb-4 no-print border-bottom pb-3">
-          <Link href="/invoices" className="back-btn-standard" title="Back to Invoices">
-            <i className="bi bi-arrow-left fs-4"></i>
-          </Link>
-          <div>
-            <nav aria-label="breadcrumb">
-              <ol className="breadcrumb mb-1">
-                <li className="breadcrumb-item"><Link href="/invoices" className="text-decoration-none text-muted small">Invoices</Link></li>
-                <li className="breadcrumb-item active fw-bold small text-primary">{invoice?.invoiceNumber || 'Detail'}</li>
-              </ol>
-            </nav>
-            <h2 className="fw-bold mb-0">Invoice Preview</h2>
-            <p className="text-muted small mb-0">Review tax details and dispatch synchronization for this transaction.</p>
-          </div>
-        </div>
+
 
         {!invoice ? (
           <div className="alert alert-warning">

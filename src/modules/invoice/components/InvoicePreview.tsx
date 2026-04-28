@@ -66,7 +66,6 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
           <div className="d-flex align-items-center gap-3">
             <BackButton />
             <h4 className="m-0 fw-bold text-dark">Invoice Preview</h4>
-            
             <div className="declaration-toggle-wrapper ms-3">
                <label className="switch">
                   <input 

@@ -53,8 +53,8 @@ const EditChallanPage = () => {
     <ModuleGuard moduleId="mod_challan">
       <div className="content-area animate-fade-in">
       <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-        <Link href="/challan" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Challan List">
-          <i className="bi bi-arrow-left fs-3 text-muted"></i>
+        <Link href="/challan" className="back-btn-standard" title="Back to Challan List">
+          <i className="bi bi-arrow-left fs-4"></i>
         </Link>
         <div>
           <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Challan: {challan.challanNo}</h2>
