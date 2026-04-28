@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchVouchers } from '@/redux/features/voucherSlice';
+import { fetchVouchers, setVoucherPage } from '@/redux/features/voucherSlice';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
@@ -18,7 +18,7 @@ const VoucherReportPage = () => {
   const [toDate, setToDate] = useState("");
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, loading } = useSelector((state: RootState) => state.voucher);
+  const { items, pagination, loading } = useSelector((state: RootState) => state.voucher);
 
   useEffect(() => { setMounted(true); if (activeCompany?.id) { dispatch(fetchVouchers(activeCompany.id) as any); } }, [dispatch, activeCompany?.id]);
 
@@ -33,6 +33,12 @@ const VoucherReportPage = () => {
 
     return matchesSearch && matchesDate;
   });
+
+  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
+  const paginatedItems = filteredItems.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const handlePrint = (item: any) => {
     const p = window.open('', '', 'height=600,width=800'); if (!p) return;
@@ -94,6 +100,7 @@ const VoucherReportPage = () => {
               <Loader text="Compiling Data..." />
             </div>
           ) : (
+            <>
             <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
@@ -108,14 +115,16 @@ const VoucherReportPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((v, i) => (
+                  {paginatedItems.map((v, i) => (
                     <tr key={v.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted font-monospace">{i + 1}</td>
+                      <td className="px-4 small text-muted ">
+                        {(pagination.currentPage - 1) * pagination.itemsPerPage + i + 1}
+                      </td>
                       <td className="small text-muted">{v.date}</td>
-                      <td className="text-center small fw-bold text-dark font-monospace">{v.voucherNo}</td>
+                      <td className="text-center small fw-bold text-dark ">{v.voucherNo}</td>
                       <td className="fw-800 text-dark small text-capitalize">{v.partyName}</td>
                       <td className="text-center"><span className={`small fw-bold text-capitalize ${v.type === 'receipt' ? 'text-success' : 'text-danger'}`}>{v.type}</span></td>
-                      <td className={`text-end fw-900 px-4 font-monospace ${v.type === 'receipt' ? 'text-success' : 'text-danger'}`}>₹{v.amount.toLocaleString()}</td>
+                      <td className={`text-end fw-900 px-4  ${v.type === 'receipt' ? 'text-success' : 'text-danger'}`}>₹{v.amount.toLocaleString()}</td>
                       <td className="text-center">
                         <div className="d-flex justify-content-center gap-1">
                           <Link href={`/vouchers/${v.id}/edit?readonly=true`} className="btn-action-view"><i className="bi bi-eye-fill"></i></Link>
@@ -132,12 +141,34 @@ const VoucherReportPage = () => {
                       </td>
                     </tr>
                   ))}
-                  {filteredItems.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-5 text-muted small">No vouchers found matching filters.</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
+            {totalPages > 1 && (
+              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+                <nav>
+                  <ul className="pagination pagination-sm mb-0">
+                    <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setVoucherPage(pagination.currentPage - 1))}>
+                        <i className="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    {[...Array(totalPages)].map((_, i) => (
+                      <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => dispatch(setVoucherPage(i + 1))}>{i + 1}</button>
+                      </li>
+                    ))}
+                    <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setVoucherPage(pagination.currentPage + 1))}>
+                        <i className="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

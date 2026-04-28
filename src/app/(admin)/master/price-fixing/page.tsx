@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchPriceFixings, createPriceFixingThunk, updatePriceFixingThunk, deletePriceFixingThunk, fetchItems, fetchProcesses } from '@/redux/features/masterSlice';
+import { fetchPriceFixings, createPriceFixingThunk, updatePriceFixingThunk, deletePriceFixingThunk, fetchItems, fetchProcesses, setPriceFixingPage } from '@/redux/features/masterSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
@@ -17,7 +17,7 @@ import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function PriceFixingPage() {
   const dispatch = useDispatch();
-  const { priceFixings, items, processes, loading: masterLoading } = useSelector((state: RootState) => state.master);
+  const { priceFixings, items, processes, pagination, loading: masterLoading } = useSelector((state: RootState) => state.master);
   const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
@@ -114,9 +114,14 @@ export default function PriceFixingPage() {
   };
 
   const filteredPriceFixings = priceFixings.filter(pf =>
-    pf.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pf.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pf.processName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredPriceFixings.length / pagination.itemsPerPage);
+  const paginatedPriceFixings = filteredPriceFixings.slice(
+    (pagination.priceFixingPage - 1) * pagination.itemsPerPage,
+    pagination.priceFixingPage * pagination.itemsPerPage
   );
 
   const handlePrintPricing = (pf: any) => {
@@ -181,19 +186,30 @@ export default function PriceFixingPage() {
       <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
         {/* Header Section Standardized */}
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-          <div>
-            <Breadcrumb 
-              items={[
-                { label: 'Master Data', href: '/master/price-fixing' },
-                { label: view === 'add' ? (editingId ? 'Price Rules' : 'New Rule') : view === 'view' ? 'Price Profiling' : 'Pricing Matrix', active: true }
-              ]} 
-            />
-            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
-              {view === 'add' ? (editingId ? 'Edit Price Rule' : 'Add Price Rule') : view === 'view' ? 'Price Profile' : 'Pricing Hub'}
-            </h2>
-            <p className="text-muted small mb-0">
-              {view === 'add' ? 'Manage customized rate contracts and client-specific pricing rules.' : 'Manage your complete rate card and customized client pricing matrix.'}
-            </p>
+          <div className="d-flex align-items-center">
+            {(view === 'add' || view === 'view') && (
+              <button 
+                className="back-btn-standard" 
+                onClick={() => setView('list')}
+                title="Back to List"
+              >
+                <i className="bi bi-arrow-left fs-4"></i>
+              </button>
+            )}
+            <div>
+              <Breadcrumb 
+                items={[
+                  { label: 'Master Data', href: '/master/price-fixing' },
+                  { label: view === 'add' ? (editingId ? 'Price Rules' : 'New Rule') : view === 'view' ? 'Price Profiling' : 'Pricing Matrix', active: true }
+                ]} 
+              />
+              <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+                {view === 'add' ? (editingId ? 'Edit Price Rule' : 'Add Price Rule') : view === 'view' ? 'Price Profile' : 'Pricing Hub'}
+              </h2>
+              <p className="text-muted small mb-0">
+                {view === 'add' ? 'Manage customized rate contracts and client-specific pricing rules.' : 'Manage your complete rate card and customized client pricing matrix.'}
+              </p>
+            </div>
           </div>
           
           <div className="d-flex align-items-center gap-3">
@@ -223,16 +239,7 @@ export default function PriceFixingPage() {
                 <span>Add Price</span>
               </button>
             )}
-            {(view === 'add' || view === 'view') && (
-              <button 
-                type="button" 
-                className="btn btn-outline-secondary btn-page-action px-3" 
-                onClick={() => setView('list')} 
-              >
-                <i className="bi bi-arrow-left"></i>
-                <span>Back</span>
-              </button>
-            )}
+
           </div>
         </div>
 
@@ -412,9 +419,9 @@ export default function PriceFixingPage() {
                             <td colSpan={6} className="text-center py-5 text-muted">No pricing records found</td>
                           </tr>
                         ) : (
-                          filteredPriceFixings.map((pf, index) => (
+                          paginatedPriceFixings.map((pf, index) => (
                             <tr key={pf.id}>
-                              <td className="px-4 py-3 text-muted">{index + 1}</td>
+                              <td className="px-4 py-3 text-muted">{(pagination.priceFixingPage - 1) * pagination.itemsPerPage + index + 1}</td>
                               <td className="px-4 py-3 fw-bold">{pf.customerName}</td>
                               <td className="px-4 py-3">{pf.itemName}</td>
                               <td className="px-4 py-3 text-muted italic">{pf.processName}</td>
@@ -473,6 +480,30 @@ export default function PriceFixingPage() {
                       </tbody>
                     </table>
                   </div>
+                  {totalPages > 1 && (
+                    <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                      <span className="text-muted small">Showing {(pagination.priceFixingPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.priceFixingPage * pagination.itemsPerPage, filteredPriceFixings.length)} of {filteredPriceFixings.length} entries</span>
+                      <nav>
+                        <ul className="pagination pagination-sm mb-0">
+                          <li className={`page-item ${pagination.priceFixingPage === 1 ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => dispatch(setPriceFixingPage(pagination.priceFixingPage - 1))}>
+                              <i className="bi bi-chevron-left"></i>
+                            </button>
+                          </li>
+                          {[...Array(totalPages)].map((_, i) => (
+                            <li key={i} className={`page-item ${pagination.priceFixingPage === i + 1 ? 'active' : ''}`}>
+                              <button className="page-link" onClick={() => dispatch(setPriceFixingPage(i + 1))}>{i + 1}</button>
+                            </li>
+                          ))}
+                          <li className={`page-item ${pagination.priceFixingPage === totalPages ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => dispatch(setPriceFixingPage(pagination.priceFixingPage + 1))}>
+                              <i className="bi bi-chevron-right"></i>
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

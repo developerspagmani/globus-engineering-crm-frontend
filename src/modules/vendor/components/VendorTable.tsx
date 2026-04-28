@@ -116,7 +116,7 @@ const VendorTable: React.FC = () => {
                 <>
                   {paginatedItems.map((vendor, index) => (
                     <tr key={vendor.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted font-monospace">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                      <td className="px-4 small text-muted">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td className="text-dark fw-bold">{vendor.name || '-'}</td>
                       <td className="text-muted small">{vendor.email || vendor.emailId1 || '-'}</td>
                       <td className="text-muted small">{vendor.phone || vendor.phoneNumber1 || '-'}</td>

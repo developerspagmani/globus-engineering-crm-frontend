@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters } from '@/redux/features/ledgerSlice';
+import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters, setLedgerPage } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import ModuleGuard from '@/components/ModuleGuard';
@@ -23,13 +23,11 @@ export default function LedgerPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { company: activeCompany, user: currentUser } = useSelector((state: RootState) => state.auth);
-  const { items: ledgerEntries, loading: ledgerLoading, filters } = useSelector((state: RootState) => state.ledger);
+  const { items: ledgerEntries, loading: ledgerLoading, filters, pagination } = useSelector((state: RootState) => state.ledger);
   
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const [partyTypeFilter, setPartyTypeFilter] = React.useState<'all' | 'customer' | 'vendor'>('all');
-  const [itemsPerPage, setItemsPerPage] = React.useState(10);
-  const [currentPage, setCurrentPage] = React.useState(1);
   const [mounted, setMounted] = React.useState(false);
   const [exportingParty, setExportingParty] = useState<any>(null);
   const [exportingEntries, setExportingEntries] = useState<LedgerEntry[]>([]);
@@ -118,10 +116,10 @@ export default function LedgerPage() {
            (item.state || '').toLowerCase().includes(filters.search.toLowerCase());
   });
 
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
   const paginatedItems = filteredItems.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
   );
 
   // --- EXPORT ACTIONS ---
@@ -411,8 +409,8 @@ export default function LedgerPage() {
                   </tr>
                 ) : (
                   paginatedItems.map((party, index) => (
-                    <tr key={party.id}>
-                      <td className="text-muted small text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <tr key={party.id || `party-${index}`}>
+                      <td className="text-muted small text-center">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td>
                         <div className="d-flex flex-column">
                            <span className="fw-bold text-dark text-capitalize">{party.name}</span>
@@ -460,19 +458,19 @@ export default function LedgerPage() {
         {/* Pagination Rendering */}
         {totalPages > 1 && (
           <div className="mt-4 d-flex justify-content-between align-items-center">
-            <span className="text-muted small">Showing {paginatedItems.length} records</span>
+            <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
             <nav>
               <ul className="pagination pagination-sm mb-0">
-                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                  <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>Previous</button>
+                <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => dispatch(setLedgerPage(pagination.currentPage - 1))}>Previous</button>
                 </li>
                 {[...Array(totalPages)].map((_, i) => (
-                  <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                    <button className="page-link" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
+                  <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setLedgerPage(i + 1))}>{i + 1}</button>
                   </li>
                 ))}
-                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                  <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>Next</button>
+                <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => dispatch(setLedgerPage(pagination.currentPage + 1))}>Next</button>
                 </li>
               </ul>
             </nav>

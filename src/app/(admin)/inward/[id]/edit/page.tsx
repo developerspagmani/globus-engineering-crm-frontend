@@ -31,13 +31,9 @@ export default function EditInwardPage() {
         ) : (
           <>
             <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-              <button
-                onClick={() => router.back()}
-                className="btn btn-outline-secondary border-0 p-0 me-3"
-                title="Back to Previous Page"
-              >
-                <i className="bi bi-arrow-left fs-3 text-muted"></i>
-              </button>
+              <Link href="/inward" className="back-btn-standard" title="Back to Inward List">
+                <i className="bi bi-arrow-left fs-4"></i>
+              </Link>
               <div>
                 <h2 className="fw-bold mb-0">{isEdit ? 'Edit' : 'View'} Inward: {inward.inwardNo}</h2>
                 <p className="text-muted small mb-0">{isEdit ? `Modify receipt details for ${inward.customerName}.` : `Review receipt details for ${inward.customerName}.`}</p>

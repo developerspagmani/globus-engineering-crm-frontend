@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk } from '@/redux/features/masterSlice';
+import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk, setItemPage } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -15,7 +15,7 @@ import autoTable from 'jspdf-autotable';
 
 export default function ItemDetailsPage() {
   const dispatch = useDispatch();
-  const { items, loading } = useSelector((state: RootState) => state.master);
+  const { items, pagination, loading } = useSelector((state: RootState) => state.master);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
@@ -79,6 +79,12 @@ export default function ItemDetailsPage() {
   const filteredItems = items.filter(item =>
     item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.itemCode.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
+  const paginatedItems = filteredItems.slice(
+    (pagination.itemPage - 1) * pagination.itemsPerPage,
+    pagination.itemPage * pagination.itemsPerPage
   );
 
   const handleCopyTable = () => {
@@ -170,19 +176,30 @@ export default function ItemDetailsPage() {
       <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
         {/* Header Section Standardized */}
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-          <div>
-            <Breadcrumb 
-              items={[
-                { label: 'Master Data', href: '/master/items' },
-                { label: view === 'add' ? (editingId ? 'Item Profile' : 'New Item') : 'Item Hub', active: true }
-              ]} 
-            />
-            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
-              {view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add Item') : 'Item Hub'}
-            </h2>
-            <p className="text-muted small mb-0">
-              {view === 'add' ? 'Manage detailed specifications and pricing for this industrial component.' : 'Manage your complete catalog of parts, tools, and industrial materials.'}
-            </p>
+          <div className="d-flex align-items-center">
+            {view === 'add' && (
+              <button 
+                className="back-btn-standard" 
+                onClick={() => setView('list')}
+                title="Back to List"
+              >
+                <i className="bi bi-arrow-left fs-4"></i>
+              </button>
+            )}
+            <div>
+              <Breadcrumb 
+                items={[
+                  { label: 'Master Data', href: '/master/items' },
+                  { label: view === 'add' ? (editingId ? 'Item Profile' : 'New Item') : 'Item Hub', active: true }
+                ]} 
+              />
+              <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+                {view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add Item') : 'Item Hub'}
+              </h2>
+              <p className="text-muted small mb-0">
+                {view === 'add' ? 'Manage detailed specifications and pricing for this industrial component.' : 'Manage your complete catalog of parts, tools, and industrial materials.'}
+              </p>
+            </div>
           </div>
           
           <div className="d-flex align-items-center gap-3">
@@ -212,16 +229,7 @@ export default function ItemDetailsPage() {
                 <span>Add Item</span>
               </button>
             )}
-            {view === 'add' && (
-              <button 
-                type="button" 
-                className="btn btn-outline-secondary btn-page-action px-3" 
-                onClick={() => setView('list')} 
-              >
-                <i className="bi bi-arrow-left"></i>
-                <span>Back</span>
-              </button>
-            )}
+
           </div>
         </div>
 
@@ -357,9 +365,9 @@ export default function ItemDetailsPage() {
                             <td colSpan={4} className="text-center py-5 text-muted">No items found</td>
                           </tr>
                         ) : (
-                          filteredItems.map((item, index) => (
+                          paginatedItems.map((item, index) => (
                             <tr key={item.id}>
-                              <td className="px-4 py-3 text-muted">{index + 1}</td>
+                              <td className="px-4 py-3 text-muted">{(pagination.itemPage - 1) * pagination.itemsPerPage + index + 1}</td>
                               <td className="px-4 py-3 font-monospace">{item.itemCode}</td>
                               <td className="px-4 py-3">{item.itemName}</td>
                               <td className="px-4 py-3 text-end">
@@ -425,6 +433,30 @@ export default function ItemDetailsPage() {
                       </tbody>
                     </table>
                   </div>
+                  {totalPages > 1 && (
+                    <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                      <span className="text-muted small">Showing {(pagination.itemPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.itemPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+                      <nav>
+                        <ul className="pagination pagination-sm mb-0">
+                          <li className={`page-item ${pagination.itemPage === 1 ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => dispatch(setItemPage(pagination.itemPage - 1))}>
+                              <i className="bi bi-chevron-left"></i>
+                            </button>
+                          </li>
+                          {[...Array(totalPages)].map((_, i) => (
+                            <li key={i} className={`page-item ${pagination.itemPage === i + 1 ? 'active' : ''}`}>
+                              <button className="page-link" onClick={() => dispatch(setItemPage(i + 1))}>{i + 1}</button>
+                            </li>
+                          ))}
+                          <li className={`page-item ${pagination.itemPage === totalPages ? 'disabled' : ''}`}>
+                            <button className="page-link" onClick={() => dispatch(setItemPage(pagination.itemPage + 1))}>
+                              <i className="bi bi-chevron-right"></i>
+                            </button>
+                          </li>
+                        </ul>
+                      </nav>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

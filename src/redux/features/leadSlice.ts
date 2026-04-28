@@ -66,6 +66,10 @@ interface LeadState {
     fromDate: string;
     toDate: string;
   };
+  pagination: {
+    currentPage: number;
+    itemsPerPage: number;
+  };
 }
 
 const initialState: LeadState = {
@@ -79,6 +83,10 @@ const initialState: LeadState = {
     fromDate: '',
     toDate: '',
   },
+  pagination: {
+    currentPage: 1,
+    itemsPerPage: 10,
+  },
 };
 
 const leadSlice = createSlice({
@@ -87,6 +95,10 @@ const leadSlice = createSlice({
   reducers: {
     setLeadFilters: (state, action: PayloadAction<Partial<LeadState['filters']>>) => {
       state.filters = { ...state.filters, ...action.payload };
+      state.pagination.currentPage = 1;
+    },
+    setLeadPage: (state, action: PayloadAction<number>) => {
+      state.pagination.currentPage = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -117,7 +129,7 @@ const leadSlice = createSlice({
   }
 });
 
-export const { setLeadFilters } = leadSlice.actions;
+export const { setLeadFilters, setLeadPage } = leadSlice.actions;
 
 export const addLead = createLeadSync;
 export const updateLead = updateLeadSync;

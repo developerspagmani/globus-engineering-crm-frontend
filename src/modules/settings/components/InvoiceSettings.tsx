@@ -110,7 +110,7 @@ const InvoiceSettings: React.FC = () => {
               {/* Branding Section */}
               <div className="col-12">
                 <div className="d-flex align-items-center gap-2 mb-3">
-                  <div className="bg-primary bg-opacity-10 p-2 text-primary">
+                  <div className=" bg-opacity-10 p-2 text-primary">
                     <i className="bi bi-brush fs-5"></i>
                   </div>
                   <h6 className="fw-bold mb-0">Branding & Identity</h6>
@@ -199,7 +199,6 @@ const InvoiceSettings: React.FC = () => {
                     <label className="form-label small text-muted text-uppercase fw-bold">Supplier Address <span className="text-danger">*</span></label>
                     <textarea className="form-control" rows={2} name="companyAddress" value={(formData as any).companyAddress || ''} onChange={handleInputChange} placeholder="Full address to be printed under Supplier Details" required></textarea>
                   </div>
-
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold">GST Number <span className="text-danger">*</span></label>
                     <input type="text" className="form-control" name="gstNo" value={(formData as any).gstNo || ''} onChange={handleInputChange} placeholder="GSTIN" required />
@@ -240,7 +239,7 @@ const InvoiceSettings: React.FC = () => {
               {/* Banking Section */}
               <div className="col-12">
                 <div className="d-flex align-items-center gap-2 mb-3">
-                  <div className="bg-primary bg-opacity-10 p-2 text-primary">
+                  <div className=" bg-opacity-10 p-2 text-primary">
                     <i className="bi bi-bank fs-5"></i>
                   </div>
                   <h6 className="fw-bold mb-0">Banking & Statutory</h6>

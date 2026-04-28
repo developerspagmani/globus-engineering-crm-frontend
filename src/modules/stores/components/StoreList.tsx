@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchStores, deleteStore, setStoreFilters } from '@/redux/features/storeSlice';
+import { fetchStores, deleteStore, setStoreFilters, setStorePage } from '@/redux/features/storeSlice';
 import { Store } from '@/types/modules';
 import StoreVisitForm from './StoreVisitForm';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ const StoreList: React.FC = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user: currentUser } = useSelector((state: RootState) => state.auth);
-  const { items: stores, loading, error, filters } = useSelector((state: RootState) => state.stores);
+  const { items: stores, loading, error, filters, pagination } = useSelector((state: RootState) => state.stores);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -55,6 +55,12 @@ const StoreList: React.FC = () => {
     const matchesArea = filters.area === 'all' || store.area === filters.area;
     return matchesSearch && matchesArea;
   });
+
+  const totalPages = Math.ceil(filteredStores.length / pagination.itemsPerPage);
+  const paginatedItems = filteredStores.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const areas = Array.from(new Set(stores.map(s => s.area).filter(Boolean)));
 
@@ -121,7 +127,8 @@ const StoreList: React.FC = () => {
         <table className="table table-hover align-middle mb-0">
           <thead>
             <tr className="bg-light">
-              <th className="ps-4 py-3 border-0 small fw-bold text-muted">Shop Name</th>
+              <th className="ps-4 py-3 border-0 small fw-bold text-muted">Sno</th>
+              <th className="py-3 border-0 small fw-bold text-muted">Shop Name</th>
               <th className="py-3 border-0 small fw-bold text-muted">Owner</th>
               <th className="py-3 border-0 small fw-bold text-muted">Phone</th>
               <th className="py-3 border-0 small fw-bold text-muted">Area / Cluster</th>
@@ -130,11 +137,12 @@ const StoreList: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredStores.map((store, index) => (
+            {paginatedItems.map((store, index) => (
               <tr key={store.id}>
-                <td className="ps-4">
+                <td className="ps-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                <td>
                   <div className="d-flex align-items-center">
-                    <div className="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center fw-800 me-3" style={{ width: '40px', height: '40px' }}>
+                    <div className=" bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center fw-800 me-3" style={{ width: '40px', height: '40px' }}>
                       {store.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -202,6 +210,31 @@ const StoreList: React.FC = () => {
             ))}
           </tbody>
         </table>
+
+        {totalPages > 1 && (
+          <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+            <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredStores.length)} of {filteredStores.length} entries</span>
+            <nav>
+              <ul className="pagination pagination-sm mb-0">
+                <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => dispatch(setStorePage(pagination.currentPage - 1))}>
+                    <i className="bi bi-chevron-left"></i>
+                  </button>
+                </li>
+                {[...Array(totalPages)].map((_, i) => (
+                  <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => dispatch(setStorePage(i + 1))}>{i + 1}</button>
+                  </li>
+                ))}
+                <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button className="page-link" onClick={() => dispatch(setStorePage(pagination.currentPage + 1))}>
+                    <i className="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        )}
 
         {filteredStores.length === 0 && (
           <div className="text-center p-5 bg-white rounded-4 border m-4">

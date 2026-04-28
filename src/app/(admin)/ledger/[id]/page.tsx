@@ -243,7 +243,7 @@ export default function LedgerDetailPage() {
                  <div className="col-md-5">
                     <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Account Holder</span>
                     <h3 className="fw-900 mb-1 text-dark">{party?.name || 'Loading Name...'}</h3>
-                    {/* <p className="text-muted small mb-0 font-monospace">ID: {partyId}</p> */}
+                    {/* <p className="text-muted small mb-0 ">ID: {partyId}</p> */}
                     <p className="text-muted small mb-0">{party?.street1 || 'No address specified'}</p>
                  </div>
                  <div className="col-md-3 border-start">
@@ -345,7 +345,7 @@ export default function LedgerDetailPage() {
                                         {e.vchType || 'JOURNAL'}
                                     </span>
                                 </td>
-                                <td className="py-3 small fw-bold text-muted font-monospace">{e.vchNo || '-'}</td>
+                                <td className="py-3 small fw-bold text-muted">{e.vchNo || '-'}</td>
                                 <td className="py-3 text-center">
                                     {(() => {
                                       // DYNAMIC STATUS CHECK

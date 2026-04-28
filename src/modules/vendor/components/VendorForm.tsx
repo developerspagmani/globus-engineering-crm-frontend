@@ -52,7 +52,8 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
     fax: '',
     gst: '',
     tin: '',
-    cst: ''
+    cst: '',
+    paymentTerms: ''
   });
 
   const [modal, setModal] = useState<{
@@ -110,7 +111,8 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
         fax: initialData.fax || '',
         gst: initialData.gst || '',
         tin: initialData.tin || '',
-        cst: initialData.cst || ''
+        cst: initialData.cst || '',
+        paymentTerms: initialData.paymentTerms || ''
       });
     }
   }, [initialData]);
@@ -200,6 +202,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
       gst: '33AAABC1234D1Z2',
       tin: 'TIN-33-8822',
       cst: 'CST-33-9911',
+      paymentTerms: 'Net 30 Days',
       // Respect current selection for Super Admin
       company_id: prev.company_id || user?.company_id || 'comp_globus'
     }));
@@ -218,6 +221,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
         value={formData[name]}
         onChange={handleChange}
         placeholder={label}
+        required={required}
         disabled={mode === 'view'}
       />
     </div>
@@ -236,7 +240,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             {user?.role === 'super_admin' && (
               <div className="col-md-12 mb-3">
                  <div className="p-3 bg-light rounded border border-warning shadow-sm">
-                    <label className="form-label fw-bold text-dark small text-uppercase mb-2 d-block">Associate with Company (System-Level Permission)</label>
+                    <label className="form-label fw-bold text-dark small text-uppercase mb-2 d-block">Associate with Company (System-Level Permission) <span className="text-danger">*</span></label>
                     <select 
                       className="form-select border-primary fw-bold" 
                       name="company_id" 
@@ -255,7 +259,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
               </div>
             )}
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Vendor Type</label>
+              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Vendor Type <span className="text-danger">*</span></label>
               <select className="form-select" name="vendorType" value={formData.vendorType} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="New">New</option>
                 <option value="Regular">Regular</option>
@@ -269,7 +273,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
 
             
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Category</label>
+              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Category <span className="text-danger">*</span></label>
               <select className="form-select" name="category" value={formData.category} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="Raw Materials">Raw Materials</option>
                 <option value="Logistics">Logistics</option>
@@ -279,7 +283,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status</label>
+              <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status <span className="text-danger">*</span></label>
               <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
@@ -297,17 +301,15 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             {renderInput('State', 'state', 'text', true)}
             {renderInput('State Code', 'stateCode', 'text', true)}
             {renderInput('Pin code', 'pinCode', 'text', true)}
-
           </div>
 
 
           <h5 className="mb-4 text-primary border-bottom pb-2">Contact Persons</h5>
           <div className="row g-3 mb-4">
             {renderInput('Contact Person 1', 'contactPerson1', 'text', true)}
-            {renderInput('Designation 1', 'designation1')}
-            {renderInput('Email Id 1', 'emailId1', 'text', true)}
+            {renderInput('Designation 1', 'designation1', 'text', true)}
+            {renderInput('Email Id 1', 'emailId1', 'email', true)}
             {renderInput('Phone Number 1', 'phoneNumber1', 'text', true)}
-
             
             {renderInput('Contact Person 2', 'contactPerson2')}
             {renderInput('Designation 2', 'designation2')}
@@ -323,11 +325,12 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             {renderInput('Fax', 'fax')}
           </div>
 
-          <h5 className="mb-4 text-primary border-bottom pb-2">Tax Details</h5>
+          <h5 className="mb-4 text-primary border-bottom pb-2">Tax & Payment Details</h5>
           <div className="row g-3 mb-4">
             {renderInput('GST', 'gst', 'text', true)}
             {renderInput('TIN', 'tin', 'text', true)}
             {renderInput('CST', 'cst', 'text', true)}
+            {renderInput('Payment Terms', 'paymentTerms', 'text', true)}
           </div>
 
 

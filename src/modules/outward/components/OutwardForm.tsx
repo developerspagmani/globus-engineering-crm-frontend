@@ -247,14 +247,14 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
               <div className="row g-4">
                  <div className="col-md-6 border-end">
                     <div className="row mb-3 align-items-center">
-                        <label className="col-4 text-muted small fw-bold">CHALLAN NO <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted small fw-bold">CHALLAN NO <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="text" className="form-control fw-bold px-3 py-2" name="outwardNo" value={formData.outwardNo} onChange={handleChange} required disabled={mode === 'view'} />
                        </div>
                     </div>
                     
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">PARTY TYPE</label>
+                       <label className="col-4 text-muted small fw-bold">PARTY TYPE <span className="text-danger">*</span></label>
                        <div className="col-8 d-flex gap-3">
                           <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
                              <input type="radio" name="partyType" value="customer" checked={formData.partyType === 'customer'} onChange={handleChange} disabled={mode === 'view'} />
@@ -269,7 +269,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
                     {formData.partyType === 'customer' ? (
                       <div className="row mb-3 align-items-center">
-                          <label className="col-4 text-muted small fw-bold">CUSTOMER <span className="text-danger">*</span></label>
+                         <label className="col-4 text-muted small fw-bold">CUSTOMER <span className="text-danger">*</span></label>
                          <div className="col-8">
                              <select className="form-select px-3 py-2 fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required={formData.partyType === 'customer'} disabled={mode === 'view'}>
                                <option value="">Select Customer</option>
@@ -318,21 +318,21 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
                  <div className="col-md-6 px-lg-5">
                     <div className="row mb-3 align-items-center">
-                        <label className="col-4 text-muted small fw-bold">DISPATCH DATE <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted small fw-bold">DISPATCH DATE <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="date" className="form-control px-3 py-2" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                        <label className="col-4 text-muted small fw-bold">VEHICLE NO <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted small fw-bold">VEHICLE NO <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="text" className="form-control px-3 py-2" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="TN-01-AB-1234" required disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">DRIVER NAME</label>
+                       <label className="col-4 text-muted small fw-bold">DRIVER NAME <span className="text-danger">*</span></label>
                        <div className="col-8">
-                           <input type="text" className="form-control border-0 bg-light rounded-pill px-3 py-2" name="driverName" value={formData.driverName || ''} onChange={handleChange} placeholder="Optional" disabled={mode === 'view'} />
+                           <input type="text" className="form-control border-0 bg-light rounded-pill px-3 py-2" name="driverName" value={formData.driverName || ''} onChange={handleChange} placeholder="Required" required disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">

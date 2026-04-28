@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInwards } from '@/redux/features/inwardSlice';
+import { fetchInwards, setInwardPage } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
@@ -18,7 +18,7 @@ const InwardReportPage = () => {
   const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, loading } = useSelector((state: RootState) => state.inward);
+  const { items, pagination, loading } = useSelector((state: RootState) => state.inward);
   const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
 
   useEffect(() => {
@@ -40,6 +40,12 @@ const InwardReportPage = () => {
 
     return matchesSearch && matchesDate;
   });
+
+  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
+  const paginatedItems = filteredItems.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const totals = filteredItems.reduce((acc, item) => {
     return {
@@ -194,7 +200,7 @@ const InwardReportPage = () => {
           <div key={i} className="col-md-3">
             <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
               <div className="d-flex align-items-center gap-3">
-                <div className={`rounded-circle bg-${item.color} bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
+                <div className={`rounded-circle  bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
                   <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
                 </div>
                 <div>
@@ -214,6 +220,7 @@ const InwardReportPage = () => {
               <Loader text="Compiling Data..." />
             </div>
           ) : (
+            <>
             <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
@@ -228,9 +235,11 @@ const InwardReportPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((item, index) => (
+                  {paginatedItems.map((item, index) => (
                     <tr key={item.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted font-monospace">{index + 1}</td>
+                      <td className="px-4 small text-muted">
+                        {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
+                      </td>
                       <td className="small text-muted">{item.date}</td>
                       <td className="text-dark fw-bold">{item.dcNo || item.challanNo || '-'}</td>
                       <td className="text-dark fw-800 text-capitalize" style={{ fontSize: '0.85rem' }}>{item.customerName || item.vendorName}</td>
@@ -260,6 +269,31 @@ const InwardReportPage = () => {
                 </tbody>
               </table>
             </div>
+            {totalPages > 1 && (
+              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+                <nav>
+                  <ul className="pagination pagination-sm mb-0">
+                    <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setInwardPage(pagination.currentPage - 1))}>
+                        <i className="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    {[...Array(totalPages)].map((_, i) => (
+                      <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => dispatch(setInwardPage(i + 1))}>{i + 1}</button>
+                      </li>
+                    ))}
+                    <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setInwardPage(pagination.currentPage + 1))}>
+                        <i className="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

@@ -35,8 +35,8 @@ export default function EditCustomerPage() {
         ) : (
           <div className="animate-fade-in">
             <div className="d-flex align-items-center mb-4 border-bottom pb-3">
-              <Link href="/customers" className="btn btn-outline-secondary border-0 p-0 me-3" title="Back to Customers">
-                <i className="bi bi-arrow-left fs-3 text-muted"></i>
+              <Link href="/customers" className="back-btn-standard" title="Back to Customers">
+                <i className="bi bi-arrow-left fs-4"></i>
               </Link>
               <div>
                 <nav aria-label="breadcrumb">

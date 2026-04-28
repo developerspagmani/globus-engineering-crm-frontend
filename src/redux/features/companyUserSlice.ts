@@ -98,6 +98,10 @@ interface UserState {
   filters: UserFilters;
   loading: boolean;
   error: string | null;
+  pagination: {
+    currentPage: number;
+    itemsPerPage: number;
+  };
 }
 
 const initialState: UserState = {
@@ -108,6 +112,10 @@ const initialState: UserState = {
   },
   loading: false,
   error: null,
+  pagination: {
+    currentPage: 1,
+    itemsPerPage: 10,
+  },
 };
 
 const companyUserSlice = createSlice({
@@ -116,6 +124,10 @@ const companyUserSlice = createSlice({
   reducers: {
     setUserFilters: (state, action: PayloadAction<Partial<UserFilters>>) => {
       state.filters = { ...state.filters, ...action.payload };
+      state.pagination.currentPage = 1;
+    },
+    setUserPage: (state, action: PayloadAction<number>) => {
+      state.pagination.currentPage = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -142,7 +154,7 @@ const companyUserSlice = createSlice({
   }
 });
 
-export const { setUserFilters } = companyUserSlice.actions;
+export const { setUserFilters, setUserPage } = companyUserSlice.actions;
 export const addUser = addUserAsync; 
 export const updateUser = updateUserAsync;
 export default companyUserSlice.reducer;

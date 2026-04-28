@@ -104,18 +104,7 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
       </div>
 
       <div className="d-flex align-items-center">
-        <div className="dropdown">
-          <button
-            className="btn btn-white border shadow-sm position-relative me-3 rounded-circle d-flex align-items-center justify-content-center"
-            style={{ width: '42px', height: '42px' }}
-            type="button"
-          >
-            <i className="bi bi-bell text-muted"></i>
-            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill border border-white" style={{ fontSize: '0.6rem', padding: '0.35em 0.65em', backgroundColor: 'var(--accent-color)' }}>
-              3
-            </span>
-          </button>
-        </div>
+
 
         <div className="dropdown">
           <button

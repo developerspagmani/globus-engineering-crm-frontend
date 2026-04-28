@@ -197,11 +197,25 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6 d-flex align-items-center gap-3">
+              <label className="text-muted small fw-bold col-3">Payment Mode <span className="text-danger">*</span></label>
+              <select
+                className="form-select"
+                name="paymentMode"
+                value={formData.chequeNo ? 'bank' : 'cash'}
+                onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value === 'cash' ? '' : prev.chequeNo }))}
+                required
+                disabled={mode === 'view'}
+              >
+                <option value="cash">Cash</option>
+                <option value="bank">Bank / Cheque</option>
+              </select>
+            </div>
+            <div className="col-md-6 d-flex align-items-center gap-3">
               <label className="text-muted small fw-bold col-3">Cheque No</label>
               <input
                 type="text"
                 className="form-control"
-                placeholder="Cheque No"
+                placeholder="Cheque No (If Bank)"
                 value={formData.chequeNo}
                 onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value }))}
                 disabled={mode === 'view'}
@@ -209,7 +223,6 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             </div>
             <div className="col-md-12 d-flex align-items-center gap-3">
               <label className="text-muted small fw-bold col-1">CUSTOMER <span className="text-danger">*</span></label>
-
               {initialData ? (
                 <div className="w-100 text-center fw-900 text-uppercase fs-3 tracking-tighter" style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', color: '#000', backgroundColor: '#f8fafc' }}>
                   {formData.customerName || 'LOADING CUSTOMER...'}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import { fetchInvoices, setInvoicePage } from '@/redux/features/invoiceSlice';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
@@ -18,7 +18,7 @@ const InvoiceReportPage = () => {
   const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: invoices, loading } = useSelector((state: RootState) => state.invoices);
+  const { items: invoices, pagination, loading } = useSelector((state: RootState) => state.invoices);
 
   useEffect(() => {
     setMounted(true);
@@ -47,6 +47,12 @@ const InvoiceReportPage = () => {
 
     return matchesSearch && matchesDate;
   });
+
+  const totalPages = Math.ceil(filteredInvoices.length / pagination.itemsPerPage);
+  const paginatedItems = filteredInvoices.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const totals = filteredInvoices.reduce((acc, inv) => {
     return {
@@ -128,7 +134,7 @@ const InvoiceReportPage = () => {
           <div key={i} className="col-md-3">
             <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
               <div className="d-flex align-items-center gap-3">
-                <div className={`rounded-circle bg-${item.color} bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
+                <div className={`rounded-circle bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
                   <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
                 </div>
                 <div>
@@ -148,6 +154,7 @@ const InvoiceReportPage = () => {
               <Loader text="Compiling Data..." />
             </div>
           ) : (
+            <>
             <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
               <table className="table table-hover align-middle mb-0">
                 <thead className="bg-light">
@@ -163,9 +170,11 @@ const InvoiceReportPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInvoices.map((inv, index) => (
+                  {paginatedItems.map((inv, index) => (
                     <tr key={inv.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted font-monospace">{index + 1}</td>
+                      <td className="px-4 small text-muted">
+                        {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
+                      </td>
                       <td className="small text-muted">{inv.date}</td>
                       <td className="text-dark fw-bold">{inv.invoiceNumber}</td>
                       <td className="text-dark fw-800 text-capitalize" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
@@ -193,12 +202,34 @@ const InvoiceReportPage = () => {
                     <td className="text-end py-3 px-2">₹{totals.grand.toLocaleString()}</td>
                     <td></td>
                   </tr>
-                  {filteredInvoices.length === 0 && (
-                    <tr><td colSpan={8} className="text-center py-5 text-muted small">No invoices found matching filters.</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
+            {totalPages > 1 && (
+              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} entries</span>
+                <nav>
+                  <ul className="pagination pagination-sm mb-0">
+                    <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setInvoicePage(pagination.currentPage - 1))}>
+                        <i className="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    {[...Array(totalPages)].map((_, i) => (
+                      <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
+                        <button className="page-link" onClick={() => dispatch(setInvoicePage(i + 1))}>{i + 1}</button>
+                      </li>
+                    ))}
+                    <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button className="page-link" onClick={() => dispatch(setInvoicePage(pagination.currentPage + 1))}>
+                        <i className="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>
