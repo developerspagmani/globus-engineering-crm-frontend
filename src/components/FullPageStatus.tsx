@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 
 interface FullPageStatusProps {
@@ -56,20 +57,18 @@ const FullPageStatus: React.FC<FullPageStatusProps> = ({
     }
   };
 
-  return (
+  const modalContent = (
     <div 
       className="d-flex align-items-center justify-content-center" 
       style={{ 
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         backgroundColor: 'rgba(0,0,0,0.1)', 
         backdropFilter: 'blur(10px)',
         zIndex: 999999, 
-        width: '100vw',
-        height: '100vh'
       }}
     >
       <div 
@@ -117,6 +116,9 @@ const FullPageStatus: React.FC<FullPageStatusProps> = ({
       `}</style>
     </div>
   );
+
+  if (typeof window === 'undefined') return modalContent;
+  return createPortal(modalContent, document.body);
 };
 
 export default FullPageStatus;

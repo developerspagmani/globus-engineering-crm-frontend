@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface StatusModalProps {
   isOpen: boolean;
@@ -55,20 +56,18 @@ const StatusModal: React.FC<StatusModalProps> = ({
 
   const style = config[type];
 
-  return (
+  const modalContent = (
     <div 
-      className="show d-flex align-items-center justify-content-center px-3" 
+      className="show d-flex align-items-center justify-content-center" 
       style={{ 
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         backgroundColor: 'rgba(0,0,0,0.4)', 
         zIndex: 99999, 
         backdropFilter: 'blur(6px)',
-        height: '100vh',
-        width: '100vw'
       }}
     >
       <div 
@@ -115,6 +114,9 @@ const StatusModal: React.FC<StatusModalProps> = ({
       `}</style>
     </div>
   );
+
+  if (typeof window === 'undefined') return modalContent;
+  return createPortal(modalContent, document.body);
 };
 
 export default StatusModal;

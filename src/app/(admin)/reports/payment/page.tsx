@@ -209,7 +209,7 @@ const PaymentReportPage = () => {
       {/* Audit Summary Cards */}
       <div className="row g-3 mb-4">
         {[
-          { label: 'Payments Recvd', val: totals.paymentCount, icon: 'shield-check', color: 'primary' },
+          { label: 'Payments Received', val: totals.paymentCount, icon: 'shield-check', color: 'primary' },
           { label: 'Total Collected', val: `₹${totals.totalCollected.toLocaleString()}`, icon: 'bank', color: 'success' },
           { label: 'Total Outstanding', val: `₹${totals.totalOutstanding.toLocaleString()}`, icon: 'exclamation-diamond', color: 'danger' },
           { label: 'Critical (>90D)', val: totals.criticalOverdue, icon: 'alarm', color: 'warning' }
