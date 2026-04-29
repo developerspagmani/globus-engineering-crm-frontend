@@ -10,24 +10,29 @@ export const fetchPendingPayments = createAsyncThunk(
       const response = await api.get(url);
       // Only show invoices that are NOT fully paid and are of type INVOICE or BOTH
       return response.data
-        .map((inv: any) => ({
-          id: inv.id.toString(),
-          invoiceNumber: String(inv.invoice_no || `INV-${inv.id}`),
-          customerId: inv.customer_id?.toString() || '',
-          customerName: inv.customer_name || 'N/A',
-          company_id: inv.company_id?.toString() || '',
-          date: inv.invoice_date ? new Date(inv.invoice_date).toISOString().split('T')[0] : '',
-          dueDate: inv.due_date ? new Date(inv.due_date).toISOString().split('T')[0] : '',
-          grandTotal: parseFloat(inv.grand_total || '0'),
-          paidAmount: parseFloat(inv.paid_amount || '0'),
-          status: inv.status?.toLowerCase() || 'draft',
-          type: inv.type || 'INVOICE',
-          inwardId: inv.inward_id?.toString(),
-          items: inv.items || [],
-          subTotal: parseFloat(inv.total || '0'),
-          taxTotal: parseFloat(inv.grand_total || '0') - parseFloat(inv.total || '0'),
-          createdAt: inv.app_created_at
-        }))
+        .map((inv: any) => {
+          const grandTotal = parseFloat(String(inv.grand_total || '0').replace(/[^\d.]/g, '')) || 0;
+          const paidAmount = parseFloat(String(inv.paid_amount || '0').replace(/[^\d.]/g, '')) || 0;
+          
+          return {
+            id: inv.id.toString(),
+            invoiceNumber: String(inv.invoice_no || `INV-${inv.id}`),
+            customerId: inv.customer_id?.toString() || '',
+            customerName: inv.customer_name || 'N/A',
+            company_id: inv.company_id?.toString() || '',
+            date: inv.invoice_date ? new Date(inv.invoice_date).toISOString().split('T')[0] : '',
+            dueDate: inv.due_date ? new Date(inv.due_date).toISOString().split('T')[0] : '',
+            grandTotal,
+            paidAmount,
+            status: inv.status?.toLowerCase() || 'draft',
+            type: inv.type || 'INVOICE',
+            inwardId: inv.inward_id?.toString(),
+            items: inv.items || [],
+            subTotal: parseFloat(String(inv.total || '0').replace(/[^\d.]/g, '')) || 0,
+            taxTotal: grandTotal - (parseFloat(String(inv.total || '0').replace(/[^\d.]/g, '')) || 0),
+            createdAt: inv.app_created_at
+          };
+        })
         .filter((inv: any) => inv.grandTotal > inv.paidAmount && (inv.type === 'INVOICE' || inv.type === 'BOTH'));
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch pending payments');
@@ -87,7 +92,7 @@ const pendingPaymentSlice = createSlice({
       })
       .addCase(fetchPendingPayments.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.filter((item: any) => (item.grandTotal - (item.paidAmount || 0)) > 0);
         state.error = null;
       })
       .addCase(fetchPendingPayments.rejected, (state, action) => {

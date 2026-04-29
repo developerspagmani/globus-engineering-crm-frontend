@@ -15,7 +15,7 @@ export const fetchVouchers = createAsyncThunk(
         partyId: v.party_id?.toString(),
         partyName: v.party_name,
         partyType: v.party_type?.toLowerCase() || 'other',
-        amount: parseFloat(v.amount || '0'),
+        amount: parseFloat(String(v.amount || '0').replace(/[^\d.]/g, '')) || 0,
         paymentMode: v.payment_mode?.toLowerCase() || 'cash',
         referenceNo: v.reference_no,
         chequeNo: v.cheque_no,

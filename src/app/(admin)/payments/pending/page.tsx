@@ -38,7 +38,12 @@ const PendingPaymentPage = () => {
 
   // Filter for pending/billed but not paid invoices
   const pendingInvoices = items.filter(inv => {
-    const isPending = inv.status?.toLowerCase() !== 'paid' && inv.status?.toLowerCase() !== 'cancelled';
+    // Only show invoices that are NOT fully paid and have a balance > 0
+    const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
+    const isPending = inv.status?.toLowerCase() !== 'paid' && 
+                      inv.status?.toLowerCase() !== 'cancelled' &&
+                      balance > 0;
+    
     if (!isPending) return false;
 
     const matchesSearch = (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || 

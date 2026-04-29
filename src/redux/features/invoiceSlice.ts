@@ -7,9 +7,12 @@ const mapInvoice = (inv: any): Invoice => {
     ? inv.items_json 
     : JSON.parse(inv.items_json || '[]');
 
+  const grandTotal = parseFloat(String(inv.grand_total || inv.grandTotal || '0').replace(/[^\d.]/g, '')) || 0;
+  const subTotal = parseFloat(String(inv.total || inv.subTotal || '0').replace(/[^\d.]/g, '')) || 0;
+
   return {
     id: inv.id.toString(),
-    invoiceNumber: inv.invoice_no ? String(inv.invoice_no).padStart(4, '0') : inv.invoiceNumber ? String(inv.invoiceNumber).padStart(4, '0') : `INV-${inv.id}`,
+    invoiceNumber: inv.invoice_no && inv.invoice_no !== 0 ? String(inv.invoice_no).padStart(4, '0') : (inv.invoiceNumber || `INV-${inv.id}`),
     customerId: inv.customer_id?.toString() || inv.customerId?.toString() || '',
     customerName: inv.customer_name || inv.customerName || 'N/A',
     address: inv.address || '',
@@ -18,23 +21,23 @@ const mapInvoice = (inv: any): Invoice => {
     dueDate: inv.due_date || inv.dueDate ? new Date(inv.due_date || inv.dueDate).toISOString().split('T')[0] : '',
     poNo: inv.po_no || inv.poNo || '',
     poDate: inv.po_date || inv.poDate ? new Date(inv.po_date || inv.poDate).toISOString().split('T')[0] : '',
-    dcNo: inv.dc_no ? String(inv.dc_no).padStart(4, '0') : (inv.dcNo ? String(inv.dcNo).padStart(4, '0') : ''),
+    dcNo: inv.delivery_no && inv.delivery_no !== 0 ? String(inv.delivery_no).padStart(4, '0') : (inv.dc_no || inv.dcNo || ''),
     dcDate: inv.dc_date || inv.dcDate ? new Date(inv.dc_date || inv.dcDate).toISOString().split('T')[0] : '',
-    grandTotal: parseFloat(inv.grand_total || inv.grandTotal || '0'),
+    grandTotal,
     status: inv.status?.toLowerCase() || 'draft',
     items: items.map((it: any) => ({
       id: it.id || Math.random().toString(36).substr(2, 9),
       description: it.description || '',
       process: it.process || '',
-      quantity: parseFloat(it.quantity || '0'),
-      unitPrice: parseFloat(it.unitPrice || it.unit_price || it.price || '0'),
-      amount: parseFloat(it.amount || '0'),
-      tax: parseFloat(it.tax || '0'),
-      total: parseFloat(it.total || '0')
+      quantity: parseFloat(String(it.quantity || '0').replace(/[^\d.]/g, '')) || 0,
+      unitPrice: parseFloat(String(it.unitPrice || it.unit_price || it.price || '0').replace(/[^\d.]/g, '')) || 0,
+      amount: parseFloat(String(it.amount || '0').replace(/[^\d.]/g, '')) || 0,
+      tax: parseFloat(String(it.tax || '0').replace(/[^\d.]/g, '')) || 0,
+      total: parseFloat(String(it.total || '0').replace(/[^\d.]/g, '')) || 0
     })),
-    subTotal: parseFloat(inv.total || inv.subTotal || '0'),
-    taxTotal: (parseFloat(inv.grand_total || inv.grandTotal || '0')) - (parseFloat(inv.total || inv.subTotal || '0')),
-    discount: parseFloat(inv.discount || '0'), 
+    subTotal,
+    taxTotal: grandTotal - subTotal,
+    discount: parseFloat(String(inv.discount || '0').replace(/[^\d.]/g, '')) || 0, 
     type: inv.type || (
       (inv.billType || inv.bill_type) === 'Without Process' || (inv.billType || inv.bill_type) === 'without_process' ? 'WOP' :
       (inv.billType || inv.bill_type) === 'Both' || (inv.billType || inv.bill_type) === 'both' ? 'BOTH' : 'INVOICE'
@@ -49,9 +52,12 @@ const mapInvoice = (inv: any): Invoice => {
     notes: inv.notes || '',
     gstin: inv.gstin || '',
     state: inv.state || '',
-    paidAmount: parseFloat(inv.paid_amount || inv.paidAmount || '0'),
-    otherCharges: parseFloat(inv.other_charges || inv.otherCharges || '0'),
-    taxRate: parseFloat(inv.tax_rate || inv.taxRate || '12')
+    paidAmount: parseFloat(String(inv.paid_amount || inv.paidAmount || '0').replace(/[^\d.]/g, '')) || 0,
+    otherCharges: parseFloat(String(inv.other_charges || inv.otherCharges || '0').replace(/[^\d.]/g, '')) || 0,
+    taxRate: parseFloat(String(inv.tax_rate || inv.taxRate || '12').replace(/[^\d.]/g, '')) || 0,
+    gst1: inv.gst1,
+    gst2: inv.gst2,
+    igst: inv.igst
   };
 };
 

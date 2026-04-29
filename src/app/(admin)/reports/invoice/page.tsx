@@ -16,6 +16,7 @@ import PaginationComponent from '@/components/shared/Pagination';
 const InvoiceReportPage = () => {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('pending');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
@@ -35,6 +36,11 @@ const InvoiceReportPage = () => {
     // Exclude 'Without Process' only records from the invoice report
     const invType = String(inv.type || '').toUpperCase();
     if (invType === 'WOP' || invType === 'WITHOUT PROCESS') return false;
+
+    // Status filtering
+    const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
+    if (statusFilter === 'pending' && balance <= 0) return false;
+    if (statusFilter === 'paid' && balance > 0) return false;
 
     const searchTerm = search.toLowerCase();
     const matchesSearch = (
@@ -114,6 +120,19 @@ const InvoiceReportPage = () => {
                 </span>
                 <input type="text" className="form-control search-bar" placeholder="Search customer or invoice..." value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
+            </div>
+
+            <div className="filter-item-select">
+              <select 
+                className="form-select search-bar"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                style={{ width: '180px' }}
+              >
+                <option value="pending">Pending Invoices</option>
+                <option value="paid">Paid Invoices</option>
+                <option value="all">All Invoices</option>
+              </select>
             </div>
             
             <div className="date-filter-group">

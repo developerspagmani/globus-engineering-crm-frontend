@@ -239,25 +239,6 @@ export default function ItemDetailsPage() {
           {view === 'add' ? (
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
               <form onSubmit={handleSubmit}>
-                {/* Item Code Field */}
-                <div className="row mb-5 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item Code <span className="text-danger">*</span></label>
-                  </div>
-
-                  <div className="col-md-9">
-                    <input
-                      type="text"
-                      required
-                      placeholder="Item Code"
-                      className="form-control"
-                      style={{ fontSize: '1.1rem' }}
-                      value={formData.itemCode}
-                      onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
-                      disabled={isViewOnly}
-                    />
-                  </div>
-                </div>
 
                 {/* Item Name Field */}
                 <div className="row mb-5 align-items-center">
@@ -350,7 +331,6 @@ export default function ItemDetailsPage() {
                       <thead className="bg-light">
                         <tr>
                           <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '60px' }}>Sno</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold">Item Code</th>
                           <th className="px-4 py-3 text-capitalize small fw-bold">Item Name</th>
                           <th className="px-4 py-3 text-capitalize small fw-bold text-end">Actions</th>
                         </tr>
@@ -370,7 +350,6 @@ export default function ItemDetailsPage() {
                           paginatedItems.map((item, index) => (
                             <tr key={item.id}>
                               <td className="px-4 py-3 text-muted">{(pagination.itemPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                              <td className="px-4 py-3 font-monospace">{item.itemCode}</td>
                               <td className="px-4 py-3">{item.itemName}</td>
                               <td className="px-4 py-3 text-end">
                                 <div className="d-flex justify-content-end align-items-center gap-1">

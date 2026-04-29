@@ -48,6 +48,9 @@ export interface Invoice {
   notes?: string;
   otherCharges?: number;
   taxRate?: number;
+  gst1?: string;
+  gst2?: string;
+  igst?: string;
   createdAt: string;
   app_created_at?: string;
 }

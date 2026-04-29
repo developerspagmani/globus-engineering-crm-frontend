@@ -17,6 +17,7 @@ import PaginationComponent from '@/components/shared/Pagination';
 const GstReportPage = () => {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('pending');
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const dispatch = useDispatch();
@@ -38,6 +39,11 @@ const GstReportPage = () => {
     // Exclude 'Without Process' records from GST report as they are non-taxable
     const invType = String(inv.type || '').toUpperCase();
     if (invType === 'WOP' || invType === 'WITHOUT PROCESS') return false;
+
+    // Status filtering
+    const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
+    if (statusFilter === 'pending' && balance <= 0) return false;
+    if (statusFilter === 'paid' && balance > 0) return false;
 
     const matchesSearch = (inv.customerName?.toLowerCase() || '').includes(search.toLowerCase()) || 
                          (inv.invoiceNumber?.toLowerCase() || '').includes(search.toLowerCase());
@@ -135,6 +141,19 @@ const GstReportPage = () => {
               </div>
             </div>
             
+            <div className="filter-item-select">
+                <select 
+                  className="form-select search-bar"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  style={{ width: '180px' }}
+                >
+                  <option value="pending">Pending Invoices</option>
+                  <option value="paid">Paid Invoices</option>
+                  <option value="all">All Invoices</option>
+                </select>
+            </div>
+
             <div className="date-filter-group">
               <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
               <span className="text-muted small fw-bold mx-1">TO</span>
@@ -181,52 +200,47 @@ const GstReportPage = () => {
                 <thead className="bg-light">
                   <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Date</th>
-                    <th className="py-3 border-0">Invoice No</th>
-                    <th className="py-3 border-0">Customer Name</th>
-                    <th className="py-3 border-0">GSTIN</th>
+                    <th className="py-3 border-0">Received Date</th>
+                    <th className="py-3 border-0">Customer</th>
+                    <th className="py-3 border-0">GST TIN</th>
+                    <th className="py-3 border-0 text-center">Dc No</th>
+                    <th className="py-3 border-0 text-center">Invoice No</th>
                     <th className="py-3 border-0 text-end">Amount</th>
-                    <th className="py-3 border-0 text-center">Taxes</th>
-                    <th className="py-3 border-0 text-center" style={{ width: '120px' }}>Action</th>
+                    <th className="py-3 border-0 text-end">CGST</th>
+                    <th className="py-3 border-0 text-end">SGST</th>
+                    <th className="py-3 border-0 text-end">IGST</th>
+                    <th className="py-3 border-0 text-center px-4" style={{ width: '80px' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedItems.map((inv, idx) => {
-                    const customer = customers.find(c => c.id === inv.customerId);
+                    const taxable = inv.subTotal || (inv.grandTotal - (inv.taxTotal || 0));
                     return (
                       <tr key={inv.id} className="border-bottom border-light">
                         <td className="px-4 small text-muted ">
                           {(pagination.currentPage - 1) * pagination.itemsPerPage + idx + 1}
                         </td>
-                        <td className="small text-muted">{inv.date}</td>
-                        <td className="text-dark fw-bold">{inv.invoiceNumber}</td>
+                        <td className="small text-muted">{inv.date ? new Date(inv.date).toLocaleDateString() : '-'}</td>
                         <td className="fw-800 text-dark small text-capitalize">{inv.customerName}</td>
-                        <td className="small text-muted ">{customer?.gst || '-'}</td>
-                        <td className="text-end fw-900  px-2">₹{inv.grandTotal.toLocaleString()}</td>
-                        <td className="text-center small text-muted ">₹{inv.taxTotal?.toLocaleString() || '-'}</td>
+                        <td className="small text-muted">{inv.gstin || '-'}</td>
+                        <td className="text-center small text-muted">{inv.dcNo || '-'}</td>
+                        <td className="text-center text-dark fw-bold">{inv.invoiceNumber}</td>
+                        <td className="text-end fw-bold small">₹{taxable.toLocaleString()}</td>
+                        <td className="text-end text-muted small">₹{parseFloat(inv.gst1 || '0').toLocaleString()}</td>
+                        <td className="text-end text-muted small">₹{parseFloat(inv.gst2 || '0').toLocaleString()}</td>
+                        <td className="text-end text-muted small">₹{parseFloat(inv.igst || '0').toLocaleString()}</td>
                         <td className="text-center">
-                          <div className="d-flex justify-content-center gap-1">
-                            <Link href={`/invoices/${inv.id}?readonly=true`} className="btn-action-view">
-                              <i className="bi bi-eye-fill"></i>
-                            </Link>
-                            <div className="dropdown">
-                              <button className="btn btn-sm btn-outline-secondary border-0 p-0" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px' }}>
-                                <i className="bi bi-three-dots-vertical fs-5"></i>
-                              </button>
-                              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                                <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrint(inv)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
-                                <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExport(inv)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
-                              </ul>
-                            </div>
-                          </div>
+                          <Link href={`/invoices/${inv.id}?readonly=true`} className="btn-action-view">
+                            <i className="bi bi-eye-fill"></i>
+                          </Link>
                         </td>
                       </tr>
                     );
                   })}
                   <tr className="bg-light-soft fw-900 border-top border-dark">
-                    <td colSpan={5} className="text-center py-3">Audit Summary (Grand Totals)</td>
-                    <td className="text-end py-3 px-2">₹{totals.grand.toLocaleString()}</td>
-                    <td className="text-center py-3">₹{totals.tax.toLocaleString()}</td>
+                    <td colSpan={6} className="text-center py-3">Audit Summary (Grand Totals)</td>
+                    <td className="text-end py-3 px-2">₹{totals.taxable.toLocaleString()}</td>
+                    <td colSpan={3} className="text-center py-3 text-info">Total Tax: ₹{totals.tax.toLocaleString()}</td>
                     <td></td>
                   </tr>
                   <tr className="bg-white small text-muted text-uppercase">

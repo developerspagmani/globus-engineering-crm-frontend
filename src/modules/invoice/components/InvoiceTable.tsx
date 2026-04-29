@@ -84,9 +84,10 @@ const InvoiceTable: React.FC = () => {
     if (activeTab === 'WOP_LIST' && (itemType !== 'WOP' && itemType !== 'WITHOUT PROCESS')) return false;
     if (activeTab === 'BOTH_LIST' && itemType !== 'BOTH') return false;
     const invNo = String(item.invoiceNumber || '').toLowerCase();
+    const dcNo = String(item.dcNo || '').toLowerCase();
     const custName = String(item.customerName || '').toLowerCase();
     const search = String(filters.search || '').toLowerCase();
-    const matchesSearch = invNo.includes(search) || custName.includes(search);
+    const matchesSearch = invNo.includes(search) || dcNo.includes(search) || custName.includes(search);
     const matchesStatus = (filters.status === 'all' || item.status === filters.status);
     
     // Date range filtering
@@ -97,7 +98,16 @@ const InvoiceTable: React.FC = () => {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  const filteredInwards = inwards.filter(item => (user?.role === 'super_admin' || !activeCompany || (item.company_id || (item as any).companyId) === activeCompany.id) && item.status === 'pending');
+  const filteredInwards = inwards.filter(item => {
+    if (user?.role !== 'super_admin' && activeCompany && (item.company_id || (item as any).companyId) !== activeCompany.id) return false;
+    if (item.status !== 'pending') return false;
+    
+    const search = String(filters.search || '').toLowerCase();
+    const custName = String(item.customerName || item.vendorName || '').toLowerCase();
+    const dcNo = String(item.dcNo || item.challanNo || '').toLowerCase();
+    
+    return custName.includes(search) || dcNo.includes(search);
+  });
   const displayItems: any[] = activeTab === 'ADD_INVOICE' ? filteredInwards : filteredInvoices;
   const totalPages = Math.ceil(displayItems.length / pagination.itemsPerPage);
   const paginatedItems = displayItems.slice((pagination.currentPage - 1) * pagination.itemsPerPage, pagination.currentPage * pagination.itemsPerPage);
@@ -137,9 +147,13 @@ const InvoiceTable: React.FC = () => {
             <tr className="border-bottom">
               <th className="fw-semibold px-4 py-3">Sno</th>
               <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Customer' : 'Customer Name'}</th>
-              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Dc No' : 'Invoice No'}</th>
+              <th className="fw-semibold px-4 py-3">
+                {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? 'Dc No' : 'Invoice No'}
+              </th>
               <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'}</th>
-              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
+              {activeTab !== 'WOP_LIST' && (
+                <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
+              )}
               <th className="text-center fw-semibold px-4 py-3 pe-4">Action</th>
             </tr>
           </thead>
@@ -149,9 +163,15 @@ const InvoiceTable: React.FC = () => {
                 <tr key={`${activeTab}-${item.id}`} className="border-bottom text-uppercase">
                   <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                   <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
-                  <td className="text-muted small">{activeTab === 'ADD_INVOICE' ? (item.dcNo || item.challanNo || '-') : item.invoiceNumber}</td>
+                  <td className="text-muted small">
+                    {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? (item.dcNo || item.challanNo || item.dc_no || '-') : item.invoiceNumber}
+                  </td>
                   <td className="text-muted small">{item.date}</td>
-                  <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>{activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : `₹${item.grandTotal.toLocaleString()}`}</td>
+                  {activeTab !== 'WOP_LIST' && (
+                    <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>
+                      {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : `₹${item.grandTotal.toLocaleString()}`}
+                    </td>
+                  )}
                   <td className="text-center pe-4">
                     <div className="d-flex justify-content-center gap-1 align-items-center">
                       <Link 
@@ -170,6 +190,27 @@ const InvoiceTable: React.FC = () => {
                         >
                           <i className="bi bi-pencil-fill"></i>
                         </Link>
+                      )}
+
+                      {activeTab === 'BOTH_LIST' && (
+                        <div className="d-flex gap-1">
+                           <button 
+                             onClick={() => window.open(`/invoices/${item.id}?print=true&type=WP`, '_blank')} 
+                             className="btn btn-sm btn-primary rounded-pill px-2 d-flex align-items-center justify-content-center"
+                             title="Print WP (With Process)"
+                             style={{ width: '32px', height: '32px' }}
+                           >
+                             <i className="bi bi-printer-fill fs-6"></i>
+                           </button>
+                           <button 
+                             onClick={() => window.open(`/invoices/${item.id}?print=true&type=WOP`, '_blank')} 
+                             className="btn btn-sm btn-danger rounded-pill px-2 d-flex align-items-center justify-content-center"
+                             title="Print WOP (Without Process)"
+                             style={{ width: '32px', height: '32px' }}
+                           >
+                             <i className="bi bi-file-earmark-text-fill fs-6"></i>
+                           </button>
+                        </div>
                       )}
 
                       <div className="dropdown">
