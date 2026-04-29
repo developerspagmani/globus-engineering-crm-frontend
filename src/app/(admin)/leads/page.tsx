@@ -13,6 +13,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import PaginationComponent from '@/components/shared/Pagination';
+
 
 import ExportExcel from '@/components/shared/ExportExcel';
 
@@ -337,25 +339,12 @@ const LeadsPage = () => {
       {totalPages > 1 && (
         <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
           <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
-          <nav>
-            <ul className="pagination pagination-sm mb-0">
-              <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => dispatch(setLeadPage(pagination.currentPage - 1))}>
-                  <i className="bi bi-chevron-left"></i>
-                </button>
-              </li>
-              {[...Array(totalPages)].map((_, i) => (
-                <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
-                  <button className="page-link" onClick={() => dispatch(setLeadPage(i + 1))}>{i + 1}</button>
-                </li>
-              ))}
-              <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => dispatch(setLeadPage(pagination.currentPage + 1))}>
-                  <i className="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
+            <PaginationComponent 
+              currentPage={pagination.currentPage} 
+              totalPages={totalPages} 
+              onPageChange={(page) => dispatch(setLeadPage(page))} 
+            />
+
         </div>
       )}
     </div>

@@ -1,88 +1,105 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-
-import { Customer } from "@/types/modules";
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import Link from 'next/link';
+import { Customer } from '@/types/modules';
+import { checkActionPermission } from '@/config/permissions';
+import PaginationComponent from '@/components/shared/Pagination';
 
 interface CustomerTableProps {
-    customers: Customer[];
-    selectedRegion: string | null;
+  customers: Customer[];
+  selectedRegion: string | null;
 }
 
-const CustomerTable = ({ customers, selectedRegion }: CustomerTableProps) => {
-    const [searchTerm, setSearchTerm] = useState("");
+const CustomerTable: React.FC<CustomerTableProps> = ({ customers, selectedRegion }) => {
+  const { user } = useSelector((state: RootState) => state.auth);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-    const filtered = customers.filter(c =>
-        searchTerm === "" ||
-        Object.values(c).some(val =>
-            String(val).toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
+  const paginatedItems = customers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-    return (
-        <div className="card shadow-sm border-0 h-100 d-flex flex-column overflow-hidden">
-            {/* Table Header / Toolbar */}
-            <div className="px-4 py-3 border-bottom d-flex align-items-center justify-content-between bg-white sticky-top z-3">
-                <div className="d-flex align-items-center gap-2">
-                    <i className="bi bi-geo-alt-fill text-secondary"></i>
-                    <span className="small fw-800 text-dark text-uppercase tracking-wider">
-                        {selectedRegion ? selectedRegion : "All Regions"}
-                    </span>
-                </div>
-
-                <div className="d-flex align-items-center gap-3">
-                    <div className="position-relative" style={{ width: '220px' }}>
-                        <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style={{ fontSize: '0.9rem' }}></i>
-                        <input
-                            type="text"
-                            className="form-control form-control-sm ps-5 bg-light border-0 search-bar"
-                            placeholder="Search by Customer Name..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Table Area */}
-            <div className="table-responsive flex-grow-1 px-3">
-                <table className="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Customer Name</th>
-                            <th>Email</th>
-                            <th>Phone Number</th>
-                            <th>GSTN</th>
-                            <th className="text-end">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.length > 0 ? (
-                            filtered.map((customer, index) => (
-                                <tr key={index}>
-                                    <td className="fw-800 text-primary small text-uppercase">{customer.name}</td>
-                                    <td className="text-muted small">{customer.email}</td>
-                                    <td className="text-muted small">{customer.phone}</td>
-                                    <td><span className="badge bg-light text-dark border fw-bold">{customer.gst || '-'}</span></td>
-                                    <td className="text-end">
-                                        <button className="btn btn-sm btn-outline-danger border-0 p-2" title="Delete">
-                                            <i className="bi bi-trash3 fs-6"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={5} className="text-center py-5 text-muted small">
-                                    No data matching "{searchTerm}"
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+  return (
+    <div className="h-100 d-flex flex-column">
+      <div className="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+        <div>
+          <h5 className="fw-800 text-dark mb-0">
+            {selectedRegion ? `${selectedRegion} Accounts` : 'Regional Accounts'}
+          </h5>
+          <p className="text-muted x-small mb-0 fw-600 uppercase tracking-widest mt-1">
+            {customers.length} ENROLLED CLIENTS
+          </p>
         </div>
-    );
+      </div>
+      
+      <div className="table-responsive flex-grow-1 p-1">
+        <table className="table mb-0 align-middle">
+          <thead className="bg-light bg-opacity-50">
+            <tr>
+              <th className="px-4 py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Sno</th>
+              <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Customer</th>
+              <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Contact</th>
+              <th className="px-4 py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0 text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedItems.map((customer, index) => (
+              <tr key={customer.id} className="border-bottom">
+                <td className="px-4 py-3 text-muted small">
+                  {(currentPage - 1) * itemsPerPage + index + 1}
+                </td>
+                <td className="py-3">
+                  <div className="fw-800 text-dark small">{customer.company || customer.name}</div>
+                  <div className="x-small text-muted fw-600">{customer.industry || 'Industrial'}</div>
+                </td>
+                <td className="py-3">
+                  <div className="small fw-700">{customer.name}</div>
+                  <div className="x-small text-muted">{customer.phone || customer.email}</div>
+                </td>
+                <td className="px-4 py-3 text-end">
+                  <div className="d-flex justify-content-end gap-1">
+                    <Link href={`/customers/${customer.id}`} className="btn-action-view" title="View Detail">
+                      <i className="bi bi-eye-fill"></i>
+                    </Link>
+                    {checkActionPermission(user, 'mod_customer', 'edit') && (
+                      <Link href={`/customers/${customer.id}?edit=true`} className="btn-action-edit" title="Edit Customer">
+                        <i className="bi bi-pencil-fill"></i>
+                      </Link>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {customers.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center py-5 text-muted small fw-600">
+                  Select a region on the map to view associated accounts.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+          <span className="text-muted small">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, customers.length)} of {customers.length}
+          </span>
+          <PaginationComponent 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={(page) => setCurrentPage(page)} 
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default CustomerTable;

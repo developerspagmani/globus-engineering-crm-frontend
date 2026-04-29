@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import ExportExcel from '@/components/shared/ExportExcel';
+import PaginationComponent from '@/components/shared/Pagination';
+
 import { RootState } from '@/redux/store';
 import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan } from '@/redux/features/challanSlice';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -313,27 +315,12 @@ const ChallanPage = () => {
               <div className="text-muted small">
                 Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
               </div>
-              <nav aria-label="Table navigation">
-                <ul className="pagination pagination-sm mb-0">
-                  <li className={`page-item ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => dispatch(setChallanPage(pagination.currentPage - 1))}>
-                      <i className="bi bi-chevron-left"></i>
-                    </button>
-                  </li>
-                  {[...Array(totalPages)].map((_, i) => (
-                    <li key={i} className={`page-item ${pagination.currentPage === i + 1 ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => dispatch(setChallanPage(i + 1))}>
-                        {i + 1}
-                      </button>
-                    </li>
-                  ))}
-                  <li className={`page-item ${pagination.currentPage === totalPages ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={() => dispatch(setChallanPage(pagination.currentPage + 1))}>
-                      <i className="bi bi-chevron-right"></i>
-                    </button>
-                  </li>
-                </ul>
-              </nav>
+              <PaginationComponent 
+                currentPage={pagination.currentPage} 
+                totalPages={totalPages} 
+                onPageChange={(page) => dispatch(setChallanPage(page))} 
+              />
+
             </div>
           )}
         </div>

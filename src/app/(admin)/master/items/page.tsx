@@ -12,6 +12,8 @@ import ExportExcel from '@/components/shared/ExportExcel';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import PaginationComponent from '@/components/shared/Pagination';
+
 
 export default function ItemDetailsPage() {
   const dispatch = useDispatch();
@@ -436,25 +438,12 @@ export default function ItemDetailsPage() {
                   {totalPages > 1 && (
                     <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
                       <span className="text-muted small">Showing {(pagination.itemPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.itemPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
-                      <nav>
-                        <ul className="pagination pagination-sm mb-0">
-                          <li className={`page-item ${pagination.itemPage === 1 ? 'disabled' : ''}`}>
-                            <button className="page-link" onClick={() => dispatch(setItemPage(pagination.itemPage - 1))}>
-                              <i className="bi bi-chevron-left"></i>
-                            </button>
-                          </li>
-                          {[...Array(totalPages)].map((_, i) => (
-                            <li key={i} className={`page-item ${pagination.itemPage === i + 1 ? 'active' : ''}`}>
-                              <button className="page-link" onClick={() => dispatch(setItemPage(i + 1))}>{i + 1}</button>
-                            </li>
-                          ))}
-                          <li className={`page-item ${pagination.itemPage === totalPages ? 'disabled' : ''}`}>
-                            <button className="page-link" onClick={() => dispatch(setItemPage(pagination.itemPage + 1))}>
-                              <i className="bi bi-chevron-right"></i>
-                            </button>
-                          </li>
-                        </ul>
-                      </nav>
+                      <PaginationComponent 
+                        currentPage={pagination.itemPage} 
+                        totalPages={totalPages} 
+                        onPageChange={(page) => dispatch(setItemPage(page))} 
+                      />
+
                     </div>
                   )}
                 </div>
