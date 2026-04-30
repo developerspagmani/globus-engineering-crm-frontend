@@ -3,8 +3,8 @@ import { Invoice } from '@/types/modules';
 import api from '@/lib/axios';
 
 const mapInvoice = (inv: any): Invoice => {
-  const items = Array.isArray(inv.items_json) 
-    ? inv.items_json 
+  const items = Array.isArray(inv.items_json)
+    ? inv.items_json
     : JSON.parse(inv.items_json || '[]');
 
   const grandTotal = parseFloat(String(inv.grand_total || inv.grandTotal || '0').replace(/[^\d.]/g, '')) || 0;
@@ -37,15 +37,15 @@ const mapInvoice = (inv: any): Invoice => {
     })),
     subTotal,
     taxTotal: grandTotal - subTotal,
-    discount: parseFloat(String(inv.discount || '0').replace(/[^\d.]/g, '')) || 0, 
+    discount: parseFloat(String(inv.discount || '0').replace(/[^\d.]/g, '')) || 0,
     type: inv.type || (
       (inv.billType || inv.bill_type) === 'Without Process' || (inv.billType || inv.bill_type) === 'without_process' ? 'WOP' :
-      (inv.billType || inv.bill_type) === 'Both' || (inv.billType || inv.bill_type) === 'both' ? 'BOTH' : 'INVOICE'
+        (inv.billType || inv.bill_type) === 'Both' || (inv.billType || inv.bill_type) === 'both' ? 'BOTH' : 'INVOICE'
     ),
     billType: inv.billType || (
       inv.bill_type === 'with_process' ? 'With Process' :
-      inv.bill_type === 'without_process' ? 'Without Process' :
-      inv.bill_type === 'both' ? 'Both' : (inv.bill_type || 'With Process')
+        inv.bill_type === 'without_process' ? 'Without Process' :
+          inv.bill_type === 'both' ? 'Both' : (inv.bill_type || 'With Process')
     ),
     inwardId: inv.inward_id?.toString() || inv.inwardId?.toString(),
     createdAt: inv.app_created_at || inv.created_at || inv.createdAt,
@@ -204,31 +204,31 @@ interface InvoiceState {
     currentPage: number;
     itemsPerPage: number;
   };
-    settings: {
-      logo: string | null;
-      logoSecondary: string | null;
-      termsAndConditions: string;
-      footerText: string;
-      prefix: string;
-      nextNumber: number;
-      showLogo: boolean;
-      accentColor: string;
-      nextInvoice: string | null;
-      nextChallan: string | null;
-      showDeclaration: boolean;
-      vatTin?: string;
-      cstNo?: string;
-      panNo?: string;
-      bankName?: string;
-      bankAcc?: string;
-      bankBranchIfsc?: string;
-      companyName?: string;
-      companySubHeader?: string;
-      companyAddress?: string;
-      gstNo?: string;
-      stateDetails?: string;
-      declarationText?: string;
-    };
+  settings: {
+    logo: string | null;
+    logoSecondary: string | null;
+    termsAndConditions: string;
+    footerText: string;
+    prefix: string;
+    nextNumber: number;
+    showLogo: boolean;
+    accentColor: string;
+    nextInvoice: string | null;
+    nextChallan: string | null;
+    showDeclaration: boolean;
+    vatTin?: string;
+    cstNo?: string;
+    panNo?: string;
+    bankName?: string;
+    bankAcc?: string;
+    bankBranchIfsc?: string;
+    companyName?: string;
+    companySubHeader?: string;
+    companyAddress?: string;
+    gstNo?: string;
+    stateDetails?: string;
+    declarationText?: string;
+  };
 }
 
 const initialState: InvoiceState = {
@@ -326,7 +326,7 @@ const invoiceSlice = createSlice({
         const invoiceSettings = company.invoiceSettings || (company.invoice_settings ? JSON.parse(company.invoice_settings) : {});
         const logo = (company as any).logo || (company as any).logo;
         const logoSecondary = (company as any).logoSecondary || (company as any).logo_secondary;
-        
+
         state.settings = {
           ...state.settings,
           ...invoiceSettings,
@@ -337,8 +337,8 @@ const invoiceSlice = createSlice({
   }
 });
 
-export const { 
-  setInvoiceFilters, 
+export const {
+  setInvoiceFilters,
   setInvoicePage,
   updateInvoiceSettings,
   initializeInvoiceSettings

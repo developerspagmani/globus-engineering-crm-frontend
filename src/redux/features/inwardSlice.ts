@@ -202,7 +202,12 @@ const inwardSlice = createSlice({
       })
       .addCase(fetchInwards.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
+        state.items = action.payload.sort((a: any, b: any) => {
+          const dateA = new Date(a.createdAt || a.date || 0).getTime();
+          const dateB = new Date(b.createdAt || b.date || 0).getTime();
+          if (dateB !== dateA) return dateB - dateA;
+          return String(b.id).localeCompare(String(a.id), undefined, { numeric: true });
+        });
       })
       .addCase(fetchInwards.rejected, (state, action) => {
         state.loading = false;

@@ -193,40 +193,40 @@ const InvoiceTable: React.FC = () => {
                       )}
 
                       <div className="dropdown">
-                        <button 
-                          className="btn btn-sm btn-outline-secondary border-0 text-muted p-0" 
-                          data-bs-toggle="dropdown" 
+                        <button
+                          className="btn btn-sm btn-outline-secondary border-0 text-muted p-0"
+                          data-bs-toggle="dropdown"
                           style={{ width: '32px', height: '32px' }}
                         >
                           <i className="bi bi-three-dots-vertical fs-5"></i>
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                           {(item.type === 'BOTH' || item.type === 'INVOICE') && (
-                             <li>
-                               <button 
-                                 className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
-                                 onClick={() => router.push(`/invoices/${item.id}?print=true&type=WP`)}
-                               >
-                                 <i className="bi bi-printer text-primary"></i> WP Print
-                               </button>
-                             </li>
-                           )}
-                           {(item.type === 'BOTH' || item.type === 'WOP') && (
-                             <li>
-                               <button 
-                                 className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
-                                 onClick={() => router.push(`/invoices/${item.id}?print=true&type=WOP`)}
-                               >
-                                 <i className="bi bi-file-earmark-text text-danger"></i> WOP Print
-                               </button>
-                             </li>
-                           )}
-                           {checkActionPermission(user, 'mod_invoice', 'delete') && (
-                             <>
-                               <li><hr className="dropdown-divider opacity-50" /></li>
-                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={() => handleDeleteParams(item.id, activeTab === 'ADD_INVOICE' ? 'inward' : 'invoice')}><i className="bi bi-trash3"></i> Remove Record</button></li>
-                             </>
-                           )}
+                          {(item.type === 'BOTH' || item.type === 'INVOICE') && (
+                            <li>
+                              <button
+                                className="dropdown-item d-flex align-items-center gap-2 py-2 small"
+                                onClick={() => router.push(`/invoices/${item.id}?print=true&type=WP`)}
+                              >
+                                <i className="bi bi-printer text-primary"></i> WP Print
+                              </button>
+                            </li>
+                          )}
+                          {(item.type === 'BOTH' || item.type === 'WOP') && (
+                            <li>
+                              <button
+                                className="dropdown-item d-flex align-items-center gap-2 py-2 small"
+                                onClick={() => router.push(`/invoices/${item.id}?print=true&type=WOP`)}
+                              >
+                                <i className="bi bi-file-earmark-text text-danger"></i> WOP Print
+                              </button>
+                            </li>
+                          )}
+                          {checkActionPermission(user, 'mod_invoice', 'delete') && (
+                            <>
+                              <li><hr className="dropdown-divider opacity-50" /></li>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={() => handleDeleteParams(item.id, activeTab === 'ADD_INVOICE' ? 'inward' : 'invoice')}><i className="bi bi-trash3"></i> Remove Record</button></li>
+                            </>
+                          )}
                         </ul>
                       </div>
                     </div>
