@@ -64,8 +64,9 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    };
 
    const isPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
-   const isWOP = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('type') === 'WOP';
-   
+   const typeParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('type') : null;
+   const isWOP = typeParam === 'WOP' || invoice.type === 'WOP';
+
    const pagesData = paginate(invoice.items);
    const totalPages = pagesData.length;
 
@@ -486,92 +487,92 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                </div>
             </div>
 
-                   {/* Items Table */}
-             <div className="p-table-area">
-                <table className="p-table">
-                   <thead>
-                      <tr>
-                         <th style={{ width: '40px' }}>S.No</th>
-                         <th>Description of Goods</th>
-                         <th style={{ width: '70px' }}>SAC Code</th>
-                         {!isWOP && <th style={{ width: '60px' }}>GST Rate</th>}
-                         <th style={{ width: '60px' }}>Qty</th>
-                         {!isWOP && <th style={{ width: '90px' }}>Price</th>}
-                         {!isWOP && <th style={{ width: '100px' }}>Amount (₹)</th>}
-                      </tr>
-                   </thead>
-                   <tbody>
-                      {items.map((item: any, idx: number) => (
-                         <tr key={idx}>
-                            <td style={{ textAlign: 'center' }}>{startSno + idx}</td>
-                            <td style={{ fontWeight: 'bold' }}>{item.description}</td>
-                            <td style={{ textAlign: 'center' }}>{item.hsnCode || '998898'}</td>
-                            {!isWOP && <td style={{ textAlign: 'center' }}>{invoice.taxRate || 18}%</td>}
-                            <td style={{ textAlign: 'center' }}>{item.quantity}</td>
-                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.unitPrice.toFixed(2)}</td>}
-                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.amount.toFixed(2)}</td>}
-                         </tr>
-                      ))}
+            {/* Items Table */}
+            <div className="p-table-area">
+               <table className="p-table">
+                  <thead>
+                     <tr>
+                        <th style={{ width: '40px' }}>S.No</th>
+                        <th>Description of Goods</th>
+                        <th style={{ width: '70px' }}>SAC Code</th>
+                        {!isWOP && <th style={{ width: '60px' }}>GST Rate</th>}
+                        <th style={{ width: '60px' }}>Qty</th>
+                        {!isWOP && <th style={{ width: '90px' }}>Price</th>}
+                        {!isWOP && <th style={{ width: '100px' }}>Amount (₹)</th>}
+                     </tr>
+                  </thead>
+                  <tbody>
+                     {items.map((item: any, idx: number) => (
+                        <tr key={idx}>
+                           <td style={{ textAlign: 'center' }}>{startSno + idx}</td>
+                           <td style={{ fontWeight: 'bold' }}>{item.description}</td>
+                           <td style={{ textAlign: 'center' }}>{item.hsnCode || '998898'}</td>
+                           {!isWOP && <td style={{ textAlign: 'center' }}>{invoice.taxRate || 18}%</td>}
+                           <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                           {!isWOP && <td style={{ textAlign: 'right' }}>{item.unitPrice.toFixed(2)}</td>}
+                           {!isWOP && <td style={{ textAlign: 'right' }}>{item.amount.toFixed(2)}</td>}
+                        </tr>
+                     ))}
 
-                      {/* Full Filler Rows to occupy entire page height */}
-                      {[...Array(fillerCount)].map((_, i) => (
-                         <tr key={`filler-${i}`}>
-                            <td style={{ textAlign: 'center' }}>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            {!isWOP && <td>&nbsp;</td>}
-                            {!isWOP && <td>&nbsp;</td>}
-                         </tr>
-                      ))}
+                     {/* Full Filler Rows to occupy entire page height */}
+                     {[...Array(fillerCount)].map((_, i) => (
+                        <tr key={`filler-${i}`}>
+                           <td style={{ textAlign: 'center' }}>&nbsp;</td>
+                           <td>&nbsp;</td>
+                           <td>&nbsp;</td>
+                           {!isWOP && <td>&nbsp;</td>}
+                           <td>&nbsp;</td>
+                           {!isWOP && <td>&nbsp;</td>}
+                           {!isWOP && <td>&nbsp;</td>}
+                        </tr>
+                     ))}
 
-                      {isLastPage && (
-                         <>
-                            <tr className="total-row">
-                               <td colSpan={4} style={{ textAlign: 'right' }}>{isWOP ? 'Total Quantity' : 'Total (Taxable Value)'}</td>
-                               <td style={{ textAlign: 'center' }}>{invoice.items.reduce((sum: number, item: any) => sum + item.quantity, 0)}</td>
-                               {!isWOP && <td>&nbsp;</td>}
-                               {!isWOP && <td style={{ textAlign: 'right' }}>{invoice.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
-                            </tr>
-                            {!isWOP && (() => {
-                               const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
-                               const taxRate = invoice.taxRate || 18;
-                               const taxTotal = invoice.taxTotal || 0;
+                     {isLastPage && (
+                        <>
+                           <tr className="total-row">
+                              <td colSpan={isWOP ? 3 : 4} style={{ textAlign: 'right' }}>{isWOP ? 'Total Quantity' : 'Total (Taxable Value)'}</td>
+                              <td style={{ textAlign: 'center' }}>{invoice.items.reduce((sum: number, item: any) => sum + item.quantity, 0)}</td>
+                              {!isWOP && <td>&nbsp;</td>}
+                              {!isWOP && <td style={{ textAlign: 'right' }}>{invoice.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
+                           </tr>
+                           {!isWOP && (() => {
+                              const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
+                              const taxRate = invoice.taxRate || 18;
+                              const taxTotal = invoice.taxTotal || 0;
 
-                               if (isIntraState) {
-                                  return (
-                                     <>
-                                        <tr style={{ height: '22px' }}>
-                                           <td colSpan={6} style={{ textAlign: 'right', fontSize: '9px' }}>CGST ({taxRate / 2}%)</td>
-                                           <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2)}</td>
-                                        </tr>
-                                        <tr style={{ height: '22px' }}>
-                                           <td colSpan={6} style={{ textAlign: 'right', fontSize: '9px' }}>SGST ({taxRate / 2}%)</td>
-                                           <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2)}</td>
-                                        </tr>
-                                     </>
-                                  );
-                               } else {
-                                  return (
-                                     <tr style={{ height: '22px' }}>
-                                        <td colSpan={6} style={{ textAlign: 'right', fontSize: '9px' }}>IGST ({taxRate}%)</td>
-                                        <td style={{ textAlign: 'right' }}>{taxTotal.toFixed(2)}</td>
-                                     </tr>
-                                  );
-                               }
-                            })()}
-                            {!isWOP && (
+                              if (isIntraState) {
+                                 return (
+                                    <>
+                                       <tr style={{ height: '22px' }}>
+                                          <td colSpan={6} style={{ textAlign: 'right', fontSize: '9px' }}>CGST ({taxRate / 2}%)</td>
+                                          <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2)}</td>
+                                       </tr>
+                                       <tr style={{ height: '22px' }}>
+                                          <td colSpan={6} style={{ textAlign: 'right', fontSize: '9px' }}>SGST ({taxRate / 2}%)</td>
+                                          <td style={{ textAlign: 'right' }}>{(taxTotal / 2).toFixed(2)}</td>
+                                       </tr>
+                                    </>
+                                 );
+                              } else {
+                                 return (
+                                    <tr style={{ height: '22px' }}>
+                                       <td colSpan={6} style={{ textAlign: 'right', fontSize: '9px' }}>IGST ({taxRate}%)</td>
+                                       <td style={{ textAlign: 'right' }}>{taxTotal.toFixed(2)}</td>
+                                    </tr>
+                                 );
+                              }
+                           })()}
+                           {!isWOP && (
                               <tr className="total-row" style={{ height: '30px' }}>
                                  <td colSpan={6} style={{ textAlign: 'right', fontSize: '13px' }}>GRAND TOTAL</td>
                                  <td style={{ textAlign: 'right', fontSize: '13px' }}>{invoice.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                               </tr>
-                            )}
-                         </>
-                      )}
-                   </tbody>
-                </table>
-             </div>
+                           )}
+                        </>
+                     )}
+                  </tbody>
+               </table>
+            </div>
 
             {/* Footer only on last page */}
             {isLastPage && (
@@ -579,24 +580,24 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   {!isWOP && <div className="p-words">Amount (in words) : <strong>{totalInWords.toUpperCase()}</strong></div>}
 
                   {!isWOP && (
-                    <div className="p-details-row">
-                       <div className="p-details-box">
-                          <div className="p-details-head">Company Details</div>
-                          <div style={{ padding: '6px 12px' }}>
-                             <div>VAT TIN &nbsp;: {settings.vatTin || '33132028969'}</div>
-                             <div>CST NO &nbsp;: {settings.cstNo || '1091562'}</div>
-                             <div>PAN NO &nbsp;: {settings.panNo || 'AAIFG6568K'}</div>
-                          </div>
-                       </div>
-                       <div className="p-details-box">
-                          <div className="p-details-head">Bank Details</div>
-                          <div style={{ padding: '6px 12px' }}>
-                             <div>Bank &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{settings.bankName || 'INDIAN OVERSEAS BANK'}</strong></div>
-                             <div>A/C No &nbsp;&nbsp;: <strong>{settings.bankAcc || '170902000000962'}</strong></div>
-                             <div>IFSC &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{settings.bankBranchIfsc || 'IOBA0001709'}</strong></div>
-                          </div>
-                       </div>
-                    </div>
+                     <div className="p-details-row">
+                        <div className="p-details-box">
+                           <div className="p-details-head">Company Details</div>
+                           <div style={{ padding: '6px 12px' }}>
+                              <div>VAT TIN &nbsp;: {settings.vatTin || '33132028969'}</div>
+                              <div>CST NO &nbsp;: {settings.cstNo || '1091562'}</div>
+                              <div>PAN NO &nbsp;: {settings.panNo || 'AAIFG6568K'}</div>
+                           </div>
+                        </div>
+                        <div className="p-details-box">
+                           <div className="p-details-head">Bank Details</div>
+                           <div style={{ padding: '6px 12px' }}>
+                              <div>Bank &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{settings.bankName || 'INDIAN OVERSEAS BANK'}</strong></div>
+                              <div>A/C No &nbsp;&nbsp;: <strong>{settings.bankAcc || '170902000000962'}</strong></div>
+                              <div>IFSC &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{settings.bankBranchIfsc || 'IOBA0001709'}</strong></div>
+                           </div>
+                        </div>
+                     </div>
                   )}
 
                   <div className="p-signs">

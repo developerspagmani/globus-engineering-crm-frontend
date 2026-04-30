@@ -33,7 +33,7 @@ export interface Invoice {
   bill_type?: string;
   inwardId?: string;
   inward_id?: string;
-  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'BILLED';
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'billed';
   items: InvoiceItem[];
   subTotal: number;
   sub_total?: number;

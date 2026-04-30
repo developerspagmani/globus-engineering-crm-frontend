@@ -197,7 +197,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6 d-flex align-items-center gap-3">
-              <label className="text-muted small fw-bold col-3">Payment Mode <span className="text-danger">*</span></label>
+              <label className="text-muted small fw-bold col-3">Payment <span className="text-danger">*</span></label>
               <select
                 className="form-select"
                 name="paymentMode"
@@ -222,14 +222,15 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-12 d-flex align-items-center gap-3">
-              <label className="text-muted small fw-bold col-1">CUSTOMER <span className="text-danger">*</span></label>
+              <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>CUSTOMER <span className="text-danger">*</span></label>
               {initialData ? (
-                <div className="w-100 text-center fw-900 text-uppercase fs-3 tracking-tighter" style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px', color: '#000', backgroundColor: '#f8fafc' }}>
+                <div className="w-100 text-center fw-bold text-uppercase" style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '10px 12px', color: '#334155', backgroundColor: '#f8fafc', fontSize: '0.85rem', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {formData.customerName || 'LOADING CUSTOMER...'}
                 </div>
               ) : (
                 <select
-                  className="form-select text-center fw-bold text-uppercase fs-5"
+                  className="form-select text-center fw-semibold text-uppercase"
+                  style={{ fontSize: '0.85rem', height: '38px' }}
                   value={formData.customerId}
                   onChange={handleCustomerChange}
                   required
@@ -290,7 +291,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               <tfoot className="border-0">
                 <tr>
                   <td colSpan={3}></td>
-                  <td className="fw-bold text-end py-4 fs-4 text-dark border-top border-dark border-2">
+                  <td className="fw-bold text-end py-4 fs-6 text-dark border-top border-dark border-2">
                     {formData.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
@@ -332,6 +333,11 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             onClose={() => {
               setModal(prev => ({ ...prev, isOpen: false }));
               if (modal.type === 'success') {
+                // Refresh invoices to update balances in Pending Payment/Ledger before redirecting
+                if (activeCompany?.id) {
+                  (dispatch as any)(fetchInvoices(activeCompany.id));
+                }
+                
                 // Reset local state if successful
                 setFormData({
                   date: new Date().toISOString().split('T')[0],
@@ -351,9 +357,11 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       <style jsx>{`
         .form-control {
           font-size: 0.85rem !important;
+          height: 38px !important;
         }
         .form-select {
           font-size: 0.85rem !important;
+          height: 38px !important;
       }
       `}</style>
     </>

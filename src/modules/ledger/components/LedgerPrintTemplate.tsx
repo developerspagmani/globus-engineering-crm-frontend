@@ -141,67 +141,68 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
               </p>
          </div>
 
-         <table className="ledger-print-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt', tableLayout: 'fixed' }}>
+         <table className="ledger-print-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt', tableLayout: 'fixed', border: '1px solid black' }}>
             <thead>
-              <tr style={{ borderTop: '0.8pt solid black', borderBottom: '0.8pt solid black' }}>
-                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '13%' }}>Date</th>
-                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '37%' }}>Particulars</th>
-                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '14%' }}>Vch Type</th>
-                  <th style={{ textAlign: 'left', padding: '10px 4px', width: '10%' }}>Vch No.</th>
-                  <th style={{ textAlign: 'right', padding: '10px 4px', width: '13%' }}>Debit</th>
-                  <th style={{ textAlign: 'right', padding: '10px 4px', width: '13%' }}>Credit</th>
+              <tr style={{ borderBottom: '1px solid black', backgroundColor: '#f5f5f5' }}>
+                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '12%', borderRight: '1px solid black' }}>Date</th>
+                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '38%', borderRight: '1px solid black' }}>Particulars</th>
+                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '12%', borderRight: '1px solid black' }}>Vch Type</th>
+                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '12%', borderRight: '1px solid black' }}>Vch No.</th>
+                  <th style={{ textAlign: 'right', padding: '8px 6px', width: '13%', borderRight: '1px solid black' }}>Debit</th>
+                  <th style={{ textAlign: 'right', padding: '8px 6px', width: '13%' }}>Credit</th>
               </tr>
             </thead>
             <tbody>
               {/* Opening Balance */}
-              <tr style={{ fontWeight: 'bold' }}>
-                <td style={{ padding: '8px 4px' }}>{dateFrom ? formatLedgerDate(dateFrom) : ''}</td>
-                <td style={{ padding: '8px 4px' }}>{isDebitOpening ? 'To ' : 'By '} Opening Balance</td>
-                <td></td>
-                <td></td>
-                <td style={{ textAlign: 'right', padding: '8px 4px' }}>{isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                <td style={{ textAlign: 'right', padding: '8px 4px' }}>{!isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+              <tr style={{ fontWeight: 'bold', borderBottom: '1px solid black' }}>
+                <td style={{ padding: '6px', borderRight: '1px solid black' }}>{dateFrom ? formatLedgerDate(dateFrom) : ''}</td>
+                <td style={{ padding: '6px', borderRight: '1px solid black' }}>
+                    <span style={{ display: 'inline-block', width: '25px' }}>{isDebitOpening ? 'To' : 'By'}</span>
+                    Opening Balance
+                </td>
+                <td style={{ borderRight: '1px solid black' }}></td>
+                <td style={{ borderRight: '1px solid black' }}></td>
+                <td style={{ textAlign: 'right', padding: '6px', borderRight: '1px solid black' }}>{isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                <td style={{ textAlign: 'right', padding: '6px' }}>{!isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
               </tr>
 
               {/* Entry Rows */}
               {allEntries.map((e: any, idx: number) => (
-                <tr key={idx}>
-                  <td style={{ padding: '4px', verticalAlign: 'top' }}>{formatLedgerDate(e.date)}</td>
-                  <td style={{ padding: '4px', verticalAlign: 'top' }}>
-                      <span style={{ display: 'inline-block', width: '25px' }}>{e.debitValue > 0 ? 'To' : 'By'}</span>
+                <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
+                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{formatLedgerDate(e.date)}</td>
+                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>
+                      <span style={{ display: 'inline-block', width: '25px', fontWeight: '500' }}>{e.debitValue > 0 ? 'To' : 'By'}</span>
                       {e.description}
                   </td>
-                  <td style={{ padding: '4px', verticalAlign: 'top' }}>{e.vchType}</td>
-                  <td style={{ padding: '4px', verticalAlign: 'top' }}>{e.vchNo || '-'}</td>
-                  <td style={{ textAlign: 'right', padding: '4px', verticalAlign: 'top' }}>{e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                  <td style={{ textAlign: 'right', padding: '4px', verticalAlign: 'top' }}>{e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{e.vchType}</td>
+                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{e.vchNo || '-'}</td>
+                  <td style={{ textAlign: 'right', padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                  <td style={{ textAlign: 'right', padding: '6px', verticalAlign: 'top' }}>{e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
                 </tr>
               ))}
 
               {/* Totals Section */}
-              <tr style={{ borderTop: '0.8pt solid black' }}>
-                  <td colSpan={4}></td>
-                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{ drTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{ crTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+              <tr style={{ borderTop: '1px solid black', backgroundColor: '#fafafa', fontWeight: 'bold' }}>
+                  <td colSpan={4} style={{ borderRight: '1px solid black', padding: '6px' }}></td>
+                  <td style={{ textAlign: 'right', padding: '6px', borderRight: '1px solid black' }}>{ drTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+                  <td style={{ textAlign: 'right', padding: '6px' }}>{ crTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
               </tr>
-              <tr>
-                  <td></td>
-                  <td style={{ padding: '6px 4px', fontWeight: 'bold' }}>
+              <tr style={{ borderBottom: '1px solid black', fontWeight: 'bold' }}>
+                  <td style={{ borderRight: '1px solid black' }}></td>
+                  <td style={{ padding: '6px', borderRight: '1px solid black' }}>
                       <span style={{ display: 'inline-block', width: '25px' }}>{diff > 0 ? 'By' : 'To'}</span>
                       Closing Balance
                   </td>
-                  <td></td>
-                  <td></td>
-                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{diff < 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                  <td style={{ textAlign: 'right', padding: '6px 4px', fontWeight: 'bold' }}>{diff > 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                  <td style={{ borderRight: '1px solid black' }}></td>
+                  <td style={{ borderRight: '1px solid black' }}></td>
+                  <td style={{ textAlign: 'right', padding: '6px', borderRight: '1px solid black' }}>{diff < 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                  <td style={{ textAlign: 'right', padding: '6px' }}>{diff > 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
               </tr>
-              <tr style={{ borderTop: '0.8pt solid black', borderBottom: '0.8pt solid black', fontWeight: 'bold' }}>
-                  <td colSpan={4}></td>
-                  <td style={{ textAlign: 'right', padding: '6px 4px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                  <td style={{ textAlign: 'right', padding: '6px 4px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+              <tr style={{ borderBottom: '2px solid black', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+                  <td colSpan={4} style={{ borderRight: '1px solid black', padding: '8px 6px' }}>TOTAL</td>
+                  <td style={{ textAlign: 'right', padding: '8px 6px', borderRight: '1px solid black' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
+                  <td style={{ textAlign: 'right', padding: '8px 6px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
               </tr>
-              {/* Double line at the very bottom as seen in accounting */}
-              <tr style={{ borderTop: '0.5pt solid black' }}><td colSpan={6} style={{ height: '1px', padding: '0' }}></td></tr>
             </tbody>
          </table>
 

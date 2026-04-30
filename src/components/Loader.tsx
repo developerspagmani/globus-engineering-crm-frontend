@@ -10,72 +10,76 @@ interface LoaderProps {
 const Loader: React.FC<LoaderProps> = ({ text = 'Loading data...', className = '' }) => {
   return (
     <div className={`d-flex flex-column align-items-center justify-content-center py-5 ${className}`}>
-      <div className="loader-container mb-3">
-        <div className="spinner-orbit">
-          <div className="orbit-inner ring-1"></div>
-          <div className="orbit-inner ring-2"></div>
-          <div className="orbit-inner ring-3"></div>
+      <div className="premium-loader-container mb-4">
+        <div className="loader-circle"></div>
+        <div className="loader-core"></div>
+      </div>
+      
+      <div className="text-center">
+        <div className="loader-text fw-900 text-uppercase tracking-wider mb-1">
+          {text}
+        </div>
+        <div className="loader-brand text-muted xx-small fw-bold">
+          GLOBUS ENGINEERING
         </div>
       </div>
-      <span className="text-muted small fw-bold text-uppercase tracking-wider animate-pulse">
-        {text}
-      </span>
 
       <style jsx>{`
-        .spinner-orbit {
+        .premium-loader-container {
           position: relative;
-          width: 50px;
-          height: 50px;
+          width: 60px;
+          height: 60px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
-        .orbit-inner {
+        .loader-circle {
           position: absolute;
-          border-radius: 50%;
-          border: 3px solid transparent;
-        }
-
-        .ring-1 {
           width: 100%;
           height: 100%;
-          border-top-color: #94a3b8;
-          animation: rotate 1.5s linear infinite;
+          border: 3px solid #e2e8f0;
+          border-top-color: var(--accent-color, #0d6efd);
+          border-radius: 50%;
+          animation: spin 1s cubic-bezier(0.55, 0.17, 0.45, 0.83) infinite;
         }
 
-        .ring-2 {
-          width: 70%;
-          height: 70%;
-          border-right-color: #64748b;
-          animation: rotate 1.2s linear reverse infinite;
+        .loader-core {
+          width: 12px;
+          height: 12px;
+          background: var(--accent-color, #0d6efd);
+          border-radius: 50%;
+          animation: pulse 1.5s ease-in-out infinite;
         }
 
-        .ring-3 {
-          width: 40%;
-          height: 40%;
-          border-bottom-color: #475569;
-          animation: rotate 1s linear infinite;
-        }
-
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-          letter-spacing: 2px;
-        }
-
-        @keyframes rotate {
-          from { transform: rotate(0deg); }
+        @keyframes spin {
           to { transform: rotate(360deg); }
         }
 
         @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .5; }
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.5; }
         }
 
-        .tracking-wider {
-          letter-spacing: 0.1em;
+        .loader-text {
+          font-size: 13px;
+          letter-spacing: 3px;
+          color: #1e293b;
+          animation: text-glow 2s ease-in-out infinite;
         }
+
+        .loader-brand {
+          font-size: 8px;
+          letter-spacing: 5px;
+          opacity: 0.5;
+        }
+
+        @keyframes text-glow {
+          0%, 100% { opacity: 1; filter: blur(0px); }
+          50% { opacity: 0.6; filter: blur(0.5px); }
+        }
+
+        .xx-small { font-size: 8px; }
       `}</style>
     </div>
   );

@@ -51,8 +51,8 @@ export default function ItemDetailsPage() {
         }
         setFormData({ itemCode: '', itemName: '' });
         setView('list');
-      } catch (err) {
-        // Handle error
+      } catch (err: any) {
+        alert(err.message || "Failed to save item. Please check if the item code is unique.");
       } finally {
         setIsSubmitting(false);
       }
@@ -240,10 +240,30 @@ export default function ItemDetailsPage() {
             <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
               <form onSubmit={handleSubmit}>
 
-                {/* Item Name Field */}
-                <div className="row mb-5 align-items-center">
+                {/* Item Code Field */}
+                <div className="row mb-4 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item Name <span className="text-danger">*</span></label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Code <span className="text-danger">*</span></label>
+                  </div>
+
+                  <div className="col-md-9">
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. ITM-001"
+                      className="form-control"
+                      style={{ fontSize: '0.85rem', height: '38px' }}
+                      value={formData.itemCode}
+                      onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
+                      disabled={isViewOnly}
+                    />
+                  </div>
+                </div>
+
+                {/* Item Name Field */}
+                <div className="row mb-4 align-items-center">
+                  <div className="col-md-3">
+                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Name <span className="text-danger">*</span></label>
                   </div>
 
                   <div className="col-md-9">
@@ -252,7 +272,7 @@ export default function ItemDetailsPage() {
                       required
                       placeholder="Item Name"
                       className="form-control"
-                      style={{ fontSize: '1.1rem' }}
+                      style={{ fontSize: '0.85rem', height: '38px' }}
                       value={formData.itemName}
                       onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
                       disabled={isViewOnly}
@@ -267,7 +287,7 @@ export default function ItemDetailsPage() {
                       type="submit"
                       disabled={isSubmitting}
                       className="btn px-4 py-2 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
-                      style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '120px', borderRadius: '4px' }}
+                      style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px', borderRadius: '4px' }}
                     >
                       {isSubmitting ? (
                         <>
@@ -330,9 +350,10 @@ export default function ItemDetailsPage() {
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light">
                         <tr>
-                          <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '60px' }}>Sno</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '80px' }}>Sno</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '150px' }}>Item Code</th>
                           <th className="px-4 py-3 text-capitalize small fw-bold">Item Name</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold text-end">Actions</th>
+                          <th className="px-4 py-3 text-capitalize small fw-bold text-end" style={{ width: '180px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -350,6 +371,7 @@ export default function ItemDetailsPage() {
                           paginatedItems.map((item, index) => (
                             <tr key={item.id}>
                               <td className="px-4 py-3 text-muted">{(pagination.itemPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                              <td className="px-4 fw-bold text-dark">{item.itemCode}</td>
                               <td className="px-4 py-3">{item.itemName}</td>
                               <td className="px-4 py-3 text-end">
                                 <div className="d-flex justify-content-end align-items-center gap-1">

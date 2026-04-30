@@ -351,7 +351,21 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
       </div>
       <style jsx>{`
-          
+          .form-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+          }
+          .form-control, .form-select {
+            font-size: 0.85rem;
+            height: 38px;
+            padding-top: 0;
+            padding-bottom: 0;
+          }
+          .card-body {
+            padding-top: 2rem !important;
+          }
       `}</style>
     </>
   );

@@ -202,17 +202,17 @@ const masterSlice = createSlice({
       .addCase(fetchItems.pending, (state) => { state.loading = true; })
       .addCase(fetchItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
       })
       .addCase(fetchProcesses.pending, (state) => { state.loading = true; })
       .addCase(fetchProcesses.fulfilled, (state, action) => {
         state.loading = false;
-        state.processes = action.payload;
+        state.processes = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
       })
       .addCase(fetchPriceFixings.pending, (state) => { state.loading = true; })
       .addCase(fetchPriceFixings.fulfilled, (state, action) => {
         state.loading = false;
-        state.priceFixings = action.payload;
+        state.priceFixings = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
       })
       .addCase(createItemThunk.fulfilled, (state, action) => {
         state.items.unshift(action.payload);

@@ -52,8 +52,8 @@ export default function ProcessDetailsPage() {
         }
         setFormData({ processName: '' });
         setView('list');
-      } catch (err) {
-        // Handle error
+      } catch (err: any) {
+        alert(err.message || "Failed to save process. Please try again.");
       } finally {
         setIsSubmitting(false);
       }
@@ -100,12 +100,12 @@ export default function ProcessDetailsPage() {
     printWindow.document.write('<h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1>');
     printWindow.document.write('<p style="margin: 5px 0 0; color: #666;">Master Data - Process Entry</p>');
     printWindow.document.write('</div>');
-    
+
     printWindow.document.write(`<div><div class="label">Process Name</div><div class="value">${p.processName}</div></div>`);
     printWindow.document.write(`<div><div class="label">Internal ID</div><div class="value">${p.id}</div></div>`);
-    
+
     printWindow.document.write('<div style="margin-top: 50px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px;">Generated on ' + new Date().toLocaleString() + '</div>');
-    
+
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.print();
@@ -120,11 +120,11 @@ export default function ProcessDetailsPage() {
     doc.text("GLOBUS ENGINEERING CRM", 14, 25);
     doc.setFontSize(10);
     doc.text("MASTER DATA: PROCESS ENTRY", 14, 32);
-    
+
     doc.setTextColor(33, 33, 33);
     doc.setFontSize(12);
     doc.text("PROCESS INFORMATION", 14, 55);
-    
+
     autoTable(doc, {
       startY: 60,
       body: [
@@ -135,7 +135,7 @@ export default function ProcessDetailsPage() {
       styles: { cellPadding: 8, fontSize: 10 },
       columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } },
     });
-    
+
     doc.setFontSize(10);
     doc.setTextColor(150, 150, 150);
     doc.text(`Generated on ${new Date().toLocaleString()}`, 14, 285);
@@ -149,8 +149,8 @@ export default function ProcessDetailsPage() {
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div className="d-flex align-items-center">
             {view === 'add' && (
-              <button 
-                className="back-btn-standard" 
+              <button
+                className="back-btn-standard"
                 onClick={() => setView('list')}
                 title="Back to List"
               >
@@ -158,11 +158,11 @@ export default function ProcessDetailsPage() {
               </button>
             )}
             <div>
-              <Breadcrumb 
+              <Breadcrumb
                 items={[
                   { label: 'Master Data', href: '/master/processes' },
                   { label: view === 'add' ? (editingId ? 'Process Detail' : 'Add Process') : 'Workflow Hub', active: true }
-                ]} 
+                ]}
               />
               <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
                 {view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add Process') : 'Workflow Hub'}
@@ -172,8 +172,17 @@ export default function ProcessDetailsPage() {
               </p>
             </div>
           </div>
-          
+
           <div className="d-flex align-items-center gap-3">
+            {view === 'add' && editingId && isViewOnly && mounted && checkActionPermission(user, 'mod_processes', 'edit') && (
+              <button 
+                className="btn btn-primary btn-page-action px-4"
+                onClick={() => setIsViewOnly(false)}
+              >
+                <i className="bi bi-pencil-square"></i>
+                <span>Edit Process</span>
+              </button>
+            )}
             {view === 'list' && mounted && checkActionPermission(user, 'mod_processes', 'create') && (
               <button
                 onClick={() => { setView('add'); setEditingId(null); setFormData({ processName: '' }); }}
@@ -193,15 +202,15 @@ export default function ProcessDetailsPage() {
               <form onSubmit={handleSubmit}>
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Process <span className="text-danger">*</span></label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Process <span className="text-danger">*</span></label>
                   </div>
                   <div className="col-md-9">
                     <input
                       type="text"
                       required
-                      placeholder="Process"
+                      placeholder="Process Name"
                       className="form-control"
-                      style={{ fontSize: '1.1rem' }}
+                      style={{ fontSize: '0.85rem', height: '38px' }}
                       value={formData.processName}
                       onChange={(e) => setFormData({ ...formData, processName: e.target.value })}
                       disabled={isViewOnly}
@@ -212,21 +221,21 @@ export default function ProcessDetailsPage() {
                 <div className="d-flex justify-content-center gap-3 mt-5">
                   {!isViewOnly ? (
                     <>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="btn px-4 py-2 text-white fw-bold rounded-1 d-flex align-items-center justify-content-center gap-2"
-                      style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '120px' }}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
-                        </>
-                      ) : (
-                        editingId ? 'UPDATE' : 'SUBMIT'
-                      )}
-                    </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="btn px-4 py-2 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
+                        style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px', borderRadius: '4px' }}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
+                          </>
+                        ) : (
+                          editingId ? 'UPDATE' : 'SUBMIT'
+                        )}
+                      </button>
                       <button
                         type="button"
                         onClick={() => { setFormData({ processName: '' }); setEditingId(null); setView('list'); }}
@@ -305,20 +314,20 @@ export default function ProcessDetailsPage() {
                                     <i className="bi bi-eye-fill"></i>
                                   </button>
                                   {mounted && checkActionPermission(user, 'mod_processes', 'edit') && (
-                                    <button 
-                                      onClick={() => { setEditingId(p.id); setFormData({ processName: p.processName }); setIsViewOnly(false); setView('add'); }} 
-                                      className="btn-action-edit" 
+                                    <button
+                                      onClick={() => { setEditingId(p.id); setFormData({ processName: p.processName }); setIsViewOnly(false); setView('add'); }}
+                                      className="btn-action-edit"
                                       title="Edit Process"
                                     >
                                       <i className="bi bi-pencil-fill"></i>
                                     </button>
                                   )}
                                   <div className="dropdown">
-                                    <button 
-                                      className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
-                                      type="button" 
-                                      id={`actions-${p.id}`} 
-                                      data-bs-toggle="dropdown" 
+                                    <button
+                                      className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
+                                      type="button"
+                                      id={`actions-${p.id}`}
+                                      data-bs-toggle="dropdown"
                                       aria-expanded="false"
                                       style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                                     >
@@ -341,8 +350,8 @@ export default function ProcessDetailsPage() {
                                         <>
                                           <li><hr className="dropdown-divider opacity-50" /></li>
                                           <li>
-                                            <button 
-                                              className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
+                                            <button
+                                              className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
                                               type="button"
                                               onClick={() => handleDeleteParams(p.id)}
                                             >
@@ -365,10 +374,10 @@ export default function ProcessDetailsPage() {
                   {totalPages > 1 && (
                     <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
                       <span className="text-muted small">Showing {(pagination.processPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.processPage * pagination.itemsPerPage, filteredProcesses.length)} of {filteredProcesses.length} entries</span>
-                      <PaginationComponent 
-                        currentPage={pagination.processPage} 
-                        totalPages={totalPages} 
-                        onPageChange={(page) => dispatch(setProcessPage(page))} 
+                      <PaginationComponent
+                        currentPage={pagination.processPage}
+                        totalPages={totalPages}
+                        onPageChange={(page) => dispatch(setProcessPage(page))}
                       />
 
                     </div>
@@ -380,7 +389,7 @@ export default function ProcessDetailsPage() {
         </div>
       </div>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, id: null })}
         onConfirm={confirmDelete}

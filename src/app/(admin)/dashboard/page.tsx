@@ -107,7 +107,7 @@ export default function DashboardPage() {
                             <td className="small text-truncate" style={{ maxWidth: '150px' }}>{inv.customer_name}</td>
                             <td className="small text-end fw-bold">₹{parseFloat(inv.grand_total || '0').toLocaleString()}</td>
                             <td className="text-center">
-                              <span className={`badge ${inv.status === 'PAID' ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${inv.status === 'PAID' ? 'success' : 'warning'} rounded-pill extra-small px-2`}>
+                              <span className={`badge ${inv.status === 'paid' ? 'bg-success' : 'bg-warning'} bg-opacity-10 text-${inv.status === 'paid' ? 'success' : 'warning'} rounded-pill extra-small px-2`}>
                                 {inv.status}
                               </span>
                             </td>

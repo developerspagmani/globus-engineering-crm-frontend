@@ -12,11 +12,8 @@ import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import Link from 'next/link';
 import BackButton from '@/components/BackButton';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import LedgerPrintTemplate from '@/modules/ledger/components/LedgerPrintTemplate';
-
-const reportRef = React.createRef<HTMLDivElement>();
+import PaginationComponent from '@/components/shared/Pagination';
 
 export default function LedgerDetailPage() {
   const params = useParams();
@@ -26,9 +23,10 @@ export default function LedgerDetailPage() {
   
   const [dateFrom, setDateFrom] = useState<string>(searchParams.get('dateFrom') || '');
   const [dateTo, setDateTo] = useState<string>(searchParams.get('dateTo') || '');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   const partyId = params.id as string;
-  const [exporting, setExporting] = useState(false);
   const reportContainerRef = React.useRef<HTMLDivElement>(null);
 
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -60,80 +58,17 @@ export default function LedgerDetailPage() {
     };
   }, [dispatch, activeCompany?.id, partyId]);
 
-  const handleDownloadPDF = async () => {
-    if (!reportContainerRef.current) return;
-    setExporting(true);
-    
-    try {
-        const element = reportContainerRef.current;
-        const originalStyle = element.style.cssText;
-        
-        // Temporarily make it visible and properly sized for capture
-        element.style.display = 'block';
-        element.style.position = 'fixed';
-        element.style.top = '0';
-        element.style.left = '0';
-        element.style.width = '210mm';
-        element.style.zIndex = '-1';
-        element.style.backgroundColor = 'white';
-        element.style.visibility = 'visible';
-
-        // Wait a small moment for the layout to calculate after setting display: block
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        const canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            windowWidth: 1000, 
-            backgroundColor: '#ffffff'
-        });
-
-        // Restore original styles
-        element.style.cssText = originalStyle;
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const imgHeight = (canvasHeight * pdfWidth) / canvasWidth;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
-        pdf.save(`${(party?.name || 'Ledger').replace(/ /g, '_')}_Statement.pdf`);
-        
-        if (searchParams.get('export') === 'true') {
-            setTimeout(() => router.back(), 1000);
-        }
-    } catch (err) {
-        console.error('PDF export failed:', err);
-    } finally {
-        setExporting(false);
-    }
-  };
-
   useEffect(() => {
     if (searchParams.get('print') === 'true' && !loading && party && allEntries.length > 0) {
         const timer = setTimeout(() => {
             window.print();
-        }, 1200); // 1.2s delay to ensure styles and data are fully rendered
+        }, 800); 
         return () => clearTimeout(timer);
-    }
-
-    if (searchParams.get('export') === 'true' && !loading && party && allEntries.length > 0) {
-        handleDownloadPDF();
     }
   }, [searchParams, loading, party, allEntries]);
 
   // 2. Process Ledger Calculations
-  const { 
-    processedEntries, 
-    openingBalance, 
-    totalDebit, 
-    totalCredit, 
-    closingBalance,
-    isDebitOpening
-  } = useMemo(() => {
+  const processedData = useMemo(() => {
     const isVendor = party?.partyType === 'vendor';
     
     const df = dateFrom || filters.dateFrom;
@@ -162,7 +97,18 @@ export default function LedgerDetailPage() {
         if (df && new Date(e.date) < new Date(df)) return false;
         if (dt && new Date(e.date) > new Date(dt)) return false;
         return true;
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Chronological for processing
+    }).sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        
+        // Secondary sort: Use createdAt if available, otherwise fallback to id
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA !== timeB) return timeA - timeB;
+        
+        return (a.id && b.id) ? (String(a.id).localeCompare(String(b.id), undefined, { numeric: true })) : 0;
+    });
 
     const mapped = filtered.map(e => {
         const amt = parseFloat(String(e.amount || 0));
@@ -199,7 +145,7 @@ export default function LedgerDetailPage() {
     const isDebitOp = isVendor ? opBalance < 0 : opBalance >= 0;
 
     return {
-      processedEntries: [...mapped].reverse(), // UI shows newest first
+      processedEntries: [...mapped].reverse(),
       openingBalance: Math.abs(opBalance),
       isDebitOpening: opBalance !== 0 ? isDebitOp : (isVendor ? false : true),
       totalDebit: periodDebitSum,
@@ -207,6 +153,21 @@ export default function LedgerDetailPage() {
       closingBalance: runningBalance
     };
   }, [allEntries, party, dateFrom, dateTo]);
+
+  const { 
+    processedEntries, 
+    openingBalance, 
+    totalDebit, 
+    totalCredit, 
+    closingBalance,
+    isDebitOpening
+  } = processedData;
+
+  const totalPages = Math.ceil(processedEntries.length / itemsPerPage);
+  const paginatedEntries = processedEntries.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handlePrint = () => { window.print(); };
 
@@ -219,16 +180,13 @@ export default function LedgerDetailPage() {
       <div className="container-fluid py-4 min-vh-100 bg-light-subtle px-4">
         
         {/* STATEMENT HEADER (Professional) */}
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white ledger-statement-header" style={{ borderLeftColor: isVendor ? '#6f42c1' : '#0d6efd' }}>
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white ledger-statement-header hide-print" style={{ borderLeftColor: isVendor ? '#6f42c1' : '#0d6efd' }}>
            <div className="card-body p-4 p-lg-5">
               <div className="d-flex justify-content-between align-items-start mb-5">
                  <div>
                     <div className="d-flex align-items-center gap-3 mb-2">
                         <BackButton href="/ledger" title="Back to Ledger" className="hide-print" />
                         <h1 className="fw-900 mb-0 tracking-tight" style={{ color: 'var(--accent-color)' }}>GLOBUS ENGINEERING</h1>
-                        {/* <span className={`badge rounded-pill px-3 py-2 ms-2 fw-bold ${isVendor ? 'bg-purple-subtle text-purple' : 'bg-primary-subtle text-primary'}`}>
-                            {isVendor ? 'VENDOR / SUPPLIER' : 'CUSTOMER STATEMENT'}
-                        </span> */}
                     </div>
                     <p className="text-muted small fw-bold text-capitalize tracking-widest mb-0 opacity-75">Professional Account Ledger Statement</p>
                  </div>
@@ -243,14 +201,13 @@ export default function LedgerDetailPage() {
                  <div className="col-md-5">
                     <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Account Holder</span>
                     <h3 className="fw-900 mb-1 text-dark">{party?.name || 'Loading Name...'}</h3>
-                    {/* <p className="text-muted small mb-0 ">ID: {partyId}</p> */}
                     <p className="text-muted small mb-0">{party?.street1 || 'No address specified'}</p>
                  </div>
                  <div className="col-md-3 border-start">
                     <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Statement Period</span>
                     <div className="d-flex flex-column gap-1">
-                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print mb-1" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print mb-1" value={dateFrom} onChange={e => {setDateFrom(e.target.value); setCurrentPage(1);}} />
+                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print" value={dateTo} onChange={e => {setDateTo(e.target.value); setCurrentPage(1);}} />
                         <span className="small fw-bold text-dark show-print-only">
                             {dateFrom || 'Start'} to {dateTo || 'Today'}
                         </span>
@@ -325,15 +282,14 @@ export default function LedgerDetailPage() {
                         </tr>
                     </thead>
                     <tbody className="border-top-0">
-                        {processedEntries.length === 0 && (
+                        {paginatedEntries.length === 0 && (
                             <tr><td colSpan={8} className="text-center py-5 text-muted">No transactions found for this period.</td></tr>
                         )}
-                        {processedEntries.map((e, idx) => (
+                        {paginatedEntries.map((e, idx) => (
                             <tr key={e.id} className="ledger-row border-bottom border-light-subtle">
                                 <td className="ps-5 py-3 small fw-bold text-muted">{new Date(e.date).toLocaleDateString()}</td>
                                 <td className="py-3">
                                     <div className="fw-800 text-dark small text-capitalize" style={{ letterSpacing: '0.01em' }}>{e.description}</div>
-                                    {/* <div className="x-small text-muted mt-1 opacity-75">{e.referenceNo || (e as any).referenceId || (e as any).reference_id ? `Ref: ${e.referenceNo || (e as any).referenceId || (e as any).reference_id}` : ''}</div> */}
                                 </td>
                                 <td className="py-3">
                                     <span className={`badge border py-2 px-3 fw-800 x-small text-capitalize tracking-wider rounded-pill shadow-none ${
@@ -396,6 +352,20 @@ export default function LedgerDetailPage() {
                 </table>
             </div>
         </div>
+
+        {/* PAGINATION UI */}
+        {totalPages > 1 && (
+            <div className="d-flex justify-content-between align-items-center mt-4 hide-print">
+                <span className="text-muted small">
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, processedEntries.length)} of {processedEntries.length} entries
+                </span>
+                <PaginationComponent 
+                    currentPage={currentPage} 
+                    totalPages={totalPages} 
+                    onPageChange={(page) => setCurrentPage(page)} 
+                />
+            </div>
+        )}
 
         {/* LEDGER PRINT VIEW (Standard Accounting Format) */}
         <div className="show-print-only" ref={reportContainerRef}>

@@ -38,7 +38,7 @@ const GstReportPage = () => {
   const filteredItems = (invoices || []).filter(inv => {
     // Exclude 'Without Process' records from GST report as they are non-taxable
     const invType = String(inv.type || '').toUpperCase();
-    if (invType === 'WOP' || invType === 'WITHOUT PROCESS') return false;
+    if (invType === 'WOP') return false;
 
     // Status filtering
     const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);

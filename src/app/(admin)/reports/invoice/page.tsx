@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchInvoices, setInvoicePage } from '@/redux/features/invoiceSlice';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -14,6 +15,7 @@ import PaginationComponent from '@/components/shared/Pagination';
 
 
 const InvoiceReportPage = () => {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('pending');
@@ -35,7 +37,7 @@ const InvoiceReportPage = () => {
   const filteredInvoices = invoices.filter(inv => {
     // Exclude 'Without Process' only records from the invoice report
     const invType = String(inv.type || '').toUpperCase();
-    if (invType === 'WOP' || invType === 'WITHOUT PROCESS') return false;
+    if (invType === 'WOP') return false;
 
     // Status filtering
     const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
@@ -72,8 +74,8 @@ const InvoiceReportPage = () => {
   }, { count: 0, taxable: 0, tax: 0, grand: 0 });
 
   const handlePrintRecord = (inv: any) => {
-    // Redirect to the professional industrial invoice preview with auto-print
-    window.open(`/invoices/${inv.id}?print=true`, '_blank');
+    // Redirect to the professional industrial invoice preview with auto-print in same tab
+    router.push(`/invoices/${inv.id}?print=true`);
   };
 
   const handleExportPDFRecord = (inv: any) => {
@@ -210,8 +212,21 @@ const InvoiceReportPage = () => {
                               <i className="bi bi-three-dots-vertical fs-5"></i>
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${inv.id}`}>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintRecord(inv)}><i className="bi bi-printer text-primary"></i> <span className="small fw-semibold">Quick Print</span></button></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFRecord(inv)}><i className="bi bi-file-earmark-pdf text-danger"></i> <span className="small fw-semibold">Export PDF</span></button></li>
+                               {(inv.type === 'BOTH' || inv.type === 'INVOICE') && (
+                                 <li>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => router.push(`/invoices/${inv.id}?print=true&type=WP`)}>
+                                     <i className="bi bi-printer text-primary"></i> <span className="small fw-semibold">WP Print</span>
+                                   </button>
+                                 </li>
+                               )}
+                               {(inv.type === 'BOTH' || inv.type === 'WOP') && (
+                                 <li>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => router.push(`/invoices/${inv.id}?print=true&type=WOP`)}>
+                                     <i className="bi bi-file-earmark-text text-danger"></i> <span className="small fw-semibold">WOP Print</span>
+                                   </button>
+                                 </li>
+                               )}
+                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFRecord(inv)}><i className="bi bi-file-earmark-pdf text-danger"></i> <span className="small fw-semibold">Export PDF</span></button></li>
                             </ul>
                           </div>
                         </div>

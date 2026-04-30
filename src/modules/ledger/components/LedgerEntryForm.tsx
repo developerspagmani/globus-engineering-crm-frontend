@@ -52,15 +52,15 @@ const LedgerEntryForm: React.FC = () => {
     setFormData(p => ({ ...p, linkedInvoiceId: '' }));
   }, [formData.customerId]);
 
-  const customerInvoices = allInvoices.filter(inv => 
+  const customerInvoices = allInvoices.filter(inv =>
     String(inv.customerId) === String(formData.customerId) && inv.status !== 'paid'
   );
 
-  const vendorInwards = allInwards.filter(inw => 
+  const vendorInwards = allInwards.filter(inw =>
     String(inw.vendorId) === String(formData.customerId) && inw.status !== 'completed'
   );
 
-  const customerInwards = allInwards.filter(inw => 
+  const customerInwards = allInwards.filter(inw =>
     String(inw.customerId) === String(formData.customerId) && inw.status !== 'completed'
   );
 
@@ -72,12 +72,12 @@ const LedgerEntryForm: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      const selectedParty = formData.partyType === 'customer' 
+      const selectedParty = formData.partyType === 'customer'
         ? customers.find((c) => String(c.id) === String(formData.customerId))
         : vendors.find((v) => String(v.id) === String(formData.customerId));
 
       const refId = `MAN-${Date.now().toString().slice(-6)}`;
-      
+
       let invoiceSuffix = '';
       if (formData.partyType === 'customer') {
         const selectedInvoice = allInvoices.find(inv => inv.id === formData.linkedInvoiceId);
@@ -214,13 +214,13 @@ const LedgerEntryForm: React.FC = () => {
                 required
               />
             </div>
-            
+
             {formData.type === 'credit' && (
               <div className="lef-field">
                 <label className="lef-label">
                   Link to Invoice (Optional)
                   {customerInvoices.length > 0 && (
-                    <span className="ms-2 px-2 py-0.5 rounded bg-primary bg-opacity-10 text-primary fw-900 border-0" 
+                    <span className="ms-2 px-2 py-0.5 rounded bg-primary bg-opacity-10 text-primary fw-900 border-0"
                       style={{ fontSize: '9px', verticalAlign: 'middle' }}>
                       {customerInvoices.length} PENDING
                     </span>
@@ -257,10 +257,10 @@ const LedgerEntryForm: React.FC = () => {
             <button
               type="button"
               className="btn btn-light px-4 py-2 rounded-pill fw-800 text-muted border-0"
-             > Discard
+            > Discard
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary d-flex align-items-center gap-2"
               disabled={isSubmitting}
             >

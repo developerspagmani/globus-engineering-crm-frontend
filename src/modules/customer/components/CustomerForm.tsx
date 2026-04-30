@@ -176,7 +176,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
 
   const renderInput = (label: string, name: keyof typeof formData, type = 'text', required = false) => (
     <div className="col-md-6 mb-3">
-      <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">
+      <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">
         {label} {required && <span className="text-danger">*</span>}
       </label>
 
@@ -201,11 +201,11 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
           <form onSubmit={handleSubmit}>
             
             <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-              <h5 className="text-primary mb-0">Basic Details</h5>
+              <h5 className="text-primary mb-0 fw-bold" style={{ fontSize: '1rem' }}>BASIC DETAILS</h5>
             </div>
             <div className="row g-3 mb-4">
               <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Customer Type <span className="text-danger">*</span></label>
+                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Customer Type <span className="text-danger">*</span></label>
                 <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} required disabled={mode === 'view'}>
                   <option value="Customer">Customer</option>
                   <option value="Dealer">Dealer</option>
@@ -217,7 +217,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               {renderInput('Phone Number', 'phone', 'text', true)}
 
               <div className="col-md-6 mb-3">
-                <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Status <span className="text-danger">*</span></label>
+                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Status <span className="text-danger">*</span></label>
                 <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
                   <option value="active">Active</option>
                   <option value="lead">Lead</option>
@@ -226,13 +226,13 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               </div>
               {(mode === 'edit' || mode === 'view') && initialData?.createdAt && (
                 <div className="col-md-6 mb-3">
-                  <label className="form-label fw-semibold small text-muted text-uppercase tracking-wider">Created On</label>
+                  <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Created On</label>
                   <input type="text" className="form-control" value={new Date(initialData.createdAt).toLocaleString()} disabled />
                 </div>
               )}
             </div>
   
-            <h5 className="mb-4 text-primary border-bottom pb-2">Address Details</h5>
+            <h5 className="mb-4 text-primary border-bottom pb-2 fw-bold" style={{ fontSize: '1rem' }}>ADDRESS DETAILS</h5>
             <div className="row g-3 mb-4">
               {renderInput('Street 1', 'street1', 'text', true)}
               {renderInput('Street 2', 'street2')}
@@ -245,7 +245,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
             </div>
 
   
-            <h5 className="mb-4 text-primary border-bottom pb-2">Contact Persons</h5>
+            <h5 className="mb-4 text-primary border-bottom pb-2 fw-bold" style={{ fontSize: '1rem' }}>CONTACT PERSONS</h5>
             <div className="row g-3 mb-4">
               {renderInput('Contact Person 1', 'contactPerson1', 'text', true)}
               {renderInput('Designation 1', 'designation1', 'text', true)}
@@ -266,7 +266,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               {renderInput('Fax', 'fax')}
             </div>
   
-            <h5 className="mb-4 text-primary border-bottom pb-2">Tax Details</h5>
+            <h5 className="mb-4 text-primary border-bottom pb-2 fw-bold" style={{ fontSize: '1rem' }}>TAX DETAILS</h5>
             <div className="row g-3 mb-4">
               {renderInput('GST', 'gst', 'text', true)}
               {renderInput('TIN', 'tin', 'text', true)}
@@ -274,7 +274,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
             </div>
 
   
-            <h5 className="mb-4 text-primary border-bottom pb-2">Machine Details</h5>
+            <h5 className="mb-4 text-primary border-bottom pb-2 fw-bold" style={{ fontSize: '1rem' }}>MACHINE DETAILS</h5>
             <div className="row g-3 mb-4">
               {renderInput('T/C', 'tc')}
               {renderInput('VMC', 'vmc')}
@@ -332,12 +332,13 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         />
       )}
       <style jsx>{`
-        .form-control {
+        .form-control, .form-select {
+          height: 38px !important;
           font-size: 0.85rem !important;
         }
-          .form-select {
-          font-size: 0.85rem !important;
-      }
+        .x-small {
+           font-size: 0.75rem !important;
+        }
       `}</style>
     </>
   );

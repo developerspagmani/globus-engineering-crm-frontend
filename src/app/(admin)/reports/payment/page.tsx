@@ -7,6 +7,7 @@ import { fetchVouchers, setVoucherPage } from '@/redux/features/voucherSlice';
 import { fetchPendingPayments, setPendingPaymentPage } from '@/redux/features/pendingPaymentSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -16,6 +17,7 @@ import PaginationComponent from '@/components/shared/Pagination';
 
 
 const PaymentReportPage = () => {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'PAYMENT' | 'PENDING'>('PAYMENT');
   const [ageingFilter, setAgeingFilter] = useState<'all' | '0-30' | '31-60' | '61-90' | '90+'>('all');
@@ -91,8 +93,8 @@ const PaymentReportPage = () => {
 
   const handlePrintRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
     if (type === 'PENDING') {
-      // Redirect to the professional invoice preview with auto-print
-      window.open(`/invoices/${item.id}?print=true`, '_blank');
+      // Redirect to the professional invoice preview with auto-print in same tab
+      router.push(`/invoices/${item.id}?print=true`);
       return;
     }
 
@@ -141,7 +143,7 @@ const PaymentReportPage = () => {
               <span class="meta-value">${item.date}</span>
             </div>
             <div class="meta-item" style="text-align: right;">
-              <span class="meta-label">Payment Mode</span>
+              <span class="meta-label">Payment</span>
               <span class="meta-value">${item.paymentMode.toUpperCase()}</span>
             </div>
           </div>

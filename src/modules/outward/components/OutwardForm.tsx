@@ -247,31 +247,31 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
               <div className="row g-4">
                  <div className="col-md-6 border-end">
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">CHALLAN NO <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted x-small fw-bold">CHALLAN NO <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="text" className="form-control fw-bold px-3 py-2" name="outwardNo" value={formData.outwardNo} onChange={handleChange} required disabled={mode === 'view'} />
                        </div>
                     </div>
                     
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">PARTY TYPE <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted x-small fw-bold">PARTY TYPE <span className="text-danger">*</span></label>
                        <div className="col-8 d-flex gap-3">
                           <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
                              <input type="radio" name="partyType" value="customer" checked={formData.partyType === 'customer'} onChange={handleChange} disabled={mode === 'view'} />
-                             <span className="small fw-bold">Customer</span>
+                             <span className="x-small fw-bold">Customer</span>
                           </label>
                           <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
                              <input type="radio" name="partyType" value="vendor" checked={formData.partyType === 'vendor'} onChange={handleChange} disabled={mode === 'view'} />
-                             <span className="small fw-bold">Vendor</span>
+                             <span className="x-small fw-bold">Vendor</span>
                           </label>
                        </div>
                     </div>
 
                     {formData.partyType === 'customer' ? (
                       <div className="row mb-3 align-items-center">
-                         <label className="col-4 text-muted small fw-bold">CUSTOMER <span className="text-danger">*</span></label>
+                         <label className="col-4 text-muted x-small fw-bold">CUSTOMER <span className="text-danger">*</span></label>
                          <div className="col-8">
-                             <select className="form-select px-3 py-2 fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required={formData.partyType === 'customer'} disabled={mode === 'view'}>
+                             <select className="form-select fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required={formData.partyType === 'customer'} disabled={mode === 'view'}>
                                <option value="">Select Customer</option>
                                {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
@@ -280,10 +280,10 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                     ) : (
                       <>
                         <div className="row mb-3 align-items-center">
-                           <label className="col-4 text-muted small fw-bold">VENDOR <span className="text-danger">*</span></label>
+                           <label className="col-4 text-muted x-small fw-bold">VENDOR <span className="text-danger">*</span></label>
 
                            <div className="col-8">
-                               <select className="form-select px-3 py-2 fw-bold" name="vendorId" value={formData.vendorId} onChange={handleChange} required={formData.partyType === 'vendor'} disabled={mode === 'view'}>
+                               <select className="form-select fw-bold" name="vendorId" value={formData.vendorId} onChange={handleChange} required={formData.partyType === 'vendor'} disabled={mode === 'view'}>
                                  <option value="">Select Vendor</option>
                                  {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                               </select>
@@ -318,27 +318,27 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
                  <div className="col-md-6 px-lg-5">
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">DISPATCH DATE <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted x-small fw-bold">DISPATCH DATE <span className="text-danger">*</span></label>
                        <div className="col-8">
-                           <input type="date" className="form-control px-3 py-2" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
+                           <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} required disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">VEHICLE NO <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted x-small fw-bold">VEHICLE NO <span className="text-danger">*</span></label>
                        <div className="col-8">
-                           <input type="text" className="form-control px-3 py-2" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="TN-01-AB-1234" required disabled={mode === 'view'} />
+                           <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="TN-01-AB-1234" required disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">DRIVER NAME <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted x-small fw-bold">DRIVER NAME <span className="text-danger">*</span></label>
                        <div className="col-8">
                            <input type="text" className="form-control border-0 bg-light rounded-pill px-3 py-2" name="driverName" value={formData.driverName || ''} onChange={handleChange} placeholder="Required" required disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">DOC REF NO <span className="text-danger">*</span></label>
+                       <label className="col-4 text-muted x-small fw-bold">DOC REF NO <span className="text-danger">*</span></label>
                        <div className="col-8">
-                           <input type="text" className="form-control px-3 py-2" name="challanNo" value={formData.challanNo} onChange={handleChange} placeholder="Ext Challan / PO" required disabled={mode === 'view'} />
+                           <input type="text" className="form-control" name="challanNo" value={formData.challanNo} onChange={handleChange} placeholder="Ext Challan / PO" required disabled={mode === 'view'} />
                        </div>
                     </div>
 
@@ -351,9 +351,9 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                       </div>
                     )}
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold">NOTES</label>
+                       <label className="col-4 text-muted x-small fw-bold">NOTES</label>
                        <div className="col-8">
-                           <textarea className="form-control px-3 py-2" name="notes" rows={2} value={formData.notes || ''} onChange={handleChange} placeholder="Special instructions..." disabled={mode === 'view'}></textarea>
+                           <textarea className="form-control" name="notes" rows={2} value={formData.notes || ''} onChange={handleChange} placeholder="Special instructions..." disabled={mode === 'view'}></textarea>
                        </div>
                     </div>
                  </div>
@@ -378,13 +378,13 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                      {formData.items.map((item, index) => (
                         <tr key={index} className="border-bottom-subtle">
                            <td className="py-3 px-3">
-                              <input type="text" className="form-control px-3 py-2" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required disabled={mode === 'view'} placeholder="Item name or part number" />
+                              <input type="text" className="form-control" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required disabled={mode === 'view'} placeholder="Item name or part number" />
                            </td>
                            <td className="py-3 px-3 text-center">
                               <input type="number" className="form-control text-center px-3 py-2 fw-bold text-primary" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required disabled={mode === 'view'} />
                            </td>
                            <td className="py-3 px-3 text-center">
-                              <select className="form-select px-3 py-2 text-center" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} disabled={mode === 'view'}>
+                              <select className="form-select text-center" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} disabled={mode === 'view'}>
                                  <option value="pcs">Pcs</option>
                                  <option value="kg">Kg</option>
                                  <option value="mtr">Mtrs</option>
@@ -440,6 +440,13 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
          .fw-900 { font-weight: 900; }
          .fw-800 { font-weight: 800; }
          .x-small { font-size: 0.70rem; }
+         .form-control, .form-select {
+            height: 38px !important;
+            font-size: 0.85rem !important;
+         }
+         label.x-small {
+            text-transform: uppercase;
+         }
       `}</style>
 
       {modal.isOpen && (

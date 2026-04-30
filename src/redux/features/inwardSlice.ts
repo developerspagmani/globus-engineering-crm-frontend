@@ -202,7 +202,7 @@ const inwardSlice = createSlice({
       })
       .addCase(fetchInwards.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
       })
       .addCase(fetchInwards.rejected, (state, action) => {
         state.loading = false;

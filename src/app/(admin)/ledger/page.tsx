@@ -31,15 +31,6 @@ export default function LedgerPage() {
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const [partyTypeFilter, setPartyTypeFilter] = React.useState<'all' | 'customer' | 'vendor'>('all');
   const [mounted, setMounted] = React.useState(false);
-  const [exportingParty, setExportingParty] = useState<any>(null);
-  const [exportingEntries, setExportingEntries] = useState<LedgerEntry[]>([]);
-  const hiddenReportRef = useRef<HTMLDivElement>(null);
-  
-  // Date Modal State
-  const [showDateModal, setShowDateModal] = useState(false);
-  const [modalDates, setModalDates] = useState({ from: '', to: '' });
-  const [targetParty, setTargetParty] = useState<any>(null);
-  const [actionType, setActionType] = useState<'pdf' | 'print' | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -53,12 +44,46 @@ export default function LedgerPage() {
     }
   }, [dispatch, activeCompany?.id]);
 
-  // DERIVE UNIQUE PARTIES FROM LEDGER ENTRIES
+  // DERIVE UNIQUE PARTIES FROM LEDGER ENTRIES + ALL CUSTOMERS/VENDORS
   const uniqueParties = React.useMemo(() => {
     const partyMap = new Map();
     const currentCompId = String(activeCompany?.id || '').toLowerCase();
 
-    // 1. Filter ledger entries that belong to this company ID (Case Insensitive) and match date filters
+    // 1. First, add all customers to the map
+    customers.forEach(c => {
+      const partyId = String(c.id).toLowerCase();
+      partyMap.set(partyId, {
+        id: c.id,
+        name: c.name || 'Unknown',
+        street1: c.street1 || 'Address not specified',
+        street2: c.street2 || '',
+        city: c.city || '-',
+        state: c.state || '-',
+        partyType: 'customer',
+        lastUpdated: '1970-01-01'
+      });
+    });
+
+    // 2. Add all vendors to the map
+    vendors.forEach(v => {
+      const partyId = String(v.id).toLowerCase();
+      // If a vendor shares an ID with a customer, we prioritize customer or handle separately
+      // In this system, they seem to have distinct ID spaces or prefixes
+      if (!partyMap.has(partyId)) {
+        partyMap.set(partyId, {
+            id: v.id,
+            name: v.name || 'Unknown',
+            street1: v.street1 || 'Address not specified',
+            street2: v.street2 || '',
+            city: v.city || '-',
+            state: v.state || '-',
+            partyType: 'vendor',
+            lastUpdated: '1970-01-01'
+        });
+      }
+    });
+
+    // 3. Filter ledger entries that belong to this company ID (Case Insensitive) and match date filters
     const companyLedger = ledgerEntries.filter(e => {
         const matchesCompany = String(e.company_id || (e as any).companyId || '').toLowerCase() === currentCompId;
         if (!matchesCompany) return false;
@@ -74,7 +99,7 @@ export default function LedgerPage() {
       const entryDate = entry.date || '';
 
       if (!partyMap.has(entryPartyId)) {
-        // Find matching customer OR vendor data for address
+        // Find matching customer OR vendor data for address if we missed it
         const customerRef = customers.find(c => String(c.id).toLowerCase() === entryPartyId);
         const vendorRef = !customerRef ? vendors.find(v => String(v.id).toLowerCase() === entryPartyId) : null;
         const partyRef = customerRef || vendorRef;
@@ -101,12 +126,12 @@ export default function LedgerPage() {
     
     let result = Array.from(partyMap.values());
     
-    // 2. Filter by Party Type
+    // 4. Filter by Party Type
     if (partyTypeFilter !== 'all') {
       result = result.filter(p => p.partyType.toLowerCase() === partyTypeFilter.toLowerCase());
     }
 
-    // 3. SORT: Recent First
+    // 5. SORT: Recent First (Parties with transactions show first, others follow)
     result.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
 
     return result;
@@ -177,129 +202,8 @@ export default function LedgerPage() {
     doc.save(`ledger_export_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
-  const handleExportClick = (party: any, type: 'pdf' | 'print') => {
-    setTargetParty(party);
-    setActionType(type);
-    setModalDates({ 
-        from: filters.dateFrom || '', 
-        to: filters.dateTo || new Date().toISOString().split('T')[0] 
-    });
-    setShowDateModal(true);
-  };
-
-  const handlePresetClick = (type: 'week' | 'month' | 'thisMonth' | 'year') => {
-    const today = new Date();
-    let from = new Date();
-    let to = today;
-
-    if (type === 'week') {
-      from.setDate(today.getDate() - 7);
-    } else if (type === 'month') {
-      from.setMonth(today.getMonth() - 1);
-    } else if (type === 'thisMonth') {
-      from = new Date(today.getFullYear(), today.getMonth(), 1);
-    } else if (type === 'year') {
-      // Indian Financial Year (Apr to Mar)
-      const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth(); // 0-indexed
-      if (currentMonth < 3) { // Jan-Mar
-        from = new Date(currentYear - 1, 3, 1);
-        to = new Date(currentYear, 2, 31);
-      } else {
-        from = new Date(currentYear, 3, 1);
-        to = new Date(currentYear + 1, 2, 31);
-      }
-    }
-
-    setModalDates({
-      from: from.toISOString().split('T')[0],
-      to: to.toISOString().split('T')[0]
-    });
-  };
-
-  const handleConfirmAction = () => {
-    if (!targetParty) return;
-    setShowDateModal(false);
-    
-    if (actionType === 'print') {
-        router.push(`/ledger/${targetParty.id}?print=true&dateFrom=${modalDates.from}&dateTo=${modalDates.to}`);
-    } else {
-        handleDirectPartyDownload(targetParty, modalDates.from, modalDates.to);
-    }
-  };
-
-  const handleDirectPartyDownload = async (party: any, dateFrom?: string, dateTo?: string) => {
-    if (!party?.id || !activeCompany?.id) {
-        console.error('Missing Party or Company ID');
-        return;
-    }
-
-    setExportingParty(party);
-    
-    try {
-        // 1. Fetch the actual entries for this specific party to ensure we have full data
-        // This is safer than relying on the list's summary entries
-        const resultAction = await (dispatch as any)(fetchLedgerEntries({ 
-            partyId: party.id, 
-            companyId: activeCompany.id 
-        }));
-        
-        if (fetchLedgerEntries.fulfilled.match(resultAction)) {
-            const partyEntries = resultAction.payload;
-            setExportingEntries(partyEntries);
-            
-            // 2. Wait for rendering to complete
-            setTimeout(async () => {
-                if (!hiddenReportRef.current) {
-                    console.error('Hidden report ref not found');
-                    setExportingParty(null);
-                    return;
-                }
-
-                try {
-                    const pageBoxes = hiddenReportRef.current?.querySelectorAll('.ledger-page-box');
-                    if (!pageBoxes || pageBoxes.length === 0) {
-                        console.error('No page boxes found for capture');
-                        return;
-                    }
-
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    
-                    for (let i = 0; i < pageBoxes.length; i++) {
-                        const canvas = await html2canvas(pageBoxes[i] as HTMLElement, { 
-                            scale: 2,
-                            useCORS: true,
-                            logging: false,
-                            backgroundColor: '#ffffff',
-                            windowWidth: 1200
-                        });
-
-                        const imgData = canvas.toDataURL('image/png');
-                        if (i > 0) pdf.addPage();
-                        
-                        // Fill the entire A4 page
-                        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-                    }
-                    
-                    pdf.save(`${party.name.replace(/ /g, '_')}_Statement_${new Date().toISOString().split('T')[0]}.pdf`);
-                } catch (err) {
-                    console.error('Canvas capture failed:', err);
-                    alert('Failed to generate PDF. Please try again.');
-                } finally {
-                    setExportingParty(null);
-                    setExportingEntries([]);
-                    // Optional: Refresh the full list in the background since we overwrote the cache
-                    (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany.id }));
-                }
-            }, 800);
-        } else {
-            throw new Error('Failed to fetch ledger entries for export');
-        }
-    } catch (err) {
-        console.error('Direct PDF export failed:', err);
-        alert('An error occurred while preparing the ledger export.');
-        setExportingParty(null);
-    }
+  const handleQuickPrint = (party: any) => {
+    router.push(`/ledger/${party.id}?print=true`);
   };
 
 
@@ -440,7 +344,7 @@ export default function LedgerPage() {
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${party.id}`}>
                               <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportClick(party, 'print')}>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleQuickPrint(party)}>
                                   <i className="bi bi-printer text-primary"></i>
                                   <span className="small fw-semibold">Quick Print</span>
                                 </button>
@@ -470,74 +374,7 @@ export default function LedgerPage() {
           </div>
         )}
 
-        {/* HIDDEN TEMPLATE FOR DIRECT DOWNLOAD */}
-        {exportingParty && (
-            <div style={{ position: 'fixed', left: '-9999px', top: '0', zIndex: -1000 }}>
-                <div ref={hiddenReportRef}>
-                    <LedgerPrintTemplate 
-                        party={exportingParty} 
-                        entries={exportingEntries} 
-                        company={activeCompany} 
-                        dateFrom={modalDates.from || filters.dateFrom} 
-                        dateTo={modalDates.to || filters.dateTo} 
-                    />
-                </div>
-            </div>
-        )}
-
-        {/* CUSTOM DATE MODAL */}
-        {showDateModal && (
-            <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                <div className="modal-dialog modal-dialog-centered">
-                    <div className="modal-content shadow border-0">
-                        <div className="modal-header border-0 pb-0">
-                            <h5 className="modal-title fw-bold">Select Date Range</h5>
-                            <button type="button" className="btn-close" onClick={() => setShowDateModal(false)}></button>
-                        </div>
-                        <div className="modal-body p-4">
-                            <p className="small text-muted mb-4">Select the period for <strong>{targetParty?.name}</strong>'s ledger {actionType === 'pdf' ? 'export' : 'print'}.</p>
-                            
-                            <div className="mb-4">
-                                <label className="form-label small fw-bold mb-2">Quick Presets</label>
-                                <div className="d-flex flex-wrap gap-2">
-                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('week')}>Last 7 Days</button>
-                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('month')}>Last Month</button>
-                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('thisMonth')}>This Month</button>
-                                    <button type="button" className="btn btn-sm btn-outline-dark rounded-pill px-3" onClick={() => handlePresetClick('year')}>Financial Year</button>
-                                </div>
-                            </div>
-
-                            <div className="row g-3 border-top pt-4">
-                                <div className="col-6">
-                                    <label className="form-label small fw-bold">From</label>
-                                    <input 
-                                        type="date" 
-                                        className="form-control rounded-pill shadow-sm" 
-                                        value={modalDates.from} 
-                                        onChange={(e) => setModalDates({...modalDates, from: e.target.value})} 
-                                    />
-                                </div>
-                                <div className="col-6">
-                                    <label className="form-label small fw-bold">To</label>
-                                    <input 
-                                        type="date" 
-                                        className="form-control rounded-pill shadow-sm" 
-                                        value={modalDates.to} 
-                                        onChange={(e) => setModalDates({...modalDates, to: e.target.value})} 
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="modal-footer border-0 pt-0 p-4">
-                            <button type="button" className="btn btn-light rounded-pill px-4" onClick={() => setShowDateModal(false)}>Cancel</button>
-                            <button type="button" className="btn btn-dark rounded-pill px-4 fw-bold" onClick={handleConfirmAction}>
-                                {actionType === 'pdf' ? 'Download PDF' : 'Ready to Print'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
+        {/* Pagination Rendering removed if single page, but kept for list */}
       </div>
 
       <style jsx>{`

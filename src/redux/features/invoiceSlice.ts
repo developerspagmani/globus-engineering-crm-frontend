@@ -297,7 +297,7 @@ const invoiceSlice = createSlice({
       })
       .addCase(fetchInvoices.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
         state.error = null;
       })
       .addCase(fetchInvoices.rejected, (state, action) => {

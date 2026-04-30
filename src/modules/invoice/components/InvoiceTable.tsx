@@ -33,7 +33,7 @@ const InvoiceTable: React.FC = () => {
   const handlePrintRecord = (item: any) => {
     const isInvoice = !!item.invoiceNumber;
     if (isInvoice) {
-      window.open(`/invoices/${item.id}?print=true`, '_blank');
+      router.push(`/invoices/${item.id}?print=true`);
       return;
     }
 
@@ -53,14 +53,14 @@ const InvoiceTable: React.FC = () => {
   const handleExportPDFRecord = (item: any) => {
     const isInvoice = !!item.invoiceNumber;
     if (isInvoice) {
-      window.open(`/invoices/${item.id}?exportPDF=true`, '_blank');
+      router.push(`/invoices/${item.id}?exportPDF=true`);
       return;
     }
 
     const doc = new jsPDF();
     doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
-    
+
     const body = [
       ['Customer', item.customerName],
       ['DC Number', item.dcNo || item.challanNo],
@@ -80,8 +80,8 @@ const InvoiceTable: React.FC = () => {
   const filteredInvoices = invoices.filter(item => {
     if (user?.role !== 'super_admin' && activeCompany && (item.company_id || (item as any).companyId) !== activeCompany.id) return false;
     const itemType = String(item.type || 'INVOICE').toUpperCase();
-    if (activeTab === 'INVOICELIST' && (itemType !== 'INVOICE' && itemType !== 'WITH PROCESS')) return false;
-    if (activeTab === 'WOP_LIST' && (itemType !== 'WOP' && itemType !== 'WITHOUT PROCESS')) return false;
+    if (activeTab === 'INVOICELIST' && itemType !== 'INVOICE') return false;
+    if (activeTab === 'WOP_LIST' && itemType !== 'WOP') return false;
     if (activeTab === 'BOTH_LIST' && itemType !== 'BOTH') return false;
     const invNo = String(item.invoiceNumber || '').toLowerCase();
     const dcNo = String(item.dcNo || '').toLowerCase();
@@ -89,7 +89,7 @@ const InvoiceTable: React.FC = () => {
     const search = String(filters.search || '').toLowerCase();
     const matchesSearch = invNo.includes(search) || dcNo.includes(search) || custName.includes(search);
     const matchesStatus = (filters.status === 'all' || item.status === filters.status);
-    
+
     // Date range filtering
     let matchesDate = true;
     if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) matchesDate = false;
@@ -101,11 +101,11 @@ const InvoiceTable: React.FC = () => {
   const filteredInwards = inwards.filter(item => {
     if (user?.role !== 'super_admin' && activeCompany && (item.company_id || (item as any).companyId) !== activeCompany.id) return false;
     if (item.status !== 'pending') return false;
-    
+
     const search = String(filters.search || '').toLowerCase();
     const custName = String(item.customerName || item.vendorName || '').toLowerCase();
     const dcNo = String(item.dcNo || item.challanNo || '').toLowerCase();
-    
+
     return custName.includes(search) || dcNo.includes(search);
   });
   const displayItems: any[] = activeTab === 'ADD_INVOICE' ? filteredInwards : filteredInvoices;
@@ -126,9 +126,9 @@ const InvoiceTable: React.FC = () => {
     <div className="d-flex text-uppercase py-2 mb-0 px-3 bg-white border-bottom align-items-center">
       <div className="d-flex gap-2">
         {['ADD_INVOICE', 'INVOICELIST', 'WOP_LIST', 'BOTH_LIST'].map(tab => (
-          <button 
-            key={tab} 
-            className={`btn shadow-none border-0 rounded-3 py-2 px-3 fw-bold small transition-all ${activeTab === tab ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'text-muted'}`} 
+          <button
+            key={tab}
+            className={`btn shadow-none border-0 rounded-3 py-2 px-3 fw-bold small transition-all ${activeTab === tab ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'text-muted'}`}
             onClick={() => handleTabChange(tab)}
           >
             {tab === 'ADD_INVOICE' ? 'Invoice Selection' : tab === 'INVOICELIST' ? 'WP List' : tab === 'WOP_LIST' ? 'WOP List' : 'Both List'}
@@ -174,8 +174,8 @@ const InvoiceTable: React.FC = () => {
                   )}
                   <td className="text-center pe-4">
                     <div className="d-flex justify-content-center gap-1 align-items-center">
-                      <Link 
-                        href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}` : `/invoices/${item.id}`} 
+                      <Link
+                        href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}` : `/invoices/${item.id}`}
                         className="btn-action-view"
                         title={activeTab === 'ADD_INVOICE' ? "Create Invoice" : "View Invoice"}
                       >
@@ -183,34 +183,13 @@ const InvoiceTable: React.FC = () => {
                       </Link>
 
                       {activeTab !== 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'edit') && (
-                        <Link 
-                          href={`/invoices/${item.id}/edit`} 
+                        <Link
+                          href={`/invoices/${item.id}/edit`}
                           className="btn-action-edit mx-1"
                           title="Edit Invoice"
                         >
                           <i className="bi bi-pencil-fill"></i>
                         </Link>
-                      )}
-
-                      {activeTab === 'BOTH_LIST' && (
-                        <div className="d-flex gap-1">
-                           <button 
-                             onClick={() => window.open(`/invoices/${item.id}?print=true&type=WP`, '_blank')} 
-                             className="btn btn-sm btn-primary rounded-pill px-2 d-flex align-items-center justify-content-center"
-                             title="Print WP (With Process)"
-                             style={{ width: '32px', height: '32px' }}
-                           >
-                             <i className="bi bi-printer-fill fs-6"></i>
-                           </button>
-                           <button 
-                             onClick={() => window.open(`/invoices/${item.id}?print=true&type=WOP`, '_blank')} 
-                             className="btn btn-sm btn-danger rounded-pill px-2 d-flex align-items-center justify-content-center"
-                             title="Print WOP (Without Process)"
-                             style={{ width: '32px', height: '32px' }}
-                           >
-                             <i className="bi bi-file-earmark-text-fill fs-6"></i>
-                           </button>
-                        </div>
                       )}
 
                       <div className="dropdown">
@@ -222,7 +201,26 @@ const InvoiceTable: React.FC = () => {
                           <i className="bi bi-three-dots-vertical fs-5"></i>
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                           <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
+                           {(item.type === 'BOTH' || item.type === 'INVOICE') && (
+                             <li>
+                               <button 
+                                 className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
+                                 onClick={() => router.push(`/invoices/${item.id}?print=true&type=WP`)}
+                               >
+                                 <i className="bi bi-printer text-primary"></i> WP Print
+                               </button>
+                             </li>
+                           )}
+                           {(item.type === 'BOTH' || item.type === 'WOP') && (
+                             <li>
+                               <button 
+                                 className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
+                                 onClick={() => router.push(`/invoices/${item.id}?print=true&type=WOP`)}
+                               >
+                                 <i className="bi bi-file-earmark-text text-danger"></i> WOP Print
+                               </button>
+                             </li>
+                           )}
                            {checkActionPermission(user, 'mod_invoice', 'delete') && (
                              <>
                                <li><hr className="dropdown-divider opacity-50" /></li>
@@ -244,10 +242,10 @@ const InvoiceTable: React.FC = () => {
       {totalPages > 1 && (
         <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4 small text-muted">
           <span>Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, displayItems.length)} of {displayItems.length}</span>
-          <PaginationComponent 
-            currentPage={pagination.currentPage} 
-            totalPages={totalPages} 
-            onPageChange={(page) => dispatch(setInvoicePage(page))} 
+          <PaginationComponent
+            currentPage={pagination.currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => dispatch(setInvoicePage(page))}
           />
         </div>
       )}
