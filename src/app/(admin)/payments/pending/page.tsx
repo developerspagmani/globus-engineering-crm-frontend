@@ -204,17 +204,17 @@ const PendingPaymentPage = () => {
                 </div>
               ) : (
                 <table className="table align-middle mb-0 table-hover">
-                  <thead className="bg-light">
+                  <thead className="table-light">
                     <tr>
-                      <th className="fw-900 small py-3 px-4 text-capitalize tracking-wider">Sno</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Customer</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Po No</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Dc No</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice No</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Invoice Date</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider">Pending Amount</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider text-danger text-center">Over Due</th>
-                      <th className="fw-900 small py-3 text-capitalize tracking-wider text-center px-4">Action</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 px-4">Sno</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Customer</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Po No</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Dc No</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Invoice No</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Invoice Date</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Pending Amount</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-danger text-center">Over Due</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-center px-4">Action</th>
                     </tr>
                   </thead>
                   <tbody className="border-top-0">
@@ -222,14 +222,14 @@ const PendingPaymentPage = () => {
                       const overdueDays = calculateOverdueDays(inv.dueDate);
                       return (
                         <tr key={inv.id} className="border-bottom border-light">
-                          <td className="text-dark small px-4">
+                          <td className="text-muted small px-4">
                             {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
                           </td>
-                          <td className="text-dark fw-bold small text-capitalize">{inv.customerName}</td>
+                          <td className="text-dark fw-bold text-uppercase" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
                           <td className="text-muted small">{inv.poNo || '-'}</td>
                           <td className="text-muted small">{inv.dcNo || '-'}</td>
-                          <td className="text-dark fw-bold small">{inv.invoiceNumber}</td>
-                          <td className="text-dark small">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
+                          <td className="text-primary fw-bold small">{inv.invoiceNumber}</td>
+                          <td className="text-muted small">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
                           <td className="text-dark fw-bold small ">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
                           <td className="text-center">
                             {overdueDays > 0 ? (
@@ -302,6 +302,7 @@ const PendingPaymentPage = () => {
       <style jsx>{`
         .fw-900 { font-weight: 900; }
         .tracking-tight { letter-spacing: -0.025em; }
+        .x-small { font-size: 0.75rem !important; }
         .table-responsive {
           min-height: 400px;
           padding-bottom: 80px;

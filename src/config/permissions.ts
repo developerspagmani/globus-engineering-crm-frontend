@@ -93,11 +93,11 @@ export const hasPermission = (
   // 1. Super Admin Role Check (Always has access to everything)
   if (user.role === 'super_admin') return true;
 
-  // 2. Company Admin Role Check (Bypasses regular module/read permissions)
-  if (user.role === 'company_admin') return true;
+  // 2. Special Case: super_admin only items (like Companies)
+  if (item.moduleId === 'super_admin') return false; // Only super_admin role can see these
 
-  // 3. Special Case: super_admin only items (like Companies)
-  if (item.moduleId === 'super_admin') return false; // Non-admins cannot see this
+  // 3. Company Admin Role Check (Bypasses regular module/read permissions for company-level data)
+  if (user.role === 'company_admin') return true;
 
   // 5. Default Access (items like Dashboard/Settings that don't belong to a specific paid module)
   if (item.moduleId === 'default') {
