@@ -36,7 +36,8 @@ const ModuleGuard: React.FC<ModuleGuardProps> = ({ moduleId, children, requiredR
     return <>{children}</>;
   }
 
-  const hasModuleAccess = company?.activeModules.includes(moduleId);
+  const activeModules = company?.activeModules || [];
+  const hasModuleAccess = activeModules.length === 0 || activeModules.includes(moduleId);
   
   // Check role access if specified
   let hasRoleAccess = true;

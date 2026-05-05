@@ -125,7 +125,13 @@ const CompanyUserTable: React.FC = () => {
                     </td>
                     <td className="text-center">
                       <span className="fw-800 text-primary small">
-                        {user.modulePermissions.filter(p => (p as any).canRead).length} Modules
+                        {user.modulePermissions.filter(p => {
+                          const canRead = (p as any).canRead;
+                          const activeModules = activeCompany?.activeModules || [];
+                          // If company has modules defined, filter by them. Otherwise allow all.
+                          const isModuleActive = activeModules.length === 0 || activeModules.includes(p.moduleId);
+                          return canRead && isModuleActive;
+                        }).length} Modules
                       </span>
                     </td>
                     <td className="text-center">

@@ -20,8 +20,10 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
 
   // Memoize company modules to prevent infinite update loops in useEffect
   const companyModules = useMemo(() => {
-    return company 
-      ? allModules.filter(m => company.activeModules.includes(m.id))
+    if (!company) return allModules;
+    const active = company.activeModules || [];
+    return active.length > 0 
+      ? allModules.filter(m => active.includes(m.id))
       : allModules;
   }, [company, allModules]);
 
@@ -111,6 +113,12 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
         legacyPermissions.push('all');
       }
 
+      // Clean up module permissions: only save what is actually active for the company
+      const activeModules = company?.activeModules || [];
+      const cleanedModulePermissions = activeModules.length > 0 
+        ? modulePermissions.filter(p => activeModules.includes(p.moduleId))
+        : modulePermissions;
+      
       const userData = {
         name: formData.name,
         email: formData.email,
@@ -118,7 +126,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
         assigned_area: formData.assignedArea,
         company_id: company?.id || currentUser?.company_id,
         permissions: legacyPermissions, // Legacy column
-        modulePermissions: modulePermissions, // New detailed column
+        modulePermissions: cleanedModulePermissions, // New detailed column
         password: formData.password || 'password123'
       };
 

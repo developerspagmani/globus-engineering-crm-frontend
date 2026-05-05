@@ -96,12 +96,18 @@ export const hasPermission = (
   // 2. Special Case: super_admin only items (like Companies)
   if (item.moduleId === 'super_admin') return false; // Only super_admin role can see these
 
-  // 3. Company Admin Role Check (Bypasses regular module/read permissions for company-level data)
-  if (user.role === 'company_admin') return true;
+  // 3. Company Admin Role Check
+  if (user.role === 'company_admin') {
+    if (item.moduleId === 'default') return true;
+    // Only restrict if company modules are explicitly defined
+    if (companyModules && companyModules.length > 0) {
+      return companyModules.includes(item.moduleId);
+    }
+    return true; 
+  }
 
-  // 5. Default Access (items like Dashboard/Settings that don't belong to a specific paid module)
+  // 5. Default Access
   if (item.moduleId === 'default') {
-    // Hide Dashboard for sales and staff roles
     if (item.name === 'Dashboard' && (user.role === 'sales' || user.role === 'staff')) {
       return false;
     }
@@ -109,8 +115,9 @@ export const hasPermission = (
   }
 
   // 6. Module check: Is this module active for the organization?
-  if (user.role !== 'sales_agent') {
-    const isModuleActive = companyModules?.includes(item.moduleId);
+  // Only restrict if company modules are explicitly defined
+  if (companyModules && companyModules.length > 0) {
+    const isModuleActive = companyModules.includes(item.moduleId);
     if (!isModuleActive) return false;
   }
 
