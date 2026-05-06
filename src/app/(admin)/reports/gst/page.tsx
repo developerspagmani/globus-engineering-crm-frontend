@@ -84,7 +84,7 @@ const GstReportPage = () => {
     ]);
     
     return {
-      headers: ['SNO', 'DATE', 'CUSTOMER', 'GSTIN', 'DC NO', 'INVOICE NO', 'TAXABLE', 'CGST', 'SGST', 'IGST'],
+      headers: ['SNO', 'DATE', 'CUSTOMER', 'GSTIN', 'DC NO', 'INVOICE NO', 'AMOUNT', 'CGST', 'SGST', 'IGST'],
       data
     };
   };
@@ -145,7 +145,7 @@ const GstReportPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'GST Report', active: true }]} /><h2 className="fw-900 mt-2">GST Report</h2><p className="text-muted small mb-0">Tax liability analysis and CGST/SGST/IGST breakdown statements.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="GST Analysis Report" onFetchAll={handleFetchAllForExport} />
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="GST Analysis Report" orientation="landscape" onFetchAll={handleFetchAllForExport} />
           <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id })); (dispatch as any)(fetchCustomers({ company_id: activeCompany?.id })); }}>
             <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
             <span className="small fw-800 text-muted">Refresh</span>
@@ -197,7 +197,7 @@ const GstReportPage = () => {
       <div className="row g-3 mb-4">
         {[
           { label: 'Total Invoices', val: totals.count, icon: 'receipt', color: 'primary' },
-          { label: 'Taxable Amount', val: `₹${totals.taxable.toLocaleString()}`, icon: 'cash-stack', color: 'info' },
+          { label: 'Total Amount', val: `₹${totals.taxable.toLocaleString()}`, icon: 'cash-stack', color: 'info' },
           { label: 'Tax Collected', val: `₹${totals.tax.toLocaleString()}`, icon: 'percent', color: 'warning' },
           { label: 'Grand Revenue', val: `₹${totals.grand.toLocaleString()}`, icon: 'wallet2', color: 'success' }
         ].map((item, i) => (
@@ -274,7 +274,7 @@ const GstReportPage = () => {
                     <td></td>
                   </tr>
                   <tr className="bg-white small text-muted text-uppercase">
-                    <td colSpan={5} className="text-center py-1">Cumulative Taxable Value</td>
+                    <td colSpan={5} className="text-center py-1">Cumulative Amount</td>
                     <td colSpan={2} className="text-center py-1 fw-bold text-info border-start border-end">₹{totals.taxable.toLocaleString()}</td>
                     <td></td>
                   </tr>

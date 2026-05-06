@@ -8,10 +8,17 @@ interface ReportActionsProps {
   setFromDate?: (date: string) => void;
   setToDate?: (date: string) => void;
   title?: string;
+  orientation?: 'portrait' | 'landscape';
   onFetchAll?: () => Promise<{ headers: string[], data: string[][] }>;
 }
 
-const ReportActions: React.FC<ReportActionsProps> = ({ setFromDate, setToDate, title = "Report", onFetchAll }) => {
+const ReportActions: React.FC<ReportActionsProps> = ({ 
+  setFromDate, 
+  setToDate, 
+  title = "Report", 
+  orientation = 'portrait', 
+  onFetchAll 
+}) => {
   const [activePreset, setActivePreset] = React.useState<string | null>(null);
   const [printLoading, setPrintLoading] = React.useState(false);
   const [pdfLoading, setPdfLoading] = React.useState(false);
@@ -80,8 +87,9 @@ const ReportActions: React.FC<ReportActionsProps> = ({ setFromDate, setToDate, t
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
 
-    printWindow.document.write('<html><head><title>Print Report Records</title>');
+    printWindow.document.write(`<html><head><title>${title} - Audit Report</title>`);
     printWindow.document.write('<style>');
+    printWindow.document.write(`@page { size: ${orientation}; margin: 10mm; }`);
     printWindow.document.write('body { font-family: sans-serif; padding: 20px; }');
     printWindow.document.write('table {width:100%; border-collapse: collapse; font-size: 10px;}');
     printWindow.document.write('th, td {border: 1px solid #ddd; padding: 6px; text-align: left; text-transform: uppercase;}');
@@ -91,7 +99,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({ setFromDate, setToDate, t
     printWindow.document.write('</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div>');
-    printWindow.document.write(`<h2>Globus Engineering - ${title || 'Official Report Export'}</h2>`);
+    printWindow.document.write(`<h2>Globus Engineering - ${title || 'Official Audit Statement'}</h2>`);
     printWindow.document.write('<p>Generated on ' + new Date().toLocaleString() + '</p>');
     printWindow.document.write('</div>');
     
@@ -148,13 +156,16 @@ const ReportActions: React.FC<ReportActionsProps> = ({ setFromDate, setToDate, t
       });
     }
 
-    const doc = new jsPDF();
-    doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 45, 'F');
+    const doc = new jsPDF({ orientation: orientation });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const centerX = pageWidth / 2;
+
+    doc.setFillColor(30, 30, 30); doc.rect(0, 0, pageWidth, 45, 'F');
     doc.setTextColor(255, 255, 255); 
-    doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("GLOBUS ENGINEERING TOOLS", 105, 18, { align: "center" });
-    doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.text("PRECISION INDUSTRIAL ENGINEERING & AUDIT LOGISTICS", 105, 25, { align: "center" });
-    doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5); doc.line(35, 28, 175, 28);
-    doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text(`${title.toUpperCase()} ANALYSIS STATEMENT`, 105, 37, { align: "center" });
+    doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("GLOBUS ENGINEERING TOOLS", centerX, 18, { align: "center" });
+    doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.text("PRECISION INDUSTRIAL ENGINEERING & AUDIT LOGISTICS", centerX, 25, { align: "center" });
+    doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5); doc.line(centerX - 70, 28, centerX + 70, 28);
+    doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text(`${title.toUpperCase()} AUDIT STATEMENT`, centerX, 37, { align: "center" });
 
     autoTable(doc, {
       head: [headers],
