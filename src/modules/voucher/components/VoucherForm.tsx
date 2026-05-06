@@ -224,12 +224,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             <div className="col-md-12 d-flex align-items-center gap-3">
               <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>CUSTOMER <span className="text-danger">*</span></label>
               {initialData ? (
-                <div className="w-100 text-center fw-bold text-uppercase" style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '10px 12px', color: '#334155', backgroundColor: '#f8fafc', fontSize: '0.85rem', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="w-100 fw-bold text-uppercase" style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '10px 12px', color: '#334155', backgroundColor: '#f8fafc', fontSize: '0.85rem', height: '38px', display: 'flex', alignItems: 'center' }}>
                   {formData.customerName || 'LOADING CUSTOMER...'}
                 </div>
               ) : (
                 <select
-                  className="form-select text-center fw-semibold text-uppercase"
+                  className="form-select fw-semibold text-uppercase"
                   style={{ fontSize: '0.85rem', height: '38px' }}
                   value={formData.customerId}
                   onChange={handleCustomerChange}

@@ -40,10 +40,12 @@ export default function PriceFixingPage() {
   }, []);
 
   useEffect(() => {
-    (dispatch as any)(fetchPriceFixings({ company_id: company?.id }));
-    (dispatch as any)(fetchItems({ company_id: company?.id }));
-    (dispatch as any)(fetchProcesses({ company_id: company?.id }));
-    (dispatch as any)(fetchCustomers({ company_id: company?.id }));
+    if (company?.id) {
+      (dispatch as any)(fetchPriceFixings({ company_id: company.id, limit: 1000 }));
+      (dispatch as any)(fetchItems({ company_id: company.id, limit: 1000 }));
+      (dispatch as any)(fetchProcesses({ company_id: company.id, limit: 1000 }));
+      (dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 }));
+    }
   }, [dispatch, company?.id]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
