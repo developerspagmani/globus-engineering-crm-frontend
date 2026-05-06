@@ -57,8 +57,6 @@ const InwardReportPage = () => {
       item.status || 'pending'
     ]);
 
-    data.push(['', '', '', 'TOTAL RECEIPTS', '', allItems.length.toString()]);
-
     return {
       headers: ['SNO', 'DATE', 'DC NO', 'CUSTOMER NAME', 'ADDRESS', 'STATUS'],
       data
@@ -224,10 +222,6 @@ const InwardReportPage = () => {
                       </td>
                     </tr>
                   ))}
-                  <tr className="bg-light-soft fw-900 border-top border-dark">
-                    <td colSpan={5} className="text-center py-3">Audit Summary (All Records)</td>
-                    <td colSpan={2} className="text-center py-3">{pagination.totalItems || items.length} Inwards Total</td>
-                  </tr>
                   {items.length === 0 && (
                     <tr><td colSpan={7} className="text-center py-5 text-muted small">No inward records found matching filters.</td></tr>
                   )}

@@ -63,17 +63,6 @@ const InvoiceReportPage = () => {
       parseFloat(inv.grand_total || '0').toLocaleString()
     ]);
 
-    const totalSub = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.total || '0'), 0);
-    const totalTax = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.tax_total || '0'), 0);
-    const totalGrand = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.grand_total || '0'), 0);
-
-    data.push([
-      '', '', '', 'GRAND TOTAL',
-      totalSub.toLocaleString(),
-      totalTax.toLocaleString(),
-      totalGrand.toLocaleString()
-    ]);
-
     return {
       headers: ['SNO', 'DATE', 'INVOICE NO', 'CUSTOMER NAME', 'SUBTOTAL', 'TAXES', 'GRAND TOTAL'],
       data
@@ -253,11 +242,9 @@ const InvoiceReportPage = () => {
                       </td>
                     </tr>
                   ))}
-                  <tr className="bg-light-soft fw-900 border-top border-dark">
-                    <td colSpan={6} className="text-center py-3 px-4 uppercase" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Audit Summary (All Records — Grand Total)</td>
-                    <td className="text-end py-3 px-2">₹{totals.grand.toLocaleString()}</td>
-                    <td></td>
-                  </tr>
+                  {invoices.length === 0 && (
+                    <tr><td colSpan={8} className="text-center py-5 text-muted small">No invoice records found matching filters.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>

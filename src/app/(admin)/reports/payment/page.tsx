@@ -81,9 +81,6 @@ const PaymentReportPage = () => {
         parseFloat(v.amount || '0').toLocaleString()
       ]);
 
-      const totalAmount = allVouchers.reduce((sum: number, v: any) => sum + parseFloat(v.amount || '0'), 0);
-      data.push(['', '', '', 'GRAND TOTAL', '', totalAmount.toLocaleString()]);
-
       return {
         headers: ['SNO', 'DATE', 'REF NO', 'CUSTOMER NAME', 'MODE', 'PAID AMOUNT'],
         data
@@ -110,14 +107,6 @@ const PaymentReportPage = () => {
           (grand - paid).toLocaleString()
         ];
       });
-
-      const totalPending = allPending.reduce((sum: number, inv: any) => {
-        const grand = parseFloat(inv.grand_total || '0');
-        const paid = parseFloat(inv.paid_amount || '0');
-        return sum + (grand - paid);
-      }, 0);
-
-      data.push(['', '', '', 'GRAND TOTAL', '', totalPending.toLocaleString()]);
 
       return {
         headers: ['SNO', 'DATE', 'INVOICE NO', 'CUSTOMER NAME', 'AGEING', 'PENDING AMOUNT'],
@@ -303,11 +292,6 @@ const PaymentReportPage = () => {
                       </td>
                     </tr>
                   ))}
-                  <tr className="bg-light-soft fw-900 border-top border-dark">
-                    <td colSpan={5} className="text-center py-3 uppercase" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Audit Summary (Current View Balance)</td>
-                    <td className={`text-end py-3 px-4 ${activeTab === 'PAYMENT' ? 'text-success' : 'text-danger'}`}>₹{(activeTab === 'PAYMENT' ? totals.totalCollected : totals.totalOutstanding).toLocaleString()}</td>
-                    <td></td>
-                  </tr>
                   {activeData.length === 0 && (
                     <tr><td colSpan={7} className="text-center py-5 text-muted small">No payment records found.</td></tr>
                   )}

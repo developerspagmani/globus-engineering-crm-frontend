@@ -70,18 +70,6 @@ const GstReportPage = () => {
       ];
     });
 
-    const totalTaxable = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.total || '0'), 0);
-    const totalGst1 = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.gst1 || '0'), 0);
-    const totalGst2 = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.gst2 || '0'), 0);
-    const totalIgst = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.igst || '0'), 0);
-
-    data.push([
-      '', '', 'GRAND TOTAL', '', '', '',
-      totalTaxable.toLocaleString(),
-      totalGst1.toLocaleString(),
-      totalGst2.toLocaleString(),
-      totalIgst.toLocaleString()
-    ]);
     
     return {
       headers: ['SNO', 'DATE', 'CUSTOMER', 'GSTIN', 'DC NO', 'INVOICE NO', 'AMOUNT', 'CGST', 'SGST', 'IGST'],
@@ -267,17 +255,9 @@ const GstReportPage = () => {
                       </tr>
                     );
                   })}
-                  <tr className="bg-light-soft fw-900 border-top border-dark">
-                    <td colSpan={6} className="text-center py-3">Audit Summary (Grand Totals)</td>
-                    <td className="text-end py-3 px-2">₹{totals.taxable.toLocaleString()}</td>
-                    <td colSpan={3} className="text-center py-3 text-info">Total Tax: ₹{totals.tax.toLocaleString()}</td>
-                    <td></td>
-                  </tr>
-                  <tr className="bg-white small text-muted text-uppercase">
-                    <td colSpan={5} className="text-center py-1">Cumulative Amount</td>
-                    <td colSpan={2} className="text-center py-1 fw-bold text-info border-start border-end">₹{totals.taxable.toLocaleString()}</td>
-                    <td></td>
-                  </tr>
+                  {invoices.length === 0 && (
+                    <tr><td colSpan={11} className="text-center py-5 text-muted small">No records found matching filters.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
