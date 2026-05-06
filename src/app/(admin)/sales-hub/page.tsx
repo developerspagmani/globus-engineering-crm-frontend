@@ -10,6 +10,7 @@ import { addCustomer } from '@/redux/features/customerSlice';
 import { deleteLead } from '@/redux/features/leadSlice';
 import Link from 'next/link';
 import StatusModal from '@/components/StatusModal';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import { checkActionPermission } from '@/config/permissions';
 
 import ExportExcel from '@/components/shared/ExportExcel';
@@ -27,6 +28,8 @@ const SalesHubPage = () => {
     title: '',
     message: ''
   });
+
+  const [sealModal, setSealModal] = useState<{ isOpen: boolean; deal: Deal | null }>({ isOpen: false, deal: null });
 
   useEffect(() => {
     setMounted(true);
@@ -50,35 +53,39 @@ const SalesHubPage = () => {
   const isAgent = user?.role === 'sales_agent';
 
   const handleSealDeal = (deal: Deal) => {
+    setSealModal({ isOpen: true, deal });
+  };
+
+  const confirmSealDeal = () => {
+    const deal = sealModal.deal;
+    if (!deal) return;
     const lead = allLeads.find(l => l.id === deal.leadId);
     if (!lead) return;
 
-    if (confirm(`Seal the deal for "${deal.title}"? This will convert ${lead.company} into an active Customer.`)) {
-      // 1. Mark Deal as Won
-      (dispatch as any)(updateDeal({ ...deal, status: 'won' }));
+    // 1. Mark Deal as Won
+    (dispatch as any)(updateDeal({ ...deal, status: 'won' }));
 
-      // 2. Convert Lead to Customer
-      (dispatch as any)(addCustomer({
-        name: lead.name,
-        email: lead.email,
-        phone: lead.phone,
-        company: lead.company,
-        industry: lead.industry,
-        status: 'active',
-        agentId: lead.agentId,
-        company_id: lead.company_id,
-      }));
+    // 2. Convert Lead to Customer
+    (dispatch as any)(addCustomer({
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      company: lead.company,
+      industry: lead.industry,
+      status: 'active',
+      agentId: lead.agentId,
+      company_id: lead.company_id,
+    }));
 
-      // 3. Remove Lead
-      (dispatch as any)(deleteLead(lead.id));
+    // 3. Remove Lead
+    (dispatch as any)(deleteLead(lead.id));
 
-      setModal({
-        isOpen: true,
-        type: 'success',
-        title: 'Deal Signed!',
-        message: `Congratulations! ${lead.company} has been onboarded as an active client. Career/Project modules are now unlocked for them.`
-      });
-    }
+    setModal({
+      isOpen: true,
+      type: 'success',
+      title: 'Deal Signed!',
+      message: `Congratulations! ${lead.company} has been onboarded as an active client. Career/Project modules are now unlocked for them.`
+    });
   };
 
   const stats = {
@@ -269,6 +276,16 @@ const SalesHubPage = () => {
         type={modal.type}
         title={modal.title}
         message={modal.message}
+      />
+
+      <ConfirmationModal 
+        isOpen={sealModal.isOpen}
+        onClose={() => setSealModal({ isOpen: false, deal: null })}
+        onConfirm={confirmSealDeal}
+        type="primary"
+        title="Finalize Partnership"
+        message={`Seal the deal for "${sealModal.deal?.title}"? This will convert the lead into an active Customer.`}
+        confirmLabel="Seal Deal"
       />
 
       <style jsx>{`

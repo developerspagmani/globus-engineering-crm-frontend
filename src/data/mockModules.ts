@@ -92,13 +92,6 @@ export const availableModules: ModuleData[] = [
     icon: 'bi-person-badge'
   },
   {
-    id: 'mod_sales_hub',
-    name: 'Sales & Deal Hub',
-    description: 'Personalized workspace for sales agents to manage leads and deals.',
-    status: 'active',
-    icon: 'bi-graph-up-arrow'
-  },
-  {
     id: 'mod_lead',
     name: 'Lead Management',
     description: 'Track potential prospects and conversion funnels.',
@@ -120,11 +113,11 @@ export const availableModules: ModuleData[] = [
     icon: 'bi-truck'
   },
   {
-    id: 'mod_sales_map',
-    name: 'Sales Map',
-    description: 'Geographic sales intelligence and customer distribution visualizer.',
+    id: 'mod_user_management',
+    name: 'User Management',
+    description: 'Manage system users, roles, and granular module permissions.',
     status: 'active',
-    icon: 'bi-geo-alt'
+    icon: 'bi-person-lock'
   },
   {
     id: 'mod_items',

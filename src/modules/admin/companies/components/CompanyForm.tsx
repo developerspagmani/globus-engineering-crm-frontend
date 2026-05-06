@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { Company } from '@/types/modules';
 import { addCompany, updateCompany } from '@/redux/features/companySlice';
+import FullPageStatus from '@/components/FullPageStatus';
 
 interface CompanyFormProps {
   initialData?: Company;
@@ -22,6 +23,13 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
     slug: '',
     plan: 'basic' as Company['plan'],
     activeModules: [] as string[]
+  });
+
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
   });
 
   useEffect(() => {
@@ -50,12 +58,28 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
     try {
       if (mode === 'create') {
         await (dispatch as any)(addCompany(formData)).unwrap();
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Tenant Provisioned',
+          message: `${formData.name} has been successfully added to the ecosystem.`
+        });
       } else {
         await (dispatch as any)(updateCompany({ id: initialData!.id, ...formData })).unwrap();
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Organization Updated',
+          message: 'Company parameters and module access have been synchronized.'
+        });
       }
-      router.push('/admin/companies');
-    } catch (err) {
-      alert('Failed to save company: ' + err);
+    } catch (err: any) {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Operation Failed',
+        message: err.message || 'Failed to update company records.'
+      });
     }
   };
 
@@ -179,6 +203,17 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
           </div>
         </form>
       </div>
+      {modal.isOpen && (
+        <FullPageStatus 
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/admin/companies');
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { addCustomer } from '@/redux/features/customerSlice';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ModuleGuard from '@/components/ModuleGuard';
+import FullPageStatus from '@/components/FullPageStatus';
 
 export default function NewLedgerAccountPage() {
     const dispatch = useDispatch();
@@ -26,6 +27,13 @@ export default function NewLedgerAccountPage() {
         status: 'active' as const
     });
 
+    const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error' | 'warning'; title: string; message: string }>({
+        isOpen: false,
+        type: 'success',
+        title: '',
+        message: ''
+    });
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -34,7 +42,12 @@ export default function NewLedgerAccountPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name) {
-            alert('Please enter a Customer');
+            setModal({
+                isOpen: true,
+                type: 'warning',
+                title: 'Missing Information',
+                message: 'Please enter the name of the party or vendor to create the ledger account.'
+            });
             return;
         }
 
@@ -46,10 +59,19 @@ export default function NewLedgerAccountPage() {
                 company_id: activeCompany?.id || ''
             })).unwrap();
 
-            alert('Account added successfully!');
-            router.push('/ledger');
+            setModal({
+                isOpen: true,
+                type: 'success',
+                title: 'Account Provisioned',
+                message: `Ledger account for ${formData.name} has been created successfully.`
+            });
         } catch (err: any) {
-            alert('Error: ' + err);
+            setModal({
+                isOpen: true,
+                type: 'error',
+                title: 'Creation Failed',
+                message: err.message || 'The system was unable to register the new ledger account.'
+            });
         } finally {
             setLoading(false);
         }
@@ -149,6 +171,17 @@ export default function NewLedgerAccountPage() {
 
 
             </div>
+            {modal.isOpen && (
+                <FullPageStatus 
+                    type={modal.type}
+                    title={modal.title}
+                    message={modal.message}
+                    onClose={() => {
+                        setModal(prev => ({ ...prev, isOpen: false }));
+                        if (modal.type === 'success') router.push('/ledger');
+                    }}
+                />
+            )}
         </ModuleGuard>
     );
 }

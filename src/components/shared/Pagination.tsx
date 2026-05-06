@@ -147,6 +147,7 @@ const Pagination: React.FC<PaginationProps> = ({
                     className="form-control border-end-0" 
                     placeholder="Page #" 
                     value={jumpInput}
+                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
                     onChange={(e) => setJumpInput(e.target.value)}
                     autoFocus
                   />

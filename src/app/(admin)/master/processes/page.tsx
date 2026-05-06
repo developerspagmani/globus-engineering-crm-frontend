@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk, setProcessPage } from '@/redux/features/masterSlice';
+import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk, setProcessPage, setProcessSearch } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -12,21 +12,22 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import FullPageStatus from '@/components/FullPageStatus';
 
 
 import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function ProcessDetailsPage() {
   const dispatch = useDispatch();
-  const { processes, pagination, loading } = useSelector((state: RootState) => state.master);
+  const { processes, pagination, loading, filters } = useSelector((state: RootState) => state.master);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ processName: '' });
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [statusModal, setStatusModal] = useState<{ isOpen: boolean; type: 'success' | 'error' | 'warning'; title: string; message: string }>({ isOpen: false, type: 'success', title: '', message: '' });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -34,8 +35,13 @@ export default function ProcessDetailsPage() {
   }, []);
 
   useEffect(() => {
-    (dispatch as any)(fetchProcesses(company?.id));
-  }, [dispatch, company?.id]);
+    (dispatch as any)(fetchProcesses({
+      company_id: company?.id,
+      page: pagination.processPage,
+      limit: pagination.itemsPerPage,
+      search: filters.processSearch
+    }));
+  }, [dispatch, company?.id, pagination.processPage, pagination.itemsPerPage, filters.processSearch]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,17 +56,33 @@ export default function ProcessDetailsPage() {
         } else {
           await (dispatch as any)(createProcessThunk({ ...formData, company_id: company.id })).unwrap();
         }
-        setFormData({ processName: '' });
-        setView('list');
-      } catch (err: any) {
-        alert(err.message || "Failed to save process. Please try again.");
-      } finally {
-        setIsSubmitting(false);
+          setFormData({ processName: '' });
+          setView('list');
+          setStatusModal({
+            isOpen: true,
+            type: 'success',
+            title: editingId ? 'Workflow Updated' : 'Process Registered',
+            message: `The process "${formData.processName}" has been successfully saved to your master catalog.`
+          });
+        } catch (err: any) {
+          setStatusModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Save Failed',
+            message: err.message || "We encountered an issue while saving the process. Please try again."
+          });
+        } finally {
+          setIsSubmitting(false);
+        }
+      } else {
+        setStatusModal({
+          isOpen: true,
+          type: 'warning',
+          title: 'Company Not Selected',
+          message: "Please select a company from the top navigation bar to manage its production processes."
+        });
       }
-    } else {
-      alert("Please select a company from the top navigation first.");
-    }
-  };
+    };
 
   const handleEdit = (p: any) => {
     setEditingId(p.id);
@@ -79,15 +101,8 @@ export default function ProcessDetailsPage() {
     }
   };
 
-  const filteredProcesses = processes.filter(p =>
-    p.processName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredProcesses.length / pagination.itemsPerPage);
-  const paginatedProcesses = filteredProcesses.slice(
-    (pagination.processPage - 1) * pagination.itemsPerPage,
-    pagination.processPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalProcessPages;
+  const paginatedProcesses = processes;
 
   const handlePrintProcess = (p: any) => {
     const printWindow = window.open('', '', 'height=600,width=800');
@@ -272,8 +287,8 @@ export default function ProcessDetailsPage() {
                           type="text"
                           placeholder="Search processes..."
                           className="form-control search-bar"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          value={filters.processSearch}
+                          onChange={(e) => dispatch(setProcessSearch(e.target.value))}
                         />
                       </div>
                     </div>
@@ -299,7 +314,7 @@ export default function ProcessDetailsPage() {
                               <Loader text="Fetching Processes..." />
                             </td>
                           </tr>
-                        ) : filteredProcesses.length === 0 ? (
+                        ) : processes.length === 0 ? (
                           <tr>
                             <td colSpan={3} className="text-center py-5 text-muted">No processes found</td>
                           </tr>
@@ -373,7 +388,7 @@ export default function ProcessDetailsPage() {
                   </div>
                   {totalPages > 1 && (
                     <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                      <span className="text-muted small">Showing {(pagination.processPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.processPage * pagination.itemsPerPage, filteredProcesses.length)} of {filteredProcesses.length} entries</span>
+                      <span className="text-muted small">Showing {(pagination.processPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.processPage * pagination.itemsPerPage, pagination.totalProcesses)} of {pagination.totalProcesses} entries</span>
                       <PaginationComponent
                         currentPage={pagination.processPage}
                         totalPages={totalPages}
@@ -396,6 +411,15 @@ export default function ProcessDetailsPage() {
         title="Delete Process"
         message="Are you sure you want to delete this process? This action cannot be undone."
       />
+
+      {statusModal.isOpen && (
+        <FullPageStatus 
+          type={statusModal.type}
+          title={statusModal.title}
+          message={statusModal.message}
+          onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+        />
+      )}
 
       <style jsx>{`
         .transition-all { transition: all 0.2s ease; }

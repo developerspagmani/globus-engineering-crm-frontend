@@ -24,35 +24,17 @@ const VoucherPage = () => {
 
   React.useEffect(() => {
     if (activeCompany?.id) {
-      (dispatch as any)(fetchVouchers(activeCompany.id));
+      (dispatch as any)(fetchVouchers({
+        company_id: activeCompany.id,
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: filters.search
+      }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
-  // Filter logic
-  const filteredItems = items.filter(item => {
-    // Company context filtering
-    if (user?.role !== 'super_admin' && activeCompany && item.company_id !== activeCompany.id) return false;
-
-    const matchesSearch = 
-      (item.voucherNo || '').toLowerCase().includes((filters.search || '').toLowerCase()) ||
-      (item.partyName || '').toLowerCase().includes((filters.search || '').toLowerCase()) ||
-      (item.description || '').toLowerCase().includes((filters.search || '').toLowerCase());
-    const matchesType = filters.type === 'all' || item.type === filters.type;
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    
-    // Date range filtering
-    if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) return false;
-    if (filters.toDate && item.date && new Date(item.date) > new Date(filters.toDate)) return false;
-
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -74,43 +56,11 @@ const VoucherPage = () => {
   };
 
   const handlePrintVoucherRecord = (voucher: any) => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Voucher Summary</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Voucher Summary Record</p></div>');
-    printWindow.document.write('<div class="grid">');
-    printWindow.document.write(`<div><div class="label">Voucher No</div><div class="value">${voucher.voucherNo}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${new Date(voucher.date).toLocaleDateString()}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Account / Party</div><div class="value">${voucher.partyName}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Amount</div><div class="value">₹${voucher.amount.toLocaleString()}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Payment Mode</div><div class="value">${voucher.paymentMode.toUpperCase()}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Status</div><div class="value">${voucher.status.toUpperCase()}</div></div>`);
-    printWindow.document.write('</div>');
-    printWindow.document.write('<div style="margin-top: 50px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px;">System Voucher Record on ' + new Date().toLocaleString() + '</div>');
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+    window.open(`/logistics-print?type=voucher&id=${voucher.id}&print=true`, '_blank');
   };
 
   const handleExportPDFVoucherRecord = (voucher: any) => {
-    const doc = new jsPDF();
-    doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
-    doc.setFontSize(10); doc.text("VOUCHER SUMMARY RECORD", 14, 32);
-    doc.setTextColor(33, 33, 33); doc.setFontSize(12); doc.text("TRANSACTION DETAILS", 14, 55);
-    autoTable(doc, {
-      startY: 60,
-      body: [
-        ['Voucher Number', voucher.voucherNo], ['Date', new Date(voucher.date).toLocaleDateString()],
-        ['Party Name', voucher.partyName], ['Amount', `INR ${voucher.amount.toLocaleString()}`],
-        ['Payment Mode', voucher.paymentMode.toUpperCase()], ['Status', voucher.status.toUpperCase()]
-      ],
-      theme: 'grid', styles: { cellPadding: 8, fontSize: 10 },
-      columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } },
-    });
-    doc.save(`voucher_${voucher.voucherNo}.pdf`);
+    window.open(`/logistics-print?type=voucher&id=${voucher.id}`, '_blank');
   };
 
   const handleDeleteParams = (id: string) => {
@@ -284,6 +234,12 @@ const VoucherPage = () => {
                                     <span className="small fw-semibold">Quick Print</span>
                                   </button>
                                 </li>
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFVoucherRecord(voucher)}>
+                                    <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                    <span className="small fw-semibold">Export PDF</span>
+                                  </button>
+                                </li>
                                 {checkActionPermission(user, 'mod_voucher', 'delete') && (
                                   <>
                                     <li><hr className="dropdown-divider opacity-50" /></li>
@@ -321,7 +277,7 @@ const VoucherPage = () => {
           {totalPages > 1 && (
             <div className="px-4 py-3 border-top d-flex align-items-center justify-content-between">
               <div className="text-muted small">
-                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
+                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
               </div>
               <PaginationComponent 
                 currentPage={pagination.currentPage} 

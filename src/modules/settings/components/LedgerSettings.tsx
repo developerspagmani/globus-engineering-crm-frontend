@@ -387,6 +387,7 @@ const LedgerSettings: React.FC<LedgerSettingsProps> = ({ settings, onSettingsCha
                       className="form-control" 
                       name="nextNumber"
                       value={formData.nextNumber}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       onChange={handleInputChange}
                     />
                   </div>

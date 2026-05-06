@@ -4,33 +4,31 @@ import api from '@/lib/axios';
 
 // Thunks
 export const fetchInwards = createAsyncThunk(
-  'inward/fetchAll',
-  async (company_id: string | undefined, { rejectWithValue }) => {
+  'inwards/fetchAll',
+  async (params: { 
+    company_id?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+    status?: string;
+    fromDate?: string;
+    toDate?: string;
+  }, { rejectWithValue }) => {
     try {
-      const url = company_id ? `/inward?company_id=${company_id}` : '/inward';
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate } = params;
+      let url = `/inward?page=${page}&limit=${limit}`;
+      if (company_id) url += `&companyId=${company_id}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
+      
       const response = await api.get(url);
-      return response.data.map((item: any) => ({
-        id: item.id.toString(),
-        inwardNo: String(item.inward_no || ''),
-        customerId: item.customer_id?.toString() || '',
-        customerName: String(item.customer_name || 'N/A'),
-        address: item.address || '',
-        vendorId: item.vendor_id?.toString() || '',
-        vendorName: item.vendor_name || '',
-        poReference: item.po_reference || '',
-        poDate: item.po_date ? new Date(item.po_date).toISOString().split('T')[0] : '',
-        challanNo: item.challan_no || '',
-        dcNo: item.dc_no || '',
-        dcDate: item.dc_date ? new Date(item.dc_date).toISOString().split('T')[0] : '',
-        vehicleNo: item.vehicle_no || '',
-        company_id: item.company_id?.toString() || '',
-        date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
-        dueDate: item.due_date ? new Date(item.due_date).toISOString().split('T')[0] : '',
-        status: item.status || 'pending',
-        items: item.items || [],
-        totalRemaining: item.totalRemaining,
-        createdAt: item.created_at
-      }));
+      return {
+        items: response.data.items,
+        pagination: response.data.pagination,
+        statusCounts: response.data.statusCounts   // ← completed / pending / activeParties
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch inward entries');
     }
@@ -164,6 +162,13 @@ interface InwardState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  statusCounts: {
+    completed: number;
+    pending: number;
+    activeParties: number;
   };
 }
 
@@ -180,6 +185,13 @@ const initialState: InwardState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
+  },
+  statusCounts: {
+    completed: 0,
+    pending: 0,
+    activeParties: 0,
   },
 };
 
@@ -202,12 +214,14 @@ const inwardSlice = createSlice({
       })
       .addCase(fetchInwards.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.sort((a: any, b: any) => {
-          const dateA = new Date(a.createdAt || a.date || 0).getTime();
-          const dateB = new Date(b.createdAt || b.date || 0).getTime();
-          if (dateB !== dateA) return dateB - dateA;
-          return String(b.id).localeCompare(String(a.id), undefined, { numeric: true });
-        });
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
+        if (action.payload.statusCounts) {
+          state.statusCounts = action.payload.statusCounts;
+        }
+        state.error = null;
       })
       .addCase(fetchInwards.rejected, (state, action) => {
         state.loading = false;

@@ -30,9 +30,9 @@ export default function LedgerDetailPage() {
   const reportContainerRef = React.useRef<HTMLDivElement>(null);
 
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: allEntries, loading, filters } = useSelector((state: RootState) => state.ledger);
-  const { items: customers } = useSelector((state: RootState) => state.customers);
-  const { items: vendors } = useSelector((state: RootState) => state.vendors);
+  const { items: allEntries, loading, filters, error: ledgerError } = useSelector((state: RootState) => state.ledger);
+  const { items: customers, loading: isCustomerLoading, error: customerError } = useSelector((state: RootState) => state.customers);
+  const { items: vendors, loading: isVendorLoading, error: vendorError } = useSelector((state: RootState) => state.vendors);
   const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
 
   // 1. Identify Party
@@ -41,22 +41,40 @@ export default function LedgerDetailPage() {
     if (cust) return { ...cust, partyType: 'customer' };
     const vend = vendors.find(v => String(v.id) === String(partyId));
     if (vend) return { ...vend, partyType: 'vendor' };
+    
+    // FALLBACK: If not found in master list but we have entries, 
+    // we can still show a basic ledger using the name from the entries
+    if (allEntries.length > 0) {
+      const first = allEntries[0];
+      return {
+        id: partyId,
+        name: first.partyName || 'Account Holder',
+        street1: 'Address details unavailable in master list',
+        partyType: first.partyType || 'customer'
+      };
+    }
     return null;
-  }, [customers, vendors, partyId]);
+  }, [customers, vendors, partyId, allEntries]);
 
   useEffect(() => {
     if (activeCompany?.id) {
-      dispatch(resetLedgerState());
-      (dispatch as any)(fetchLedgerEntries({ partyId, companyId: activeCompany.id }));
-      (dispatch as any)(fetchCustomers(activeCompany.id));
-      (dispatch as any)(fetchVendors(activeCompany.id));
-      (dispatch as any)(fetchInvoices(activeCompany.id));
+      (dispatch as any)(fetchLedgerEntries({ 
+        partyId, 
+        companyId: activeCompany.id,
+        page: currentPage,
+        limit: itemsPerPage,
+        dateFrom: dateFrom || filters.dateFrom,
+        dateTo: dateTo || filters.dateTo
+      }));
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
     }
     
     return () => {
       dispatch(resetLedgerState());
     };
-  }, [dispatch, activeCompany?.id, partyId]);
+  }, [dispatch, activeCompany?.id, partyId, currentPage, itemsPerPage, dateFrom, dateTo, filters.dateFrom, filters.dateTo]);
 
   useEffect(() => {
     if (searchParams.get('print') === 'true' && !loading && party && allEntries.length > 0) {
@@ -68,49 +86,28 @@ export default function LedgerDetailPage() {
   }, [searchParams, loading, party, allEntries]);
 
   // 2. Process Ledger Calculations
+  const { openingBalance: rawOpeningBalance, pagination: ledgerPagination } = useSelector((state: RootState) => state.ledger);
+
   const processedData = useMemo(() => {
     const isVendor = party?.partyType === 'vendor';
     
-    const df = dateFrom || filters.dateFrom;
-    const dt = dateTo || filters.dateTo;
-    
-    // 1. Calculate Opening Balance (from entries before dateFrom)
-    let opBalance = 0;
-    if (df) {
-        const entriesBefore = allEntries.filter(e => new Date(e.date) < new Date(df));
-        entriesBefore.forEach(e => {
-            const amt = parseFloat(String(e.amount || 0));
-            if (isVendor) {
-                opBalance += (e.type === 'credit' ? amt : -amt);
-            } else {
-                opBalance += (e.type === 'debit' ? amt : -amt);
-            }
-        });
-    }
+    // Use rawOpeningBalance from backend
+    let opBalance = isVendor ? -rawOpeningBalance : rawOpeningBalance;
 
     let runningBalance = opBalance;
     let periodDebitSum = 0;
     let periodCreditSum = 0;
 
-    // Filter by date range
-    const filtered = allEntries.filter(e => {
-        if (df && new Date(e.date) < new Date(df)) return false;
-        if (dt && new Date(e.date) > new Date(dt)) return false;
-        return true;
-    }).sort((a, b) => {
+    const sortedForBalance = [...allEntries].sort((a, b) => {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
         if (dateA !== dateB) return dateA - dateB;
-        
-        // Secondary sort: Use createdAt if available, otherwise fallback to id
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        if (timeA !== timeB) return timeA - timeB;
-        
-        return (a.id && b.id) ? (String(a.id).localeCompare(String(b.id), undefined, { numeric: true })) : 0;
+        return timeA - timeB;
     });
 
-    const mapped = filtered.map(e => {
+    const mapped = sortedForBalance.map(e => {
         const amt = parseFloat(String(e.amount || 0));
         const isDebit = e.type === 'debit';
         const isCredit = e.type === 'credit';
@@ -124,18 +121,8 @@ export default function LedgerDetailPage() {
             runningBalance += (isDebit ? amt : -amt);
         }
 
-        let vType = e.vchType;
-        if (!vType) {
-            const desc = e.description?.toLowerCase() || '';
-            if (desc.includes('invoice')) vType = 'INVOICE';
-            else if (desc.includes('payment') || desc.includes('receipt')) vType = 'PAYMENT';
-            else if (desc.includes('dispatch') || desc.includes('outward')) vType = 'OUTWARD';
-            else vType = 'JOURNAL';
-        }
-
         return {
             ...e,
-            vchType: vType,
             debitValue: isDebit ? amt : 0,
             creditValue: isCredit ? amt : 0,
             runningBalance
@@ -145,14 +132,14 @@ export default function LedgerDetailPage() {
     const isDebitOp = isVendor ? opBalance < 0 : opBalance >= 0;
 
     return {
-      processedEntries: [...mapped].reverse(),
+      processedEntries: [...mapped].reverse(), // Back to DESC for display
       openingBalance: Math.abs(opBalance),
       isDebitOpening: opBalance !== 0 ? isDebitOp : (isVendor ? false : true),
       totalDebit: periodDebitSum,
       totalCredit: periodCreditSum,
       closingBalance: runningBalance
     };
-  }, [allEntries, party, dateFrom, dateTo]);
+  }, [allEntries, party, rawOpeningBalance]);
 
   const { 
     processedEntries, 
@@ -163,15 +150,34 @@ export default function LedgerDetailPage() {
     isDebitOpening
   } = processedData;
 
-  const totalPages = Math.ceil(processedEntries.length / itemsPerPage);
-  const paginatedEntries = processedEntries.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = ledgerPagination.totalPages;
+  const paginatedEntries = processedEntries;
 
   const handlePrint = () => { window.print(); };
 
-  if (loading || (!party && !allEntries.length)) return <Loader text="Syncing Statement..." />;
+  // Only show loader if we are actually fetching and don't have the party yet
+  if ((loading || isCustomerLoading || isVendorLoading) && !party) {
+    return <Loader text="Syncing Statement..." />;
+  }
+
+  // If loading is done and still no party, show error
+  if (!party) {
+    return (
+      <div className="container-fluid py-5 text-center">
+        <div className="alert alert-warning d-inline-block px-5 py-4 rounded-4 shadow-sm">
+            <h2 className="text-warning-emphasis fw-bold mb-3"><i className="bi bi-exclamation-triangle-fill me-2"></i>Account Not Identified</h2>
+            <p className="mb-0 text-muted">The ledger ID <strong>{partyId}</strong> was not found in your current company database.</p>
+            {ledgerError && <div className="mt-3 text-danger small"><strong>Ledger Error:</strong> {ledgerError}</div>}
+            {customerError && <div className="text-danger small"><strong>Customer Fetch Error:</strong> {customerError}</div>}
+            {vendorError && <div className="text-danger small"><strong>Vendor Fetch Error:</strong> {vendorError}</div>}
+            <div className="mt-4 d-flex gap-2 justify-content-center">
+                <Link href="/ledger" className="btn btn-primary px-4 fw-bold rounded-pill shadow-sm">Back to Ledger</Link>
+                <button onClick={() => window.location.reload()} className="btn btn-outline-secondary px-4 fw-bold rounded-pill">Retry Sync</button>
+            </div>
+        </div>
+      </div>
+    );
+  }
 
   const isVendor = party?.partyType === 'vendor';
 
@@ -200,7 +206,7 @@ export default function LedgerDetailPage() {
               <div className="row g-4 border-top pt-4">
                  <div className="col-md-5">
                     <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Account Holder</span>
-                    <h3 className="fw-900 mb-1 text-dark">{party?.name || 'Loading Name...'}</h3>
+                    <h3 className="fw-900 mb-1 text-dark">{party?.name}</h3>
                     <p className="text-muted small mb-0">{party?.street1 || 'No address specified'}</p>
                  </div>
                  <div className="col-md-3 border-start">
@@ -357,7 +363,7 @@ export default function LedgerDetailPage() {
         {totalPages > 1 && (
             <div className="d-flex justify-content-between align-items-center mt-4 hide-print">
                 <span className="text-muted small">
-                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, processedEntries.length)} of {processedEntries.length} entries
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, ledgerPagination.totalItems)} of {ledgerPagination.totalItems} entries
                 </span>
                 <PaginationComponent 
                     currentPage={currentPage} 

@@ -211,6 +211,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ initialData, mode }) => {
                   className="form-control" 
                   name="salary" 
                   value={formData.salary} 
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
                   onChange={handleInputChange} 
                   required 
                   disabled={mode === 'view'}

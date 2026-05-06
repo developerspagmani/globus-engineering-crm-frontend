@@ -160,9 +160,13 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
       }
 
 
-    } catch (err) {
-      // console.error('Failed to save vendor:', err);
-      alert('Failed to save vendor');
+    } catch (err: any) {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Failed to save vendor profile.'
+      });
     } finally {
       setIsSubmitting(false);
     }

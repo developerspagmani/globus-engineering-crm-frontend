@@ -14,6 +14,8 @@ import Breadcrumb from '@/components/Breadcrumb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import api from '@/lib/axios';
+
 
 
 const PaymentReportPage = () => {
@@ -27,23 +29,107 @@ const PaymentReportPage = () => {
   const [toDate, setToDate] = useState("");
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: vouchers, pagination: vPagination, loading: vLoading } = useSelector((state: RootState) => state.voucher);
-  const { items: pending, pagination: pPagination, loading: pLoading } = useSelector((state: RootState) => state.pendingPayments);
+  const { items: vouchers, pagination: vPagination, loading: vLoading, aggregates: vAggregates } = useSelector((state: RootState) => state.voucher);
+  const { items: pending, pagination: pPagination, loading: pLoading, aggregates: pAggregates } = useSelector((state: RootState) => state.pendingPayments);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
 
   useEffect(() => {
     setMounted(true);
     if (activeCompany?.id) { 
-      (dispatch as any)(fetchVouchers(activeCompany.id)); 
-      (dispatch as any)(fetchPendingPayments(activeCompany.id)); 
-      (dispatch as any)(fetchCustomers(activeCompany.id));
+      // Fetch both for accurate aggregate calculations across tabs
+      (dispatch as any)(fetchVouchers({
+        company_id: activeCompany.id,
+        page: vPagination.currentPage,
+        limit: vPagination.itemsPerPage,
+        search: searchTerm,
+        fromDate: fromDate,
+        toDate: toDate,
+        partyId: selectedCustomerId
+      }));
+      (dispatch as any)(fetchPendingPayments({
+        company_id: activeCompany.id,
+        page: pPagination.currentPage,
+        limit: pPagination.itemsPerPage,
+        search: searchTerm,
+        fromDate: fromDate,
+        toDate: toDate
+      }));
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, vPagination.currentPage, pPagination.currentPage, searchTerm, fromDate, toDate, selectedCustomerId]);
+
+  const handleFetchAllForExport = async () => {
+    if (!activeCompany?.id) return { headers: [], data: [] };
+    
+    if (activeTab === 'PAYMENT') {
+      let url = `/vouchers?page=1&limit=10000&company_id=${activeCompany.id}`;
+      if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
+      if (selectedCustomerId) url += `&partyId=${selectedCustomerId}`;
+      
+      const response = await api.get(url);
+      const allVouchers = response.data.items;
+      
+      const data = allVouchers.map((v: any, idx: number) => [
+        (idx + 1).toString(),
+        v.date ? new Date(v.date).toISOString().split('T')[0] : 'N/A',
+        v.voucher_no || 'N/A',
+        v.party_name || 'N/A',
+        v.payment_mode || 'N/A',
+        parseFloat(v.amount || '0').toLocaleString()
+      ]);
+
+      const totalAmount = allVouchers.reduce((sum: number, v: any) => sum + parseFloat(v.amount || '0'), 0);
+      data.push(['', '', '', 'GRAND TOTAL', '', totalAmount.toLocaleString()]);
+
+      return {
+        headers: ['SNO', 'DATE', 'REF NO', 'CUSTOMER NAME', 'MODE', 'PAID AMOUNT'],
+        data
+      };
+    } else {
+      let url = `/invoices?page=1&limit=10000&status=pending&type=INVOICE,BOTH&company_id=${activeCompany.id}`;
+      if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
+      
+      const response = await api.get(url);
+      const allPending = response.data.items;
+      
+      const data = allPending.map((inv: any, idx: number) => {
+        const grand = parseFloat(inv.grand_total || '0');
+        const paid = parseFloat(inv.paid_amount || '0');
+        const dateStr = inv.invoice_date || inv.date;
+        return [
+          (idx + 1).toString(),
+          dateStr ? new Date(dateStr).toISOString().split('T')[0] : 'N/A',
+          inv.invoice_no?.toString() || 'N/A',
+          inv.customer_name || 'N/A',
+          `${calculateDays(dateStr)} Days`,
+          (grand - paid).toLocaleString()
+        ];
+      });
+
+      const totalPending = allPending.reduce((sum: number, inv: any) => {
+        const grand = parseFloat(inv.grand_total || '0');
+        const paid = parseFloat(inv.paid_amount || '0');
+        return sum + (grand - paid);
+      }, 0);
+
+      data.push(['', '', '', 'GRAND TOTAL', '', totalPending.toLocaleString()]);
+
+      return {
+        headers: ['SNO', 'DATE', 'INVOICE NO', 'CUSTOMER NAME', 'AGEING', 'PENDING AMOUNT'],
+        data
+      };
+    }
+  };
 
   if (!mounted) return null;
 
   const calculateDays = (dateStr: string) => {
+    if (!dateStr) return 0;
     const invDate = new Date(dateStr); const today = new Date();
     return Math.ceil(Math.abs(today.getTime() - invDate.getTime()) / (1000 * 60 * 60 * 24));
   };
@@ -56,146 +142,33 @@ const PaymentReportPage = () => {
     return true;
   };
 
-  const paymentData = vouchers.filter(v => {
-    const matchesCustomer = !selectedCustomerId || String(v.partyId) === String(selectedCustomerId);
-    return v.type === 'receipt' && matchesCustomer && (v.partyName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) && matchesDate(v.date);
-  });
-  
-  const filteredPending = pending.filter(inv => {
-    const days = calculateDays(inv.date);
-    const matchesCustomer = !selectedCustomerId || String(inv.customerId) === String(selectedCustomerId);
-    const matchSearch = (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
-    if (!matchesCustomer) return false;
-    if (!matchSearch) return false;
-    if (!matchesDate(inv.date)) return false;
-    if (ageingFilter === '0-30') return days <= 30;
-    if (ageingFilter === '31-60') return days > 30 && days <= 60;
-    if (ageingFilter === '61-90') return days > 60 && days <= 90;
-    if (ageingFilter === '90+') return days > 90;
-    return true;
-  });
-
-  const activeData = activeTab === 'PAYMENT' ? paymentData : filteredPending;
+  const activeData = activeTab === 'PAYMENT' ? vouchers : pending;
   const activePagination = activeTab === 'PAYMENT' ? vPagination : pPagination;
-  const totalPages = Math.ceil(activeData.length / activePagination.itemsPerPage);
-  const paginatedItems = activeData.slice(
-    (activePagination.currentPage - 1) * activePagination.itemsPerPage,
-    activePagination.currentPage * activePagination.itemsPerPage
-  );
+  const totalPages = activePagination.totalPages;
+  const paginatedItems = activeData;
 
   const totals = {
-    paymentCount: paymentData.length,
-    totalCollected: paymentData.reduce((sum, v) => sum + v.amount, 0),
-    pendingCount: filteredPending.length,
-    totalOutstanding: filteredPending.reduce((sum, inv) => sum + (inv.grandTotal - (inv.paidAmount || 0)), 0),
-    criticalOverdue: filteredPending.filter(inv => calculateDays(inv.date) > 90).length
+    paymentCount:     vPagination.totalItems || vouchers.length,
+    totalCollected:   vAggregates?.totalCollected || 0,
+    pendingCount:     pPagination.totalItems || pending.length,
+    totalOutstanding: pAggregates?.totalOutstanding || 0,
+    criticalOverdue:  pAggregates?.criticalOverdue || 0
   };
 
   const handlePrintRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
     if (type === 'PENDING') {
-      // Redirect to the professional invoice preview with auto-print in same tab
       router.push(`/invoices/${item.id}?print=true`);
       return;
     }
-
-    // For Receipts, generate a beautiful matching layout
-    const p = window.open('', '', 'height=800,width=1000'); if (!p) return;
-    const accentColor = invSettings?.accentColor || '#ea580c';
-    
-    p.document.write(`
-      <html>
-        <head>
-          <title>Payment Receipt - ${item.voucherNo}</title>
-          <style>
-            @page { size: A4; margin: 10mm; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
-            .header { border-bottom: 2px solid ${accentColor}; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-            .company-name { font-size: 24px; font-weight: 900; color: #000; }
-            .receipt-label { background: ${accentColor}; color: white; padding: 5px 15px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 14px; }
-            .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-            .meta-item { font-size: 13px; }
-            .meta-label { color: #666; font-weight: bold; text-transform: uppercase; font-size: 10px; display: block; margin-bottom: 2px; }
-            .meta-value { font-weight: 800; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f8f9fa; border: 1px solid #dee2e6; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #666; }
-            td { border: 1px solid #dee2e6; padding: 15px; text-align: left; font-size: 14px; }
-            .amount-box { margin-top: 40px; border: 2px solid ${accentColor}; padding: 20px; border-radius: 8px; display: inline-block; min-width: 250px; }
-            .footer { margin-top: 60px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 15px; text-align: center; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="company-name">${activeCompany?.name || 'GLOBUS ENGINEERING'}</div>
-            <div class="receipt-label">Payment Receipt</div>
-          </div>
-          
-          <div class="meta-grid">
-            <div class="meta-item">
-              <span class="meta-label">Customer Name</span>
-              <span class="meta-value">${item.partyName}</span>
-            </div>
-            <div class="meta-item" style="text-align: right;">
-              <span class="meta-label">Receipt Voucher No</span>
-              <span class="meta-value">${item.voucherNo}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Transaction Date</span>
-              <span class="meta-value">${item.date}</span>
-            </div>
-            <div class="meta-item" style="text-align: right;">
-              <span class="meta-label">Payment</span>
-              <span class="meta-value">${item.paymentMode.toUpperCase()}</span>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th style="text-align: right;">Amount Recieved</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="font-weight: 600;">Payment received against services/goods provided and documented in audit logs.</td>
-                <td style="text-align: right; font-weight: 900; font-size: 18px;">₹${item.amount.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="amount-box">
-            <div class="meta-label">Total Amount Recieved</div>
-            <div style="font-size: 24px; font-weight: 900; color: ${accentColor};">₹${item.amount.toLocaleString()}</div>
-          </div>
-
-          <div class="footer">
-            This is a computer-generated payment receipt and does not require a physical signature.<br/>
-            ${activeCompany?.name || 'Globus Engineering Main'}
-          </div>
-        </body>
-      </html>
-    `);
-    p.document.close();
-    setTimeout(() => { p.print(); }, 500);
+    window.open(`/logistics-print?type=voucher&id=${item.id}&print=true`, '_blank');
   };
 
   const handleExportPDFRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
-    const doc = new jsPDF();
-    const amount = type === 'PAYMENT' ? item.amount : (item.grandTotal - (item.paidAmount || 0));
-    doc.setFontSize(18); doc.text(`GLOBUS ENGINEERING - ${type} AUDIT`, 14, 20);
-    autoTable(doc, {
-      startY: 30,
-      head: [['Category', 'Details']],
-      body: [
-        ['Customer', type === 'PAYMENT' ? item.partyName : item.customerName],
-        ['Reference No', type === 'PAYMENT' ? item.voucherNo : item.invoiceNumber],
-        ['Date', item.date],
-        ['Statement Amount', `INR ${amount.toLocaleString()}`],
-        ['Category', type]
-      ],
-      theme: 'grid'
-    });
-    doc.save(`audit_payment_${item.id}.pdf`);
+    if (type === 'PENDING') {
+      window.open(`/invoices/${item.id}`, '_blank');
+      return;
+    }
+    window.open(`/logistics-print?type=voucher&id=${item.id}`, '_blank');
   };
 
   return (
@@ -203,8 +176,8 @@ const PaymentReportPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Payment Report', active: true }]} /><h2 className="fw-900 mt-2">Payment Report</h2><p className="text-muted small mb-0">Track collection history and monitor outstanding dues.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-3">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Collection & Ageing Analysis" />
-          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchVouchers(activeCompany?.id)); (dispatch as any)(fetchPendingPayments(activeCompany?.id)); }}><i className="bi bi-arrow-repeat fw-bold" style={{ color: 'var(--accent-color)' }}></i>
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title={activeTab === 'PAYMENT' ? "Collection History" : "Outstanding Dues"} onFetchAll={handleFetchAllForExport} />
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchVouchers({ company_id: activeCompany?.id })); (dispatch as any)(fetchPendingPayments({ company_id: activeCompany?.id })); }}><i className="bi bi-arrow-repeat fw-bold" style={{ color: 'var(--accent-color)' }}></i>
             <span className="small fw-800 text-muted">Refresh</span>
           </button>
         </div>
@@ -224,10 +197,10 @@ const PaymentReportPage = () => {
                 <div className={`rounded-circle bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
                   <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
                 </div>
-                <div>
-                  <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
-                  <h4 className="fw-900 mb-0">{item.val}</h4>
-                </div>
+                 <div>
+                   <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
+                   <h4 className="fw-900 mb-0">{item.val}</h4>
+                 </div>
               </div>
             </div>
           </div>
@@ -343,7 +316,7 @@ const PaymentReportPage = () => {
             </div>
             {totalPages > 1 && (
               <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">Showing {(activePagination.currentPage - 1) * activePagination.itemsPerPage + 1} to {Math.min(activePagination.currentPage * activePagination.itemsPerPage, activeData.length)} of {activeData.length} entries</span>
+                <span className="text-muted small">Showing {(activePagination.currentPage - 1) * activePagination.itemsPerPage + 1} to {Math.min(activePagination.currentPage * activePagination.itemsPerPage, activePagination.totalItems)} of {activePagination.totalItems} entries</span>
                 <PaginationComponent 
                   currentPage={activePagination.currentPage} 
                   totalPages={totalPages} 

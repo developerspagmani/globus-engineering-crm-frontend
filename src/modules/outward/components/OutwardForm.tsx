@@ -66,10 +66,10 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      (dispatch as any)(fetchCustomers(activeCompany.id));
-      (dispatch as any)(fetchVendors(activeCompany.id));
-      (dispatch as any)(fetchInwards(activeCompany.id));
-      (dispatch as any)(fetchProcesses(activeCompany.id));
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchInwards({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchProcesses({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -166,8 +166,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
     const newItems = [...formData.items];
     let val = value;
     if (field === 'quantity') {
-      val = value === '' ? 0 : parseFloat(value);
-      if (isNaN(val)) val = 0;
+      val = value;
     }
     (newItems[index] as any)[field] = val;
     setFormData(prev => ({ ...prev, items: newItems }));
@@ -346,7 +345,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                       <div className="row mb-3 align-items-center">
                         <label className="col-4 text-muted small fw-bold text-danger">JOB VALUE (INR)</label>
                         <div className="col-8">
-                            <input type="number" className="form-control border-danger-subtle bg-danger-light rounded-pill px-3 py-2 fw-bold text-danger" name="amount" value={(formData as any).amount || ''} onChange={handleChange} placeholder="Value for Ledger" disabled={mode === 'view'} />
+                            <input type="number" className="form-control border-danger-subtle bg-danger-light rounded-pill px-3 py-2 fw-bold text-danger" name="amount" value={formData.amount} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={handleChange} placeholder="Value for Ledger" disabled={mode === 'view'} />
                         </div>
                       </div>
                     )}
@@ -381,7 +380,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                               <input type="text" className="form-control" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required disabled={mode === 'view'} placeholder="Item name or part number" />
                            </td>
                            <td className="py-3 px-3 text-center">
-                              <input type="number" className="form-control text-center px-3 py-2 fw-bold text-primary" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required disabled={mode === 'view'} />
+                              <input type="number" className="form-control text-center px-3 py-2 fw-bold text-primary" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required disabled={mode === 'view'} />
                            </td>
                            <td className="py-3 px-3 text-center">
                               <select className="form-select text-center" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} disabled={mode === 'view'}>

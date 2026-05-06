@@ -12,66 +12,86 @@ import Breadcrumb from '@/components/Breadcrumb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
-
+import api from '@/lib/axios';
 
 const InvoiceReportPage = () => {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('pending');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: invoices, pagination, loading } = useSelector((state: RootState) => state.invoices);
+  const { items: invoices, pagination, loading, aggregates } = useSelector((state: RootState) => state.invoices);
 
   useEffect(() => {
     setMounted(true);
     if (activeCompany?.id) {
-      (dispatch as any)(fetchInvoices(activeCompany.id));
+      (dispatch as any)(fetchInvoices({
+        company_id: activeCompany.id,
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: search,
+        status: statusFilter,
+        fromDate: fromDate,
+        toDate: toDate,
+        type: 'INVOICE,BOTH' // Default to only taxable invoices
+      }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate]);
+
+  const handleFetchAllForExport = async () => {
+    if (!activeCompany?.id) return { headers: [], data: [] };
+    
+    let url = `/invoices?page=1&limit=10000&company_id=${activeCompany.id}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (statusFilter && statusFilter !== 'all') url += `&status=${statusFilter}`;
+    if (fromDate) url += `&fromDate=${fromDate}`;
+    if (toDate) url += `&toDate=${toDate}`;
+    
+    const response = await api.get(url);
+    const allInvoices = response.data.items;
+    
+    const data = allInvoices.map((inv: any, idx: number) => [
+      (idx + 1).toString(),
+      inv.invoice_date ? new Date(inv.invoice_date).toISOString().split('T')[0] : 'N/A',
+      inv.invoice_no?.toString() || 'N/A',
+      inv.customer_name || 'N/A',
+      parseFloat(inv.total || '0').toLocaleString(),
+      parseFloat(inv.tax_total || '0').toLocaleString(),
+      parseFloat(inv.grand_total || '0').toLocaleString()
+    ]);
+
+    const totalSub = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.total || '0'), 0);
+    const totalTax = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.tax_total || '0'), 0);
+    const totalGrand = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.grand_total || '0'), 0);
+
+    data.push([
+      '', '', '', 'GRAND TOTAL',
+      totalSub.toLocaleString(),
+      totalTax.toLocaleString(),
+      totalGrand.toLocaleString()
+    ]);
+
+    return {
+      headers: ['SNO', 'DATE', 'INVOICE NO', 'CUSTOMER NAME', 'SUBTOTAL', 'TAXES', 'GRAND TOTAL'],
+      data
+    };
+  };
 
   if (!mounted) return null;
 
-  const filteredInvoices = invoices.filter(inv => {
-    // Exclude 'Without Process' only records from the invoice report
-    const invType = String(inv.type || '').toUpperCase();
-    if (invType === 'WOP') return false;
+  const totalPages = pagination.totalPages;
+  const paginatedItems = invoices;
 
-    // Status filtering
-    const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
-    if (statusFilter === 'pending' && balance <= 0) return false;
-    if (statusFilter === 'paid' && balance > 0) return false;
-
-    const searchTerm = search.toLowerCase();
-    const matchesSearch = (
-      (inv.customerName?.toLowerCase() ?? '').includes(searchTerm) ||
-      (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm)
-    );
-    
-    // Date range filtering
-    let matchesDate = true;
-    if (fromDate && inv.date && new Date(inv.date) < new Date(fromDate)) matchesDate = false;
-    if (toDate && inv.date && new Date(inv.date) > new Date(toDate)) matchesDate = false;
-
-    return matchesSearch && matchesDate;
-  });
-
-  const totalPages = Math.ceil(filteredInvoices.length / pagination.itemsPerPage);
-  const paginatedItems = filteredInvoices.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
-
-  const totals = filteredInvoices.reduce((acc, inv) => {
-    return {
-      count: acc.count + 1,
-      taxable: acc.taxable + (inv.subTotal || 0),
-      tax: acc.tax + (inv.taxTotal || 0),
-      grand: acc.grand + (inv.grandTotal || 0)
-    };
-  }, { count: 0, taxable: 0, tax: 0, grand: 0 });
+  // All monetary totals come from backend aggregates (all pages, all matching records)
+  const totals = {
+    count:   pagination.totalItems || 0,
+    taxable: aggregates?.totalTaxable || 0,
+    tax:     aggregates?.totalTax     || 0,
+    grand:   aggregates?.totalGrand   || 0
+  };
 
   const handlePrintRecord = (inv: any) => {
     // Redirect to the professional industrial invoice preview with auto-print in same tab
@@ -104,8 +124,8 @@ const InvoiceReportPage = () => {
           <p className="text-muted small mb-0 font-weight-500">Comprehensive summary of all generated invoices and billing statements.</p>
         </div>
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Invoice Summary Report" />
-          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}>
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Invoice Summary Report" onFetchAll={handleFetchAllForExport} />
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id }))}>
             <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
             <span className="small fw-800 text-muted">Refresh</span>
           </button>
@@ -131,9 +151,9 @@ const InvoiceReportPage = () => {
                 onChange={(e) => setStatusFilter(e.target.value as any)}
                 style={{ width: '180px' }}
               >
+        <option value="all">All Invoices</option>
                 <option value="pending">Pending Invoices</option>
                 <option value="paid">Paid Invoices</option>
-                <option value="all">All Invoices</option>
               </select>
             </div>
             
@@ -234,7 +254,7 @@ const InvoiceReportPage = () => {
                     </tr>
                   ))}
                   <tr className="bg-light-soft fw-900 border-top border-dark">
-                    <td colSpan={6} className="text-center py-3 px-4 uppercase" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Audit Summary (Total Sales Revenue)</td>
+                    <td colSpan={6} className="text-center py-3 px-4 uppercase" style={{ fontSize: '11px', letterSpacing: '0.5px' }}>Audit Summary (All Records — Grand Total)</td>
                     <td className="text-end py-3 px-2">₹{totals.grand.toLocaleString()}</td>
                     <td></td>
                   </tr>
@@ -243,7 +263,7 @@ const InvoiceReportPage = () => {
             </div>
             {totalPages > 1 && (
               <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length} entries</span>
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
                 <PaginationComponent 
                   currentPage={pagination.currentPage} 
                   totalPages={totalPages} 

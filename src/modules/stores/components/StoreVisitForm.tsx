@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { Store, StoreVisit } from '@/types/modules';
 import { logVisit, updateVisit } from '@/redux/features/storeSlice';
+import FullPageStatus from '@/components/FullPageStatus';
 
 interface StoreVisitFormProps {
   store: Store;
@@ -24,6 +25,13 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
     notes: '',
     productInterest: '',
     nextVisitDate: '',
+  });
+
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
   });
 
   useEffect(() => {
@@ -74,9 +82,23 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
       } else {
         await (dispatch as any)(logVisit(payload)).unwrap();
       }
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      alert('Failed to log visit: ' + err);
+      if (onSuccess) {
+        // We show a quick success message then close? 
+        // Or just close? User requested popups.
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Visit Logged',
+          message: 'The store visit notes have been successfully recorded in the system.'
+        });
+      }
+    } catch (err: any) {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Logging Failed',
+        message: err.message || 'The system was unable to save your visit notes at this time.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -162,6 +184,17 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
           </div>
         </form>
       </div>
+      {modal.isOpen && (
+        <FullPageStatus 
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success' && onSuccess) onSuccess();
+          }}
+        />
+      )}
     </div>
   );
 };

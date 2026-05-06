@@ -21,230 +21,336 @@ interface LedgerPrintTemplateProps {
   dateTo?: string;
 }
 
-const ITEMS_PER_PAGE = 50; 
+const fmt = (n: number) =>
+  n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({ 
-  party, 
-  entries, 
-  company, 
-  dateFrom, 
-  dateTo 
+const formatLedgerDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const day = d.getDate();
+  const month = d.toLocaleString('en-GB', { month: 'short' });
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}-${month}-${year}`;
+};
+
+const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
+  party,
+  entries,
+  company,
+  dateFrom,
+  dateTo,
 }) => {
   const { settings } = useSelector((state: RootState) => state.invoices);
   const isVendor = party?.partyType?.toLowerCase() === 'vendor';
 
-  // 1. Core Accounting Logic
-  const { 
-    processedEntries, 
-    openingBalance, 
-    totalDebit, 
-    totalCredit, 
-    isDebitOpening 
+  const docSettings = settings || company?.invoiceSettings || {};
+  const companyName =
+    (docSettings as any).companyName || company?.name?.toUpperCase() || 'GLOBUS ENGINEERING MAIN';
+  const companyAddress =
+    (docSettings as any).companyAddress ||
+    company?.address ||
+    'No:24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Coimbatore - 641 006';
+
+  // ── Accounting Logic ──────────────────────────────────────────────────
+  const {
+    processedEntries,
+    openingBalance,
+    isDebitOpening,
+    totalDebit,
+    totalCredit,
   } = useMemo(() => {
+    // Opening balance = sum of ALL entries BEFORE dateFrom
     let opBalance = 0;
     if (dateFrom) {
-        const entriesBefore = entries.filter(e => new Date(e.date) < new Date(dateFrom));
-        entriesBefore.forEach(e => {
-            const amt = parseFloat(String(e.amount || 0));
-            if (isVendor) {
-                opBalance += (e.type === 'credit' ? amt : -amt);
-            } else {
-                opBalance += (e.type === 'debit' ? amt : -amt);
-            }
+      entries
+        .filter(e => new Date(e.date) < new Date(dateFrom))
+        .forEach(e => {
+          const amt = parseFloat(String(e.amount || 0));
+          if (isVendor) opBalance += e.type === 'credit' ? amt : -amt;
+          else opBalance += e.type === 'debit' ? amt : -amt;
         });
     }
 
-    const filtered = entries.filter(e => {
+    // Period entries sorted ASC (oldest first — tally style)
+    const period = entries
+      .filter(e => {
         if (dateFrom && new Date(e.date) < new Date(dateFrom)) return false;
         if (dateTo && new Date(e.date) > new Date(dateTo)) return false;
         return true;
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    let runningBalance = opBalance;
-    let periodDebitSum = 0;
-    let periodCreditSum = 0;
+    let drSum = 0;
+    let crSum = 0;
 
-    const mapped = filtered.map(e => {
-        const amt = parseFloat(String(e.amount || 0));
-        const isDebit = e.type === 'debit';
-        const isCredit = e.type === 'credit';
-        if (isDebit) periodDebitSum += amt;
-        if (isCredit) periodCreditSum += amt;
-        
-        if (isVendor) runningBalance += (isCredit ? amt : -amt);
-        else runningBalance += (isDebit ? amt : -amt);
-
-        let vType = e.vchType;
-        if (!vType) {
-            const desc = e.description?.toLowerCase() || '';
-            if (desc.includes('invoice')) vType = 'GST Purchase';
-            else if (desc.includes('payment') || desc.includes('receipt')) vType = 'Payment';
-            else vType = 'Journal';
-        }
-
-        return {
-            ...e,
-            vchType: vType,
-            debitValue: isDebit ? amt : 0,
-            creditValue: isCredit ? amt : 0,
-        };
+    const mapped = period.map(e => {
+      const amt = parseFloat(String(e.amount || 0));
+      if (e.type === 'debit') drSum += amt;
+      else crSum += amt;
+      return {
+        ...e,
+        debitValue: e.type === 'debit' ? amt : 0,
+        creditValue: e.type === 'credit' ? amt : 0,
+      };
     });
-
-    const isDebitOp = isVendor ? opBalance < 0 : opBalance >= 0;
 
     return {
       processedEntries: mapped,
       openingBalance: Math.abs(opBalance),
-      isDebitOpening: opBalance !== 0 ? isDebitOp : (isVendor ? false : true),
-      totalDebit: periodDebitSum,
-      totalCredit: periodCreditSum
+      isDebitOpening: opBalance >= 0,
+      totalDebit: drSum,
+      totalCredit: crSum,
     };
-  }, [entries, party, dateFrom, dateTo, isVendor]);
+  }, [entries, dateFrom, dateTo, isVendor]);
 
-  const allEntries = processedEntries;
-  const drTotalWithOp = totalDebit + (isDebitOpening ? openingBalance : 0);
-  const crTotalWithOp = totalCredit + (!isDebitOpening ? openingBalance : 0);
-  const diff = drTotalWithOp - crTotalWithOp;
+  // ── Grand-total balancing ─────────────────────────────────────────────
+  // Tally convention:
+  //   Dr side = period debits  + (opening if Dr) + (closing if Dr)
+  //   Cr side = period credits + (opening if Cr) + (closing if Cr)
+  //   Both sides must be equal (grand total)
+  const drWithOp = totalDebit + (isDebitOpening ? openingBalance : 0);
+  const crWithOp = totalCredit + (!isDebitOpening ? openingBalance : 0);
 
-  const formatDate = (d: string) => {
-    if (!d) return '';
-    return new Date(d).toLocaleDateString('en-GB', { day: 'j-digit', month: 'short', year: '2-digit' } as any)
-      .replace(/ /g, '-');
+  // Closing balance fills the smaller side so both equal
+  const closingBalance = Math.abs(drWithOp - crWithOp);
+  const isDebitClosing = crWithOp > drWithOp; // closing goes to Dr if Cr is bigger
+  const grandTotal = Math.max(drWithOp, crWithOp) + closingBalance; // = max side (already bigger by closingBalance)
+  // Actually: grandTotal = max(drWithOp, crWithOp)
+  const gt = Math.max(drWithOp, crWithOp);
+
+  const dateRangeLabel = () => {
+    const from = dateFrom ? formatLedgerDate(dateFrom) : '1-Apr-25';
+    const to = dateTo ? formatLedgerDate(dateTo) : '31-Mar-26';
+    return `${from} to ${to}`;
   };
-  
-  // Custom date formatting to match "1-Apr-25" (no leading zero on day if single digit)
-  const formatLedgerDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    const month = d.toLocaleString('en-GB', { month: 'short' });
-    const year = d.getFullYear().toString().slice(-2);
-    return `${day}-${month}-${year}`;
-  };
+
+  const partyAddrParts = [party?.street1, party?.street2, party?.city, party?.state]
+    .filter(Boolean)
+    .join(', ');
 
   return (
-    <div className="ledger-master-print-container" style={{ background: 'white' }}>
-      <div className="ledger-page-box">
-         {/* Header Section Matches Image */}
-         <div className="print-header text-center" style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <h1 style={{ fontSize: '15pt', fontWeight: 'bold', margin: '0 0 2px 0', textTransform: 'uppercase' }}>{party?.name || 'ACCOUNT NAME'}</h1>
-              <p style={{ fontSize: '10pt', margin: '0 0 12px 0', lineHeight: '1.2' }}>{party?.street1 || ''} {party?.street2 || ''}<br />{party?.city || ''} {party?.state || ''} - {party?.pinCode || ''}</p>
-              
-              <h2 style={{ fontSize: '14pt', fontWeight: 'bold', margin: '0' }}>{company?.name || 'Globus Engineering Tools'}</h2>
-              <h3 style={{ fontSize: '9pt', margin: '0', fontWeight: 'normal' }}>Ledger Account</h3>
-              <p style={{ fontSize: '9pt', margin: '4px auto 10px auto', maxWidth: '80%', lineHeight: '1.2' }}>
-                  {(company as any)?.address || 'No 24, Annaiyappan Street,\nSS Nagar, Nallampalayam, Ganapathy Post,\nCoimbatore'}
-              </p>
-              
-              <p className="fw-bold" style={{ fontSize: '10pt', fontWeight: 'bold' }}>
-                  {formatLedgerDate(dateFrom || '')} to {formatLedgerDate(dateTo || '2026-03-31')}
-              </p>
-         </div>
+    <div className="lt-wrap">
 
-         <table className="ledger-print-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5pt', tableLayout: 'fixed', border: '1px solid black' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid black', backgroundColor: '#f5f5f5' }}>
-                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '12%', borderRight: '1px solid black' }}>Date</th>
-                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '38%', borderRight: '1px solid black' }}>Particulars</th>
-                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '12%', borderRight: '1px solid black' }}>Vch Type</th>
-                  <th style={{ textAlign: 'left', padding: '8px 6px', width: '12%', borderRight: '1px solid black' }}>Vch No.</th>
-                  <th style={{ textAlign: 'right', padding: '8px 6px', width: '13%', borderRight: '1px solid black' }}>Debit</th>
-                  <th style={{ textAlign: 'right', padding: '8px 6px', width: '13%' }}>Credit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Opening Balance */}
-              <tr style={{ fontWeight: 'bold', borderBottom: '1px solid black' }}>
-                <td style={{ padding: '6px', borderRight: '1px solid black' }}>{dateFrom ? formatLedgerDate(dateFrom) : ''}</td>
-                <td style={{ padding: '6px', borderRight: '1px solid black' }}>
-                    <span style={{ display: 'inline-block', width: '25px' }}>{isDebitOpening ? 'To' : 'By'}</span>
-                    Opening Balance
+      {/* ═══════════════════ HEADER ═══════════════════ */}
+      <table className="lt-header-table">
+        <tbody>
+          <tr>
+            <td className="lt-hdr-left"></td>
+            <td className="lt-hdr-center">
+              <div className="lt-co-name">{companyName}</div>
+              <div className="lt-co-addr">{companyAddress}</div>
+              <div className="lt-party-name">{party?.name || 'ACCOUNT NAME'}</div>
+              <div className="lt-party-sub">Ledger Account</div>
+              {partyAddrParts && <div className="lt-party-addr">{partyAddrParts}</div>}
+              <div className="lt-date-range">{dateRangeLabel()}</div>
+            </td>
+            <td className="lt-hdr-right"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ═══════════════════ LEDGER TABLE ═══════════════════ */}
+      <table className="lt-table">
+        <thead>
+          <tr>
+            <th className="w-date">Date</th>
+            <th className="w-part">Particulars</th>
+            <th className="w-vtype">Vch Type</th>
+            <th className="w-vno">Vch No.</th>
+            <th className="w-amt">Debit</th>
+            <th className="w-amt">Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          {/* ── Opening Balance ── */}
+          <tr>
+            <td className="td-date">{dateFrom ? formatLedgerDate(dateFrom) : '1-Apr-25'}</td>
+            <td>
+              <span className="byto">{isDebitOpening ? 'To' : 'By'}</span>
+              <strong>Opening Balance</strong>
+            </td>
+            <td></td>
+            <td></td>
+            <td className="num">{isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
+            <td className="num">{!isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
+          </tr>
+
+          {/* ── Period Entries ── */}
+          {processedEntries.map((e: any, idx: number) => {
+            // "To" = debit (money going out / receivable), "By" = credit (money coming in / payable)
+            const prefix = e.debitValue > 0 ? 'To' : 'By';
+            return (
+              <tr key={idx}>
+                <td className="td-date">{formatLedgerDate(e.date)}</td>
+                <td>
+                  <span className="byto">{prefix}</span>
+                  {e.description || e.vchType || '-'}
                 </td>
-                <td style={{ borderRight: '1px solid black' }}></td>
-                <td style={{ borderRight: '1px solid black' }}></td>
-                <td style={{ textAlign: 'right', padding: '6px', borderRight: '1px solid black' }}>{isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                <td style={{ textAlign: 'right', padding: '6px' }}>{!isDebitOpening ? openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                <td>{e.vchType || ''}</td>
+                <td>{e.vchNo || ''}</td>
+                <td className="num">{e.debitValue > 0 ? fmt(e.debitValue) : ''}</td>
+                <td className="num">{e.creditValue > 0 ? fmt(e.creditValue) : ''}</td>
               </tr>
+            );
+          })}
 
-              {/* Entry Rows */}
-              {allEntries.map((e: any, idx: number) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{formatLedgerDate(e.date)}</td>
-                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>
-                      <span style={{ display: 'inline-block', width: '25px', fontWeight: '500' }}>{e.debitValue > 0 ? 'To' : 'By'}</span>
-                      {e.description}
-                  </td>
-                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{e.vchType}</td>
-                  <td style={{ padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{e.vchNo || '-'}</td>
-                  <td style={{ textAlign: 'right', padding: '6px', verticalAlign: 'top', borderRight: '1px solid black' }}>{e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                  <td style={{ textAlign: 'right', padding: '6px', verticalAlign: 'top' }}>{e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                </tr>
-              ))}
+          {/* Closing balance shown only in footer */}
 
-              {/* Totals Section */}
-              <tr style={{ borderTop: '1px solid black', backgroundColor: '#fafafa', fontWeight: 'bold' }}>
-                  <td colSpan={4} style={{ borderRight: '1px solid black', padding: '6px' }}></td>
-                  <td style={{ textAlign: 'right', padding: '6px', borderRight: '1px solid black' }}>{ drTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                  <td style={{ textAlign: 'right', padding: '6px' }}>{ crTotalWithOp.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid black', fontWeight: 'bold' }}>
-                  <td style={{ borderRight: '1px solid black' }}></td>
-                  <td style={{ padding: '6px', borderRight: '1px solid black' }}>
-                      <span style={{ display: 'inline-block', width: '25px' }}>{diff > 0 ? 'By' : 'To'}</span>
-                      Closing Balance
-                  </td>
-                  <td style={{ borderRight: '1px solid black' }}></td>
-                  <td style={{ borderRight: '1px solid black' }}></td>
-                  <td style={{ textAlign: 'right', padding: '6px', borderRight: '1px solid black' }}>{diff < 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                  <td style={{ textAlign: 'right', padding: '6px' }}>{diff > 0 ? Math.abs(diff).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-              </tr>
-              <tr style={{ borderBottom: '2px solid black', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
-                  <td colSpan={4} style={{ borderRight: '1px solid black', padding: '8px 6px' }}>TOTAL</td>
-                  <td style={{ textAlign: 'right', padding: '8px 6px', borderRight: '1px solid black' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-                  <td style={{ textAlign: 'right', padding: '8px 6px' }}>{ Math.max(drTotalWithOp, crTotalWithOp).toLocaleString('en-IN', { minimumFractionDigits: 2 }) }</td>
-              </tr>
-            </tbody>
-         </table>
+        </tbody>
+        <tfoot>
+          {/* ── Subtotals row ── */}
+          <tr className="row-subtotal">
+            <td colSpan={4}></td>
+            <td className="num">{fmt(drWithOp)}</td>
+            <td className="num">{fmt(crWithOp)}</td>
+          </tr>
 
-         {/* Footer Section for Ledger */}
-         <div className="ledger-footer-details mt-4 pt-3" style={{ fontSize: '8.5pt' }}>
-             <div className="mt-4 text-center" style={{ fontWeight: 'bold', fontStyle: 'italic' }}>
-                --- End of Ledger Account ---
-             </div>
-         </div>
+          {/* ── Closing Balance row ── */}
+          {closingBalance > 0 && (
+            <tr className="row-closinglabel">
+              <td></td>
+              <td>
+                <span className="byto">{isDebitClosing ? 'To' : 'By'}</span>
+                <strong>Closing Balance</strong>
+              </td>
+              <td colSpan={2}></td>
+              <td className="num">{isDebitClosing ? fmt(closingBalance) : ''}</td>
+              <td className="num">{!isDebitClosing ? fmt(closingBalance) : ''}</td>
+            </tr>
+          )}
 
-      </div>
-      
+          {/* ── Grand Total ── */}
+          <tr className="row-grandtotal">
+            <td colSpan={4}></td>
+            <td className="num">{fmt(gt)}</td>
+            <td className="num">{fmt(gt)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      {/* ═══════════════════ STYLES ═══════════════════ */}
       <style jsx>{`
+        * { box-sizing: border-box; }
+
+        .lt-wrap {
+          background: #fff;
+          width: 100%;
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 9.5pt;
+          color: #000;
+        }
+
+        /* ─ Header ─ */
+        .lt-header-table {
+          width: 100%;
+          border-collapse: collapse;
+          border-bottom: 1pt solid #000;
+          padding-bottom: 4px;
+        }
+        .lt-hdr-left  { width: 15%; vertical-align: top; padding: 6px 8px; }
+        .lt-hdr-center { width: 70%; text-align: center; padding: 6px 4px; vertical-align: top; }
+        .lt-hdr-right  { width: 15%; text-align: right; vertical-align: top; padding: 6px 8px; font-size: 8.5pt; }
+
+        .lt-co-name    { font-size: 12pt; font-weight: bold; }
+        .lt-co-addr    { font-size: 8.5pt; margin-top: 1px; }
+        .lt-party-name { font-size: 11pt; font-weight: bold; margin-top: 8px; }
+        .lt-party-sub  { font-size: 9pt; }
+        .lt-party-addr { font-size: 8.5pt; margin-top: 2px; }
+        .lt-date-range { font-size: 9pt; margin-top: 4px; }
+
+        /* ─ Table ─ */
+        .lt-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 9pt;
+        }
+
+        .lt-table thead tr {
+          border-top: 1pt solid #000;
+          border-bottom: 1pt solid #000;
+        }
+        .lt-table th {
+          font-size: 9pt;
+          font-weight: bold;
+          padding: 4px 6px;
+          text-align: left;
+        }
+        .lt-table th:last-child,
+        .lt-table th:nth-last-child(2) {
+          text-align: right;
+        }
+
+        /* Date cell: never wrap */
+        .lt-table td.td-date {
+          white-space: nowrap;
+          width: 10%;
+        }
+
+        .w-date  { width: 10%; white-space: nowrap; }
+        .w-part  { width: 40%; }
+        .w-vtype { width: 16%; }
+        .w-vno   { width: 10%; }
+        .w-amt   { width: 12%; text-align: right; }
+
+        .lt-table td {
+          padding: 2px 6px;
+          vertical-align: top;
+          font-size: 9pt;
+        }
+        .lt-table td.num {
+          text-align: right;
+          font-family: 'Courier New', monospace;
+          font-size: 8.5pt;
+        }
+
+        .byto {
+          display: inline-block;
+          width: 22px;
+          font-style: normal;
+        }
+
+        /* Subtotal row */
+        .row-subtotal td {
+          border-top: 1pt solid #000;
+          padding-top: 3px;
+          padding-bottom: 2px;
+        }
+
+        /* Closing label row - visible, italic */
+        .row-closinglabel td {
+          font-style: italic;
+          padding-bottom: 2px;
+        }
+
+        /* Grand total row */
+        .row-grandtotal td {
+          border-top: 1pt solid #000;
+          border-bottom: 2pt double #000;
+          font-weight: bold;
+          padding: 3px 6px;
+          font-family: 'Courier New', monospace;
+          font-size: 8.5pt;
+        }
+
+        /* Keep totals together — no page break inside tfoot */
+        @media print {
+          tfoot { display: table-row-group; }
+          .row-subtotal, .row-closinglabel, .row-grandtotal {
+            page-break-inside: avoid;
+            page-break-before: avoid;
+          }
+        }
+
+        /* ─ Print overrides: suppress browser date/URL headers ─ */
         @media print {
           @page {
-            size: A4;
-            margin: 10mm;
+            size: A4 portrait;
+            margin: 0;
           }
-          .ledger-master-print-container { 
-            background: white !important; 
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 0 !important;
-          }
-          .ledger-page-box { 
-            box-shadow: none !important; 
-            margin: 0 !important; 
-            padding: 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            background: white;
-            color: black;
-            font-family: Arial, sans-serif;
-            height: auto !important;
-            min-height: 0 !important;
-          }
-          /* Ensure table fits */
-          .ledger-print-table {
-            width: 100% !important;
-            table-layout: fixed !important;
+          .lt-wrap {
+            font-size: 9pt;
+            padding: 12mm 10mm;
           }
         }
       `}</style>

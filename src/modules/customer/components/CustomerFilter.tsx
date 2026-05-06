@@ -10,10 +10,31 @@ import autoTable from 'jspdf-autotable';
 const CustomerFilter: React.FC = () => {
   const dispatch = useDispatch();
   const { filters } = useSelector((state: RootState) => state.customers);
+  const [searchTerm, setSearchTerm] = React.useState(filters.search);
+
+  // Sync local state with redux filters (e.g. on clear)
+  React.useEffect(() => {
+    setSearchTerm(filters.search);
+  }, [filters.search]);
+
+  // Debounce search
+  React.useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm !== filters.search) {
+        dispatch(setFilters({ search: searchTerm }));
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, dispatch, filters.search]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    dispatch(setFilters({ [name]: value }));
+    if (name === 'search') {
+      setSearchTerm(value);
+    } else {
+      dispatch(setFilters({ [name]: value }));
+    }
   };
 
   return (
@@ -30,7 +51,7 @@ const CustomerFilter: React.FC = () => {
                 className="form-control search-bar"
                 placeholder="Search by customer name..."
                 name="search"
-                value={filters.search}
+                value={searchTerm}
                 onChange={handleChange}
               />
             </div>

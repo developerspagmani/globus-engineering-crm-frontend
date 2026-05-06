@@ -19,11 +19,35 @@ const mapEmployee = (emp: any): Employee => ({
 
 export const fetchEmployees = createAsyncThunk(
   'employee/fetchAll',
-  async (companyId: string | undefined, { rejectWithValue }) => {
+  async (params: { 
+    company_id?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+  }, { rejectWithValue }) => {
     try {
-      const url = companyId ? `/employees?companyId=${companyId}` : '/employees';
+      const { company_id, page = 1, limit = 10, search } = params;
+      let url = `/employees?page=${page}&limit=${limit}`;
+      if (company_id) url += `&companyId=${company_id}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
       const response = await api.get(url);
-      return response.data.map(mapEmployee);
+      return {
+        items: response.data.items.map((emp: any) => ({
+          id: emp.id.toString(),
+          name: emp.ename || '',
+          employeeId: emp.id.toString(),
+          designation: emp.designation || '',
+          department: emp.department || 'Engineering',
+          email: emp.email || '',
+          phone: emp.phone_number || '',
+          salary: emp.salary || 0,
+          joiningDate: emp.joining_date ? new Date(emp.joining_date).toISOString().split('T')[0] : '',
+          status: emp.app_status || 'active',
+          company_id: emp.company_id || ''
+        })),
+        pagination: response.data.pagination
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch employees');
     }
@@ -80,6 +104,8 @@ interface EmployeeState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -97,6 +123,8 @@ const initialState: EmployeeState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
   },
 };
 
@@ -117,7 +145,11 @@ const employeeSlice = createSlice({
       .addCase(fetchEmployees.pending, (state) => { state.loading = true; })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
+        state.error = null;
       })
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.loading = false;

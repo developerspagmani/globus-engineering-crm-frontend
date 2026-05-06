@@ -229,7 +229,7 @@ const InvoiceSettings: React.FC = () => {
                   </div>
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold">Next Number</label>
-                    <input type="number" className="form-control" name="nextNumber" value={formData.nextNumber} onChange={handleInputChange} />
+                    <input type="number" className="form-control" name="nextNumber" value={formData.nextNumber} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={handleInputChange} />
                   </div>
                 </div>
               </div>

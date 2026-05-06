@@ -4,26 +4,38 @@ import api from '@/lib/axios';
 
 export const fetchChallans = createAsyncThunk(
   'challan/fetchAll',
-  async (company_id: string | undefined, { rejectWithValue }) => {
+  async (params: { 
+    company_id?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+  }, { rejectWithValue }) => {
     try {
-      const url = company_id ? `/challans?company_id=${company_id}` : '/challans';
+      const { company_id, page = 1, limit = 10, search } = params;
+      let url = `/challans?page=${page}&limit=${limit}`;
+      if (company_id) url += `&company_id=${company_id}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
       const response = await api.get(url);
-      return response.data.map((c: any) => ({
-        id: c.id.toString(),
-        challanNo: c.challan_no || '',
-        partyId: c.party_id || '',
-        partyName: c.party_name || '',
-        partyType: c.party_type || 'customer',
-        company_id: c.company_id || '',
-        date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
-        type: c.type || 'delivery',
-        status: c.status || 'draft',
-        items: Array.isArray(c.items) ? c.items : JSON.parse(c.items_json || '[]'),
-        vehicleNo: c.vehicle_no || '',
-        driverName: c.driver_name || '',
-        notes: c.notes || '',
-        createdAt: c.app_created_at || c.createdAt || ''
-      }));
+      return {
+        items: response.data.items.map((c: any) => ({
+          id: c.id.toString(),
+          challanNo: c.challan_no || '',
+          partyId: c.party_id || '',
+          partyName: c.party_name || '',
+          partyType: c.party_type || 'customer',
+          company_id: c.company_id || '',
+          date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
+          type: c.type || 'delivery',
+          status: c.status || 'draft',
+          items: Array.isArray(c.items) ? c.items : JSON.parse(c.items_json || '[]'),
+          vehicleNo: c.vehicle_no || '',
+          driverName: c.driver_name || '',
+          notes: c.notes || '',
+          createdAt: c.app_created_at || c.createdAt || ''
+        })),
+        pagination: response.data.pagination
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch challans');
     }
@@ -135,6 +147,8 @@ interface ChallanState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -152,6 +166,8 @@ const initialState: ChallanState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
   },
 };
 
@@ -174,7 +190,10 @@ const challanSlice = createSlice({
       })
       .addCase(fetchChallans.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
         state.error = null;
       })
       .addCase(fetchChallans.rejected, (state, action) => {

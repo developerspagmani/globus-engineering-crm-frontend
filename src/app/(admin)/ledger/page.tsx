@@ -38,11 +38,16 @@ export default function LedgerPage() {
 
   useEffect(() => {
     if (activeCompany?.id) {
-       (dispatch as any)(fetchLedgerEntries({ companyId: activeCompany.id }));
-       (dispatch as any)(fetchCustomers(activeCompany.id));
-       (dispatch as any)(fetchVendors(activeCompany.id));
+       (dispatch as any)(fetchLedgerEntries({ 
+          companyId: activeCompany.id,
+          page: pagination.currentPage,
+          limit: pagination.itemsPerPage,
+          search: filters.search
+       }));
+       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+       (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
   // DERIVE UNIQUE PARTIES FROM LEDGER ENTRIES + ALL CUSTOMERS/VENDORS
   const uniqueParties = React.useMemo(() => {
@@ -137,17 +142,13 @@ export default function LedgerPage() {
     return result;
   }, [ledgerEntries, customers, vendors, activeCompany?.id, filters.dateFrom, filters.dateTo, partyTypeFilter]);
 
-  const filteredItems = uniqueParties.filter(item => {
-    return (item.name || '').toLowerCase().includes(filters.search.toLowerCase()) ||
-           (item.city || '').toLowerCase().includes(filters.search.toLowerCase()) ||
-           (item.state || '').toLowerCase().includes(filters.search.toLowerCase());
-  });
-
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalItems = uniqueParties.length;
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedItems = React.useMemo(() => {
+    const start = (pagination.currentPage - 1) * pagination.itemsPerPage;
+    return uniqueParties.slice(start, start + pagination.itemsPerPage);
+  }, [uniqueParties, pagination.currentPage, pagination.itemsPerPage]);
 
   // --- EXPORT ACTIONS ---
   const handlePrint = () => {
@@ -364,7 +365,7 @@ export default function LedgerPage() {
         {/* Pagination Rendering */}
         {totalPages > 1 && (
           <div className="mt-4 d-flex justify-content-between align-items-center">
-            <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+            <span className="text-muted small">Showing {Math.min((pagination.currentPage - 1) * itemsPerPage + 1, totalItems)} to {Math.min(pagination.currentPage * itemsPerPage, totalItems)} of {totalItems} entries</span>
             <PaginationComponent 
               currentPage={pagination.currentPage} 
               totalPages={totalPages} 

@@ -4,8 +4,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { User, ModulePermission } from '@/types/modules';
 import { addUser, updateUser } from '@/redux/features/companyUserSlice';
+import FullPageStatus from '@/components/FullPageStatus';
+import { User, ModulePermission } from '@/types/modules';
 
 interface CompanyUserFormProps {
   initialData?: User;
@@ -36,6 +37,12 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
   });
 
   const [modulePermissions, setModulePermissions] = useState<ModulePermission[]>([]);
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     if (initialData) {
@@ -51,7 +58,7 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
       // Default permissions for new user
       const defaultPerms: ModulePermission[] = companyModules.map(m => {
         // Auto-tick logic for Sales/Staff
-        const isAutoTickModule = ['mod_lead', 'mod_stores', 'mod_store_visits', 'mod_sales_hub'].includes(m.id);
+        const isAutoTickModule = ['mod_lead', 'mod_stores', 'mod_store_visits'].includes(m.id);
         const shouldTickAll = (formData.role === 'sales' || formData.role === 'staff') && isAutoTickModule;
 
         return {
@@ -132,12 +139,28 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
 
       if (mode === 'create') {
         await (dispatch as any)(addUser(userData)).unwrap();
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'User Created',
+          message: `Account for ${formData.name} has been successfully provisioned.`
+        });
       } else {
         await (dispatch as any)(updateUser({ id: initialData!.id, ...userData } as any)).unwrap();
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Update Successful',
+          message: 'User profile and permissions have been updated.'
+        });
       }
-      router.push('/users');
     } catch (err: any) {
-      alert('Failed to save user: ' + (err.message || err));
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Save Failed',
+        message: err.message || 'Failed to process user account updates.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -326,6 +349,17 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
           </div>
         </form>
       </div>
+      {modal.isOpen && (
+        <FullPageStatus 
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => {
+            setModal(prev => ({ ...prev, isOpen: false }));
+            if (modal.type === 'success') router.push('/users');
+          }}
+        />
+      )}
     </div>
   );
 };

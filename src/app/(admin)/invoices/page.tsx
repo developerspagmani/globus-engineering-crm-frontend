@@ -21,7 +21,7 @@ export default function InvoiceHistoryPage() {
 
   React.useEffect(() => {
     setMounted(true);
-    (dispatch as any)(fetchInvoices(activeCompany?.id));
+    (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id }));
   }, [dispatch, activeCompany?.id]);
 
   if (!mounted) return null;

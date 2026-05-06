@@ -22,29 +22,16 @@ const CustomerTable: React.FC = () => {
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   React.useEffect(() => {
-    (dispatch as any)(fetchCustomers(activeCompany?.id));
-  }, [dispatch, activeCompany?.id]);
+    (dispatch as any)(fetchCustomers({
+      company_id: activeCompany?.id,
+      page: pagination.currentPage,
+      limit: pagination.itemsPerPage,
+      search: filters.search
+    }));
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
-  const filteredItems = items.filter(item => {
-    if (user?.role !== 'super_admin' && activeCompany && (item.company_id || (item as any).companyId) !== activeCompany.id) return false;
-    if (user?.role === 'sales_agent' && item.agentId !== user.id) return false;
-    const matchesSearch = String(item.name || '').toLowerCase().includes(filters.search.toLowerCase()) || 
-                         String(item.company || '').toLowerCase().includes(filters.search.toLowerCase());
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-
-    // Date range filtering
-    let matchesDate = true;
-    if (filters.fromDate && item.createdAt && new Date(item.createdAt) < new Date(filters.fromDate)) matchesDate = false;
-    if (filters.toDate && item.createdAt && new Date(item.createdAt) > new Date(filters.toDate)) matchesDate = false;
-
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
 
   const handleDeleteParams = (id: string) => {
     setDeleteModal({ isOpen: true, id });
@@ -156,7 +143,7 @@ const CustomerTable: React.FC = () => {
         </div>
         {totalPages > 1 && (
           <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-             <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+             <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
              <PaginationComponent 
                currentPage={pagination.currentPage} 
                totalPages={totalPages} 

@@ -29,30 +29,16 @@ export default function InwardListPage() {
   }, []);
 
   useEffect(() => {
-    (dispatch as any)(fetchInwards(company?.id));
-  }, [dispatch, company?.id]);
+    (dispatch as any)(fetchInwards({
+      company_id: company?.id,
+      page: pagination.currentPage,
+      limit: pagination.itemsPerPage,
+      search: filters.search
+    }));
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
-  const filteredInwards = inwards.filter(item => {
-    // Company data isolation
-    if (company?.id && item.company_id !== company.id.toString()) return false;
-
-    const matchesSearch = (item.customerName || item.vendorName || '').toLowerCase().includes(filters.search.toLowerCase()) ||
-                         (item.dcNo || item.challanNo || '').toLowerCase().includes(filters.search.toLowerCase()) ||
-                         (item.poReference || '').toLowerCase().includes(filters.search.toLowerCase());
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    
-    // Date range filtering
-    if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) return false;
-    if (filters.toDate && item.date && new Date(item.date) > new Date(filters.toDate)) return false;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(filteredInwards.length / pagination.itemsPerPage);
-  const paginatedInwards = filteredInwards.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedInwards = inwards;
 
   const handleDeleteParams = (id: string) => {
     setDeleteModal({ isOpen: true, id });
@@ -65,29 +51,11 @@ export default function InwardListPage() {
   };
 
   const handlePrintInward = (item: any) => {
-    const p = window.open('', '', 'height=600,width=800');
-    if (!p) return;
-    p.document.write('<html><head><title>Print Inward</title><style>body{font-family:sans-serif;padding:40px;color:#333;}.label{font-weight:bold;color:#666;font-size:0.8rem;text-transform:uppercase;}.value{font-size:1.1rem;margin-bottom:20px;font-weight:500;}</style></head><body><h1>Globus Engineering</h1>');
-    p.document.write(`<p><span class="label">Customer:</span><br/><span class="value">${item.customerName || item.vendorName}</span></p>`);
-    p.document.write(`<p><span class="label">DC No:</span><br/><span class="value">${item.dcNo || item.challanNo || '-'}</span></p>`);
-    p.document.write(`<p><span class="label">Date:</span><br/><span class="value">${item.date}</span></p>`);
-    p.document.close(); p.print();
+    window.open(`/logistics-print?type=inward&id=${item.id}&print=true`, '_blank');
   };
 
   const handleExportPDFInward = (item: any) => {
-    const doc = new jsPDF();
-    doc.text("GLOBUS ENGINEERING - INWARD RECEIPT", 14, 20);
-    autoTable(doc, {
-      startY: 30,
-      body: [
-        ['Customer', item.customerName || item.vendorName],
-        ['DC No', item.dcNo || item.challanNo || '-'],
-        ['PO No', item.poReference || '-'],
-        ['Date', item.date],
-        ['Status', (item.status || 'pending').toUpperCase()],
-      ],
-    });
-    doc.save(`inward_${item.dcNo}.pdf`);
+    window.open(`/logistics-print?type=inward&id=${item.id}`, '_blank');
   };
 
   return (
@@ -102,7 +70,7 @@ export default function InwardListPage() {
           </div>
           <div className="d-flex align-items-center gap-2">
             <ExportExcel 
-              data={filteredInwards} 
+              data={inwards} 
               fileName="Inward_Records" 
               headers={{ inwardNo: 'Inward No', customerName: 'Customer', poReference: 'PO No', dcNo: 'DC No', date: 'Date' }}
               buttonText="Export List"
@@ -218,7 +186,7 @@ export default function InwardListPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredInwards.length === 0 && (
+                  {inwards.length === 0 && (
                     <tr><td colSpan={6} className="text-center py-5 text-muted small">No inward entries found.</td></tr>
                   )}
                 </tbody>
@@ -227,13 +195,12 @@ export default function InwardListPage() {
           </div>
           {totalPages > 1 && (
             <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredInwards.length)} of {filteredInwards.length} entries</span>
+              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
               <PaginationComponent 
                 currentPage={pagination.currentPage} 
                 totalPages={totalPages} 
                 onPageChange={(page) => dispatch(setInwardPage(page))} 
               />
-
             </div>
           )}
         </div>

@@ -12,65 +12,95 @@ import Breadcrumb from '@/components/Breadcrumb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
-
+import api from '@/lib/axios';
 
 const GstReportPage = () => {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('pending');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('all');
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: invoices, pagination, loading: invLoading } = useSelector((state: RootState) => state.invoices);
+  const { items: invoices, pagination, loading: invLoading, aggregates } = useSelector((state: RootState) => state.invoices);
   const { items: customers, loading: custLoading } = useSelector((state: RootState) => state.customers);
 
   useEffect(() => { 
     setMounted(true); 
     if (activeCompany?.id) {
-      (dispatch as any)(fetchInvoices(activeCompany.id)); 
-      (dispatch as any)(fetchCustomers(activeCompany.id)); 
+      (dispatch as any)(fetchInvoices({
+        company_id: activeCompany.id,
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: search,
+        status: statusFilter,
+        fromDate: fromDate,
+        toDate: toDate,
+        type: 'INVOICE,BOTH' // Only taxable invoices for GST
+      })); 
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id })); 
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate]);
+
+  const handleFetchAllForExport = async () => {
+    if (!activeCompany?.id) return { headers: [], data: [] };
+    
+    let url = `/invoices?page=1&limit=10000&company_id=${activeCompany.id}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (statusFilter && statusFilter !== 'all') url += `&status=${statusFilter}`;
+    if (fromDate) url += `&fromDate=${fromDate}`;
+    if (toDate) url += `&toDate=${toDate}`;
+    
+    const response = await api.get(url);
+    const allInvoices = response.data.items;
+    
+    const data = allInvoices.map((inv: any, idx: number) => {
+      const taxable = parseFloat(inv.total || '0');
+      return [
+        (idx + 1).toString(),
+        inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : 'N/A',
+        inv.customer_name || 'N/A',
+        inv.gstin || '-',
+        inv.dc_no || '-',
+        inv.invoice_no?.toString() || 'N/A',
+        taxable.toLocaleString(),
+        parseFloat(inv.gst1 || '0').toLocaleString(),
+        parseFloat(inv.gst2 || '0').toLocaleString(),
+        parseFloat(inv.igst || '0').toLocaleString()
+      ];
+    });
+
+    const totalTaxable = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.total || '0'), 0);
+    const totalGst1 = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.gst1 || '0'), 0);
+    const totalGst2 = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.gst2 || '0'), 0);
+    const totalIgst = allInvoices.reduce((sum: number, inv: any) => sum + parseFloat(inv.igst || '0'), 0);
+
+    data.push([
+      '', '', 'GRAND TOTAL', '', '', '',
+      totalTaxable.toLocaleString(),
+      totalGst1.toLocaleString(),
+      totalGst2.toLocaleString(),
+      totalIgst.toLocaleString()
+    ]);
+    
+    return {
+      headers: ['SNO', 'DATE', 'CUSTOMER', 'GSTIN', 'DC NO', 'INVOICE NO', 'TAXABLE', 'CGST', 'SGST', 'IGST'],
+      data
+    };
+  };
 
   if (!mounted) return null;
 
-  const filteredItems = (invoices || []).filter(inv => {
-    // Exclude 'Without Process' records from GST report as they are non-taxable
-    const invType = String(inv.type || '').toUpperCase();
-    if (invType === 'WOP') return false;
+  const totalPages = pagination.totalPages;
+  const paginatedItems = (invoices || []);
 
-    // Status filtering
-    const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
-    if (statusFilter === 'pending' && balance <= 0) return false;
-    if (statusFilter === 'paid' && balance > 0) return false;
-
-    const matchesSearch = (inv.customerName?.toLowerCase() || '').includes(search.toLowerCase()) || 
-                         (inv.invoiceNumber?.toLowerCase() || '').includes(search.toLowerCase());
-    
-    // Date range filtering
-    let matchesDate = true;
-    if (fromDate && inv.date && new Date(inv.date) < new Date(fromDate)) matchesDate = false;
-    if (toDate && inv.date && new Date(inv.date) > new Date(toDate)) matchesDate = false;
-
-    return matchesSearch && matchesDate;
-  });
-
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
-
-  const totals = filteredItems.reduce((acc, inv) => {
-    const taxable = inv.subTotal || (inv.grandTotal - (inv.taxTotal || 0));
-    return {
-      taxable: acc.taxable + taxable,
-      tax: acc.tax + (inv.taxTotal || 0),
-      grand: acc.grand + inv.grandTotal,
-      count: acc.count + 1
-    };
-  }, { taxable: 0, tax: 0, grand: 0, count: 0 });
+  // All monetary totals come from backend aggregates (all pages, all matching records)
+  const totals = {
+    count:   pagination.totalItems || 0,
+    taxable: aggregates?.totalTaxable || 0,
+    tax:     aggregates?.totalTax     || 0,
+    grand:   aggregates?.totalGrand   || 0
+  };
 
   const handlePrint = (item: any) => {
     const p = window.open('', '', 'height=600,width=800'); if (!p) return;
@@ -115,8 +145,8 @@ const GstReportPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'GST Report', active: true }]} /><h2 className="fw-900 mt-2">GST Report</h2><p className="text-muted small mb-0">Tax liability analysis and CGST/SGST/IGST breakdown statements.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="GST Analysis Report" />
-          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchInvoices(activeCompany?.id)); (dispatch as any)(fetchCustomers(activeCompany?.id)); }}>
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="GST Analysis Report" onFetchAll={handleFetchAllForExport} />
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id })); (dispatch as any)(fetchCustomers({ company_id: activeCompany?.id })); }}>
             <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
             <span className="small fw-800 text-muted">Refresh</span>
           </button>
@@ -148,9 +178,9 @@ const GstReportPage = () => {
                   onChange={(e) => setStatusFilter(e.target.value as any)}
                   style={{ width: '180px' }}
                 >
+                  <option value="all">All Invoices</option>
                   <option value="pending">Pending Invoices</option>
                   <option value="paid">Paid Invoices</option>
-                  <option value="all">All Invoices</option>
                 </select>
             </div>
 
@@ -253,7 +283,7 @@ const GstReportPage = () => {
             </div>
             {totalPages > 1 && (
               <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
                 <PaginationComponent 
                   currentPage={pagination.currentPage} 
                   totalPages={totalPages} 

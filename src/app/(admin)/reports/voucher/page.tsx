@@ -22,38 +22,31 @@ const VoucherReportPage = () => {
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, pagination, loading } = useSelector((state: RootState) => state.voucher);
 
-  useEffect(() => { setMounted(true); if (activeCompany?.id) { dispatch(fetchVouchers(activeCompany.id) as any); } }, [dispatch, activeCompany?.id]);
+  useEffect(() => { 
+    setMounted(true); 
+    if (activeCompany?.id) { 
+      (dispatch as any)(fetchVouchers({
+        company_id: activeCompany.id,
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: searchTerm,
+        fromDate: fromDate,
+        toDate: toDate
+      })); 
+    } 
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, searchTerm, fromDate, toDate]);
 
   if (!mounted) return null;
 
-  const filteredItems = items.filter(v => {
-    const matchesSearch = (v.partyName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || (v.voucherNo?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || (v.chequeNo?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
-    
-    let matchesDate = true;
-    if (fromDate && v.date && new Date(v.date) < new Date(fromDate)) matchesDate = false;
-    if (toDate && v.date && new Date(v.date) > new Date(toDate)) matchesDate = false;
-
-    return matchesSearch && matchesDate;
-  });
-
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
 
   const handlePrint = (item: any) => {
-    const p = window.open('', '', 'height=600,width=800'); if (!p) return;
-    p.document.write('<html><head><title>Voucher</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; }</style></head><body>');
-    p.document.write('<h1>Globus Engineering</h1><p>Voucher Statement</p>');
-    p.document.write(`<p><b>Party:</b> ${item.partyName}</p><p><b>Voucher No:</b> ${item.voucherNo}</p><p><b>Amount:</b> ₹${item.amount.toLocaleString()}</p><p><b>Date:</b> ${item.date}</p>`);
-    p.document.close(); p.print();
+    window.open(`/logistics-print?type=voucher&id=${item.id}&print=true`, '_blank');
   };
 
   const handleExport = (item: any) => {
-    const doc = new jsPDF(); doc.text("GLOBUS ENGINEERING", 14, 20);
-    autoTable(doc, { startY: 30, body: [['Party Name', item.partyName], ['Voucher No', item.voucherNo], ['Date', item.date], ['Amount', `INR ${item.amount.toLocaleString()}`], ['Type', item.type.toUpperCase()]] });
-    doc.save(`voucher_${item.voucherNo}.pdf`);
+    window.open(`/logistics-print?type=voucher&id=${item.id}`, '_blank');
   };
 
   return (
@@ -62,7 +55,7 @@ const VoucherReportPage = () => {
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Voucher Report', active: true }]} /><h2 className="fw-900 mt-2">Voucher Report</h2><p className="text-muted small mb-0">Record of all financial receipts and payments statements.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-2">
           <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Voucher Report" />
-          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => dispatch(fetchVouchers(activeCompany?.id) as any)}>
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => dispatch(fetchVouchers({ company_id: activeCompany?.id }) as any)}>
             <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
             <span className="small fw-800 text-muted">Refresh</span>
           </button>
@@ -148,7 +141,7 @@ const VoucherReportPage = () => {
             </div>
             {totalPages > 1 && (
               <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
                 <PaginationComponent 
                   currentPage={pagination.currentPage} 
                   totalPages={totalPages} 

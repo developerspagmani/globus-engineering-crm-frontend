@@ -21,7 +21,7 @@ export default function InvoiceDetailPage() {
 
   React.useEffect(() => {
     if (!invoice && !invoiceLoading && company?.id) {
-      dispatch(fetchInvoices(company.id) as any);
+      dispatch(fetchInvoices({ company_id: company.id }) as any);
     }
   }, [invoice, invoiceLoading, company?.id, dispatch]);
 

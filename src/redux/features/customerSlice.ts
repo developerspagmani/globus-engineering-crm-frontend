@@ -4,10 +4,23 @@ import api from '@/lib/axios';
 
 export const fetchCustomers = createAsyncThunk(
   'customers/fetchAll',
-  async (company_id: string | undefined, { rejectWithValue }) => {
+  async (params: { 
+    company_id?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+  }, { rejectWithValue }) => {
     try {
-      const response = await api.get(company_id ? `/customers?company_id=${company_id}` : '/customers');
-      return response.data;
+      const { company_id, page = 1, limit = 10, search } = params;
+      let url = `/customers?page=${page}&limit=${limit}`;
+      if (company_id) url += `&companyId=${company_id}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
+      const response = await api.get(url);
+      return {
+        items: response.data.items,
+        pagination: response.data.pagination
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch customers');
     }
@@ -64,6 +77,8 @@ interface CustomerState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -81,6 +96,8 @@ const initialState: CustomerState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
   },
 };
 
@@ -103,12 +120,12 @@ const customerSlice = createSlice({
       })
       .addCase(fetchCustomers.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.map((c: any) => ({
+        state.items = action.payload.items.map((c: any) => ({
           id: c.id?.toString() || '',
           name: c.name || c.customer_name || '',
           email: c.email || '',
           phone: c.phone || '',
-          company: c.customer_name || c.name || '',
+          company: c.company || c.name || c.customer_name || '',
           industry: c.industry || '',
           status: c.status || 'active',
           street1: c.street1,
@@ -141,6 +158,9 @@ const customerSlice = createSlice({
           company_id: c.company_id,
           createdAt: c.createdAt || c.app_created_at
         }));
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
         state.error = null;
       })
       .addCase(fetchCustomers.rejected, (state, action) => {

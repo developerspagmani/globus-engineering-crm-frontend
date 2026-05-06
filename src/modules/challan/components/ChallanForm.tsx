@@ -30,8 +30,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
   // Ensure data is fetched if not present
   useEffect(() => {
     if (activeCompany?.id) {
-       if (customers.length === 0) dispatch(fetchCustomers(activeCompany.id) as any);
-       if (vendors.length === 0) dispatch(fetchVendors(activeCompany.id) as any);
+       if (customers.length === 0) dispatch(fetchCustomers({ company_id: activeCompany.id }) as any);
+       if (vendors.length === 0) dispatch(fetchVendors({ company_id: activeCompany.id }) as any);
     }
   }, [activeCompany?.id, dispatch, customers.length, vendors.length]);
 
@@ -269,8 +269,9 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                         <input 
                           type="number" 
                           className="form-control" 
-                          value={item.quantity || 0} 
-                          onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
+                          value={item.quantity} 
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                           required 
                           disabled={mode === 'view'}
                         />

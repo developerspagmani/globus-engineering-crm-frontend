@@ -4,34 +4,46 @@ import api from '@/lib/axios';
 
 // Thunks
 export const fetchOutwards = createAsyncThunk(
-  'outward/fetchAll',
-  async (company_id: string | undefined, { rejectWithValue }) => {
+  'outwards/fetchAll',
+  async (params: { 
+    company_id?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+  }, { rejectWithValue }) => {
     try {
-      const url = company_id ? `/outward?company_id=${company_id}` : '/outward';
+      const { company_id, page = 1, limit = 10, search } = params;
+      let url = `/outward?page=${page}&limit=${limit}`;
+      if (company_id) url += `&companyId=${company_id}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
       const response = await api.get(url);
-      return response.data.map((item: any) => ({
-        id: item.id.toString(),
-        outwardNo: item.outward_no || item.dc_no || '',
-        partyType: item.party_type || 'customer',
-        customerId: item.customer_id?.toString() || '',
-        customerName: item.customer_name || '',
-        vendorId: item.vendor_id?.toString() || '',
-        vendorName: item.vendor_name || '',
-        processName: item.process_name || '',
-        invoiceReference: item.invoice_reference || item.invoice_no || '',
-        challanNo: item.challan_no || '',
-        vehicleNo: item.vehicle_no || '',
-        driverName: item.driver_name || '',
-        notes: item.notes || '',
-        inwardId: item.inward_id || item.inwardId || '',
-        inwardNo: item.inward_no || item.inwardNo || '',
-        company_id: item.company_id?.toString() || '',
-        date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
-        status: item.status || 'pending',
-        items: item.items || [],
-        amount: item.amount || 0,
-        createdAt: item.created_at
-      }));
+      return {
+        items: response.data.items.map((item: any) => ({
+          id: item.id.toString(),
+          outwardNo: item.outward_no || item.dc_no || '',
+          partyType: item.party_type || 'customer',
+          customerId: item.customer_id?.toString() || '',
+          customerName: item.customer_name || '',
+          vendorId: item.vendor_id?.toString() || '',
+          vendorName: item.vendor_name || '',
+          processName: item.process_name || '',
+          invoiceReference: item.invoice_reference || item.invoice_no || '',
+          challanNo: item.challan_no || '',
+          vehicleNo: item.vehicle_no || '',
+          driverName: item.driver_name || '',
+          notes: item.notes || '',
+          inwardId: item.inward_id || item.inwardId || '',
+          inwardNo: item.inward_no || item.inwardNo || '',
+          company_id: item.company_id?.toString() || '',
+          date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
+          status: item.status || 'pending',
+          items: item.items || [],
+          amount: item.amount || 0,
+          createdAt: item.created_at
+        })),
+        pagination: response.data.pagination
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch outward entries');
     }
@@ -127,6 +139,8 @@ interface OutwardState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -143,6 +157,8 @@ const initialState: OutwardState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
   },
 };
 
@@ -165,7 +181,11 @@ const outwardSlice = createSlice({
       })
       .addCase(fetchOutwards.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
+        state.error = null;
       })
       .addCase(fetchOutwards.rejected, (state, action) => {
         state.loading = false;

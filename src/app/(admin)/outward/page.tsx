@@ -27,61 +27,29 @@ export default function OutwardListPage() {
 
   useEffect(() => {
     setMounted(true);
-    (dispatch as any)(fetchOutwards(company?.id));
-  }, [dispatch, company?.id]);
+  }, []);
 
-  const filteredOutwards = outwards.filter(item => {
-    // Company data isolation
-    if (company?.id && item.company_id !== company.id.toString()) return false;
+  useEffect(() => {
+    (dispatch as any)(fetchOutwards({
+      company_id: company?.id,
+      page: pagination.currentPage,
+      limit: pagination.itemsPerPage,
+      search: filters.search
+    }));
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
-    const matchesSearch = (item.customerName || '').toLowerCase().includes(filters.search.toLowerCase()) ||
-                         (item.vendorName || '').toLowerCase().includes(filters.search.toLowerCase()) ||
-                         (item.outwardNo || '').toLowerCase().includes(filters.search.toLowerCase()) ||
-                         (item.invoiceReference || '').toLowerCase().includes(filters.search.toLowerCase());
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    
-    // Date range filtering
-    if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) return false;
-    if (filters.toDate && item.date && new Date(item.date) > new Date(filters.toDate)) return false;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(filteredOutwards.length / pagination.itemsPerPage);
-  const paginatedOutwards = filteredOutwards.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedOutwards = outwards;
 
   const handleDeleteParams = (id: string) => { setDeleteModal({ isOpen: true, id }); };
   const confirmDelete = () => { if (deleteModal.id) (dispatch as any)(deleteOutward(deleteModal.id)); };
 
   const handlePrintOutward = (item: any) => {
-     const p = window.open('', '', 'height=600,width=800'); if (!p) return;
-     const partyName = item.partyType === 'vendor' ? item.vendorName : item.customerName;
-     p.document.write('<html><head><title>Print Outward</title><style>body{font-family:sans-serif;padding:40px;color:#333;}.label{font-weight:bold;color:#666;font-size:0.8rem;text-transform:uppercase;}.value{font-size:1.1rem;margin-bottom:20px;font-weight:500;}</style></head><body><h1>Globus Engineering</h1>');
-     p.document.write(`<p><span class="label">Party:</span><br/><span class="value">${partyName} (${(item.partyType || 'customer').toUpperCase()})</span></p>`);
-     p.document.write(`<p><span class="label">Outward No:</span><br/><span class="value">${item.outwardNo || '-'}</span></p>`);
-     p.document.write(`<p><span class="label">Date:</span><br/><span class="value">${item.date}</span></p>`);
-     p.document.close(); p.print();
+     window.open(`/logistics-print?type=outward&id=${item.id}&print=true`, '_blank');
   };
 
   const handleExportPDFOutward = (item: any) => {
-    const doc = new jsPDF();
-    const partyName = item.partyType === 'vendor' ? item.vendorName : item.customerName;
-    doc.text("GLOBUS ENGINEERING - OUTWARD RECEIPT", 14, 20);
-    autoTable(doc, {
-      startY: 30,
-      body: [
-        ['Party', partyName],
-        ['Type', (item.partyType || 'customer').toUpperCase()],
-        ['Outward No', item.outwardNo || '-'],
-        ['Invoice Ref', item.invoiceReference || '-'],
-        ['Date', item.date],
-        ['Status', (item.status || 'pending').toUpperCase()],
-      ],
-    });
-    doc.save(`outward_${item.outwardNo || 'record'}.pdf`);
+     window.open(`/logistics-print?type=outward&id=${item.id}`, '_blank');
   };
 
   return (
@@ -96,7 +64,7 @@ export default function OutwardListPage() {
           </div>
           <div className="d-flex align-items-center gap-2">
             <ExportExcel 
-              data={filteredOutwards} 
+              data={outwards} 
               fileName="Outward_Records" 
               headers={{ outwardNo: 'Outward No', partyType: 'Type', customerName: 'Customer', vendorName: 'Vendor', invoiceReference: 'Invoice Ref', date: 'Date' }}
               buttonText="Export List"
@@ -207,6 +175,7 @@ export default function OutwardListPage() {
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 py-2">
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handlePrintOutward(item)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold" onClick={() => handleExportPDFOutward(item)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
                               {mounted && checkActionPermission(user, 'mod_outward', 'delete') && (
                                 <>
                                   <li><hr className="dropdown-divider opacity-50" /></li>
@@ -219,7 +188,7 @@ export default function OutwardListPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredOutwards.length === 0 && (
+                  {outwards.length === 0 && (
                     <tr><td colSpan={8} className="text-center py-5 text-muted small">No outward entries found.</td></tr>
                   )}
                 </tbody>
@@ -228,13 +197,12 @@ export default function OutwardListPage() {
           </div>
           {totalPages > 1 && (
             <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredOutwards.length)} of {filteredOutwards.length} entries</span>
+               <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
               <PaginationComponent 
                 currentPage={pagination.currentPage} 
                 totalPages={totalPages} 
                 onPageChange={(page) => dispatch(setOutwardPage(page))} 
               />
-
             </div>
           )}
         </div>

@@ -48,21 +48,15 @@ const StoreList: React.FC = () => {
   };
 
   useEffect(() => {
-    (dispatch as any)(fetchStores());
-  }, [dispatch]);
+    (dispatch as any)(fetchStores({
+      page: pagination.currentPage,
+      limit: pagination.itemsPerPage,
+      search: filters.search
+    }));
+  }, [dispatch, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
-  const filteredStores = stores.filter(store => {
-    const matchesSearch = store.name.toLowerCase().includes(filters.search.toLowerCase()) || 
-                         store.ownerName?.toLowerCase().includes(filters.search.toLowerCase());
-    const matchesArea = filters.area === 'all' || store.area === filters.area;
-    return matchesSearch && matchesArea;
-  });
-
-  const totalPages = Math.ceil(filteredStores.length / pagination.itemsPerPage);
-  const paginatedItems = filteredStores.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = stores;
 
   const areas = Array.from(new Set(stores.map(s => s.area).filter(Boolean)));
 
@@ -215,7 +209,7 @@ const StoreList: React.FC = () => {
 
         {totalPages > 1 && (
           <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-            <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredStores.length)} of {filteredStores.length} entries</span>
+            <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
             <PaginationComponent 
               currentPage={pagination.currentPage} 
               totalPages={totalPages} 
@@ -225,7 +219,7 @@ const StoreList: React.FC = () => {
           </div>
         )}
 
-        {filteredStores.length === 0 && (
+        {stores.length === 0 && (
           <div className="text-center p-5 bg-white rounded-4 border m-4">
             <i className="bi bi-shop display-4 text-muted mb-3 d-block opacity-25"></i>
             <h5 className="text-muted fw-800 tracking-tight text-capitalize">No Stores Found</h5>

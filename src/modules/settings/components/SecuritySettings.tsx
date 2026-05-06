@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { updatePassword } from '@/redux/features/authSlice';
+import FullPageStatus from '@/components/FullPageStatus';
 
 const SecuritySettings: React.FC = () => {
   const dispatch = useDispatch();
@@ -16,14 +17,24 @@ const SecuritySettings: React.FC = () => {
   });
 
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error' | 'warning'; title: string; message: string }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     
     if (formData.newPassword !== formData.confirmPassword) {
-      alert("New passwords don't match!");
+      setModal({
+        isOpen: true,
+        type: 'warning',
+        title: 'Validation Error',
+        message: "The new password and confirmation password do not match. Please verify and try again."
+      });
       return;
     }
 
@@ -35,11 +46,20 @@ const SecuritySettings: React.FC = () => {
 
     setSaving(false);
     if (updatePassword.fulfilled.match(result)) {
-      setMessage('Password changed successfully!');
+      setModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Security Updated',
+        message: 'Your account password has been changed successfully. Please use your new credentials for the next login.'
+      });
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setTimeout(() => setMessage(''), 3000);
     } else {
-      setMessage('Failed to update password: ' + (result.payload || 'Unknown error'));
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Update Failed',
+        message: (result.payload as any) || 'The system was unable to update your password at this time.'
+      });
     }
   };
 
@@ -47,12 +67,6 @@ const SecuritySettings: React.FC = () => {
     <div className="card border-0 shadow-sm rounded-4">
       <div className="card-body p-4">
         <h5 className="fw-bold mb-4">Security & Authentication</h5>
-        
-        {message && (
-          <div className="alert alert-warning border-0 shadow-sm mb-4">
-            {message}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit}>
           <div className="row g-4">
@@ -107,6 +121,14 @@ const SecuritySettings: React.FC = () => {
           </div>
         </form>
       </div>
+      {modal.isOpen && (
+        <FullPageStatus 
+          type={modal.type}
+          title={modal.title}
+          message={modal.message}
+          onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        />
+      )}
     </div>
   );
 };

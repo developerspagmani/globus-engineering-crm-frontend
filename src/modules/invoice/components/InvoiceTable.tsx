@@ -75,32 +75,51 @@ const InvoiceTable: React.FC = () => {
   const handleDeleteParams = (id: string, type: 'invoice' | 'inward') => { setDeleteModal({ isOpen: true, id, type }); };
   const confirmDelete = () => { if (deleteModal.id && deleteModal.type) { if (deleteModal.type === 'invoice') dispatch(deleteInvoice(deleteModal.id) as any); else dispatch(deleteInward(deleteModal.id) as any); } };
 
-  React.useEffect(() => { if (activeCompany?.id) { (dispatch as any)(fetchInwards(activeCompany.id)); (dispatch as any)(fetchInvoices(activeCompany.id)); (dispatch as any)(fetchNextNumbers(activeCompany.id)); } }, [dispatch, activeCompany?.id]);
+  React.useEffect(() => {
+    if (activeCompany?.id) {
+      if (activeTab === 'ADD_INVOICE') {
+        (dispatch as any)(fetchInwards({ 
+          company_id: activeCompany.id,
+          status: 'pending',
+          limit: 100 // Fetch more for selection
+        }));
+      }
+      (dispatch as any)(fetchNextNumbers({ companyId: activeCompany.id }));
+    }
+  }, [dispatch, activeCompany?.id, activeTab]);
 
-  const filteredInvoices = invoices.filter(item => {
-    if (user?.role !== 'super_admin' && activeCompany && (item.company_id || (item as any).companyId) !== activeCompany.id) return false;
-    const itemType = String(item.type || 'INVOICE').toUpperCase();
-    if (activeTab === 'INVOICELIST' && itemType !== 'INVOICE') return false;
-    if (activeTab === 'WOP_LIST' && itemType !== 'WOP') return false;
-    if (activeTab === 'BOTH_LIST' && itemType !== 'BOTH') return false;
-    const invNo = String(item.invoiceNumber || '').toLowerCase();
-    const dcNo = String(item.dcNo || '').toLowerCase();
-    const custName = String(item.customerName || '').toLowerCase();
-    const search = String(filters.search || '').toLowerCase();
-    const matchesSearch = invNo.includes(search) || dcNo.includes(search) || custName.includes(search);
-    const matchesStatus = (filters.status === 'all' || item.status === filters.status);
-
-    // Date range filtering
-    let matchesDate = true;
-    if (filters.fromDate && item.date && new Date(item.date) < new Date(filters.fromDate)) matchesDate = false;
-    if (filters.toDate && item.date && new Date(item.date) > new Date(filters.toDate)) matchesDate = false;
-
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+  React.useEffect(() => {
+    if (activeCompany?.id) {
+      const typeMap: any = {
+        'INVOICELIST': 'WP',
+        'WOP_LIST': 'WOP',
+        'BOTH_LIST': 'BOTH'
+      };
+      
+      (dispatch as any)(fetchInvoices({
+        company_id: activeCompany.id,
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage,
+        search: filters.search,
+        status: filters.status,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+        type: typeMap[activeTab] || 'all'
+      }));
+    }
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters, activeTab]);
 
   const filteredInwards = inwards.filter(item => {
-    if (user?.role !== 'super_admin' && activeCompany && (item.company_id || (item as any).companyId) !== activeCompany.id) return false;
-    if (item.status !== 'pending') return false;
+    const itemCompId = String(item.company_id || (item as any).companyId || '').toLowerCase();
+    const activeCompId = String(activeCompany?.id || '').toLowerCase();
+    
+    if (user?.role !== 'super_admin' && activeCompany && itemCompId !== activeCompId) return false;
+    
+    // Check both status and remaining items balance
+    const isPending = String(item.status || '').toLowerCase() === 'pending';
+    const hasRemaining = (item.totalRemaining ?? 1) > 0;
+    
+    if (!isPending && !hasRemaining) return false;
 
     const search = String(filters.search || '').toLowerCase();
     const custName = String(item.customerName || item.vendorName || '').toLowerCase();
@@ -108,9 +127,15 @@ const InvoiceTable: React.FC = () => {
 
     return custName.includes(search) || dcNo.includes(search);
   });
-  const displayItems: any[] = activeTab === 'ADD_INVOICE' ? filteredInwards : filteredInvoices;
-  const totalPages = Math.ceil(displayItems.length / pagination.itemsPerPage);
-  const paginatedItems = displayItems.slice((pagination.currentPage - 1) * pagination.itemsPerPage, pagination.currentPage * pagination.itemsPerPage);
+
+  const displayItems: any[] = activeTab === 'ADD_INVOICE' ? filteredInwards : invoices;
+  const totalPages = activeTab === 'ADD_INVOICE' 
+    ? Math.ceil(filteredInwards.length / pagination.itemsPerPage) 
+    : pagination.totalPages;
+
+  const paginatedItems = activeTab === 'ADD_INVOICE'
+    ? displayItems.slice((pagination.currentPage - 1) * pagination.itemsPerPage, pagination.currentPage * pagination.itemsPerPage)
+    : displayItems;
 
   const invoiceHeaders = {
     invoiceNumber: "Invoice Number",
@@ -241,7 +266,9 @@ const InvoiceTable: React.FC = () => {
 
       {totalPages > 1 && (
         <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4 small text-muted">
-          <span>Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, displayItems.length)} of {displayItems.length}</span>
+          <span>
+            Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, activeTab === 'ADD_INVOICE' ? filteredInwards.length : pagination.totalItems)} of {activeTab === 'ADD_INVOICE' ? filteredInwards.length : pagination.totalItems}
+          </span>
           <PaginationComponent
             currentPage={pagination.currentPage}
             totalPages={totalPages}

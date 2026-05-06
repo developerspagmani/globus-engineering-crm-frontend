@@ -35,7 +35,7 @@ export const navigationConfig: NavItem[] = [
   },
   { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
-  { name: 'Active Sales Area', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_hub' },
+  
   { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
   { name: 'Vendors', icon: 'bi-truck', path: '/vendors', moduleId: 'mod_vendor' },
   { name: 'Employee Management', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
@@ -43,7 +43,6 @@ export const navigationConfig: NavItem[] = [
   { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
   { name: 'Field Stores', icon: 'bi-shop', path: '/stores', moduleId: 'mod_lead' }, // Shares lead module permission for now
   { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'default' },
-  { name: 'Sales Hub', icon: 'bi-graph-up-arrow', path: '/sales-hub', moduleId: 'mod_sales_hub' },
 
   // Reports
   { 

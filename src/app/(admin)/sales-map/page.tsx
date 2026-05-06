@@ -21,7 +21,7 @@ const SalesMapPage = () => {
     const customers = useSelector((state: RootState) => state.customers.items);
 
     useEffect(() => {
-        (dispatch as any)(fetchCustomers(activeCompany?.id));
+        (dispatch as any)(fetchCustomers({ company_id: activeCompany?.id }));
         (dispatch as any)(fetchCompanies());
     }, [dispatch, activeCompany?.id]);
     const [selectedRegion, setSelectedRegion] = useState<string | null>(null);

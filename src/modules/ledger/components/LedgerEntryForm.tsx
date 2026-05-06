@@ -40,10 +40,10 @@ const LedgerEntryForm: React.FC = () => {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      (dispatch as any)(fetchCustomers(activeCompany.id));
-      (dispatch as any)(fetchVendors(activeCompany.id));
-      (dispatch as any)(fetchInvoices(activeCompany.id));
-      (dispatch as any)(fetchInwards(activeCompany.id));
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id }));
+      (dispatch as any)(fetchVendors({ company_id: activeCompany.id }));
+      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
+      (dispatch as any)(fetchInwards({ company_id: activeCompany.id }));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -210,6 +210,7 @@ const LedgerEntryForm: React.FC = () => {
                 placeholder="0.00"
                 value={formData.amount}
                 style={formData.type !== 'credit' ? { maxWidth: '300px' } : {}}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
                 onChange={(e) => setFormData((p) => ({ ...p, amount: e.target.value }))}
                 required
               />

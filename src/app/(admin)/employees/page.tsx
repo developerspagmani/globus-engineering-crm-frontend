@@ -20,60 +20,27 @@ const EmployeesPage = () => {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.employee) as { 
-    items: Employee[]; 
-    filters: {
-      search: string;
-      department: string;
-      status: string;
-      fromDate: string;
-      toDate: string;
-    }; 
-    pagination: {
-      currentPage: number;
-      itemsPerPage: number;
-    };
-    loading: boolean;
-  };
+  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.employee);
   const [deleteModal, setDeleteModal] = React.useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
 
   React.useEffect(() => {
     setMounted(true);
     if (activeCompany?.id) {
-       (dispatch as any)(fetchEmployees(activeCompany.id));
+       (dispatch as any)(fetchEmployees({
+          company_id: activeCompany.id,
+          page: pagination.currentPage,
+          limit: pagination.itemsPerPage,
+          search: filters.search
+       }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
   if (!mounted) return null;
 
   // Filter logic
-  const filteredItems = items.filter(item => {
-    // Company context filtering
-    if (activeCompany && item.company_id !== activeCompany.id) return false;
-
-    const matchesSearch = 
-      item.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.employeeId.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.designation.toLowerCase().includes(filters.search.toLowerCase());
-    const matchesDept = filters.department === 'all' || item.department === filters.department;
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-
-    // Date range filtering (Joining Date)
-    let matchesDate = true;
-    if (filters.fromDate && item.joiningDate && new Date(item.joiningDate) < new Date(filters.fromDate)) matchesDate = false;
-    if (filters.toDate && item.joiningDate && new Date(item.joiningDate) > new Date(filters.toDate)) matchesDate = false;
-
-    return matchesSearch && matchesStatus && matchesDept && matchesDate;
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
 
   const getDeptColor = (dept: string) => {
     switch (dept) {
@@ -346,7 +313,7 @@ const EmployeesPage = () => {
           {totalPages > 1 && (
             <div className="px-4 py-3 border-top d-flex align-items-center justify-content-between">
               <div className="text-muted small">
-                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
+                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
               </div>
               <PaginationComponent 
                 currentPage={pagination.currentPage} 

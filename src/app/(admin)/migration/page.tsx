@@ -6,16 +6,27 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import ModuleGuard from '@/components/ModuleGuard';
 import Breadcrumb from '@/components/Breadcrumb';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 const MigrationPage = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ success?: boolean; message?: string; data?: any } | null>(null);
   const { token } = useSelector((state: RootState) => state.auth);
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'warning' | 'danger'; title: string; message: string; onConfirm: () => void }>({ 
+    isOpen: false, type: 'warning', title: '', message: '', onConfirm: () => {} 
+  });
 
-  const handleMigrate = async () => {
-    if (!confirm('Are you sure you want to run the migration? This will update legacy records to the Globus company ID.')) {
-      return;
-    }
+  const handleMigrate = () => {
+    setModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Run System Migration',
+      message: 'Are you sure you want to run the migration? This will update legacy records to the Globus company ID.',
+      onConfirm: startMigration
+    });
+  };
+
+  const startMigration = async () => {
 
     setLoading(true);
     setStatus(null);
@@ -38,10 +49,17 @@ const MigrationPage = () => {
     }
   };
 
-  const handleRollback = async () => {
-    if (!confirm('WARNING: This will UNDO the migration and remove company assignments. Are you sure?')) {
-      return;
-    }
+  const handleRollback = () => {
+    setModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Undo Migration',
+      message: 'WARNING: This will UNDO the migration and remove company assignments. This action is destructive. Are you sure?',
+      onConfirm: startRollback
+    });
+  };
+
+  const startRollback = async () => {
 
     setLoading(true);
     setStatus(null);
@@ -232,6 +250,15 @@ const MigrationPage = () => {
           flex-shrink: 0;
         }
       `}</style>
+      <ConfirmationModal 
+        isOpen={modal.isOpen}
+        onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modal.onConfirm}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        confirmLabel={modal.type === 'danger' ? 'Rollback' : 'Proceed'}
+      />
     </ModuleGuard>
   );
 };

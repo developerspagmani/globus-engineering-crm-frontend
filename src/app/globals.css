@@ -185,7 +185,7 @@ body {
 
   transform: translateY(-2px);
 
-  box-shadow: 0 12px 20px -5px rgba(249, 115, 22, 0.4);
+  box-shadow: 0 6px 14px -4px rgba(249, 115, 22, 0.25);
 
 }
 
@@ -280,8 +280,6 @@ body {
   padding: 1rem !important;
 }
 
-/* Standardized Button Styles - ENFORCED CONSISTENCY */
-
 .btn,
 button,
 .btn-action,
@@ -310,6 +308,9 @@ button,
 
   border-radius: 0.5rem !important;
   /* Consistent medium rounded corners */
+
+  overflow: hidden !important;
+  /* Prevent background from bleeding outside rounded corners */
 
   transition: var(--transition-smooth) !important;
 
@@ -414,6 +415,7 @@ input[type="submit"],
 .nav-link {
   text-transform: capitalize !important;
   border-radius: 0.5rem !important;
+  overflow: hidden !important;
 }
 
 /* Override card and container border radius */
@@ -632,9 +634,14 @@ input[type="password"],
 
   font-weight: 500;
 
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
 
-  margin: 0.125rem 0.5rem;
+  /* Use padding-left/right for inset — NOT margin (margin lets bg bleed outside) */
+  margin: 0.1rem 0;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+
+  overflow: hidden;
 
   transition: var(--transition-smooth);
 

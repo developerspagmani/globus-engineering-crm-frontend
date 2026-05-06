@@ -66,11 +66,11 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
       } else {
         setFormData(prev => ({ ...prev, company_id: activeCompany.id }));
       }
-      (dispatch as any)(fetchItems(activeCompany.id));
-      (dispatch as any)(fetchProcesses(activeCompany.id));
-      (dispatch as any)(fetchCustomers(activeCompany.id));
+      (dispatch as any)(fetchItems({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchProcesses({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
     } else {
-      (dispatch as any)(fetchCustomers());
+      (dispatch as any)(fetchCustomers({}));
     }
   }, [dispatch, activeCompany?.id, mode]);
 
@@ -288,7 +288,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                     </select>
                   </div>
                   <div className="col-md-2">
-                    <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none" value={item.quantity || ''} onChange={e => handleItemChange(index, 'quantity', parseFloat(e.target.value))} required disabled={mode === 'view'} />
+                    <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required disabled={mode === 'view'} />
                   </div>
                   <div className="col-md-1 text-center">
                     {mode !== 'view' && (

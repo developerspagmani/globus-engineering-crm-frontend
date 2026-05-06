@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk, setItemPage } from '@/redux/features/masterSlice';
+import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk, setItemPage, setItemSearch } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ExportExcel from '@/components/shared/ExportExcel';
+import FullPageStatus from '@/components/FullPageStatus';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -17,15 +18,15 @@ import PaginationComponent from '@/components/shared/Pagination';
 
 export default function ItemDetailsPage() {
   const dispatch = useDispatch();
-  const { items, pagination, loading } = useSelector((state: RootState) => state.master);
+  const { items, pagination, loading, filters } = useSelector((state: RootState) => state.master);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({ itemCode: '', itemName: '' });
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [statusModal, setStatusModal] = useState<{ isOpen: boolean; type: 'success' | 'error' | 'warning' | 'info'; title: string; message: string }>({ isOpen: false, type: 'success', title: '', message: '' });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -33,8 +34,13 @@ export default function ItemDetailsPage() {
   }, []);
 
   useEffect(() => {
-    (dispatch as any)(fetchItems(company?.id));
-  }, [dispatch, company?.id]);
+    (dispatch as any)(fetchItems({
+      company_id: company?.id,
+      page: pagination.itemPage,
+      limit: pagination.itemsPerPage,
+      search: filters.itemSearch
+    }));
+  }, [dispatch, company?.id, pagination.itemPage, pagination.itemsPerPage, filters.itemSearch]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,17 +55,33 @@ export default function ItemDetailsPage() {
         } else {
           await (dispatch as any)(createItemThunk({ ...formData, company_id: company.id })).unwrap();
         }
-        setFormData({ itemCode: '', itemName: '' });
-        setView('list');
-      } catch (err: any) {
-        alert(err.message || "Failed to save item. Please check if the item code is unique.");
-      } finally {
-        setIsSubmitting(false);
+          setFormData({ itemCode: '', itemName: '' });
+          setView('list');
+          setStatusModal({
+            isOpen: true,
+            type: 'success',
+            title: editingId ? 'Item Updated' : 'Item Registered',
+            message: `The item "${formData.itemName}" has been successfully saved to your master catalog.`
+          });
+        } catch (err: any) {
+          setStatusModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Save Failed',
+            message: err.message || "We encountered an issue while saving the item. Please ensure the item code is unique."
+          });
+        } finally {
+          setIsSubmitting(false);
+        }
+      } else {
+        setStatusModal({
+          isOpen: true,
+          type: 'warning',
+          title: 'Company Not Selected',
+          message: "Please select a company from the top navigation bar to manage its master items."
+        });
       }
-    } else {
-      alert("Please select a company from the top navigation first.");
-    }
-  };
+    };
 
   const handleEdit = (item: any) => {
     setEditingId(item.id);
@@ -78,16 +100,8 @@ export default function ItemDetailsPage() {
     }
   };
 
-  const filteredItems = items.filter(item =>
-    item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.itemCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.itemPage - 1) * pagination.itemsPerPage,
-    pagination.itemPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalItemPages;
+  const paginatedItems = items;
 
   const handleCopyTable = () => {
     const table = document.querySelector('table');
@@ -99,7 +113,14 @@ export default function ItemDetailsPage() {
       const rowData = cols.slice(0, -1).map(col => (col as HTMLElement).innerText.trim()).join("\t");
       text += rowData + "\n";
     });
-    navigator.clipboard.writeText(text).then(() => alert("Table data copied to clipboard!"));
+    navigator.clipboard.writeText(text).then(() => {
+      setStatusModal({
+        isOpen: true,
+        type: 'info',
+        title: 'Copied!',
+        message: "Table data has been copied to your clipboard. You can now paste it into Excel or other tools."
+      });
+    });
   };
 
   const handleExportExcel = () => {
@@ -335,8 +356,8 @@ export default function ItemDetailsPage() {
                           type="text"
                           placeholder="Search items..."
                           className="form-control search-bar"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          value={filters.itemSearch}
+                          onChange={(e) => dispatch(setItemSearch(e.target.value))}
                         />
                       </div>
                     </div>
@@ -363,7 +384,7 @@ export default function ItemDetailsPage() {
                               <Loader text="Fetching Items..." />
                             </td>
                           </tr>
-                        ) : filteredItems.length === 0 ? (
+                        ) : items.length === 0 ? (
                           <tr>
                             <td colSpan={4} className="text-center py-5 text-muted">No items found</td>
                           </tr>
@@ -438,7 +459,7 @@ export default function ItemDetailsPage() {
                   </div>
                   {totalPages > 1 && (
                     <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                      <span className="text-muted small">Showing {(pagination.itemPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.itemPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+                      <span className="text-muted small">Showing {(pagination.itemPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.itemPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
                       <PaginationComponent 
                         currentPage={pagination.itemPage} 
                         totalPages={totalPages} 
@@ -461,6 +482,15 @@ export default function ItemDetailsPage() {
         title="Delete Item"
         message="Are you sure you want to delete this item? This action cannot be undone."
       />
+
+      {statusModal.isOpen && (
+        <FullPageStatus 
+          type={statusModal.type}
+          title={statusModal.title}
+          message={statusModal.message}
+          onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+        />
+      )}
 
       <style jsx>{`
         .transition-all { transition: all 0.2s ease; }

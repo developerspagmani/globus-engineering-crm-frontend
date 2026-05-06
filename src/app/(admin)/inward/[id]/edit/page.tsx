@@ -25,7 +25,7 @@ export default function EditInwardPage() {
 
   React.useEffect(() => {
     if (company?.id) {
-      (dispatch as any)(fetchInwards(company.id));
+      (dispatch as any)(fetchInwards({ company_id: company.id }));
     }
   }, [dispatch, company?.id]);
 

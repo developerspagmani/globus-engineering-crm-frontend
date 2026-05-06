@@ -35,8 +35,16 @@ interface MasterState {
   pagination: {
     itemsPerPage: number;
     itemPage: number;
+    totalItems: number;
+    totalItemPages: number;
     processPage: number;
+    totalProcesses: number;
+    totalProcessPages: number;
     priceFixingPage: number;
+  };
+  filters: {
+    itemSearch: string;
+    processSearch: string;
   };
 }
 
@@ -49,46 +57,74 @@ const initialState: MasterState = {
   pagination: {
     itemsPerPage: 10,
     itemPage: 1,
+    totalItems: 0,
+    totalItemPages: 0,
     processPage: 1,
+    totalProcesses: 0,
+    totalProcessPages: 0,
     priceFixingPage: 1,
+  },
+  filters: {
+    itemSearch: '',
+    processSearch: '',
   }
 };
 
-export const fetchItems = createAsyncThunk('master/fetchItems', async (company_id: string | undefined) => {
-  const url = company_id ? `/items?companyId=${company_id}` : '/items';
+export const fetchItems = createAsyncThunk('master/fetchItems', async (params: { company_id?: string; page?: number; limit?: number; search?: string }) => {
+  const { company_id, page = 1, limit = 10, search } = params;
+  let url = `/items?page=${page}&limit=${limit}`;
+  if (company_id) url += `&companyId=${company_id}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  
   const response = await api.get(url);
-  return response.data.data.map((item: any) => ({
-    id: String(item.id),
-    itemCode: String(item.item_code || ''),
-    itemName: String(item.item_name || ''),
-    company_id: String(item.company_id || ''),
-  }));
+  return {
+    items: response.data.data.map((item: any) => ({
+      id: String(item.id),
+      itemCode: String(item.item_code || ''),
+      itemName: String(item.item_name || ''),
+      company_id: String(item.company_id || ''),
+    })),
+    pagination: response.data.pagination
+  };
 });
 
-export const fetchProcesses = createAsyncThunk('master/fetchProcesses', async (company_id: string | undefined) => {
-  const url = company_id ? `/processes?companyId=${company_id}` : '/processes';
+export const fetchProcesses = createAsyncThunk('master/fetchProcesses', async (params: { company_id?: string; page?: number; limit?: number; search?: string }) => {
+  const { company_id, page = 1, limit = 10, search } = params;
+  let url = `/processes?page=${page}&limit=${limit}`;
+  if (company_id) url += `&companyId=${company_id}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  
   const response = await api.get(url);
-  return response.data.data.map((p: any) => ({
-    id: String(p.id),
-    processName: String(p.process_name || ''),
-    company_id: String(p.company_id || ''),
-  }));
+  return {
+    processes: response.data.data.map((p: any) => ({
+      id: String(p.id),
+      processName: String(p.process_name || ''),
+      company_id: String(p.company_id || ''),
+    })),
+    pagination: response.data.pagination
+  };
 });
 
-export const fetchPriceFixings = createAsyncThunk('master/fetchPriceFixings', async (company_id: string | undefined) => {
-  const url = company_id ? `/price-fixings?companyId=${company_id}` : '/price-fixings';
+export const fetchPriceFixings = createAsyncThunk('master/fetchPriceFixings', async (params: { company_id?: string; page?: number; limit?: number }) => {
+  const { company_id, page = 1, limit = 10 } = params;
+  let url = `/price-fixings?page=${page}&limit=${limit}`;
+  if (company_id) url += `&companyId=${company_id}`;
+  
   const response = await api.get(url);
-  return response.data.data.map((pf: any) => ({
-    id: String(pf.id),
-    customerId: String(pf.customer_id || ''),
-    customerName: String(pf.customer_name || ''),
-    itemId: String(pf.item_id || ''),
-    itemName: String(pf.item_name || ''),
-    processId: String(pf.process_id || ''),
-    processName: String(pf.process_name || ''),
-    price: Number(pf.price || 0),
-    company_id: String(pf.company_id || ''),
-  }));
+  return {
+    priceFixings: response.data.data.map((pf: any) => ({
+      id: String(pf.id),
+      customerId: String(pf.customer_id || ''),
+      customerName: String(pf.customer_name || ''),
+      itemId: String(pf.item_id || ''),
+      itemName: String(pf.item_name || ''),
+      processId: String(pf.process_id || ''),
+      processName: String(pf.process_name || ''),
+      price: Number(pf.price || 0),
+      company_id: String(pf.company_id || ''),
+    })),
+    pagination: response.data.pagination
+  };
 });
 
 // Create actions
@@ -196,23 +232,41 @@ const masterSlice = createSlice({
     setPriceFixingPage: (state, action: PayloadAction<number>) => {
       state.pagination.priceFixingPage = action.payload;
     },
+    setItemSearch: (state, action: PayloadAction<string>) => {
+      state.filters.itemSearch = action.payload;
+      state.pagination.itemPage = 1;
+    },
+    setProcessSearch: (state, action: PayloadAction<string>) => {
+      state.filters.processSearch = action.payload;
+      state.pagination.processPage = 1;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchItems.pending, (state) => { state.loading = true; })
       .addCase(fetchItems.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalItemPages = action.payload.pagination.totalPages;
+        state.pagination.itemPage = action.payload.pagination.page;
       })
       .addCase(fetchProcesses.pending, (state) => { state.loading = true; })
       .addCase(fetchProcesses.fulfilled, (state, action) => {
         state.loading = false;
-        state.processes = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
+        state.processes = action.payload.processes;
+        state.pagination.totalProcesses = action.payload.pagination.total;
+        state.pagination.totalProcessPages = action.payload.pagination.totalPages;
+        state.pagination.processPage = action.payload.pagination.page;
       })
       .addCase(fetchPriceFixings.pending, (state) => { state.loading = true; })
       .addCase(fetchPriceFixings.fulfilled, (state, action) => {
         state.loading = false;
-        state.priceFixings = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
+        state.priceFixings = action.payload.priceFixings.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
+        // Update pagination if the backend returns it for price fixings
+        if (action.payload.pagination) {
+          state.pagination.priceFixingPage = action.payload.pagination.page;
+        }
       })
       .addCase(createItemThunk.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
@@ -247,5 +301,5 @@ const masterSlice = createSlice({
   },
 });
 
-export const { setItemPage, setProcessPage, setPriceFixingPage } = masterSlice.actions;
+export const { setItemPage, setProcessPage, setPriceFixingPage, setItemSearch, setProcessSearch } = masterSlice.actions;
 export default masterSlice.reducer;

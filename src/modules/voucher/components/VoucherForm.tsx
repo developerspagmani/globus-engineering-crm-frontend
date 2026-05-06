@@ -46,10 +46,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      (dispatch as any)(fetchInvoices(activeCompany.id));
+      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
       // Ensure customers are fetched if the list is empty
       if (customers.length === 0) {
-        (dispatch as any)(fetchCustomers(activeCompany.id));
+        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
       }
     }
   }, [dispatch, activeCompany, customers.length]);
@@ -335,7 +335,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               if (modal.type === 'success') {
                 // Refresh invoices to update balances in Pending Payment/Ledger before redirecting
                 if (activeCompany?.id) {
-                  (dispatch as any)(fetchInvoices(activeCompany.id));
+                  (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
                 }
                 
                 // Reset local state if successful

@@ -88,15 +88,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    useEffect(() => {
       if (company?.id) {
-         (dispatch as any)(fetchItems(company.id));
-         (dispatch as any)(fetchProcesses(company.id));
-         (dispatch as any)(fetchPriceFixings(company.id));
-         (dispatch as any)(fetchCustomers(company.id));
+         (dispatch as any)(fetchItems({ company_id: company.id, limit: 1000 }));
+         (dispatch as any)(fetchProcesses({ company_id: company.id, limit: 1000 }));
+         (dispatch as any)(fetchPriceFixings({ company_id: company.id, limit: 1000 }));
+         (dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 }));
 
          if (mode === 'create') {
             import('@/redux/features/invoiceSlice').then(async ({ fetchNextNumbers }) => {
                try {
-                  const data = await (dispatch as any)(fetchNextNumbers(company.id)).unwrap();
+                  const data = await (dispatch as any)(fetchNextNumbers({ companyId: company.id })).unwrap();
                   setFormData((prev: any) => ({
                      ...prev,
                      invoiceNumber: prev.invoiceNumber || String(data.nextInvoice || data.nextInvoiceNo || '').padStart(4, '0'),
@@ -108,7 +108,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             });
          }
       } else {
-         (dispatch as any)(fetchCustomers());
+         (dispatch as any)(fetchCustomers({}));
       }
    }, [dispatch, company?.id, mode]);
 
@@ -786,17 +786,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     </select>
                                  </td>
                                  <td className="py-3">
-                                    <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity || 0} onChange={e => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)} />
+                                    <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
                                  </td>
                                  {formData.billType === 'Both' && (
                                     <td className="py-3">
-                                       <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty || 0} onChange={e => handleItemChange(index, 'wopQty', parseInt(e.target.value) || 0)} />
+                                       <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'wopQty', e.target.value)} />
                                     </td>
                                  )}
                                  {formData.billType !== 'Without Process' && (
                                     <>
                                        <td className="py-3">
-                                          <input type="number" className="form-control bg-transparent p-1 text-end" value={item.unitPrice || 0} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                                          <input type="number" className="form-control bg-transparent p-1 text-end" value={item.unitPrice} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} />
                                        </td>
                                        <td className="py-3 text-end fw-semibold">
                                           ₹ {(item.amount || 0).toFixed(2)}
@@ -833,7 +833,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                  <span>{formData.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                               </div>
                            </div>
-
                            <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                               <h6 className="text-muted fw-bold small text-uppercase mb-0">(-) Discount</h6>
                               <div className="d-flex align-items-center justify-content-center text-dark fw-bold fs-5">
@@ -843,9 +842,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     step="0.01"
                                     className="form-control bg-light text-end fw-bold p-1 no-spinner"
                                     style={{ width: '120px' }}
-                                    value={formData.discount || ''}
+                                    value={formData.discount}
                                     placeholder="0.00"
-                                    onChange={e => setFormData((prev: any) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                    onChange={e => setFormData((prev: any) => ({ ...prev, discount: e.target.value }))}
                                  />
                               </div>
                            </div>
@@ -859,9 +859,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     step="0.01"
                                     className="form-control bg-light text-end fw-bold p-1 no-spinner"
                                     style={{ width: '120px' }}
-                                    value={formData.otherCharges || ''}
+                                    value={formData.otherCharges}
                                     placeholder="0.00"
-                                    onChange={e => setFormData((prev: any) => ({ ...prev, otherCharges: parseFloat(e.target.value) || 0 }))}
+                                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                    onChange={e => setFormData((prev: any) => ({ ...prev, otherCharges: e.target.value }))}
                                  />
                               </div>
                            </div>
@@ -906,7 +907,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                                 className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
                                                 style={{ fontSize: '14px' }}
                                                 value={formData.taxRate}
-                                                onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                                onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: e.target.value }))}
                                              />
                                              <span className="small fw-bold">%</span>
                                           </div>
@@ -924,7 +926,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                                 className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
                                                 style={{ fontSize: '14px' }}
                                                 value={formData.taxRate}
-                                                onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                                onChange={e => setFormData((prev: any) => ({ ...prev, taxRate: e.target.value }))}
                                              />
                                              <span className="small fw-bold">%</span>
                                           </div>

@@ -4,10 +4,23 @@ import api from '@/lib/axios';
 
 export const fetchLeads = createAsyncThunk(
   'leads/fetchAll',
-  async (company_id: string | undefined, { rejectWithValue }) => {
+  async (params: { 
+    companyId?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+  }, { rejectWithValue }) => {
     try {
-      const response = await api.get(company_id ? `/leads?companyId=${company_id}` : '/leads');
-      return response.data;
+      const { companyId, page = 1, limit = 10, search } = params;
+      let url = `/leads?page=${page}&limit=${limit}`;
+      if (companyId) url += `&companyId=${companyId}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
+      const response = await api.get(url);
+      return {
+        items: response.data.items,
+        pagination: response.data.pagination
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch leads');
     }
@@ -69,6 +82,8 @@ interface LeadState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -86,6 +101,8 @@ const initialState: LeadState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
   },
 };
 
@@ -106,9 +123,13 @@ const leadSlice = createSlice({
       .addCase(fetchLeads.pending, (state) => {
         state.loading = true;
       })
-      .addCase(fetchLeads.fulfilled, (state, action: PayloadAction<Lead[]>) => {
+      .addCase(fetchLeads.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
+        state.error = null;
       })
       .addCase(fetchLeads.rejected, (state, action) => {
         state.loading = false;

@@ -40,10 +40,10 @@ export default function PriceFixingPage() {
   }, []);
 
   useEffect(() => {
-    (dispatch as any)(fetchPriceFixings(company?.id));
-    (dispatch as any)(fetchItems(company?.id));
-    (dispatch as any)(fetchProcesses(company?.id));
-    (dispatch as any)(fetchCustomers(company?.id));
+    (dispatch as any)(fetchPriceFixings({ company_id: company?.id }));
+    (dispatch as any)(fetchItems({ company_id: company?.id }));
+    (dispatch as any)(fetchProcesses({ company_id: company?.id }));
+    (dispatch as any)(fetchCustomers({ company_id: company?.id }));
   }, [dispatch, company?.id]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -326,6 +326,7 @@ export default function PriceFixingPage() {
                       className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
                       style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
                       value={formData.price}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       disabled={view === 'view'}
                     />

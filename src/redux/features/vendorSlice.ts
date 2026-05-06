@@ -4,11 +4,23 @@ import api from '@/lib/axios';
 
 export const fetchVendors = createAsyncThunk(
   'vendors/fetchAll',
-  async (companyId: string | undefined, { rejectWithValue }) => {
+  async (params: { 
+    company_id?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+  }, { rejectWithValue }) => {
     try {
-      const url = companyId ? `/vendors?companyId=${companyId}` : '/vendors';
+      const { company_id, page = 1, limit = 10, search } = params;
+      let url = `/vendors?page=${page}&limit=${limit}`;
+      if (company_id) url += `&companyId=${company_id}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      
       const response = await api.get(url);
-      return response.data;
+      return {
+        items: response.data.items,
+        pagination: response.data.pagination
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch vendors');
     }
@@ -65,6 +77,8 @@ interface VendorState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
   };
 }
 
@@ -82,6 +96,8 @@ const initialState: VendorState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
   },
 };
 
@@ -104,7 +120,10 @@ const vendorSlice = createSlice({
       })
       .addCase(fetchVendors.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
         state.error = null;
       })
       .addCase(fetchVendors.rejected, (state, action) => {

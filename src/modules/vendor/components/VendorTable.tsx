@@ -10,6 +10,7 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 
 const VendorTable: React.FC = () => {
@@ -17,32 +18,27 @@ const VendorTable: React.FC = () => {
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.vendors);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   React.useEffect(() => {
-    dispatch(fetchVendors(activeCompany?.id));
-  }, [dispatch, activeCompany?.id]);
+    dispatch(fetchVendors({
+      company_id: activeCompany?.id,
+      page: pagination.currentPage,
+      limit: pagination.itemsPerPage,
+      search: filters.search
+    }));
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
  
-  const filteredItems = items.filter(item => {
-    if (activeCompany && (item.companyId || item.company_id) !== activeCompany.id) return false;
-    const matchesSearch = item.name.toLowerCase().includes(filters.search.toLowerCase()) || 
-                          (item.company && item.company.toLowerCase().includes(filters.search.toLowerCase()));
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    const matchesCategory = filters.category === 'all' || item.category === filters.category;
-    let matchesDate = true;
-    if (filters.fromDate && item.createdAt && new Date(item.createdAt) < new Date(filters.fromDate)) matchesDate = false;
-    if (filters.toDate && item.createdAt && new Date(item.createdAt) > new Date(filters.toDate)) matchesDate = false;
-    return matchesSearch && matchesStatus && matchesCategory && matchesDate;
-  });
-
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this vendor?')) {
-      dispatch(deleteVendor(id));
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = () => {
+    if (deleteModal.id) {
+      dispatch(deleteVendor(deleteModal.id));
     }
   };
 
@@ -164,7 +160,7 @@ const VendorTable: React.FC = () => {
         {totalPages > 1 && (
           <div className="px-4 py-3 border-top d-flex align-items-center justify-content-between bg-light bg-opacity-50">
             <div className="text-muted small">
-              Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
+              Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
             </div>
             <PaginationComponent 
               currentPage={pagination.currentPage} 
@@ -175,6 +171,13 @@ const VendorTable: React.FC = () => {
           </div>
         )}
       </div>
+      <ConfirmationModal 
+        isOpen={deleteModal.isOpen} 
+        onClose={() => setDeleteModal({ isOpen: false, id: null })} 
+        onConfirm={confirmDelete}
+        title="Delete Vendor"
+        message="Are you sure you want to remove this vendor from the register? This action cannot be undone."
+      />
     </div>
   );
 };

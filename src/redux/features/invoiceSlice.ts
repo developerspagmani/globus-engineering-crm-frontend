@@ -64,11 +64,32 @@ const mapInvoice = (inv: any): Invoice => {
 // Thunks
 export const fetchInvoices = createAsyncThunk(
   'invoices/fetchAll',
-  async (company_id: string | undefined, { rejectWithValue }) => {
+  async (params: { 
+    company_id?: string; 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+    status?: string; 
+    fromDate?: string; 
+    toDate?: string;
+    type?: string;
+  }, { rejectWithValue }) => {
     try {
-      const url = company_id ? `/invoices?company_id=${company_id}` : '/invoices';
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type } = params;
+      let url = `/invoices?page=${page}&limit=${limit}`;
+      if (company_id) url += `&company_id=${company_id}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
+      if (type && type !== 'all') url += `&type=${type}`;
+      
       const response = await api.get(url);
-      return response.data.map(mapInvoice);
+      return {
+        items: response.data.items.map(mapInvoice),
+        pagination: response.data.pagination,
+        aggregates: response.data.aggregates || { totalTaxable: 0, totalGrand: 0, totalTax: 0 }
+      };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch invoices');
     }
@@ -161,8 +182,9 @@ export const deleteInvoice = createAsyncThunk(
 
 export const fetchNextNumbers = createAsyncThunk(
   'invoices/fetchNextNumbers',
-  async (companyId: string, { rejectWithValue }) => {
+  async (params: { companyId: string }, { rejectWithValue }) => {
     try {
+      const { companyId } = params;
       const response = await api.get(`/invoices/next-numbers?companyId=${companyId}`);
       return response.data;
     } catch (err: any) {
@@ -173,8 +195,9 @@ export const fetchNextNumbers = createAsyncThunk(
 
 export const saveInvoiceSettings = createAsyncThunk(
   'invoices/saveSettings',
-  async ({ companyId, settings }: { companyId: string, settings: any }, { rejectWithValue }) => {
+  async (params: { companyId: string, settings: any }, { rejectWithValue }) => {
     try {
+      const { companyId, settings } = params;
       // The backend stores invoice settings in the Company model
       // We extract the logo fields for top-level company storage and put the rest in invoice_settings JSON
       const { logo, logoSecondary, ...otherSettings } = settings;
@@ -203,6 +226,13 @@ interface InvoiceState {
   pagination: {
     currentPage: number;
     itemsPerPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  aggregates: {
+    totalTaxable: number;
+    totalGrand: number;
+    totalTax: number;
   };
   settings: {
     logo: string | null;
@@ -244,6 +274,13 @@ const initialState: InvoiceState = {
   pagination: {
     currentPage: 1,
     itemsPerPage: 10,
+    totalItems: 0,
+    totalPages: 0,
+  },
+  aggregates: {
+    totalTaxable: 0,
+    totalGrand: 0,
+    totalTax: 0,
   },
   settings: {
     logo: null,
@@ -297,7 +334,11 @@ const invoiceSlice = createSlice({
       })
       .addCase(fetchInvoices.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.sort((a: any, b: any) => b.id.localeCompare(a.id, undefined, { numeric: true }));
+        state.items = action.payload.items;
+        state.pagination.totalItems = action.payload.pagination.total;
+        state.pagination.totalPages = action.payload.pagination.totalPages;
+        state.pagination.currentPage = action.payload.pagination.page;
+        state.aggregates = action.payload.aggregates || { totalTaxable: 0, totalGrand: 0, totalTax: 0 };
         state.error = null;
       })
       .addCase(fetchInvoices.rejected, (state, action) => {

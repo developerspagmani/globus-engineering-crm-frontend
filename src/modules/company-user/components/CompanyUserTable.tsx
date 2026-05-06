@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { checkActionPermission } from '@/config/permissions';
 import Loader from '@/components/Loader';
 import PaginationComponent from '@/components/shared/Pagination';
+import ConfirmationModal from '@/components/ConfirmationModal';
+import FullPageStatus from '@/components/FullPageStatus';
 
 
 const CompanyUserTable: React.FC = () => {
@@ -18,6 +20,8 @@ const CompanyUserTable: React.FC = () => {
   const [resetModalUser, setResetModalUser] = React.useState<string | null>(null);
   const [newPassword, setNewPassword] = React.useState('');
   const [resetting, setResetting] = React.useState(false);
+  const [deleteModal, setDeleteModal] = React.useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [statusModal, setStatusModal] = React.useState<{ isOpen: boolean; type: 'success' | 'error' | 'warning'; title: string; message: string }>({ isOpen: false, type: 'success', title: '', message: '' });
 
   React.useEffect(() => {
     const { fetchUsers } = require('@/redux/features/companyUserSlice');
@@ -44,11 +48,20 @@ const CompanyUserTable: React.FC = () => {
 
   const handleDelete = (id: string) => {
     if (id === currentUser?.id) {
-       alert("You cannot delete your own account.");
+       setStatusModal({
+         isOpen: true,
+         type: 'warning',
+         title: 'Action Denied',
+         message: "You cannot delete your own account for security reasons."
+       });
        return;
     }
-    if (confirm('Are you sure you want to delete this user? Access will be immediately revoked.')) {
-      (dispatch as any)(deleteUserAsync(id));
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = () => {
+    if (deleteModal.id) {
+      (dispatch as any)(deleteUserAsync(deleteModal.id));
     }
   };
 
@@ -59,11 +72,21 @@ const CompanyUserTable: React.FC = () => {
     setResetting(true);
     try {
       await (dispatch as any)(resetUserPasswordAsync({ id: resetModalUser, password: newPassword })).unwrap();
-      alert('Password reset successfully.');
+      setStatusModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Security Updated',
+        message: 'The user password has been reset successfully.'
+      });
       setResetModalUser(null);
       setNewPassword('');
     } catch (err: any) {
-      alert(err || 'Failed to reset password');
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Reset Failed',
+        message: err || 'Failed to update user security credentials.'
+      });
     } finally {
       setResetting(false);
     }
@@ -239,6 +262,23 @@ const CompanyUserTable: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      <ConfirmationModal 
+        isOpen={deleteModal.isOpen} 
+        onClose={() => setDeleteModal({ isOpen: false, id: null })} 
+        onConfirm={confirmDelete}
+        title="Revoke User Access"
+        message="Are you sure you want to delete this user? Their system access will be immediately revoked."
+      />
+
+      {statusModal.isOpen && (
+        <FullPageStatus 
+          type={statusModal.type}
+          title={statusModal.title}
+          message={statusModal.message}
+          onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+        />
       )}
     </>
   );

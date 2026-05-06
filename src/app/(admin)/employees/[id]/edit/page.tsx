@@ -24,7 +24,7 @@ const EditEmployeePage = () => {
     setMounted(true);
     if ((items.length === 0 || !employee) && activeCompany?.id) {
        import('@/redux/features/employeeSlice').then(({ fetchEmployees }) => {
-          (dispatch as any)(fetchEmployees(activeCompany.id));
+          (dispatch as any)(fetchEmployees({ company_id: activeCompany.id }));
        });
     }
   }, [dispatch, activeCompany?.id, items.length, employee, id]);

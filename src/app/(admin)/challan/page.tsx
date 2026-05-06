@@ -25,35 +25,19 @@ const ChallanPage = () => {
 
   React.useEffect(() => {
     setMounted(true);
-    (dispatch as any)(fetchChallans(activeCompany?.id));
-  }, [dispatch, activeCompany?.id]);
+    (dispatch as any)(fetchChallans({
+      company_id: activeCompany?.id,
+      page: pagination.currentPage,
+      limit: pagination.itemsPerPage,
+      search: filters.search
+    }));
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
   if (!mounted) return <Loader text="Initializing..." />;
 
   // Filter logic
-  const filteredItems = items.filter(item => {
-    // Company context filtering
-    if (activeCompany && String(item.company_id) !== String(activeCompany.id)) return false;
-
-    const matchesSearch =
-      (item.challanNo?.toLowerCase() ?? '').includes(filters.search.toLowerCase()) ||
-      (item.partyName?.toLowerCase() ?? '').includes(filters.search.toLowerCase());
-    const matchesType = filters.type === 'all' || item.type === filters.type;
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-    
-    // Date range filtering
-    if (filters.fromDate && new Date(item.date) < new Date(filters.fromDate)) return false;
-    if (filters.toDate && new Date(item.date) > new Date(filters.toDate)) return false;
-
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -75,43 +59,11 @@ const ChallanPage = () => {
   };
 
   const handlePrintChallanRecord = (challan: any) => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Challan Summary</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header"><h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1><p style="margin: 5px 0 0; color: #666;">Challan Summary Record</p></div>');
-    printWindow.document.write('<div class="grid">');
-    printWindow.document.write(`<div><div class="label">Challan No</div><div class="value">${challan.challanNo}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${new Date(challan.date).toLocaleDateString()}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Party / Client</div><div class="value">${challan.partyName}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Challan Type</div><div class="value">${challan.type.toUpperCase()}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Items Count</div><div class="value">${challan.items.length}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Current Status</div><div class="value">${challan.status.toUpperCase()}</div></div>`);
-    printWindow.document.write('</div>');
-    printWindow.document.write('<div style="margin-top: 50px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px;">System Generated Challan Record on ' + new Date().toLocaleString() + '</div>');
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+    window.open(`/logistics-print?type=challan&id=${challan.id}&print=true`, '_blank');
   };
 
   const handleExportPDFChallanRecord = (challan: any) => {
-    const doc = new jsPDF();
-    doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
-    doc.setFontSize(10); doc.text("CHALLAN SUMMARY RECORD", 14, 32);
-    doc.setTextColor(33, 33, 33); doc.setFontSize(12); doc.text("MOVEMENT DETAILS", 14, 55);
-    autoTable(doc, {
-      startY: 60,
-      body: [
-        ['Challan Number', challan.challanNo], ['Date', new Date(challan.date).toLocaleDateString()],
-        ['Party Name', challan.partyName], ['Type', challan.type.toUpperCase()],
-        ['Items Count', challan.items.length], ['Status', challan.status.toUpperCase()]
-      ],
-      theme: 'grid', styles: { cellPadding: 8, fontSize: 10 },
-      columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } },
-    });
-    doc.save(`challan_${challan.challanNo}.pdf`);
+    window.open(`/logistics-print?type=challan&id=${challan.id}`, '_blank');
   };
 
   const handleDeleteParams = (id: string) => {
@@ -138,7 +90,7 @@ const ChallanPage = () => {
         </div>
           <div className="d-flex align-items-center gap-2">
             <ExportExcel 
-              data={filteredItems} 
+              data={items} 
               fileName="Challan_Records" 
               headers={{ challanNo: 'Challan No', date: 'Date', partyName: 'Party Name', type: 'Type', status: 'Status' }}
               buttonText="Export List"
@@ -276,6 +228,12 @@ const ChallanPage = () => {
                                     <span className="small fw-semibold">Quick Print</span>
                                   </button>
                                 </li>
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFChallanRecord(challan)}>
+                                    <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                    <span className="small fw-semibold">Export PDF</span>
+                                  </button>
+                                </li>
                                 {checkActionPermission(user, 'mod_challan', 'delete') && (
                                   <>
                                     <li><hr className="dropdown-divider opacity-50" /></li>
@@ -297,7 +255,7 @@ const ChallanPage = () => {
                         </td>
                       </tr>
                     ))}
-                    {paginatedItems.length === 0 && (
+                    {items.length === 0 && (
                       <tr>
                         <td colSpan={7} className="text-center py-5 text-muted">
                           No challans found matching your filters.
@@ -313,7 +271,7 @@ const ChallanPage = () => {
           {totalPages > 1 && (
             <div className="px-4 py-3 border-top d-flex align-items-center justify-content-between">
               <div className="text-muted small">
-                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
+                Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
               </div>
               <PaginationComponent 
                 currentPage={pagination.currentPage} 

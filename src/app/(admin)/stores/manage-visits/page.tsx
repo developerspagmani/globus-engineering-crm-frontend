@@ -11,12 +11,13 @@ import api from '@/lib/axios';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ModuleGuard from '@/components/ModuleGuard';
 import { checkActionPermission } from '@/config/permissions';
+import FullPageStatus from '@/components/FullPageStatus';
 
 export default function ManageVisitsPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { items: stores } = useSelector((state: RootState) => state.stores);
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   
   const [selectedStoreId, setSelectedStoreId] = useState('');
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -26,6 +27,7 @@ export default function ManageVisitsPage() {
   const [loadingVisits, setLoadingVisits] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [statusModal, setStatusModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({ isOpen: false, type: 'success', title: '', message: '' });
 
   const fetchVisits = async (storeId: string) => {
     setLoadingVisits(true);
@@ -40,8 +42,8 @@ export default function ManageVisitsPage() {
   };
 
   useEffect(() => {
-    (dispatch as any)(fetchStores());
-  }, [dispatch]);
+    (dispatch as any)(fetchStores({ company_id: activeCompany?.id }));
+  }, [dispatch, activeCompany?.id]);
 
   // Load visits when store selection changes
   useEffect(() => {
@@ -68,8 +70,19 @@ export default function ManageVisitsPage() {
     try {
       await (dispatch as any)(deleteVisit(itemToDelete)).unwrap();
       setVisits(prev => prev.filter(v => v.id !== itemToDelete));
-    } catch (err) {
-      alert('Failed to delete: ' + err);
+      setStatusModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Entry Removed',
+        message: 'The visit log has been permanently deleted from the system.'
+      });
+    } catch (err: any) {
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Delete Failed',
+        message: err.message || 'The system was unable to remove this visit report.'
+      });
     }
   };
 
@@ -241,6 +254,14 @@ export default function ManageVisitsPage() {
           confirmLabel="Delete"
           type="danger"
         />
+        {statusModal.isOpen && (
+          <FullPageStatus 
+            type={statusModal.type}
+            title={statusModal.title}
+            message={statusModal.message}
+            onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+          />
+        )}
       </div>
     </ModuleGuard>
   );

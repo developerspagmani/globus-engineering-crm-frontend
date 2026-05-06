@@ -28,7 +28,7 @@ const EditChallanPage = () => {
 
   React.useEffect(() => {
     if (activeCompany?.id && items.length === 0) {
-      (dispatch as any)(fetchChallans(activeCompany.id));
+      (dispatch as any)(fetchChallans({ company_id: activeCompany.id }));
     }
   }, [activeCompany?.id, items.length, dispatch]);
 

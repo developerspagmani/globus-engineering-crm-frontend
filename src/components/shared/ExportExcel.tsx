@@ -2,6 +2,7 @@
 
 import React from 'react';
 import * as XLSX from 'xlsx';
+import StatusModal from '@/components/StatusModal';
 
 interface ExportExcelProps {
   data: any[];
@@ -22,9 +23,15 @@ const ExportExcel: React.FC<ExportExcelProps> = ({
   buttonText = 'Export to Excel',
   variant = 'outline-success'
 }) => {
+  const [modal, setModal] = React.useState({ isOpen: false, title: '', message: '' });
+
   const exportToExcel = () => {
     if (!data || data.length === 0) {
-      alert('No data available to export');
+      setModal({
+        isOpen: true,
+        title: 'Empty Dataset',
+        message: 'There is no data matching your current filters to export. Please adjust your criteria and try again.'
+      });
       return;
     }
 
@@ -63,14 +70,24 @@ const ExportExcel: React.FC<ExportExcelProps> = ({
   };
 
   return (
-    <button
-      onClick={exportToExcel}
-      className={`btn btn-${variant} btn-page-action ${className}`}
-      style={{ border: variant.includes('success') ? '1.5px solid #198754' : undefined }}
-    >
-      <i className="bi bi-file-earmark-excel-fill"></i>
-      <span>{buttonText}</span>
-    </button>
+    <>
+      <button
+        onClick={exportToExcel}
+        className={`btn btn-${variant} btn-page-action ${className}`}
+        style={{ border: variant.includes('success') ? '1.5px solid #198754' : undefined }}
+      >
+        <i className="bi bi-file-earmark-excel-fill"></i>
+        <span>{buttonText}</span>
+      </button>
+
+      <StatusModal 
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        type="info"
+        title={modal.title}
+        message={modal.message}
+      />
+    </>
   );
 };
 

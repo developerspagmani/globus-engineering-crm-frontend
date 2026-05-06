@@ -8,8 +8,6 @@ import { fetchCustomers } from '@/redux/features/customerSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 import ExportExcel from '@/components/shared/ExportExcel';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -29,8 +27,8 @@ const PendingPaymentPage = () => {
   useEffect(() => {
     setMounted(true);
     if (activeCompany?.id) {
-       (dispatch as any)(fetchInvoices(activeCompany.id));
-       (dispatch as any)(fetchCustomers(activeCompany.id));
+      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000, status: 'pending' }));
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -38,17 +36,16 @@ const PendingPaymentPage = () => {
 
   // Filter for pending/billed but not paid invoices
   const pendingInvoices = items.filter(inv => {
-    // Only show invoices that are NOT fully paid and have a balance > 0
     const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
-    const isPending = inv.status?.toLowerCase() !== 'paid' && 
+    const isPending = inv.status?.toLowerCase() !== 'paid' &&
                       inv.status?.toLowerCase() !== 'cancelled' &&
                       balance > 0;
-    
     if (!isPending) return false;
 
-    const matchesSearch = (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || 
-                         (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
-                         (inv.poNo?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+      (inv.invoiceNumber?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+      (inv.poNo?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
     const matchesCustomer = !selectedCustomerId || String(inv.customerId) === String(selectedCustomerId);
 
     return matchesSearch && matchesCustomer;
@@ -69,69 +66,9 @@ const PendingPaymentPage = () => {
     return diffDays > 0 ? diffDays : 0;
   };
 
+  // Open the invoice's own print page — exactly the same format as invoice print
   const handlePrintPending = (inv: any) => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-
-    printWindow.document.write('<html><head><title>Pending Payment Details</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ef4444; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write('<div class="header">');
-    printWindow.document.write('<h1 style="margin: 0; color: #ef4444;">Globus Engineering CRM</h1>');
-    printWindow.document.write('<p style="margin: 5px 0 0; color: #666;">Payment Collection Notice - Outstanding Balance</p>');
-    printWindow.document.write('</div>');
-
-    printWindow.document.write('<div class="grid">');
-    printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${inv.customerName}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Invoice No</div><div class="value">${inv.invoiceNumber}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Invoice Date</div><div class="value">${new Date(inv.date).toLocaleDateString()}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Pending Amount</div><div class="value">INR ${(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Due Date</div><div class="value">${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : 'N/A'}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Overdue Status</div><div class="value">${calculateOverdueDays(inv.dueDate)} Days Overdue</div></div>`);
-    printWindow.document.write('</div>');
-
-    printWindow.document.write('<div style="margin-top: 50px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px;">Issued by Finance Dept - Globus Engineering CRM on ' + new Date().toLocaleString() + '</div>');
-
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  const handleExportPDFPending = (inv: any) => {
-    const doc = new jsPDF();
-    doc.setFillColor(239, 68, 68); // Red for pending/overdue
-    doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.text("GLOBUS ENGINEERING CRM", 14, 25);
-    doc.setFontSize(10);
-    doc.text("OUTSTANDING PAYMENT STATEMENT", 14, 32);
-
-    doc.setTextColor(33, 33, 33);
-    doc.setFontSize(12);
-    doc.text("BILLING & COLLECTION OVERVIEW", 14, 55);
-
-    autoTable(doc, {
-      startY: 60,
-      body: [
-        ['Customer Name', inv.customerName],
-        ['Invoice Number', inv.invoiceNumber],
-        ['Date of Issue', new Date(inv.date).toLocaleDateString()],
-        ['Total Bill Amount', `INR ${inv.grandTotal.toLocaleString()}`],
-        ['Amount Paid', `INR ${(inv.paidAmount || 0).toLocaleString()}`],
-        ['Outstanding Balance', `INR ${(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}`],
-        ['Due Date', inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : 'N/A'],
-        ['Account Status', `${calculateOverdueDays(inv.dueDate)} Days Overdue`],
-      ],
-      theme: 'grid',
-      styles: { cellPadding: 8, fontSize: 10 },
-      columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } },
-    });
-
-    doc.setFontSize(10);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`Generated on ${new Date().toLocaleString()}`, 14, 285);
-    doc.save(`pending_payment_${inv.invoiceNumber}.pdf`);
+    window.open(`/invoices/${inv.id}?print=true`, '_blank');
   };
 
   return (
@@ -150,16 +87,16 @@ const PendingPaymentPage = () => {
               headers={{ customerName: 'Customer', invoiceNumber: 'Invoice No', grandTotal: 'Total', paidAmount: 'Paid', status: 'Status' }}
               buttonText="Export List"
             />
-            <button 
-              className="btn btn-primary btn-page-action px-4" 
-              onClick={() => (dispatch as any)(fetchInvoices(activeCompany?.id))}
+            <button
+              className="btn btn-primary btn-page-action px-4"
+              onClick={() => (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id }))}
             >
               <i className="bi bi-arrow-repeat"></i>
               <span>Refresh Data</span>
             </button>
           </div>
         </div>
-        
+
         {/* Filter Bar */}
         <div className="card filter-card">
           <div className="card-body p-3">
@@ -169,18 +106,18 @@ const PendingPaymentPage = () => {
                   <span className="input-group-text">
                     <i className="bi bi-search"></i>
                   </span>
-                  <input 
-                    type="text" 
-                    className="form-control search-bar" 
+                  <input
+                    type="text"
+                    className="form-control search-bar"
                     placeholder="Search customer, invoice, or PO no..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
-              
+
               <div className="filter-item-select">
-                <select 
+                <select
                   className="form-select search-bar"
                   value={selectedCustomerId}
                   onChange={(e) => setSelectedCustomerId(e.target.value)}
@@ -230,7 +167,7 @@ const PendingPaymentPage = () => {
                           <td className="text-muted small">{inv.dcNo || '-'}</td>
                           <td className="text-primary fw-bold small">{inv.invoiceNumber}</td>
                           <td className="text-muted small">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
-                          <td className="text-dark fw-bold small ">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
+                          <td className="text-dark fw-bold small">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
                           <td className="text-center">
                             {overdueDays > 0 ? (
                               <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{overdueDays} Days</span>
@@ -247,7 +184,7 @@ const PendingPaymentPage = () => {
                               >
                                 <i className="bi bi-wallet2 px-1"></i>
                               </button>
-  
+
                               <div className="dropdown">
                                 <button
                                   className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
@@ -280,24 +217,23 @@ const PendingPaymentPage = () => {
                         </td>
                       </tr>
                     )}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              )}
+            </div>
+            {totalPages > 1 && (
+              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pendingInvoices.length)} of {pendingInvoices.length} entries</span>
+                <PaginationComponent
+                  currentPage={pagination.currentPage}
+                  totalPages={totalPages}
+                  onPageChange={(page) => dispatch(setInvoicePage(page))}
+                />
+              </div>
             )}
           </div>
-          {totalPages > 1 && (
-            <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pendingInvoices.length)} of {pendingInvoices.length} entries</span>
-              <PaginationComponent 
-                currentPage={pagination.currentPage} 
-                totalPages={totalPages} 
-                onPageChange={(page) => dispatch(setInvoicePage(page))} 
-              />
-
-            </div>
-          )}
         </div>
       </div>
-    </div>
 
       <style jsx>{`
         .fw-900 { font-weight: 900; }

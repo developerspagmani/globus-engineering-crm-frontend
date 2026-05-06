@@ -41,36 +41,18 @@ const LeadsPage = () => {
 
   useEffect(() => {
     setMounted(true);
-    (dispatch as any)(fetchLeads(activeCompany?.id));
-  }, [dispatch, activeCompany?.id]);
+    (dispatch as any)(fetchLeads({
+      companyId: activeCompany?.id,
+      page: pagination.currentPage,
+      limit: pagination.itemsPerPage,
+      search: filters.search
+    }));
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
   if (!mounted) return null;
 
-  // Data isolation
-  const filteredItems = items.filter(item => {
-    // Company context filtering
-    if (activeCompany && item.company_id !== activeCompany.id) return false;
-
-    // Agent-level isolation (for sales agents)
-    if (user?.role === 'sales_agent' && item.agentId !== user.id) return false;
-    
-    const matchesSearch = item.name.toLowerCase().includes(filters.search.toLowerCase()) || 
-                          item.company.toLowerCase().includes(filters.search.toLowerCase());
-    const matchesStatus = filters.status === 'all' || item.status === filters.status;
-
-    // Date range filtering (Inquiry Date uses createdAt)
-    let matchesDate = true;
-    if (filters.fromDate && item.createdAt && new Date(item.createdAt) < new Date(filters.fromDate)) matchesDate = false;
-    if (filters.toDate && item.createdAt && new Date(item.createdAt) > new Date(filters.toDate)) matchesDate = false;
-
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-
-  const totalPages = Math.ceil(filteredItems.length / pagination.itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
 
   const handlePromoteParams = (lead: any) => {
     setConfirmModal({ isOpen: true, id: lead.id, type: 'promote', leadData: lead });
@@ -165,7 +147,7 @@ const LeadsPage = () => {
         </div>
         <div className="d-flex align-items-center gap-2">
           <ExportExcel
-            data={filteredItems}
+            data={items}
             fileName="Leads_List"
             headers={{ name: 'Name', company: 'Company', industry: 'Industry', source: 'Source', status: 'Status', createdAt: 'Inquiry Date' }}
             buttonText="Export List"
@@ -247,7 +229,7 @@ const LeadsPage = () => {
                   <Loader text="Fetching Leads..." />
                 </td>
               </tr>
-            ) : filteredItems.length === 0 ? (
+            ) : items.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-5 text-muted fw-600">No leads found in your current view.</td>
               </tr>
@@ -338,7 +320,7 @@ const LeadsPage = () => {
       </div>
       {totalPages > 1 && (
         <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-          <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</span>
+          <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
             <PaginationComponent 
               currentPage={pagination.currentPage} 
               totalPages={totalPages} 
