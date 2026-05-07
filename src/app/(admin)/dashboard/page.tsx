@@ -236,19 +236,19 @@ export default function DashboardPage() {
               <div className="card border-0 shadow-sm h-100">
                 <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
                   <div>
-                    <h5 className="fw-bold mb-0 text-danger">Payment Reminders</h5>
-                    <p className="text-muted x-small mb-0">Invoices overdue by more than 30 days</p>
+                    <h5 className="fw-bold mb-0 text-warning">Pending Payments</h5>
+                    <p className="text-muted x-small mb-0">Latest 10 invoices awaiting payment</p>
                   </div>
-                  <Link href="/invoices/status" className="btn btn-link link-danger p-0 text-decoration-none small">View All</Link>
+                  <Link href="/invoices/status" className="btn btn-link link-warning p-0 text-decoration-none small">View All</Link>
                 </div>
                 <div className="card-body">
                   <div className="d-flex flex-column gap-3">
                     {realStats?.overdueInvoices && realStats.overdueInvoices.length > 0 ? (
                       realStats.overdueInvoices.slice(0, 10).map((inv, idx) => (
-                        <div key={idx} className="p-2 border rounded bg-danger bg-opacity-10 border-danger border-opacity-25">
+                        <div key={idx} className="p-2 border rounded bg-warning bg-opacity-10 border-warning border-opacity-25">
                           <div className="d-flex justify-content-between align-items-start">
                             <div>
-                              <div className="fw-bold small text-danger">
+                              <div className="fw-bold small text-warning">
                                 {inv.invoice_no && inv.invoice_no !== 0 
                                   ? `INV-${String(inv.invoice_no).padStart(4, '0')}` 
                                   : `INV-${inv.id}`}
@@ -256,7 +256,7 @@ export default function DashboardPage() {
                               <div className="text-muted extra-small">{inv.customer}</div>
                             </div>
                             <div className="text-end">
-                              <div className="fw-bold small">₹{inv.pending.toLocaleString()}</div>
+                              <div className="fw-bold small text-dark">₹{inv.pending.toLocaleString()}</div>
                               <div className="text-muted extra-small">{new Date(inv.due_date).toLocaleDateString()}</div>
                             </div>
                           </div>

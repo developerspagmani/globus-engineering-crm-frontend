@@ -90,7 +90,7 @@ export const fetchInvoices = createAsyncThunk(
       return {
         items: response.data.items.map(mapInvoice),
         pagination: response.data.pagination,
-        aggregates: response.data.aggregates || { totalTaxable: 0, totalGrand: 0, totalTax: 0 }
+        aggregates: response.data.aggregates || { totalTaxable: 0, totalGrand: 0, totalPaid: 0, totalTax: 0, totalOutstanding: 0 }
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch invoices');
@@ -234,7 +234,9 @@ interface InvoiceState {
   aggregates: {
     totalTaxable: number;
     totalGrand: number;
+    totalPaid: number;
     totalTax: number;
+    totalOutstanding: number;
   };
   settings: {
     logo: string | null;
@@ -282,7 +284,9 @@ const initialState: InvoiceState = {
   aggregates: {
     totalTaxable: 0,
     totalGrand: 0,
+    totalPaid: 0,
     totalTax: 0,
+    totalOutstanding: 0,
   },
   settings: {
     logo: null,
@@ -340,7 +344,7 @@ const invoiceSlice = createSlice({
         state.pagination.totalItems = action.payload.pagination.total;
         state.pagination.totalPages = action.payload.pagination.totalPages;
         state.pagination.currentPage = action.payload.pagination.page;
-        state.aggregates = action.payload.aggregates || { totalTaxable: 0, totalGrand: 0, totalTax: 0 };
+        state.aggregates = action.payload.aggregates || { totalTaxable: 0, totalGrand: 0, totalPaid: 0, totalTax: 0, totalOutstanding: 0 };
         state.error = null;
       })
       .addCase(fetchInvoices.rejected, (state, action) => {

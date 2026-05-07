@@ -17,7 +17,7 @@ export default function InvoiceHistoryPage() {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items } = useSelector((state: RootState) => state.invoices);
+  const { items, aggregates } = useSelector((state: RootState) => state.invoices);
 
   React.useEffect(() => {
     setMounted(true);
@@ -31,12 +31,10 @@ export default function InvoiceHistoryPage() {
     ? items.filter(inv => inv.company_id === activeCompany.id)
     : items;
 
-  // Analytics logic from previous app
-  const totalBilled = filteredInvoices.reduce((acc, inv) => acc + inv.grandTotal, 0);
-  const totalPaid = filteredInvoices
-    .filter(inv => inv.status === 'paid')
-    .reduce((acc, inv) => acc + inv.grandTotal, 0);
-  const totalUnpaid = totalBilled - totalPaid;
+  // Analytics logic - Use backend aggregates for global totals
+  const totalBilled = aggregates?.totalGrand || 0;
+  const totalPaid = aggregates?.totalPaid || 0;
+  const totalUnpaid = aggregates?.totalOutstanding || 0;
 
   return (
     <ModuleGuard moduleId="mod_invoice">

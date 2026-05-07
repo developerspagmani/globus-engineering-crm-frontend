@@ -430,7 +430,7 @@ export default function PriceFixingPage() {
                               <td className="px-4 py-3 fw-bold">{pf.customerName}</td>
                               <td className="px-4 py-3">{pf.itemName}</td>
                               <td className="px-4 py-3 text-muted italic">{pf.processName}</td>
-                              <td className="px-4 py-3 text-end fw-bold text-success">₹ {Number(pf.price).toLocaleString('en-IN')}</td>
+                              <td className="px-4 py-3 text-end fw-bold text-success text-nowrap">₹{Number(pf.price).toLocaleString('en-IN')}</td>
                               <td className="px-4 py-3 text-end">
                                 <div className="d-flex justify-content-end align-items-center gap-1">
                                   <button onClick={() => handleView(pf)} className="btn-action-view" title="View Profile">

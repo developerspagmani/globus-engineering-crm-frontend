@@ -27,6 +27,30 @@ const ChallanPage = () => {
   const [mounted, setMounted] = React.useState(false);
 
 
+  // State and Hooks (Must be called before any early returns)
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`CHALLAN_${downloadingItem.challanNo || downloadingItem.id}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   React.useEffect(() => {
     setMounted(true);
     (dispatch as any)(fetchChallans({
@@ -61,29 +85,6 @@ const ChallanPage = () => {
       default: return null;
     }
   };
-
-  const [downloadingItem, setDownloadingItem] = useState<any>(null);
-  const downloadRef = React.useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (downloadingItem && downloadRef.current) {
-      const captureAndDownload = async () => {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        if (downloadRef.current) {
-          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const imgProps = pdf.getImageProperties(imgData);
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          pdf.save(`CHALLAN_${downloadingItem.challanNo || downloadingItem.id}.pdf`);
-          setDownloadingItem(null);
-        }
-      };
-      captureAndDownload();
-    }
-  }, [downloadingItem]);
 
   const handlePrintChallanRecord = (challan: any) => {
     router.push(`/logistics-print?type=challan&id=${challan.id}&print=true`);
