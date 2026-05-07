@@ -372,6 +372,11 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
    // Filler rows to reach full page height
    const targetRows = isLastPage ? (capacity - footerSpaceNeeded) : capacity;
    const fillerCount = Math.max(0, targetRows - items.length);
+   const calculatedTaxRate = (invoice.subTotal && invoice.subTotal > 0) 
+      ? Math.round(((invoice.taxTotal || 0) / invoice.subTotal) * 100) 
+      : (invoice.taxRate || 18);
+   
+   const taxRate = calculatedTaxRate;
 
    return (
       <div
@@ -507,7 +512,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                            <td style={{ textAlign: 'center' }}>{startSno + idx}</td>
                            <td style={{ fontWeight: 'bold' }}>{item.description}</td>
                            <td style={{ textAlign: 'center' }}>{item.hsnCode || '998898'}</td>
-                           {!isWOP && <td style={{ textAlign: 'center' }}>{invoice.taxRate || 18}%</td>}
+                           {!isWOP && <td style={{ textAlign: 'center' }}>{taxRate}%</td>}
                            <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.unitPrice.toFixed(2)}</td>}
                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.amount.toFixed(2)}</td>}
@@ -537,7 +542,6 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                            </tr>
                            {!isWOP && (() => {
                               const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
-                              const taxRate = invoice.taxRate || 18;
                               const taxTotal = invoice.taxTotal || 0;
 
                               if (isIntraState) {

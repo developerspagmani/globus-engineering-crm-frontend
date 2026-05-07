@@ -61,7 +61,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       taxTotal: 0,
       discount: 0,
       otherCharges: 0,
-      taxRate: 12,
+      taxRate: 18,
       grandTotal: 0,
       paidAmount: 0,
       notes: '',
