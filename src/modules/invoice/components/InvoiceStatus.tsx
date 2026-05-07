@@ -13,48 +13,69 @@ const InvoiceStatus = () => {
   const dispatch = useDispatch();
   const { items: invoices, loading: isLoading, pagination } = useSelector((state: RootState) => state.invoices);
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const [activeTab, setActiveTab] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>('today');
+  const [activeTab, setActiveTab] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>('all');
+  const [searchTerm, setSearchTerm] = React.useState('');
 
   React.useEffect(() => {
     if (activeCompany?.id) {
-       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
+       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany?.id]);
 
   if (isLoading) return <Loader />;
 
   const filteredInvoices = (invoices || []).filter((inv: Invoice) => {
-    if (activeTab === 'all') return true;
-    if (!inv.date) return false;
-    const invDate = new Date(inv.date);
-    const today = new Date();
-    
-    // Normalize dates to start of day for accurate comparison
-    const normalize = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const dayInv = normalize(invDate).getTime();
-    const dayToday = normalize(today).getTime();
+    // 1. Tab filtering
+    let matchesTab = false;
+    if (activeTab === 'all') {
+      matchesTab = true;
+    } else if (inv.date) {
+      const invDate = new Date(inv.date);
+      const today = new Date();
+      
+      // Normalize dates to start of day for accurate comparison
+      const normalize = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const dayInv = normalize(invDate).getTime();
+      const dayToday = normalize(today).getTime();
 
-    if (activeTab === 'today') return dayInv === dayToday;
-    
-    if (activeTab === 'yesterday') {
-      const yesterday = normalize(new Date());
-      yesterday.setDate(yesterday.getDate() - 1);
-      return dayInv === yesterday.getTime();
+      if (activeTab === 'today') {
+        matchesTab = dayInv === dayToday;
+      } else if (activeTab === 'yesterday') {
+        const yesterday = normalize(new Date());
+        yesterday.setDate(yesterday.getDate() - 1);
+        matchesTab = dayInv === yesterday.getTime();
+      } else if (activeTab === 'week') {
+        const oneWeekAgo = normalize(new Date());
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        matchesTab = dayInv >= oneWeekAgo.getTime() && dayInv <= dayToday;
+      } else if (activeTab === 'month') {
+        const thirtyDaysAgo = normalize(new Date());
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        matchesTab = dayInv >= thirtyDaysAgo.getTime() && dayInv <= dayToday;
+      }
     }
 
-    if (activeTab === 'week') {
-      const oneWeekAgo = normalize(new Date());
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      return dayInv >= oneWeekAgo.getTime() && dayInv <= dayToday;
+    if (!matchesTab) return false;
+
+    // 2. Search filtering
+    if (searchTerm.trim() !== '') {
+      const query = searchTerm.toLowerCase();
+      const invNo = (inv.invoiceNumber || '').toLowerCase();
+      const custName = (inv.customerName || '').toLowerCase();
+      const poNo = (inv.poNo || (inv as any).poNumber || '').toLowerCase();
+      const dcNo = (inv.dcNo || (inv as any).deliveryNumber || '').toLowerCase();
+      const gstin = (inv.gstin || '').toLowerCase();
+      
+      return (
+        invNo.includes(query) ||
+        custName.includes(query) ||
+        poNo.includes(query) ||
+        dcNo.includes(query) ||
+        gstin.includes(query)
+      );
     }
 
-    if (activeTab === 'month') {
-      const thirtyDaysAgo = normalize(new Date());
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return dayInv >= thirtyDaysAgo.getTime() && dayInv <= dayToday;
-    }
-
-    return false;
+    return true;
   });
 
   // Calculate pagination
@@ -71,23 +92,36 @@ const InvoiceStatus = () => {
     return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
   const tabs = [
+    { id: 'all', name: 'All Invoices', icon: 'bi-collection' },
     { id: 'today', name: 'Today', icon: 'bi-calendar-event' },
     { id: 'yesterday', name: 'Before 1 Day', icon: 'bi-calendar-minus' },
     { id: 'week', name: 'Last 1 Week', icon: 'bi-calendar-week' },
     { id: 'month', name: 'Last 30 Days', icon: 'bi-calendar-month' },
-    { id: 'all', name: 'All Invoices', icon: 'bi-collection' },
   ];
 
   return (
     <div className="container-fluid py-4">
       <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div className="card-header bg-white border-0 py-3">
-          <div className="d-flex align-items-center justify-content-between">
-            <h5 className="fw-800 mb-0 d-flex align-items-center gap-2">
-              <i className="bi bi-file-earmark-spreadsheet text-primary"></i>
-              Invoice Status Summary
-            </h5>
-            <div className="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-700">
+          <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div className="filter-item-search mb-0" style={{ maxWidth: '350px', width: '100%' }}>
+              <div className="search-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control search-bar"
+                  placeholder="Search by invoice number or customer..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    dispatch(setInvoicePage(1));
+                  }}
+                />
+              </div>
+            </div>
+            <div className="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-700 text-nowrap">
               {totalItems} Invoices Found
             </div>
           </div>

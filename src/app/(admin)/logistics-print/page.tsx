@@ -5,9 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
-import { fetchInwards } from '@/redux/features/inwardSlice';
-import { fetchOutwards } from '@/redux/features/outwardSlice';
-import { fetchChallans } from '@/redux/features/challanSlice';
+import { fetchInwardById } from '@/redux/features/inwardSlice';
+import { fetchOutwardById } from '@/redux/features/outwardSlice';
+import { fetchChallanById } from '@/redux/features/challanSlice';
 import { fetchVouchers } from '@/redux/features/voucherSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
@@ -44,11 +44,11 @@ const PrintContent = () => {
          if (vendors.length === 0) fetchPromises.push((dispatch as any)(fetchVendors({ company_id: company.id })));
 
          if (type === 'inward') {
-            fetchPromises.push((dispatch as any)(fetchInwards({ company_id: company.id, id })));
+            fetchPromises.push((dispatch as any)(fetchInwardById(id)));
          } else if (type === 'outward') {
-            fetchPromises.push((dispatch as any)(fetchOutwards({ company_id: company.id, id })));
+            fetchPromises.push((dispatch as any)(fetchOutwardById(id)));
          } else if (type === 'challan') {
-            fetchPromises.push((dispatch as any)(fetchChallans({ company_id: company.id, id })));
+            fetchPromises.push((dispatch as any)(fetchChallanById(id)));
          } else if (type === 'voucher') {
             fetchPromises.push((dispatch as any)(fetchVouchers({ company_id: company.id, id })));
          }

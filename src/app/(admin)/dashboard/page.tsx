@@ -110,7 +110,11 @@ export default function DashboardPage() {
                       <tbody>
                         {realStats?.latestInvoices && realStats.latestInvoices.length > 0 ? realStats.latestInvoices.slice(0, 10).map((inv) => (
                           <tr key={inv.id}>
-                            <td className="ps-3 small fw-medium text-primary">#{inv.invoice_no}</td>
+                            <td className="ps-3 small fw-medium text-primary">
+                              {inv.invoice_no && inv.invoice_no !== 0 
+                                ? `#${String(inv.invoice_no).padStart(4, '0')}` 
+                                : `#${inv.id}`}
+                            </td>
                             <td className="small text-truncate" style={{ maxWidth: '150px' }}>{inv.customer_name}</td>
                             <td className="small text-end fw-bold">₹{parseFloat(inv.grand_total || '0').toLocaleString()}</td>
                             <td className="text-center">
@@ -230,18 +234,25 @@ export default function DashboardPage() {
             </div>
             <div className="col-12 col-lg-4">
               <div className="card border-0 shadow-sm h-100">
-                <div className="card-header bg-white py-3 border-0">
-                  <h5 className="fw-bold mb-0 text-danger">Payment Reminders</h5>
-                  <p className="text-muted x-small mb-0">Invoices overdue by more than 30 days</p>
+                <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 className="fw-bold mb-0 text-danger">Payment Reminders</h5>
+                    <p className="text-muted x-small mb-0">Invoices overdue by more than 30 days</p>
+                  </div>
+                  <Link href="/invoices/status" className="btn btn-link link-danger p-0 text-decoration-none small">View All</Link>
                 </div>
                 <div className="card-body">
                   <div className="d-flex flex-column gap-3">
                     {realStats?.overdueInvoices && realStats.overdueInvoices.length > 0 ? (
-                      realStats.overdueInvoices.map((inv, idx) => (
+                      realStats.overdueInvoices.slice(0, 10).map((inv, idx) => (
                         <div key={idx} className="p-2 border rounded bg-danger bg-opacity-10 border-danger border-opacity-25">
                           <div className="d-flex justify-content-between align-items-start">
                             <div>
-                              <div className="fw-bold small text-danger">INV-#{inv.invoice_no}</div>
+                              <div className="fw-bold small text-danger">
+                                {inv.invoice_no && inv.invoice_no !== 0 
+                                  ? `INV-${String(inv.invoice_no).padStart(4, '0')}` 
+                                  : `INV-${inv.id}`}
+                              </div>
                               <div className="text-muted extra-small">{inv.customer}</div>
                             </div>
                             <div className="text-end">

@@ -52,6 +52,41 @@ export const fetchOutwards = createAsyncThunk(
   }
 );
 
+export const fetchOutwardById = createAsyncThunk(
+  'outwards/fetchById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/outward/${id}`);
+      const item = response.data;
+      return {
+        id: item.id.toString(),
+        outwardNo: item.outward_no || item.dc_no || '',
+        partyType: item.party_type || 'customer',
+        customerId: item.customer_id?.toString() || '',
+        customerName: item.customer_name || '',
+        vendorId: item.vendor_id?.toString() || '',
+        vendorName: item.vendor_name || '',
+        processName: item.process_name || '',
+        invoiceReference: item.invoice_reference || item.invoice_no || '',
+        challanNo: item.challan_no || '',
+        vehicleNo: item.vehicle_no || '',
+        driverName: item.driver_name || '',
+        notes: item.notes || '',
+        inwardId: item.inward_id || item.inwardId || '',
+        inwardNo: item.inward_no || item.inwardNo || '',
+        company_id: item.company_id?.toString() || '',
+        date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
+        status: item.status || 'pending',
+        items: item.items || [],
+        amount: item.amount || 0,
+        createdAt: item.created_at
+      };
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch outward entry');
+    }
+  }
+);
+
 export const createOutward = createAsyncThunk(
   'outward/create',
   async (data: any, { rejectWithValue }) => {
@@ -190,6 +225,23 @@ const outwardSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchOutwards.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchOutwardById.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchOutwardById.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.items.findIndex(i => i.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        } else {
+          state.items.push(action.payload);
+        }
+        state.error = null;
+      })
+      .addCase(fetchOutwardById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

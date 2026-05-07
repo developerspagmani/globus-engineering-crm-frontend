@@ -13,17 +13,15 @@ export const fetchInwards = createAsyncThunk(
     status?: string;
     fromDate?: string;
     toDate?: string;
-    id?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, id } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate } = params;
       let url = `/inward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
-      if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
       return {
@@ -33,6 +31,39 @@ export const fetchInwards = createAsyncThunk(
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch inward entries');
+    }
+  }
+);
+
+export const fetchInwardById = createAsyncThunk(
+  'inwards/fetchById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/inward/${id}`);
+      const c = response.data;
+      return {
+        id: c.id.toString(),
+        inwardNo: String(c.inward_no || ''),
+        customerId: c.customer_id?.toString() || '',
+        customerName: String(c.customer_name || 'N/A'),
+        address: c.address || '',
+        vendorId: c.vendor_id?.toString() || '',
+        vendorName: c.vendor_name || '',
+        poReference: c.po_reference || '',
+        poDate: c.po_date ? new Date(c.po_date).toISOString().split('T')[0] : '',
+        challanNo: c.challan_no || '',
+        dcNo: c.dc_no || '',
+        dcDate: c.dc_date ? new Date(c.dc_date).toISOString().split('T')[0] : '',
+        vehicleNo: c.vehicle_no || '',
+        company_id: c.company_id?.toString() || '',
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
+        dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : '',
+        status: c.status || 'pending',
+        items: c.items || [],
+        createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
+      };
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch inward entry');
     }
   }
 );
@@ -226,6 +257,23 @@ const inwardSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchInwards.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchInwardById.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchInwardById.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.items.findIndex(i => i.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        } else {
+          state.items.push(action.payload);
+        }
+        state.error = null;
+      })
+      .addCase(fetchInwardById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

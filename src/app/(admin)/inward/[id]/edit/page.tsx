@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInwards } from '@/redux/features/inwardSlice';
+import { fetchInwards, fetchInwardById } from '@/redux/features/inwardSlice';
 import InwardForm from '@/modules/inward/components/InwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
@@ -24,10 +24,10 @@ export default function EditInwardPage() {
   const inward = inwards.find(i => i.id === id);
 
   React.useEffect(() => {
-    if (company?.id) {
-      (dispatch as any)(fetchInwards({ company_id: company.id }));
+    if (id) {
+      (dispatch as any)(fetchInwardById(id));
     }
-  }, [dispatch, company?.id]);
+  }, [dispatch, id]);
 
   return (
     <ModuleGuard moduleId="mod_inward">
@@ -51,22 +51,13 @@ export default function EditInwardPage() {
                 <p className="text-muted small mb-0">{isEdit ? `Modify receipt details for ${inward.customerName}.` : `Review receipt details for ${inward.customerName}.`}</p>
               </div>
               {!isEdit && !isReadOnly && checkActionPermission(user, 'mod_inward', 'edit') && (
-                <div className="ms-auto d-flex gap-2">
-                  <Link
-                    href={`/logistics-print?type=inward&id=${inward.id}&print=true`}
-                    className="btn btn-outline-dark d-flex align-items-center gap-2 px-4"
-                  >
-                    <i className="bi bi-printer"></i>
-                    <span>Print Receipt</span>
-                  </Link>
-                  <button
-                    className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
-                    onClick={() => setIsEdit(true)}
-                  >
-                    <i className="bi bi-pencil-square"></i>
-                    <span>Edit Entry</span>
-                  </button>
-                </div>
+                <button
+                  className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
+                  onClick={() => setIsEdit(true)}
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  <span>Edit Entry</span>
+                </button>
               )}
             </div>
             <InwardForm mode={isEdit ? 'edit' : 'view'} initialData={inward} />

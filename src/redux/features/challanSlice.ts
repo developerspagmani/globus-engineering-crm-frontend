@@ -44,6 +44,34 @@ export const fetchChallans = createAsyncThunk(
   }
 );
 
+export const fetchChallanById = createAsyncThunk(
+  'challan/fetchById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/challans/${id}`);
+      const c = response.data;
+      return {
+        id: c.id.toString(),
+        challanNo: c.challan_no || '',
+        partyId: c.party_id || '',
+        partyName: c.party_name || '',
+        partyType: c.party_type || 'customer',
+        company_id: c.company_id || '',
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
+        type: c.type || 'delivery',
+        status: c.status || 'draft',
+        items: Array.isArray(c.items) ? c.items : JSON.parse(c.items_json || '[]'),
+        vehicleNo: c.vehicle_no || '',
+        driverName: c.driver_name || '',
+        notes: c.notes || '',
+        createdAt: c.app_created_at || c.createdAt || ''
+      };
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch challan details');
+    }
+  }
+);
+
 export const createChallan = createAsyncThunk(
   'challan/create',
   async (data: Omit<Challan, 'id' | 'createdAt'>, { rejectWithValue }) => {
@@ -199,6 +227,23 @@ const challanSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchChallans.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(fetchChallanById.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchChallanById.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.items.findIndex(i => i.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        } else {
+          state.items.push(action.payload);
+        }
+        state.error = null;
+      })
+      .addCase(fetchChallanById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
