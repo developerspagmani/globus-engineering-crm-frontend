@@ -7,6 +7,7 @@ import { RootState } from '@/redux/store';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import { createChallan, updateChallan } from '@/redux/features/challanSlice';
+import { fetchItems } from '@/redux/features/masterSlice';
 import { Challan } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
 
@@ -22,6 +23,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
+  const { items: masterItems } = useSelector((state: RootState) => state.master);
 
   // Use String comparison to handle both numeric and string IDs correctly
   const companyCustomers = customers.filter(c => !activeCompany || String(c.company_id || (c as any).companyId) === String(activeCompany.id));
@@ -32,8 +34,9 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
     if (activeCompany?.id) {
        if (customers.length === 0) dispatch(fetchCustomers({ company_id: activeCompany.id }) as any);
        if (vendors.length === 0) dispatch(fetchVendors({ company_id: activeCompany.id }) as any);
+       if (masterItems.length === 0) (dispatch as any)(fetchItems({ company_id: activeCompany.id, limit: 1000 }));
     }
-  }, [activeCompany?.id, dispatch, customers.length, vendors.length]);
+  }, [activeCompany?.id, dispatch, customers.length, vendors.length, masterItems.length]);
 
   const [formData, setFormData] = useState<Omit<Challan, 'id' | 'createdAt'>>({
     challanNo: `DC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -244,31 +247,36 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               <table className="table table-bordered align-middle">
                 <thead className="table-light mt-0">
                   <tr>
-                    <th>Description</th>
-                    <th style={{ width: '120px' }}>Quantity</th>
-                    <th style={{ width: '100px' }}>Unit</th>
-                    <th style={{ width: '150px' }}>HSN Code</th>
+                    <th className="px-3">Description</th>
+                    <th className="text-center" style={{ width: '120px' }}>Quantity</th>
+                    <th className="text-center" style={{ width: '100px' }}>Unit</th>
+                    <th className="text-center" style={{ width: '150px' }}>HSN Code</th>
                     <th style={{ width: '50px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {formData.items.map((item, index) => (
                     <tr key={index}>
-                      <td className="p-0 border-0">
-                        <input 
-                          type="text" 
-                          className="form-control" 
-                          placeholder="Item details..."
+                      <td className="px-3 py-2">
+                        <select 
+                          className="form-select" 
                           value={item.description || ''} 
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                           required 
                           disabled={mode === 'view'}
-                        />
+                        >
+                          <option value="">Select Item</option>
+                          {masterItems.map((mi) => (
+                            <option key={mi.id} value={mi.itemName}>
+                              {mi.itemName} ({mi.itemCode})
+                            </option>
+                          ))}
+                        </select>
                       </td>
-                      <td className="p-0 border-0">
+                      <td className="px-2 py-2">
                         <input 
                           type="number" 
-                          className="form-control" 
+                          className="form-control text-center" 
                           value={item.quantity} 
                           onWheel={(e) => (e.target as HTMLInputElement).blur()}
                           onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
@@ -276,33 +284,33 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           disabled={mode === 'view'}
                         />
                       </td>
-                      <td className="p-0 border-0">
+                      <td className="px-2 py-2">
                         <input 
                           type="text" 
-                          className="form-control" 
+                          className="form-control text-center" 
                           value={item.unit || ''} 
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                           required 
                           disabled={mode === 'view'}
                         />
                       </td>
-                      <td className="p-0 border-0">
+                      <td className="px-2 py-2">
                         <input 
                           type="text" 
-                          className="form-control" 
+                          className="form-control text-center" 
                           value={item.hsnCode || ''} 
                           onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
                           disabled={mode === 'view'}
                         />
                       </td>
-                      <td className="text-center">
+                      <td className="text-center py-2">
                         <button 
                           type="button" 
                           className="btn btn-link text-danger p-0" 
                           onClick={() => removeItem(index)}
                           disabled={formData.items.length === 1}
                         >
-                          <i className="bi bi-trash"></i>
+                          <i className="bi bi-trash fs-5"></i>
                         </button>
                       </td>
                     </tr>
@@ -382,6 +390,31 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
         </form>
       </div>
 
+      <style jsx>{`
+        .form-control, .form-select {
+          height: 40px !important;
+          min-height: 40px !important;
+          display: flex !important;
+          align-items: center !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+        }
+        .table thead th {
+          background-color: #f8fafc !important;
+          color: #475569 !important;
+          font-size: 0.7rem !important;
+          font-weight: 800 !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.05em !important;
+          padding-top: 12px !important;
+          padding-bottom: 12px !important;
+          border-top: none !important;
+        }
+        .table tbody td {
+          vertical-align: middle !important;
+        }
+      `}</style>
+
       {modal.isOpen && (
         <FullPageStatus
           type={modal.type}
@@ -399,3 +432,4 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
 };
 
 export default ChallanForm;
+
