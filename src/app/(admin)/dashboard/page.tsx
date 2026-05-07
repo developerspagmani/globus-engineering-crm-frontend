@@ -31,7 +31,7 @@ export default function DashboardPage() {
     { label: 'Monthly Revenue', value: '₹12,400', change: '+8%', icon: 'bi-bank', color: 'info' },
     { label: 'System Health', value: '99.9%', change: 'Stable', icon: 'bi-cpu', color: 'warning' },
   ] : [
-    { label: 'Total Invoiced', value: `₹${realStats?.summary.totalInvoiced.toLocaleString() || '0'}`, change: '+0%', icon: 'bi-currency-rupee', color: 'primary' },
+    { label: 'Total Invoiced', value: `${realStats?.summary.totalInvoiced.toLocaleString() || '0'}`, change: '+0%', icon: 'bi-currency-rupee', color: 'secondary' },
     { label: 'Pending Payments', value: `₹${realStats?.summary.pendingAmount.toLocaleString() || '0'}`, change: 'Live', icon: 'bi-clock-history', color: 'warning' },
     { label: 'Customer Count', value: realStats?.summary.customerCount.toString() || '0', change: 'Active', icon: 'bi-people', color: 'success' },
     { label: 'Overdue Invoices', value: realStats?.summary.overdueCount.toString() || '0', change: '>30 Days', icon: 'bi-exclamation-triangle', color: 'danger' },
@@ -71,7 +71,14 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <h6 className="text-muted mb-1 small">{stat.label}</h6>
-                <h3 className="fw-bold mb-0">{stat.value}</h3>
+                <h3 className="fw-bold mb-0">
+                  {stat.icon === 'bi-currency-rupee' || stat.label.toLowerCase().includes('revenue') ? (
+                    <>
+                      <span className="text-muted fw-normal me-1" style={{ fontSize: '0.9em' }}>₹</span>
+                      {stat.value.replace('₹', '')}
+                    </>
+                  ) : stat.value}
+                </h3>
               </div>
             </div>
           </div>
