@@ -10,12 +10,14 @@ export const fetchOutwards = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    id?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search } = params;
+      const { company_id, page = 1, limit = 10, search, id } = params;
       let url = `/outward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
       return {

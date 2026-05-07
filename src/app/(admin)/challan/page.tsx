@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 
@@ -17,6 +18,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 
 const ChallanPage = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.challan);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
@@ -59,11 +61,11 @@ const ChallanPage = () => {
   };
 
   const handlePrintChallanRecord = (challan: any) => {
-    window.open(`/logistics-print?type=challan&id=${challan.id}&print=true`, '_blank');
+    router.push(`/logistics-print?type=challan&id=${challan.id}&print=true`);
   };
 
   const handleExportPDFChallanRecord = (challan: any) => {
-    window.open(`/logistics-print?type=challan&id=${challan.id}`, '_blank');
+    router.push(`/logistics-print?type=challan&id=${challan.id}`);
   };
 
   const handleDeleteParams = (id: string) => {

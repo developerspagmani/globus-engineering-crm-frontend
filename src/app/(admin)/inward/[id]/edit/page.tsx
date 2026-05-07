@@ -51,13 +51,22 @@ export default function EditInwardPage() {
                 <p className="text-muted small mb-0">{isEdit ? `Modify receipt details for ${inward.customerName}.` : `Review receipt details for ${inward.customerName}.`}</p>
               </div>
               {!isEdit && !isReadOnly && checkActionPermission(user, 'mod_inward', 'edit') && (
-                <button
-                  className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
-                  onClick={() => setIsEdit(true)}
-                >
-                  <i className="bi bi-pencil-square"></i>
-                  <span>Edit Entry</span>
-                </button>
+                <div className="ms-auto d-flex gap-2">
+                  <Link
+                    href={`/logistics-print?type=inward&id=${inward.id}&print=true`}
+                    className="btn btn-outline-dark d-flex align-items-center gap-2 px-4"
+                  >
+                    <i className="bi bi-printer"></i>
+                    <span>Print Receipt</span>
+                  </Link>
+                  <button
+                    className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
+                    onClick={() => setIsEdit(true)}
+                  >
+                    <i className="bi bi-pencil-square"></i>
+                    <span>Edit Entry</span>
+                  </button>
+                </div>
               )}
             </div>
             <InwardForm mode={isEdit ? 'edit' : 'view'} initialData={inward} />

@@ -12,12 +12,14 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 
 
 export default function InwardListPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { items: inwards, filters, pagination, loading } = useSelector((state: RootState) => state.inward);
   const { company, user } = useSelector((state: RootState) => state.auth);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
@@ -51,11 +53,11 @@ export default function InwardListPage() {
   };
 
   const handlePrintInward = (item: any) => {
-    window.open(`/logistics-print?type=inward&id=${item.id}&print=true`, '_blank');
+    router.push(`/logistics-print?type=inward&id=${item.id}&print=true`);
   };
 
   const handleExportPDFInward = (item: any) => {
-    window.open(`/logistics-print?type=inward&id=${item.id}`, '_blank');
+    router.push(`/logistics-print?type=inward&id=${item.id}`);
   };
 
   return (

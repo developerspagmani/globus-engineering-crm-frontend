@@ -62,13 +62,22 @@ const EditVoucherPage = () => {
           <p className="text-muted small mb-0">{isEdit ? 'Update transaction details and narration.' : 'Review transaction details and narration.'}</p>
         </div>
         {!isEdit && !isReadOnly && (
-          <button
-            className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
-            onClick={() => setIsEdit(true)}
-          >
-            <i className="bi bi-pencil-square"></i>
-            <span>Edit Voucher</span>
-          </button>
+          <div className="ms-auto d-flex gap-2">
+            <Link
+              href={`/logistics-print?type=voucher&id=${voucher.id}&print=true`}
+              className="btn btn-outline-dark d-flex align-items-center gap-2 px-4"
+            >
+              <i className="bi bi-printer"></i>
+              <span>Print Voucher</span>
+            </Link>
+            <button
+              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
+              onClick={() => setIsEdit(true)}
+            >
+              <i className="bi bi-pencil-square"></i>
+              <span>Edit Voucher</span>
+            </button>
+          </div>
         )}
       </div>
 

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { setVoucherFilters, setVoucherPage, fetchVouchers, deleteVoucher } from '@/redux/features/voucherSlice';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -17,6 +18,7 @@ import PaginationComponent from '@/components/shared/Pagination';
 
 const VoucherPage = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.voucher);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
@@ -58,11 +60,11 @@ const VoucherPage = () => {
   };
 
   const handlePrintVoucherRecord = (voucher: any) => {
-    window.open(`/logistics-print?type=voucher&id=${voucher.id}&print=true`, '_blank');
+    router.push(`/logistics-print?type=voucher&id=${voucher.id}&print=true`);
   };
 
   const handleExportPDFVoucherRecord = (voucher: any) => {
-    window.open(`/logistics-print?type=voucher&id=${voucher.id}`, '_blank');
+    router.push(`/logistics-print?type=voucher&id=${voucher.id}`);
   };
 
   const handleDeleteParams = (id: string) => {

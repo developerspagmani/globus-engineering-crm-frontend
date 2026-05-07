@@ -13,15 +13,17 @@ export const fetchInwards = createAsyncThunk(
     status?: string;
     fromDate?: string;
     toDate?: string;
+    id?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, id } = params;
       let url = `/inward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
       return {

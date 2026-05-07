@@ -39,55 +39,63 @@ const PrintContent = () => {
       const fetchData = async () => {
          setLoading(true);
          
-         // Fetch party lists if empty to ensure address enrichment works
          const fetchPromises = [];
          if (customers.length === 0) fetchPromises.push((dispatch as any)(fetchCustomers({ company_id: company.id })));
          if (vendors.length === 0) fetchPromises.push((dispatch as any)(fetchVendors({ company_id: company.id })));
 
-         let found = null;
          if (type === 'inward') {
-            found = inwardData.find(i => i.id === id);
-            if (!found) fetchPromises.push((dispatch as any)(fetchInwards({ company_id: company.id })));
+            fetchPromises.push((dispatch as any)(fetchInwards({ company_id: company.id, id })));
          } else if (type === 'outward') {
-            found = outwardData.find(o => o.id === id);
-            if (!found) fetchPromises.push((dispatch as any)(fetchOutwards({ company_id: company.id })));
+            fetchPromises.push((dispatch as any)(fetchOutwards({ company_id: company.id, id })));
          } else if (type === 'challan') {
-            found = challanData.find(c => c.id === id);
-            if (!found) fetchPromises.push((dispatch as any)(fetchChallans({ company_id: company.id })));
+            fetchPromises.push((dispatch as any)(fetchChallans({ company_id: company.id, id })));
          } else if (type === 'voucher') {
-            found = voucherData.find(v => v.id === id);
-            if (!found) fetchPromises.push((dispatch as any)(fetchVouchers({ company_id: company.id })));
+            fetchPromises.push((dispatch as any)(fetchVouchers({ company_id: company.id, id })));
          }
 
-         await Promise.all(fetchPromises);
-         setLoading(false);
+         try {
+            await Promise.all(fetchPromises);
+         } catch (err) {
+            console.error("Fetch failed", err);
+         } finally {
+            setLoading(false);
+         }
       };
 
       fetchData();
-   }, [id, type, company?.id, dispatch, customers.length, vendors.length]);
+   }, [id, type, company?.id, dispatch]); // Reduced dependencies to prevent infinite loops
 
    useEffect(() => {
-      if (!loading) {
+      if (!loading && id) {
          let found = null;
-         if (type === 'inward') found = inwardData.find(i => i.id === id);
-         else if (type === 'outward') found = outwardData.find(o => o.id === id);
-         else if (type === 'challan') found = challanData.find(c => c.id === id);
-         else if (type === 'voucher') found = voucherData.find(v => v.id === id);
+         const tid = String(id);
+         if (type === 'inward') found = inwardData.find(i => String(i.id) === tid);
+         else if (type === 'outward') found = outwardData.find(o => String(o.id) === tid);
+         else if (type === 'challan') found = challanData.find(c => String(c.id) === tid);
+         else if (type === 'voucher') found = voucherData.find(v => String(v.id) === tid);
          
-         setData(found);
+         if (found) setData(found);
       }
    }, [loading, inwardData, outwardData, challanData, voucherData, id, type]);
 
    useEffect(() => {
       if (data && searchParams.get('print') === 'true') {
-         setTimeout(() => {
+         const timer = setTimeout(() => {
             window.print();
-         }, 1000);
+         }, 1200);
+         return () => clearTimeout(timer);
       }
    }, [data, searchParams]);
 
-   if (loading) return <div className="p-5 text-center"><Loader text="Preparing Document..." /></div>;
-   if (!data) return <div className="p-5 text-center text-danger">Document not found or access denied.</div>;
+   if (!id || !type) return <div className="p-5 text-center text-warning">Invalid print parameters provided.</div>;
+   if (loading || !company?.id) return <div className="p-5 text-center"><Loader text="Preparing Document..." /></div>;
+   if (!data) return (
+      <div className="p-5 text-center">
+         <div className="text-danger mb-3 font-weight-bold">Document not found or access denied.</div>
+         <p className="text-muted small">ID: {id} | Type: {type}</p>
+         <button className="btn btn-outline-primary btn-sm mt-3" onClick={() => window.location.reload()}>Retry Loading</button>
+      </div>
+   );
 
    return (
       <div className="print-preview-container container py-4">

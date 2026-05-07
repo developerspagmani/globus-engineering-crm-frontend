@@ -12,12 +12,14 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 
 
 export default function OutwardListPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { items: outwards, filters, pagination, loading } = useSelector((state: RootState) => state.outward);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
@@ -45,11 +47,11 @@ export default function OutwardListPage() {
   const confirmDelete = () => { if (deleteModal.id) (dispatch as any)(deleteOutward(deleteModal.id)); };
 
   const handlePrintOutward = (item: any) => {
-     window.open(`/logistics-print?type=outward&id=${item.id}&print=true`, '_blank');
+     router.push(`/logistics-print?type=outward&id=${item.id}&print=true`);
   };
 
   const handleExportPDFOutward = (item: any) => {
-     window.open(`/logistics-print?type=outward&id=${item.id}`, '_blank');
+     router.push(`/logistics-print?type=outward&id=${item.id}`);
   };
 
   return (
