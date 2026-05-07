@@ -9,12 +9,14 @@ export const fetchCustomers = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    id?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search } = params;
+      const { company_id, page = 1, limit = 10, search, id } = params;
       let url = `/customers?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
       return {
@@ -158,9 +160,11 @@ const customerSlice = createSlice({
           company_id: c.company_id,
           createdAt: c.createdAt || c.app_created_at
         }));
-        state.pagination.totalItems = action.payload.pagination.total;
-        state.pagination.totalPages = action.payload.pagination.totalPages;
-        state.pagination.currentPage = action.payload.pagination.page;
+        if (!action.meta.arg?.id) {
+          state.pagination.totalItems = action.payload.pagination.total;
+          state.pagination.totalPages = action.payload.pagination.totalPages;
+          state.pagination.currentPage = action.payload.pagination.page;
+        }
         state.error = null;
       })
       .addCase(fetchCustomers.rejected, (state, action) => {

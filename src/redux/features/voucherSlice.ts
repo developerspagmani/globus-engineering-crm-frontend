@@ -14,9 +14,10 @@ export const fetchVouchers = createAsyncThunk(
     fromDate?: string;
     toDate?: string;
     partyId?: string;
+    id?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, type, status, fromDate, toDate, partyId } = params;
+      const { company_id, page = 1, limit = 10, search, type, status, fromDate, toDate, partyId, id } = params;
       let url = `/vouchers?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -25,6 +26,7 @@ export const fetchVouchers = createAsyncThunk(
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (partyId) url += `&partyId=${partyId}`;
+      if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
       return {
@@ -186,9 +188,11 @@ const voucherSlice = createSlice({
       .addCase(fetchVouchers.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload.items;
-        state.pagination.totalItems = action.payload.pagination.total;
-        state.pagination.totalPages = action.payload.pagination.totalPages;
-        state.pagination.currentPage = action.payload.pagination.page;
+        if (!action.meta.arg?.id) {
+          state.pagination.totalItems = action.payload.pagination.total;
+          state.pagination.totalPages = action.payload.pagination.totalPages;
+          state.pagination.currentPage = action.payload.pagination.page;
+        }
         state.aggregates = action.payload.aggregates || { totalCollected: 0 };
         state.error = null;
       })

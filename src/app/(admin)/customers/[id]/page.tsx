@@ -24,10 +24,10 @@ export default function EditCustomerPage() {
   const customer = items.find(c => String(c.id) === String(id));
 
   React.useEffect(() => {
-    if (items.length === 0) {
-      dispatch(fetchCustomers({ company_id: activeCompany?.id, page: 1, limit: 100 }));
+    if (items.length === 0 && activeCompany?.id && id) {
+      dispatch(fetchCustomers({ company_id: activeCompany.id, id }));
     }
-  }, [dispatch, items.length, activeCompany?.id]);
+  }, [dispatch, items.length, activeCompany?.id, id]);
 
   if (loading || (items.length === 0 && !customer)) {
     return (

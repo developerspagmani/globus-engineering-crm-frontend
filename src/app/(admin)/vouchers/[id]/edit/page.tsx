@@ -25,14 +25,13 @@ const EditVoucherPage = () => {
 
   useEffect(() => {
     setMounted(true);
-    if (items.length === 0 && activeCompany?.id) {
+    if (items.length === 0 && activeCompany?.id && id) {
       dispatch(fetchVouchers({
         company_id: activeCompany.id,
-        page: 1,
-        limit: 100
+        id: id as string
       }));
     }
-  }, [dispatch, items.length, activeCompany?.id]);
+  }, [dispatch, items.length, activeCompany?.id, id]);
 
   if (!mounted || loading || (items.length === 0 && !voucher)) {
     return (
