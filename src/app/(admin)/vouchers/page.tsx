@@ -20,9 +20,11 @@ const VoucherPage = () => {
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.voucher);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [mounted, setMounted] = useState(false);
 
 
   React.useEffect(() => {
+    setMounted(true);
     if (activeCompany?.id) {
       (dispatch as any)(fetchVouchers({
         company_id: activeCompany.id,
@@ -92,7 +94,7 @@ const VoucherPage = () => {
               headers={{ voucherNo: 'Voucher No', type: 'Type', partyName: 'Party', amount: 'Amount', date: 'Date', status: 'Status' }}
               buttonText="Export List"
             />
-          {checkActionPermission(user, 'mod_voucher', 'create') && (
+          {mounted && checkActionPermission(user, 'mod_voucher', 'create') && (
             <Link href="/vouchers/new" className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-plus-lg"></i>
               <span>Add Voucher</span>
@@ -205,7 +207,7 @@ const VoucherPage = () => {
                         </td>
                         <td className="text-center px-4 text-nowrap">
                           <div className="d-flex justify-content-center gap-1">
-                            {checkActionPermission(user, 'mod_voucher', 'edit') && (
+                            {mounted && checkActionPermission(user, 'mod_voucher', 'edit') && (
                               <>
                                 <Link href={`/vouchers/${voucher.id}/edit`} className="btn-action-view" title="View Detail">
                                   <i className="bi bi-eye-fill"></i>
@@ -240,7 +242,7 @@ const VoucherPage = () => {
                                     <span className="small fw-semibold">Export PDF</span>
                                   </button>
                                 </li>
-                                {checkActionPermission(user, 'mod_voucher', 'delete') && (
+                                {mounted && checkActionPermission(user, 'mod_voucher', 'delete') && (
                                   <>
                                     <li><hr className="dropdown-divider opacity-50" /></li>
                                     <li>

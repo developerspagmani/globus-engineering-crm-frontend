@@ -7,8 +7,8 @@ const mapInvoice = (inv: any): Invoice => {
     ? inv.items_json
     : JSON.parse(inv.items_json || '[]');
 
-  const grandTotal = parseFloat(String(inv.grand_total || inv.grandTotal || '0').replace(/[^\d.]/g, '')) || 0;
-  const subTotal = parseFloat(String(inv.total || inv.subTotal || '0').replace(/[^\d.]/g, '')) || 0;
+  const grandTotal = parseFloat(String(inv.grandTotal || inv.grand_total || '0').replace(/[^\d.]/g, '')) || 0;
+  const subTotal = parseFloat(String(inv.subTotal || inv.total || '0').replace(/[^\d.]/g, '')) || 0;
 
   return {
     id: inv.id.toString(),

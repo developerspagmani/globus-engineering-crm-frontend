@@ -269,7 +269,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     <td className="small text-muted">{new Date(inv.date).toLocaleDateString()}</td>
                     <td className="small fw-bold text-center text-dark">{inv.invoiceNumber}</td>
                     <td className="small fw-bold text-end text-dark">
-                      {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
                 ))}
