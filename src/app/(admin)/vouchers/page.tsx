@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,8 @@ import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import html2canvas from 'html2canvas';
 
 
 const VoucherPage = () => {
@@ -59,12 +61,35 @@ const VoucherPage = () => {
     }
   };
 
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`VOUCHER_${downloadingItem.voucherNo || downloadingItem.id}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   const handlePrintVoucherRecord = (voucher: any) => {
     router.push(`/logistics-print?type=voucher&id=${voucher.id}&print=true`);
   };
 
   const handleExportPDFVoucherRecord = (voucher: any) => {
-    router.push(`/logistics-print?type=voucher&id=${voucher.id}`);
+    setDownloadingItem(voucher);
   };
 
   const handleDeleteParams = (id: string) => {
@@ -316,6 +341,14 @@ const VoucherPage = () => {
           :global(.sidebar), :global(.header), :global(.breadcrumb), .card-header, .pagination, .border-bottom { display: none !important; }
         }
       `}</style>
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            <IndustrialDocument data={downloadingItem} type="voucher" company={activeCompany!} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

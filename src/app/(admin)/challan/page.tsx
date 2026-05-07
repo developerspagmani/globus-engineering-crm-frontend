@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,8 +10,10 @@ import PaginationComponent from '@/components/shared/Pagination';
 import { RootState } from '@/redux/store';
 import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan } from '@/redux/features/challanSlice';
 import Breadcrumb from '@/components/Breadcrumb';
-import { checkActionPermission } from '@/config/permissions';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { checkActionPermission } from '@/config/permissions';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -60,12 +62,35 @@ const ChallanPage = () => {
     }
   };
 
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`CHALLAN_${downloadingItem.challanNo || downloadingItem.id}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   const handlePrintChallanRecord = (challan: any) => {
     router.push(`/logistics-print?type=challan&id=${challan.id}&print=true`);
   };
 
   const handleExportPDFChallanRecord = (challan: any) => {
-    router.push(`/logistics-print?type=challan&id=${challan.id}`);
+    setDownloadingItem(challan);
   };
 
   const handleDeleteParams = (id: string) => {
@@ -90,13 +115,13 @@ const ChallanPage = () => {
           <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Challan Management</h2>
           <p className="text-muted small mb-0">Track material movement and delivery challans across industrial sites.</p>
         </div>
-          <div className="d-flex align-items-center gap-2">
-            <ExportExcel 
-              data={items} 
-              fileName="Challan_Records" 
-              headers={{ challanNo: 'Challan No', date: 'Date', partyName: 'Party Name', type: 'Type', status: 'Status' }}
-              buttonText="Export List"
-            />
+        <div className="d-flex align-items-center gap-2">
+          <ExportExcel
+            data={items}
+            fileName="Challan_Records"
+            headers={{ challanNo: 'Challan No', date: 'Date', partyName: 'Party Name', type: 'Type', status: 'Status' }}
+            buttonText="Export List"
+          />
           {checkActionPermission(user, 'mod_challan', 'create') && (
             <Link href="/challan/new" className="btn btn-primary btn-page-action px-4">
               <i className="bi bi-plus-lg"></i>
@@ -106,55 +131,55 @@ const ChallanPage = () => {
         </div>
       </div>
 
-        <div className="card filter-card">
-          <div className="card-body p-3">
-            <div className="filter-bar-row">
-              <div className="filter-item-search">
-                <div className="search-group">
-                  <span className="input-group-text">
-                    <i className="bi bi-search"></i>
-                  </span>
-                  <input
-                    type="text"
-                    className="form-control search-bar"
-                    placeholder="Search by challan or party..."
-                    value={filters.search}
-                    onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
-                  />
-                </div>
-              </div>
-              
-              <div className="filter-item-select">
-                <select
-                  className="form-select search-bar"
-                  value={filters.type}
-                  onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
-                >
-                  <option value="all">All Types</option>
-                  <option value="delivery">Delivery</option>
-                  <option value="returnable">Returnable</option>
-                  <option value="job_work">Job Work</option>
-                </select>
-              </div>
-
-              <div className="date-filter-group">
-                <input 
-                  type="date" 
-                  className="text-muted" 
-                  value={filters.fromDate}
-                  onChange={(e) => dispatch(setChallanFilters({ fromDate: e.target.value }))}
-                />
-                <span className="text-muted small fw-bold mx-1">TO</span>
-                <input 
-                  type="date" 
-                  className="text-muted" 
-                  value={filters.toDate}
-                  onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
+      <div className="card filter-card">
+        <div className="card-body p-3">
+          <div className="filter-bar-row">
+            <div className="filter-item-search">
+              <div className="search-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control search-bar"
+                  placeholder="Search by challan or party..."
+                  value={filters.search}
+                  onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
+
+            <div className="filter-item-select">
+              <select
+                className="form-select search-bar"
+                value={filters.type}
+                onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
+              >
+                <option value="all">All Types</option>
+                <option value="delivery">Delivery</option>
+                <option value="returnable">Returnable</option>
+                <option value="job_work">Job Work</option>
+              </select>
+            </div>
+
+            <div className="date-filter-group">
+              <input
+                type="date"
+                className="text-muted"
+                value={filters.fromDate}
+                onChange={(e) => dispatch(setChallanFilters({ fromDate: e.target.value }))}
+              />
+              <span className="text-muted small fw-bold mx-1">TO</span>
+              <input
+                type="date"
+                className="text-muted"
+                value={filters.toDate}
+                onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
+              />
+            </div>
           </div>
         </div>
+      </div>
 
       <div className="card border-0 shadow-sm">
         <div className="card-body p-0">
@@ -211,13 +236,13 @@ const ChallanPage = () => {
                                 <i className="bi bi-pencil-fill"></i>
                               </Link>
                             )}
-                            
+
                             <div className="dropdown">
-                              <button 
-                                className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
-                                type="button" 
-                                id={`actions-${challan.id}`} 
-                                data-bs-toggle="dropdown" 
+                              <button
+                                className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
+                                type="button"
+                                id={`actions-${challan.id}`}
+                                data-bs-toggle="dropdown"
                                 aria-expanded="false"
                                 style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                               >
@@ -240,8 +265,8 @@ const ChallanPage = () => {
                                   <>
                                     <li><hr className="dropdown-divider opacity-50" /></li>
                                     <li>
-                                      <button 
-                                        className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
+                                      <button
+                                        className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
                                         type="button"
                                         onClick={() => handleDeleteParams(challan.id)}
                                       >
@@ -269,16 +294,16 @@ const ChallanPage = () => {
               </tbody>
             </table>
           </div>
-          
+
           {totalPages > 1 && (
             <div className="px-4 py-3 border-top d-flex align-items-center justify-content-between">
               <div className="text-muted small">
                 Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
               </div>
-              <PaginationComponent 
-                currentPage={pagination.currentPage} 
-                totalPages={totalPages} 
-                onPageChange={(page) => dispatch(setChallanPage(page))} 
+              <PaginationComponent
+                currentPage={pagination.currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => dispatch(setChallanPage(page))}
               />
 
             </div>
@@ -286,7 +311,7 @@ const ChallanPage = () => {
         </div>
       </div>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, id: null })}
         onConfirm={confirmDelete}
@@ -308,6 +333,14 @@ const ChallanPage = () => {
           :global(.sidebar), :global(.header), :global(.breadcrumb), .card-header, .pagination, .border-bottom { display: none !important; }
         }
       `}</style>
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            <IndustrialDocument data={downloadingItem} type="challan" company={activeCompany!} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

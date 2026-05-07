@@ -14,6 +14,8 @@ import Link from 'next/link';
 import BackButton from '@/components/BackButton';
 import LedgerPrintTemplate from '@/modules/ledger/components/LedgerPrintTemplate';
 import PaginationComponent from '@/components/shared/Pagination';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function LedgerDetailPage() {
   const params = useParams();
@@ -77,11 +79,36 @@ export default function LedgerDetailPage() {
   }, [dispatch, activeCompany?.id, partyId, currentPage, itemsPerPage, dateFrom, dateTo, filters.dateFrom, filters.dateTo]);
 
   useEffect(() => {
-    if (searchParams.get('print') === 'true' && !loading && party && allEntries.length > 0) {
+    const download = searchParams.get('download') === 'true';
+    const print = searchParams.get('print') === 'true';
+
+    if (print && !download && !loading && party && allEntries.length > 0) {
         const timer = setTimeout(() => {
             window.print();
         }, 800); 
         return () => clearTimeout(timer);
+    }
+
+    if (download && !loading && party && allEntries.length > 0) {
+        const triggerDownload = async () => {
+            // Wait for images and layout to settle
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            if (reportContainerRef.current) {
+                const canvas = await html2canvas(reportContainerRef.current, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`LEDGER_${party.name.toUpperCase()}_${new Date().toISOString().split('T')[0]}.pdf`);
+            }
+        };
+        triggerDownload();
     }
   }, [searchParams, loading, party, allEntries]);
 
@@ -155,6 +182,18 @@ export default function LedgerDetailPage() {
 
   const handlePrint = () => { window.print(); };
 
+  const handleExportPDF = async () => {
+    if (!reportContainerRef.current) return;
+    const canvas = await html2canvas(reportContainerRef.current, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`LEDGER_${party?.name?.toUpperCase()}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   // Only show loader if we are actually fetching and don't have the party yet
   if ((loading || isCustomerLoading || isVendorLoading) && !party) {
     return <Loader text="Syncing Statement..." />;
@@ -196,11 +235,14 @@ export default function LedgerDetailPage() {
                     </div>
                     <p className="text-muted small fw-bold text-capitalize tracking-widest mb-0 opacity-75">Professional Account Ledger Statement</p>
                  </div>
-                  <div className="text-end hide-print">
-                    <button onClick={handlePrint} className="btn btn-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
-                        <i className="bi bi-printer-fill"></i> PRINT STATEMENT
-                    </button>
-                  </div>
+                   <div className="text-end d-flex gap-2 hide-print">
+                     <button onClick={handlePrint} className="btn btn-outline-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                         <i className="bi bi-printer-fill"></i> PRINT
+                     </button>
+                     <button onClick={handleExportPDF} className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                         <i className="bi bi-file-earmark-pdf-fill"></i> EXPORT PDF
+                     </button>
+                   </div>
               </div>
 
               <div className="row g-4 border-top pt-4">

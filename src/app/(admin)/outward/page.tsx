@@ -15,6 +15,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import html2canvas from 'html2canvas';
 
 
 export default function OutwardListPage() {
@@ -46,12 +48,35 @@ export default function OutwardListPage() {
   const handleDeleteParams = (id: string) => { setDeleteModal({ isOpen: true, id }); };
   const confirmDelete = () => { if (deleteModal.id) (dispatch as any)(deleteOutward(deleteModal.id)); };
 
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`OUTWARD_${downloadingItem.outwardNo || downloadingItem.id}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   const handlePrintOutward = (item: any) => {
-     router.push(`/logistics-print?type=outward&id=${item.id}&print=true`);
+    router.push(`/logistics-print?type=outward&id=${item.id}&print=true`);
   };
 
   const handleExportPDFOutward = (item: any) => {
-     router.push(`/logistics-print?type=outward&id=${item.id}`);
+    setDownloadingItem(item);
   };
 
   return (
@@ -65,9 +90,9 @@ export default function OutwardListPage() {
             <p className="text-muted small mb-0">Manage outgoing finished goods and customer/vendor dispatches.</p>
           </div>
           <div className="d-flex align-items-center gap-2">
-            <ExportExcel 
-              data={outwards} 
-              fileName="Outward_Records" 
+            <ExportExcel
+              data={outwards}
+              fileName="Outward_Records"
               headers={{ outwardNo: 'Outward No', partyType: 'Type', customerName: 'Customer', vendorName: 'Vendor', invoiceReference: 'Invoice Ref', date: 'Date' }}
               buttonText="Export List"
             />
@@ -99,8 +124,8 @@ export default function OutwardListPage() {
                 </div>
               </div>
               <div className="filter-item-select">
-                <select className="form-select search-bar" 
-                  value={filters.status} 
+                <select className="form-select search-bar"
+                  value={filters.status}
                   onChange={(e) => dispatch(setOutwardFilters({ status: e.target.value as any }))}>
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
@@ -108,16 +133,16 @@ export default function OutwardListPage() {
                 </select>
               </div>
               <div className="date-filter-group">
-                <input 
-                  type="date" 
-                  className="text-muted" 
+                <input
+                  type="date"
+                  className="text-muted"
                   value={filters.fromDate}
                   onChange={(e) => dispatch(setOutwardFilters({ fromDate: e.target.value }))}
                 />
                 <span className="text-muted small fw-bold mx-1">TO</span>
-                <input 
-                  type="date" 
-                  className="text-muted" 
+                <input
+                  type="date"
+                  className="text-muted"
                   value={filters.toDate}
                   onChange={(e) => dispatch(setOutwardFilters({ toDate: e.target.value }))}
                 />
@@ -153,15 +178,15 @@ export default function OutwardListPage() {
                         <div className="x-small text-muted text-capitalize">{item.processName || (item.items?.[0]?.description) || '-'}</div>
                       </td>
                       <td>
-                         <span className={`badge rounded-pill px-2 py-1 small fw-bold ${item.partyType === 'vendor' ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary'}`}>
-                            {(item.partyType || 'customer').toUpperCase()}
-                         </span>
+                        <span className={`badge rounded-pill px-2 py-1 small fw-bold ${item.partyType === 'vendor' ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary'}`}>
+                          {(item.partyType || 'customer').toUpperCase()}
+                        </span>
                       </td>
                       <td><span className="badge bg-light text-dark border-0 shadow-inner px-2 py-1 fw-bold" style={{ borderRadius: '6px' }}>{item.invoiceReference || '-'}</span></td>
                       <td className="text-muted small fw-bold text-capitalize">{item.vehicleNo || '-'}</td>
                       <td className="text-muted small fw-bold">{item.date}</td>
                       <td>
-                        <span className={`badge rounded-pill px-3 py-1 small fw-bold ${item.status==='completed'?'bg-success-subtle text-success':'bg-warning-subtle text-warning'}`}>
+                        <span className={`badge rounded-pill px-3 py-1 small fw-bold ${item.status === 'completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
                           {(item.status || 'pending').toUpperCase()}
                         </span>
                       </td>
@@ -199,18 +224,31 @@ export default function OutwardListPage() {
           </div>
           {totalPages > 1 && (
             <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-               <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
-              <PaginationComponent 
-                currentPage={pagination.currentPage} 
-                totalPages={totalPages} 
-                onPageChange={(page) => dispatch(setOutwardPage(page))} 
+              <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
+              <PaginationComponent
+                currentPage={pagination.currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => dispatch(setOutwardPage(page))}
               />
             </div>
           )}
         </div>
       </div>
       <ConfirmationModal isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, id: null })} onConfirm={confirmDelete} title="Remove Outward Record" message="Are you sure you want to delete this record? This action is permanent and cannot be undone." />
-      <style jsx>{` .fw-900 { font-weight: 900; } .bg-light-soft { background-color: #f7f9fc; } .table-responsive { min-height: 400px; padding-bottom: 80px; } `}</style>
+      <style jsx>{`
+        .fw-900 { font-weight: 900; }
+        .bg-light-soft { background-color: #f7f9fc; }
+        .table-responsive { min-height: 400px; padding-bottom: 80px; }
+      `}</style>
+
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            <IndustrialDocument data={downloadingItem} type="outward" company={company!} />
+          </div>
+        </div>
+      )}
     </ModuleGuard>
   );
 }

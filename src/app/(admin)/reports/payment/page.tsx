@@ -15,6 +15,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
 import api from '@/lib/axios';
+import html2canvas from 'html2canvas';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import IndustrialInvoice from '@/modules/invoice/components/IndustrialInvoice';
+import { fetchInvoices } from '@/redux/features/invoiceSlice';
 
 
 
@@ -36,7 +40,7 @@ const PaymentReportPage = () => {
 
   useEffect(() => {
     setMounted(true);
-    if (activeCompany?.id) { 
+    if (activeCompany?.id) {
       // Fetch both for accurate aggregate calculations across tabs
       (dispatch as any)(fetchVouchers({
         company_id: activeCompany.id,
@@ -61,17 +65,17 @@ const PaymentReportPage = () => {
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
-    
+
     if (activeTab === 'PAYMENT') {
       let url = `/vouchers?page=1&limit=10000&company_id=${activeCompany.id}`;
       if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (selectedCustomerId) url += `&partyId=${selectedCustomerId}`;
-      
+
       const response = await api.get(url);
       const allVouchers = response.data.items;
-      
+
       const data = allVouchers.map((v: any, idx: number) => [
         (idx + 1).toString(),
         v.date ? new Date(v.date).toISOString().split('T')[0] : 'N/A',
@@ -90,10 +94,10 @@ const PaymentReportPage = () => {
       if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
-      
+
       const response = await api.get(url);
       const allPending = response.data.items;
-      
+
       const data = allPending.map((inv: any, idx: number) => {
         const grand = parseFloat(inv.grand_total || '0');
         const paid = parseFloat(inv.paid_amount || '0');
@@ -137,27 +141,50 @@ const PaymentReportPage = () => {
   const paginatedItems = activeData;
 
   const totals = {
-    paymentCount:     vPagination.totalItems || vouchers.length,
-    totalCollected:   vAggregates?.totalCollected || 0,
-    pendingCount:     pPagination.totalItems || pending.length,
+    paymentCount: vPagination.totalItems || vouchers.length,
+    totalCollected: vAggregates?.totalCollected || 0,
+    pendingCount: pPagination.totalItems || pending.length,
     totalOutstanding: pAggregates?.totalOutstanding || 0,
-    criticalOverdue:  pAggregates?.criticalOverdue || 0
+    criticalOverdue: pAggregates?.criticalOverdue || 0
   };
+
+  const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'PAYMENT' | 'PENDING'} | null>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+  const { settings: invoiceSettings } = useSelector((state: RootState) => state.invoices);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          const fileName = downloadingItem.type === 'PENDING' 
+            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}.pdf`
+            : `VOUCHER_${downloadingItem.item.voucherNo || downloadingItem.item.id}.pdf`;
+          pdf.save(fileName);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
 
   const handlePrintRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
     if (type === 'PENDING') {
       router.push(`/invoices/${item.id}?print=true`);
       return;
     }
-    window.open(`/logistics-print?type=voucher&id=${item.id}&print=true`, '_blank');
+    router.push(`/logistics-print?type=voucher&id=${item.id}&print=true`);
   };
 
   const handleExportPDFRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
-    if (type === 'PENDING') {
-      window.open(`/invoices/${item.id}`, '_blank');
-      return;
-    }
-    window.open(`/logistics-print?type=voucher&id=${item.id}`, '_blank');
+    setDownloadingItem({ item, type });
   };
 
   return (
@@ -186,10 +213,10 @@ const PaymentReportPage = () => {
                 <div className={`rounded-circle bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
                   <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
                 </div>
-                 <div>
-                   <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
-                   <h4 className="fw-900 mb-0">{item.val}</h4>
-                 </div>
+                <div>
+                  <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
+                  <h4 className="fw-900 mb-0">{item.val}</h4>
+                </div>
               </div>
             </div>
           </div>
@@ -205,7 +232,7 @@ const PaymentReportPage = () => {
         <div className="card-body p-3">
           <div className="filter-bar-row">
             <div className="filter-item-search" style={{ maxWidth: '260px' }}>
-              <div className="search-group" style={{width:"260px"}}>
+              <div className="search-group" style={{ width: "260px" }}>
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
@@ -220,11 +247,11 @@ const PaymentReportPage = () => {
             </div>
 
             <div className="filter-item-select" style={{ minWidth: '220px' }}>
-              <select 
+              <select
                 className="form-select search-bar"
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
-                style={{width:"340px"}}
+                style={{ width: "340px" }}
               >
                 <option value=""> All Customers </option>
                 {customers.map(c => (
@@ -232,7 +259,7 @@ const PaymentReportPage = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className="date-filter-group ms-auto">
               <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
               <span className="text-muted small fw-bold mx-1">TO</span>
@@ -250,70 +277,90 @@ const PaymentReportPage = () => {
             </div>
           ) : (
             <>
-            <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
-              <table className="table table-hover align-middle mb-0">
-                <thead className="bg-light">
-                  <tr className="text-capitalize small fw-bold text-muted">
-                    <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Date</th>
-                    <th className="py-3 border-0 text-center">{activeTab === 'PAYMENT' ? 'Ref No' : 'Invoice No'}</th>
-                    <th className="py-3 border-0">Customer Name</th>
-                    <th className="py-3 border-0 text-center">{activeTab === 'PAYMENT' ? 'Mode' : 'Ageing'}</th>
-                    <th className="py-3 border-0 text-end px-4">{activeTab === 'PAYMENT' ? 'Paid Amount' : 'Pending Amount'}</th>
-                    <th className="py-3 border-0 text-center" style={{ width: '120px' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedItems.map((item: any, idx) => (
-                    <tr key={item.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted ">
-                        {(activePagination.currentPage - 1) * activePagination.itemsPerPage + idx + 1}
-                      </td>
-                      <td className="small text-muted">{item.date}</td>
-                      <td className="text-center small fw-bold text-dark ">{activeTab === 'PAYMENT' ? item.voucherNo : item.invoiceNumber}</td>
-                      <td className="fw-800 text-dark small text-capitalize">{activeTab === 'PAYMENT' ? item.partyName : item.customerName}</td>
-                      <td className="text-center">{activeTab === 'PAYMENT' ? <span className="badge bg-light text-dark shadow-sm border-0 px-3">{item.paymentMode}</span> : <span className={`badge rounded-pill fw-bold px-3 ${calculateDays(item.date) > 60 ? 'bg-danger' : calculateDays(item.date) > 30 ? 'bg-warning text-dark' : 'bg-success'}`}>{calculateDays(item.date)} Days</span>}</td>
-                      <td className={`text-end fw-900 px-4  ${activeTab === 'PAYMENT' ? 'text-success' : 'text-danger'}`}>₹{(activeTab === 'PAYMENT' ? item.amount : (item.grandTotal - (item.paidAmount || 0))).toLocaleString()}</td>
-                      <td className="text-center">
-                        <div className="d-flex justify-content-center gap-1">
-                          <Link href={activeTab === 'PAYMENT' ? `/vouchers/${item.id}/edit?readonly=true` : `/invoices/${item.id}?readonly=true`} className="btn-action-view">
-                            <i className="bi bi-eye-fill"></i>
-                          </Link>
-                          <div className="dropdown">
-                            <button className="btn btn-sm btn-outline-secondary border-0 p-0" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px' }}>
-                              <i className="bi bi-three-dots-vertical fs-5"></i>
-                            </button>
-                            <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item, activeTab)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item, activeTab)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
-                            </ul>
-                          </div>
-                        </div>
-                      </td>
+              <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="bg-light">
+                    <tr className="text-capitalize small fw-bold text-muted">
+                      <th className="px-4 py-3 border-0">Sno</th>
+                      <th className="py-3 border-0">Date</th>
+                      <th className="py-3 border-0 text-center">{activeTab === 'PAYMENT' ? 'Ref No' : 'Invoice No'}</th>
+                      <th className="py-3 border-0">Customer Name</th>
+                      <th className="py-3 border-0 text-center">{activeTab === 'PAYMENT' ? 'Mode' : 'Ageing'}</th>
+                      <th className="py-3 border-0 text-end px-4">{activeTab === 'PAYMENT' ? 'Paid Amount' : 'Pending Amount'}</th>
+                      <th className="py-3 border-0 text-center" style={{ width: '120px' }}>Action</th>
                     </tr>
-                  ))}
-                  {activeData.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-5 text-muted small">No payment records found.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            {totalPages > 1 && (
-              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">Showing {(activePagination.currentPage - 1) * activePagination.itemsPerPage + 1} to {Math.min(activePagination.currentPage * activePagination.itemsPerPage, activePagination.totalItems)} of {activePagination.totalItems} entries</span>
-                <PaginationComponent 
-                  currentPage={activePagination.currentPage} 
-                  totalPages={totalPages} 
-                  onPageChange={(page) => dispatch((activeTab === 'PAYMENT' ? setVoucherPage : setPendingPaymentPage)(page))} 
-                />
-
+                  </thead>
+                  <tbody>
+                    {paginatedItems.map((item: any, idx) => (
+                      <tr key={item.id} className="border-bottom border-light">
+                        <td className="px-4 small text-muted ">
+                          {(activePagination.currentPage - 1) * activePagination.itemsPerPage + idx + 1}
+                        </td>
+                        <td className="small text-muted">{item.date}</td>
+                        <td className="text-center small fw-bold text-dark ">{activeTab === 'PAYMENT' ? item.voucherNo : item.invoiceNumber}</td>
+                        <td className="fw-800 text-dark small text-capitalize">{activeTab === 'PAYMENT' ? item.partyName : item.customerName}</td>
+                        <td className="text-center">{activeTab === 'PAYMENT' ? <span className="badge bg-light text-dark shadow-sm border-0 px-3">{item.paymentMode}</span> : <span className={`badge rounded-pill fw-bold px-3 ${calculateDays(item.date) > 60 ? 'bg-danger' : calculateDays(item.date) > 30 ? 'bg-warning text-dark' : 'bg-success'}`}>{calculateDays(item.date)} Days</span>}</td>
+                        <td className={`text-end fw-900 px-4  ${activeTab === 'PAYMENT' ? 'text-success' : 'text-danger'}`}>₹{(activeTab === 'PAYMENT' ? item.amount : (item.grandTotal - (item.paidAmount || 0))).toLocaleString()}</td>
+                        <td className="text-center">
+                          <div className="d-flex justify-content-center gap-1">
+                            <Link href={activeTab === 'PAYMENT' ? `/vouchers/${item.id}/edit?readonly=true` : `/invoices/${item.id}?readonly=true`} className="btn-action-view">
+                              <i className="bi bi-eye-fill"></i>
+                            </Link>
+                            <div className="dropdown">
+                              <button className="btn btn-sm btn-outline-secondary border-0 p-0" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px' }}>
+                                <i className="bi bi-three-dots-vertical fs-5"></i>
+                              </button>
+                              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
+                                <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item, activeTab)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
+                                <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item, activeTab)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
+                              </ul>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {activeData.length === 0 && (
+                      <tr><td colSpan={7} className="text-center py-5 text-muted small">No payment records found.</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
+              {totalPages > 1 && (
+                <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                  <span className="text-muted small">Showing {(activePagination.currentPage - 1) * activePagination.itemsPerPage + 1} to {Math.min(activePagination.currentPage * activePagination.itemsPerPage, activePagination.totalItems)} of {activePagination.totalItems} entries</span>
+                  <PaginationComponent
+                    currentPage={activePagination.currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => dispatch((activeTab === 'PAYMENT' ? setVoucherPage : setPendingPaymentPage)(page))}
+                  />
+
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
       <style jsx>{` .fw-900 { font-weight: 900; } .bg-light-soft { background-color: #f7f9fc; } .table-responsive { padding-bottom: 80px; } `}</style>
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            {downloadingItem.type === 'PENDING' ? (
+              <IndustrialInvoice 
+                invoice={downloadingItem.item} 
+                company={activeCompany} 
+                settings={invoiceSettings} 
+              />
+            ) : (
+              <IndustrialDocument 
+                data={downloadingItem.item} 
+                type="voucher" 
+                company={activeCompany!} 
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

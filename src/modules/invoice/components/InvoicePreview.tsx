@@ -11,6 +11,9 @@ import { updateInvoiceSettings, initializeInvoiceSettings } from '@/redux/featur
 import InvoiceEmailReminderToggle from './InvoiceEmailReminderToggle';
 import BackButton from '@/components/BackButton';
 
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
 interface InvoicePreviewProps {
   invoice: Invoice;
   company: Company | null;
@@ -29,12 +32,28 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     window.print();
   };
 
+  const handleDownload = async () => {
+    if (!invoiceRef.current) return;
+    const canvas = await html2canvas(invoiceRef.current, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`INVOICE_${invoice.invoiceNumber || invoice.id}.pdf`);
+  };
+
   React.useEffect(() => {
     if (searchParams.get('print') === 'true') {
-      // Small delay to ensure styles are loaded
-      setTimeout(() => {
-        window.print();
-      }, 500);
+      setTimeout(() => { window.print(); }, 500);
+    }
+    if (searchParams.get('download') === 'true') {
+      handleDownload();
     }
   }, [searchParams]);
 
@@ -89,7 +108,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
             <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill" onClick={handlePrint}>
               <i className="bi bi-printer"></i> Print
             </button>
-            <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handlePrint}>
+            <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleDownload}>
               <i className="bi bi-filetype-pdf"></i> Export PDF
             </button>
           </div>

@@ -9,11 +9,16 @@ import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import api from '@/lib/axios';
+import { useRouter } from 'next/navigation';
 
 
 
 const InwardReportPage = () => {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [fromDate, setFromDate] = useState('');
@@ -39,15 +44,15 @@ const InwardReportPage = () => {
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
-    
+
     let url = `/inward?page=1&limit=10000&company_id=${activeCompany.id}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (fromDate) url += `&fromDate=${fromDate}`;
     if (toDate) url += `&toDate=${toDate}`;
-    
+
     const response = await api.get(url);
     const allItems = response.data.items;
-    
+
     const data = allItems.map((item: any, idx: number) => [
       (idx + 1).toString(),
       item.date ? new Date(item.date).toISOString().split('T')[0] : 'N/A',
@@ -70,19 +75,42 @@ const InwardReportPage = () => {
 
   // All counts come from backend aggregation — accurate across all pages
   const totals = {
-    count:     pagination.totalItems || 0,
+    count: pagination.totalItems || 0,
     completed: statusCounts.completed,
-    pending:   statusCounts.pending,
-    parties:   statusCounts.activeParties
+    pending: statusCounts.pending,
+    parties: statusCounts.activeParties
   };
 
   // Use IndustrialDocument format — same as inward detail page
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`INWARD_${downloadingItem.inwardNo || downloadingItem.id}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   const handlePrintRecord = (item: any) => {
-    window.open(`/logistics-print?type=inward&id=${item.id}&print=true`, '_blank');
+    router.push(`/logistics-print?type=inward&id=${item.id}&print=true`);
   };
 
   const handleExportPDFRecord = (item: any) => {
-    window.open(`/logistics-print?type=inward&id=${item.id}`, '_blank');
+    setDownloadingItem(item);
   };
 
   return (
@@ -134,10 +162,10 @@ const InwardReportPage = () => {
       {/* Summary Cards — all counts from backend (all pages) */}
       <div className="row g-3 mb-4">
         {[
-          { label: 'Total Receipts',  val: totals.count,     icon: 'box-seam',      color: 'primary' },
-          { label: 'Completed',       val: totals.completed, icon: 'check-circle',  color: 'success' },
-          { label: 'Pending Entries', val: totals.pending,   icon: 'clock-history', color: 'warning' },
-          { label: 'Active Parties',  val: totals.parties,   icon: 'people',        color: 'info' }
+          { label: 'Total Receipts', val: totals.count, icon: 'box-seam', color: 'primary' },
+          { label: 'Completed', val: totals.completed, icon: 'check-circle', color: 'success' },
+          { label: 'Pending Entries', val: totals.pending, icon: 'clock-history', color: 'warning' },
+          { label: 'Active Parties', val: totals.parties, icon: 'people', color: 'info' }
         ].map((item, i) => (
           <div key={i} className="col-md-3">
             <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
@@ -163,88 +191,96 @@ const InwardReportPage = () => {
             </div>
           ) : (
             <>
-            <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
-              <table className="table table-hover align-middle mb-0">
-                <thead className="bg-light">
-                  <tr className="text-capitalize small fw-bold text-muted">
-                    <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Date</th>
-                    <th className="py-3 border-0">Dc No</th>
-                    <th className="py-3 border-0">Customer Name</th>
-                    <th className="py-3 border-0">Address</th>
-                    <th className="py-3 border-0">Status</th>
-                    <th className="py-3 border-0 text-center px-4" style={{ width: '120px' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedItems.map((item, index) => (
-                    <tr key={item.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted">
-                        {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
-                      </td>
-                      <td className="small text-muted">{item.date}</td>
-                      <td className="text-dark fw-bold">{item.dcNo || item.challanNo || '-'}</td>
-                      <td className="text-dark fw-800 text-capitalize" style={{ fontSize: '0.85rem' }}>{item.customerName || item.vendorName}</td>
-                      <td className="text-muted small text-truncate" style={{ maxWidth: '200px' }}>{item.address || '-'}</td>
-                      <td>
-                        <span className={`badge rounded-pill px-3 py-1 small text-capitalize ${item.status === 'completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
-                          {item.status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="text-center px-4">
-                        <div className="d-flex justify-content-center align-items-center gap-1">
-                          <Link href={`/inward/${item.id}/edit?readonly=true`} className="btn-action-view" title="View Detail">
-                            <i className="bi bi-eye-fill"></i>
-                          </Link>
-                          <div className="dropdown">
-                            <button
-                              className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
-                              type="button"
-                              data-bs-toggle="dropdown"
-                              style={{ width: '32px', height: '32px' }}
-                            >
-                              <i className="bi bi-three-dots-vertical fs-5"></i>
-                            </button>
-                            <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2">
-                              <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}>
-                                  <i className="bi bi-printer text-primary"></i> Quick Print
-                                </button>
-                              </li>
-                              <li>
-                                <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}>
-                                  <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
-                                </button>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </td>
+              <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="bg-light">
+                    <tr className="text-capitalize small fw-bold text-muted">
+                      <th className="px-4 py-3 border-0">Sno</th>
+                      <th className="py-3 border-0">Date</th>
+                      <th className="py-3 border-0">Dc No</th>
+                      <th className="py-3 border-0">Customer Name</th>
+                      <th className="py-3 border-0">Address</th>
+                      <th className="py-3 border-0">Status</th>
+                      <th className="py-3 border-0 text-center px-4" style={{ width: '120px' }}>Action</th>
                     </tr>
-                  ))}
-                  {items.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-5 text-muted small">No inward records found matching filters.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            {totalPages > 1 && (
-              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">
-                  Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
-                </span>
-                <PaginationComponent
-                  currentPage={pagination.currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => dispatch(setInwardPage(page))}
-                />
+                  </thead>
+                  <tbody>
+                    {paginatedItems.map((item, index) => (
+                      <tr key={item.id} className="border-bottom border-light">
+                        <td className="px-4 small text-muted">
+                          {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
+                        </td>
+                        <td className="small text-muted">{item.date}</td>
+                        <td className="text-dark fw-bold">{item.dcNo || item.challanNo || '-'}</td>
+                        <td className="text-dark fw-800 text-capitalize" style={{ fontSize: '0.85rem' }}>{item.customerName || item.vendorName}</td>
+                        <td className="text-muted small text-truncate" style={{ maxWidth: '200px' }}>{item.address || '-'}</td>
+                        <td>
+                          <span className={`badge rounded-pill px-3 py-1 small text-capitalize ${item.status === 'completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
+                            {item.status || 'pending'}
+                          </span>
+                        </td>
+                        <td className="text-center px-4">
+                          <div className="d-flex justify-content-center align-items-center gap-1">
+                            <Link href={`/inward/${item.id}/edit?readonly=true`} className="btn-action-view" title="View Detail">
+                              <i className="bi bi-eye-fill"></i>
+                            </Link>
+                            <div className="dropdown">
+                              <button
+                                className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                style={{ width: '32px', height: '32px' }}
+                              >
+                                <i className="bi bi-three-dots-vertical fs-5"></i>
+                              </button>
+                              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2">
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}>
+                                    <i className="bi bi-printer text-primary"></i> Quick Print
+                                  </button>
+                                </li>
+                                <li>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}>
+                                    <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
+                                  </button>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {items.length === 0 && (
+                      <tr><td colSpan={7} className="text-center py-5 text-muted small">No inward records found matching filters.</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
+              {totalPages > 1 && (
+                <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                  <span className="text-muted small">
+                    Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries
+                  </span>
+                  <PaginationComponent
+                    currentPage={pagination.currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => dispatch(setInwardPage(page))}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
       <style jsx>{` .fw-900 { font-weight: 900; } .bg-light-soft { background-color: #f7f9fc; } .table-responsive { padding-bottom: 80px; } `}</style>
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            <IndustrialDocument data={downloadingItem} type="inward" company={activeCompany!} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

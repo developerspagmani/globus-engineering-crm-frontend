@@ -3,12 +3,15 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import IndustrialInvoice from './IndustrialInvoice';
 import { deleteInvoice, setInvoicePage, fetchNextNumbers, fetchInvoices } from '@/redux/features/invoiceSlice';
 import { deleteInward, fetchInwards } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { checkActionPermission } from '@/config/permissions';
-import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -30,46 +33,45 @@ const InvoiceTable: React.FC = () => {
 
   const handleTabChange = (tab: any) => { setActiveTab(tab); const params = new URLSearchParams(searchParams.toString()); params.set('tab', tab); router.push(`${pathname}?${params.toString()}`); };
 
+  const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'invoice' | 'inward'} | null>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+  const { settings: invoiceSettings } = useSelector((state: RootState) => state.invoices);
+
+  React.useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          const fileName = downloadingItem.type === 'invoice' 
+            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}.pdf`
+            : `INWARD_${downloadingItem.item.inwardNo || downloadingItem.item.id}.pdf`;
+          pdf.save(fileName);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   const handlePrintRecord = (item: any) => {
     const isInvoice = !!item.invoiceNumber;
     if (isInvoice) {
       router.push(`/invoices/${item.id}?print=true`);
       return;
     }
-
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Record</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style></head><body>');
-    printWindow.document.write(`<div class="header"><h1>Globus Engineering</h1><p>Record</p></div>`);
-    printWindow.document.write('<div class="grid">');
-    printWindow.document.write(`<div><div class="label">Customer</div><div class="value">${item.customerName}</div></div>`);
-    printWindow.document.write(`<div><div class="label">DC No</div><div class="value">${item.dcNo || item.challanNo}</div></div>`);
-    printWindow.document.write(`<div><div class="label">Date</div><div class="value">${item.date}</div></div>`);
-    printWindow.document.write(`<div><div class="label">PO Ref</div><div class="value">${item.poReference || '-'}</div></div>`);
-    printWindow.document.write('</div>');
-    printWindow.document.close(); printWindow.print();
+    router.push(`/logistics-print?type=inward&id=${item.id}&print=true`);
   };
 
   const handleExportPDFRecord = (item: any) => {
     const isInvoice = !!item.invoiceNumber;
-    if (isInvoice) {
-      router.push(`/invoices/${item.id}?exportPDF=true`);
-      return;
-    }
-
-    const doc = new jsPDF();
-    doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
-
-    const body = [
-      ['Customer', item.customerName],
-      ['DC Number', item.dcNo || item.challanNo],
-      ['Date', item.date],
-      ['PO Reference', item.poReference || '-']
-    ];
-
-    autoTable(doc, { startY: 55, body, theme: 'grid', styles: { cellPadding: 8, fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } } });
-    doc.save(`record_${item.id}.pdf`);
+    setDownloadingItem({ item, type: isInvoice ? 'invoice' : 'inward' });
   };
 
   const handleDeleteParams = (id: string, type: 'invoice' | 'inward') => { setDeleteModal({ isOpen: true, id, type }); };
@@ -226,13 +228,23 @@ const InvoiceTable: React.FC = () => {
                           <i className="bi bi-three-dots-vertical fs-5"></i>
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
+                          <li>
+                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}>
+                              <i className="bi bi-printer text-primary"></i> Quick Print
+                            </button>
+                          </li>
+                          <li>
+                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}>
+                              <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
+                            </button>
+                          </li>
                           {(item.type === 'BOTH' || item.type === 'INVOICE') && (
                             <li>
                               <button
                                 className="dropdown-item d-flex align-items-center gap-2 py-2 small"
                                 onClick={() => router.push(`/invoices/${item.id}?print=true&type=WP`)}
                               >
-                                <i className="bi bi-printer text-primary"></i> WP Print
+                                <i className="bi bi-printer text-muted small"></i> WP Print (Alt)
                               </button>
                             </li>
                           )}
@@ -242,7 +254,7 @@ const InvoiceTable: React.FC = () => {
                                 className="dropdown-item d-flex align-items-center gap-2 py-2 small"
                                 onClick={() => router.push(`/invoices/${item.id}?print=true&type=WOP`)}
                               >
-                                <i className="bi bi-file-earmark-text text-danger"></i> WOP Print
+                                <i className="bi bi-file-earmark-text text-muted small"></i> WOP Print (Alt)
                               </button>
                             </li>
                           )}
@@ -278,6 +290,26 @@ const InvoiceTable: React.FC = () => {
       )}
 
       <ConfirmationModal isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, id: null, type: null })} onConfirm={confirmDelete} title={deleteModal.type === 'invoice' ? "Remove Invoice Record" : "Remove Inward Selection"} message="Are you sure you want to delete this record? This action is permanent and cannot be undone." />
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            {downloadingItem.type === 'invoice' ? (
+              <IndustrialInvoice 
+                invoice={downloadingItem.item} 
+                company={activeCompany} 
+                settings={invoiceSettings} 
+              />
+            ) : (
+              <IndustrialDocument 
+                data={downloadingItem.item} 
+                type="inward" 
+                company={activeCompany!} 
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -14,12 +14,17 @@ import { fetchVendors } from '@/redux/features/vendorSlice';
 import Loader from '@/components/Loader';
 import BackButton from '@/components/BackButton';
 import Link from 'next/link';
+import api from '@/lib/axios';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const PrintContent = () => {
    const searchParams = useSearchParams();
    const dispatch = useDispatch();
    const type = searchParams.get('type') as 'inward' | 'outward' | 'challan' | 'voucher';
    const id = searchParams.get('id');
+   const download = searchParams.get('download') === 'true';
+   const print = searchParams.get('print') === 'true';
 
    const { company } = useSelector((state: RootState) => state.auth);
    const { items: customers } = useSelector((state: RootState) => state.customers);
@@ -32,6 +37,7 @@ const PrintContent = () => {
    const [data, setData] = useState<any>(null);
    const [loading, setLoading] = useState(true);
    const accentColor = company?.invoiceSettings?.accentColor || '#0d6efd';
+   const printRef = React.useRef<HTMLDivElement>(null);
 
    useEffect(() => {
       if (!id || !type || !company?.id) return;
@@ -63,7 +69,7 @@ const PrintContent = () => {
       };
 
       fetchData();
-   }, [id, type, company?.id, dispatch]); // Reduced dependencies to prevent infinite loops
+   }, [id, type, company?.id, dispatch]);
 
    useEffect(() => {
       if (!loading && id) {
@@ -79,13 +85,47 @@ const PrintContent = () => {
    }, [loading, inwardData, outwardData, challanData, voucherData, id, type]);
 
    useEffect(() => {
-      if (data && searchParams.get('print') === 'true') {
+      if (data && print && !download) {
          const timer = setTimeout(() => {
             window.print();
          }, 1200);
          return () => clearTimeout(timer);
       }
-   }, [data, searchParams]);
+      
+      if (data && download) {
+         const triggerDownload = async () => {
+            // Wait for images and layout to settle
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            if (printRef.current) {
+               const canvas = await html2canvas(printRef.current, {
+                  scale: 2,
+                  useCORS: true,
+                  logging: false,
+               });
+               const imgData = canvas.toDataURL('image/png');
+               const pdf = new jsPDF('p', 'mm', 'a4');
+               const imgProps = pdf.getImageProperties(imgData);
+               const pdfWidth = pdf.internal.pageSize.getWidth();
+               const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+               pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+               pdf.save(`${type.toUpperCase()}_${data.inwardNo || data.outwardNo || data.challanNo || data.voucherNo || id}.pdf`);
+            }
+         };
+         triggerDownload();
+      }
+   }, [data, print, download, type, id]);
+
+   const handleExport = async () => {
+      if (!printRef.current) return;
+      const canvas = await html2canvas(printRef.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${type.toUpperCase()}_${data?.inwardNo || data?.outwardNo || data?.challanNo || data?.voucherNo || id}.pdf`);
+   };
 
    if (!id || !type) return <div className="p-5 text-center text-warning">Invalid print parameters provided.</div>;
    if (loading || !company?.id) return <div className="p-5 text-center"><Loader text="Preparing Document..." /></div>;
@@ -109,13 +149,15 @@ const PrintContent = () => {
                <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill" onClick={() => window.print()}>
                   <i className="bi bi-printer"></i> Print
                </button>
-               <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={() => window.print()}>
+               <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleExport}>
                   <i className="bi bi-filetype-pdf"></i> Export PDF
                </button>
             </div>
          </div>
 
-         <IndustrialDocument data={data} type={type} company={company} />
+         <div ref={printRef}>
+            <IndustrialDocument data={data} type={type} company={company} />
+         </div>
          
          <style jsx>{`
             .print-preview-container {

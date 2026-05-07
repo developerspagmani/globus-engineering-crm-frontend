@@ -9,12 +9,14 @@ import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { checkActionPermission } from '@/config/permissions';
-import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 
 export default function InwardListPage() {
@@ -52,12 +54,35 @@ export default function InwardListPage() {
     }
   };
 
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`INWARD_${downloadingItem.inwardNo || downloadingItem.id}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   const handlePrintInward = (item: any) => {
     router.push(`/logistics-print?type=inward&id=${item.id}&print=true`);
   };
 
   const handleExportPDFInward = (item: any) => {
-    router.push(`/logistics-print?type=inward&id=${item.id}`);
+    setDownloadingItem(item);
   };
 
   return (
@@ -71,9 +96,9 @@ export default function InwardListPage() {
             <p className="text-muted small mb-0">Manage incoming materials and vendor gate receipts for industrial operations.</p>
           </div>
           <div className="d-flex align-items-center gap-2">
-            <ExportExcel 
-              data={inwards} 
-              fileName="Inward_Records" 
+            <ExportExcel
+              data={inwards}
+              fileName="Inward_Records"
               headers={{ inwardNo: 'Inward No', customerName: 'Customer', poReference: 'PO No', dcNo: 'DC No', date: 'Date' }}
               buttonText="Export List"
             />
@@ -105,7 +130,7 @@ export default function InwardListPage() {
                 </div>
               </div>
               <div className="filter-item-select">
-                <select className="form-select search-bar" 
+                <select className="form-select search-bar"
                   value={filters.status} onChange={(e) => dispatch(setInwardFilters({ status: e.target.value as any }))}>
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
@@ -113,16 +138,16 @@ export default function InwardListPage() {
                 </select>
               </div>
               <div className="date-filter-group">
-                <input 
-                  type="date" 
-                  className="text-muted" 
+                <input
+                  type="date"
+                  className="text-muted"
                   value={filters.fromDate}
                   onChange={(e) => dispatch(setInwardFilters({ fromDate: e.target.value }))}
                 />
                 <span className="text-muted small fw-bold mx-1">TO</span>
-                <input 
-                  type="date" 
-                  className="text-muted" 
+                <input
+                  type="date"
+                  className="text-muted"
                   value={filters.toDate}
                   onChange={(e) => dispatch(setInwardFilters({ toDate: e.target.value }))}
                 />
@@ -198,17 +223,17 @@ export default function InwardListPage() {
           {totalPages > 1 && (
             <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
               <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
-              <PaginationComponent 
-                currentPage={pagination.currentPage} 
-                totalPages={totalPages} 
-                onPageChange={(page) => dispatch(setInwardPage(page))} 
+              <PaginationComponent
+                currentPage={pagination.currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => dispatch(setInwardPage(page))}
               />
             </div>
           )}
         </div>
       </div>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, id: null })} onConfirm={confirmDelete}
         title="Remove Inward Record" message="Are you sure you want to delete this record? This action is permanent and cannot be undone."
       />
@@ -219,6 +244,15 @@ export default function InwardListPage() {
         .bg-light-soft { background-color: #f7f9fc; }
         .table-responsive { min-height: 400px; padding-bottom: 80px; }
       `}</style>
+      
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            <IndustrialDocument data={downloadingItem} type="inward" company={company!} />
+          </div>
+        </div>
+      )}
     </ModuleGuard>
   );
 }

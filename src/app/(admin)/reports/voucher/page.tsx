@@ -11,20 +11,26 @@ import Breadcrumb from '@/components/Breadcrumb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import { useRouter } from 'next/navigation';
 
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import html2canvas from 'html2canvas';
 
 const VoucherReportPage = () => {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, pagination, loading } = useSelector((state: RootState) => state.voucher);
 
-  useEffect(() => { 
-    setMounted(true); 
-    if (activeCompany?.id) { 
+  useEffect(() => {
+    setMounted(true);
+    if (activeCompany?.id) {
       (dispatch as any)(fetchVouchers({
         company_id: activeCompany.id,
         page: pagination.currentPage,
@@ -32,9 +38,34 @@ const VoucherReportPage = () => {
         search: searchTerm,
         fromDate: fromDate,
         toDate: toDate
-      })); 
-    } 
+      }));
+    }
   }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, searchTerm, fromDate, toDate]);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        // Short delay to ensure it's rendered
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+          });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`VOUCHER_${downloadingItem.voucherNo || downloadingItem.id}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
 
   if (!mounted) return null;
 
@@ -42,11 +73,11 @@ const VoucherReportPage = () => {
   const paginatedItems = items;
 
   const handlePrint = (item: any) => {
-    window.open(`/logistics-print?type=voucher&id=${item.id}&print=true`, '_blank');
+    router.push(`/logistics-print?type=voucher&id=${item.id}&print=true`);
   };
 
   const handleExport = (item: any) => {
-    window.open(`/logistics-print?type=voucher&id=${item.id}`, '_blank');
+    setDownloadingItem(item);
   };
 
   return (
@@ -70,12 +101,12 @@ const VoucherReportPage = () => {
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
-                <input 
-                  type="text" 
-                  className="form-control search-bar" 
-                  placeholder="Search party or voucher..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
+                <input
+                  type="text"
+                  className="form-control search-bar"
+                  placeholder="Search party or voucher..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
@@ -96,65 +127,74 @@ const VoucherReportPage = () => {
             </div>
           ) : (
             <>
-            <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
-              <table className="table table-hover align-middle mb-0">
-                <thead className="bg-light">
-                  <tr className="text-capitalize small fw-bold text-muted">
-                    <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Date</th>
-                    <th className="py-3 border-0 text-center">Voucher No</th>
-                    <th className="py-3 border-0">Party Name</th>
-                    <th className="py-3 border-0 text-center">Type</th>
-                    <th className="py-3 border-0 text-end px-4">Amount</th>
-                    <th className="py-3 border-0 text-center" style={{ width: '120px' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedItems.map((v, i) => (
-                    <tr key={v.id} className="border-bottom border-light">
-                      <td className="px-4 small text-muted ">
-                        {(pagination.currentPage - 1) * pagination.itemsPerPage + i + 1}
-                      </td>
-                      <td className="small text-muted">{v.date}</td>
-                      <td className="text-center small fw-bold text-dark ">{v.voucherNo}</td>
-                      <td className="fw-800 text-dark small text-capitalize">{v.partyName}</td>
-                      <td className="text-center"><span className={`small fw-bold text-capitalize ${v.type === 'receipt' ? 'text-success' : 'text-danger'}`}>{v.type}</span></td>
-                      <td className={`text-end fw-900 px-4  ${v.type === 'receipt' ? 'text-success' : 'text-danger'}`}>₹{v.amount.toLocaleString()}</td>
-                      <td className="text-center">
-                        <div className="d-flex justify-content-center gap-1">
-                          <Link href={`/vouchers/${v.id}/edit?readonly=true`} className="btn-action-view"><i className="bi bi-eye-fill"></i></Link>
-                          <div className="dropdown">
-                            <button className="btn btn-sm btn-outline-secondary border-0 p-0" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px' }}>
-                              <i className="bi bi-three-dots-vertical fs-5"></i>
-                            </button>
-                            <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrint(v)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExport(v)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
-                            </ul>
-                          </div>
-                        </div>
-                      </td>
+              <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
+                <table className="table table-hover align-middle mb-0">
+                  <thead className="bg-light">
+                    <tr className="text-capitalize small fw-bold text-muted">
+                      <th className="px-4 py-3 border-0">Sno</th>
+                      <th className="py-3 border-0">Date</th>
+                      <th className="py-3 border-0 text-center">Voucher No</th>
+                      <th className="py-3 border-0">Party Name</th>
+                      <th className="py-3 border-0 text-center">Type</th>
+                      <th className="py-3 border-0 text-end px-4">Amount</th>
+                      <th className="py-3 border-0 text-center" style={{ width: '120px' }}>Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {totalPages > 1 && (
-              <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
-                <PaginationComponent 
-                  currentPage={pagination.currentPage} 
-                  totalPages={totalPages} 
-                  onPageChange={(page) => dispatch(setVoucherPage(page))} 
-                />
-
+                  </thead>
+                  <tbody>
+                    {paginatedItems.map((v, i) => (
+                      <tr key={v.id} className="border-bottom border-light">
+                        <td className="px-4 small text-muted ">
+                          {(pagination.currentPage - 1) * pagination.itemsPerPage + i + 1}
+                        </td>
+                        <td className="small text-muted">{v.date}</td>
+                        <td className="text-center small fw-bold text-dark ">{v.voucherNo}</td>
+                        <td className="fw-800 text-dark small text-capitalize">{v.partyName}</td>
+                        <td className="text-center"><span className={`small fw-bold text-capitalize ${v.type === 'receipt' ? 'text-success' : 'text-danger'}`}>{v.type}</span></td>
+                        <td className={`text-end fw-900 px-4  ${v.type === 'receipt' ? 'text-success' : 'text-danger'}`}>₹{v.amount.toLocaleString()}</td>
+                        <td className="text-center">
+                          <div className="d-flex justify-content-center gap-1">
+                            <Link href={`/vouchers/${v.id}/edit?readonly=true`} className="btn-action-view"><i className="bi bi-eye-fill"></i></Link>
+                            <div className="dropdown">
+                              <button className="btn btn-sm btn-outline-secondary border-0 p-0" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px' }}>
+                                <i className="bi bi-three-dots-vertical fs-5"></i>
+                              </button>
+                              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
+                                <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrint(v)}><i className="bi bi-printer text-primary"></i> Quick Print</button></li>
+                                <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExport(v)}><i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF</button></li>
+                              </ul>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+              {totalPages > 1 && (
+                <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
+                  <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} entries</span>
+                  <PaginationComponent
+                    currentPage={pagination.currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => dispatch(setVoucherPage(page))}
+                  />
+
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
       <style jsx>{` .fw-900 { font-weight: 900; } .bg-light-soft { background-color: #f7f9fc; } .table-responsive { padding-bottom: 80px; } `}</style>
+
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            <IndustrialDocument data={downloadingItem} type="voucher" company={activeCompany!} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

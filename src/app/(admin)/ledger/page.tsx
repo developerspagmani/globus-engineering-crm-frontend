@@ -19,8 +19,6 @@ import { LedgerEntry } from '@/types/modules';
 import ExportExcel from '@/components/shared/ExportExcel';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
-
-
 export default function LedgerPage() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -203,8 +201,35 @@ export default function LedgerPage() {
     doc.save(`ledger_export_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  const [downloadingItem, setDownloadingItem] = useState<any>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`LEDGER_${downloadingItem.name.toUpperCase()}_${new Date().toISOString().split('T')[0]}.pdf`);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
   const handleQuickPrint = (party: any) => {
     router.push(`/ledger/${party.id}?print=true`);
+  };
+
+  const handleExportPDFRecord = (party: any) => {
+    setDownloadingItem(party);
   };
 
 
@@ -350,6 +375,12 @@ export default function LedgerPage() {
                                   <span className="small fw-semibold">Quick Print</span>
                                 </button>
                               </li>
+                              <li>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFRecord(party)}>
+                                  <i className="bi bi-file-earmark-pdf text-danger"></i>
+                                  <span className="small fw-semibold">Export PDF</span>
+                                </button>
+                              </li>
                             </ul>
                           </div>
                         </div>
@@ -389,6 +420,18 @@ export default function LedgerPage() {
           .card { border: none !important; box-shadow: none !important; }
         }
       `}</style>
+      {/* Hidden Download Generator */}
+      {downloadingItem && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={downloadRef}>
+            <LedgerPrintTemplate 
+               party={downloadingItem} 
+               entries={ledgerEntries.filter(e => String(e.partyId) === String(downloadingItem.id))} 
+               company={activeCompany} 
+            />
+          </div>
+        </div>
+      )}
     </ModuleGuard>
   );
 }
