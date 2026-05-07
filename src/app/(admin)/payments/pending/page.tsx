@@ -68,7 +68,7 @@ const PendingPaymentPage = () => {
 
   // Open the invoice's own print page — exactly the same format as invoice print
   const handlePrintPending = (inv: any) => {
-    window.open(`/invoices/${inv.id}?print=true`, '_blank');
+    router.push(`/invoices/${inv.id}?print=true`);
   };
 
   return (
