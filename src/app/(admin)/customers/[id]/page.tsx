@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/redux/store';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import CustomerForm from '@/modules/customer/components/CustomerForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
 import { checkActionPermission } from '@/config/permissions';
+import { fetchCustomers } from '@/redux/features/customerSlice';
+import Loader from '@/components/Loader';
 
 export default function EditCustomerPage() {
   const params = useParams();
@@ -16,9 +18,26 @@ export default function EditCustomerPage() {
   const searchParams = useSearchParams();
   const [isEdit, setIsEdit] = React.useState(searchParams.get('edit') === 'true');
 
-  const { user } = useSelector((state: RootState) => state.auth);
-  const { items } = useSelector((state: RootState) => state.customers);
+  const dispatch = useDispatch<AppDispatch>();
+  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { items, loading } = useSelector((state: RootState) => state.customers);
   const customer = items.find(c => String(c.id) === String(id));
+
+  React.useEffect(() => {
+    if (items.length === 0) {
+      dispatch(fetchCustomers({ company_id: activeCompany?.id, page: 1, limit: 100 }));
+    }
+  }, [dispatch, items.length, activeCompany?.id]);
+
+  if (loading || (items.length === 0 && !customer)) {
+    return (
+      <ModuleGuard moduleId="mod_customer">
+        <div className="container-fluid py-4 min-vh-100 d-flex align-items-center justify-content-center">
+          <Loader text="Loading customer details..." />
+        </div>
+      </ModuleGuard>
+    );
+  }
 
   return (
     <ModuleGuard moduleId="mod_customer">

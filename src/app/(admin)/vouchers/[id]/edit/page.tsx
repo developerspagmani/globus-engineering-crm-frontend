@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { RootState } from '@/redux/store';
+import { AppDispatch, RootState } from '@/redux/store';
 import VoucherForm from '@/modules/voucher/components/VoucherForm';
 import Link from 'next/link';
 import BackButton from '@/components/BackButton';
+import { fetchVouchers } from '@/redux/features/voucherSlice';
+import Loader from '@/components/Loader';
 
 const EditVoucherPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -16,14 +18,29 @@ const EditVoucherPage = () => {
   const [isEdit, setIsEdit] = useState(searchParams.get('edit') === 'true');
   const isReadOnly = searchParams.get('readonly') === 'true';
 
-  const { items } = useSelector((state: RootState) => state.voucher);
+  const dispatch = useDispatch<AppDispatch>();
+  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { items, loading } = useSelector((state: RootState) => state.voucher);
   const voucher = items.find(item => item.id === id);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (items.length === 0 && activeCompany?.id) {
+      dispatch(fetchVouchers({
+        company_id: activeCompany.id,
+        page: 1,
+        limit: 100
+      }));
+    }
+  }, [dispatch, items.length, activeCompany?.id]);
 
-  if (!mounted) return <div className="content-area"></div>;
+  if (!mounted || loading || (items.length === 0 && !voucher)) {
+    return (
+      <div className="content-area d-flex align-items-center justify-content-center min-vh-100">
+        <Loader text="Loading voucher details..." />
+      </div>
+    );
+  }
 
   if (!voucher) {
     return (

@@ -23,7 +23,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/vouchers';
   const { items: customers } = useSelector((state: RootState) => state.customers);
-  const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
+  const { items: allInvoices, loading: invoicesLoading } = useSelector((state: RootState) => state.invoices);
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -46,13 +46,22 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+      const invoiceNosParam = (mode === 'view' || mode === 'edit') && initialData?.referenceNo
+        ? initialData.referenceNo
+        : undefined;
+
+      (dispatch as any)(fetchInvoices({ 
+        company_id: activeCompany.id, 
+        limit: 1000,
+        invoice_nos: invoiceNosParam
+      }));
+
       // Ensure customers are fetched if the list is empty
       if (customers.length === 0) {
         (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
       }
     }
-  }, [dispatch, activeCompany, customers.length]);
+  }, [dispatch, activeCompany, customers.length, initialData?.referenceNo, mode]);
 
   useEffect(() => {
     if (initialData) {
@@ -168,12 +177,48 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     }
   };
 
+  const isInvoiceSelected = (inv: any) => {
+    return formData.selectedInvoices.some(ref => {
+      const r = ref.trim();
+      const invId = String(inv.id).trim();
+      const invNo = String(inv.invoice_no || '').trim();
+      const invNum = String(inv.invoiceNumber || '').trim();
+
+      // Direct ID match
+      if (r === invId) return true;
+
+      // Direct string matches
+      if (r === invNo || r === invNum) return true;
+
+      // Numeric value matches (stripping leading zeros/padding)
+      const numRef = parseInt(r, 10);
+      const numInvNo = parseInt(invNo, 10);
+      const numInvNum = parseInt(invNum, 10);
+
+      if (!isNaN(numRef)) {
+        if (numRef !== 0) {
+          return numRef === numInvNo || numRef === numInvNum;
+        } else {
+          // If ref is "0", only match if both are exactly "0" or 0
+          return invNo === '0' || invNum === '0';
+        }
+      }
+
+      return false;
+    });
+  };
+
   // Filter invoices for selected customer
   const customerInvoices = allInvoices.filter(inv => {
     const isMatched = String(inv.customerId) === String(formData.customerId);
-    const isSelected = formData.selectedInvoices.includes(String(inv.id));
-    const isNotPaid = inv.status?.toLowerCase() !== 'paid';
+    const isSelected = isInvoiceSelected(inv);
     
+    if (mode === 'view') {
+      // In view mode, ONLY show the invoices that are selected for this voucher
+      return isMatched && isSelected;
+    }
+
+    const isNotPaid = inv.status?.toLowerCase() !== 'paid';
     // Show if it belongs to customer AND (is not paid OR was already selected for this voucher)
     return isMatched && (isNotPaid || isSelected);
   });
@@ -255,37 +300,50 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 </tr>
               </thead>
               <tbody className="border-0">
-                {customerInvoices.map(inv => (
-                  <tr key={inv.id} className="border-bottom border-light">
-                    <td className="text-center">
-                      <input
-                        type="checkbox"
-                        className="form-check-input shadow-none border-secondary-subtle"
-                        checked={formData.selectedInvoices.includes(inv.id)}
-                        onChange={() => toggleInvoice(inv.id, inv.grandTotal - (inv.paidAmount || 0))}
-                        disabled={mode === 'view'}
-                      />
-                    </td>
-                    <td className="small text-muted">{new Date(inv.date).toLocaleDateString()}</td>
-                    <td className="small fw-bold text-center text-dark">{inv.invoiceNumber}</td>
-                    <td className="small fw-bold text-end text-dark">
-                      {inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                ))}
-                {formData.customerId && customerInvoices.length === 0 && (
+                {invoicesLoading ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-5 text-muted small">
-                      {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
-                        ? "All invoices for this customer are fully paid" 
-                        : "No invoices found for this customer"}
+                    <td colSpan={4} className="text-center py-5">
+                      <div className="spinner-border text-primary spinner-border-sm me-2" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                      <span className="text-muted small">Loading invoices...</span>
                     </td>
                   </tr>
-                )}
-                {!formData.customerId && (
-                  <tr>
-                    <td colSpan={4} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
-                  </tr>
+                ) : (
+                  <>
+                    {customerInvoices.map(inv => (
+                      <tr key={inv.id} className="border-bottom border-light">
+                        <td className="text-center">
+                          <input
+                            type="checkbox"
+                            className="form-check-input shadow-none border-secondary-subtle"
+                            checked={isInvoiceSelected(inv)}
+                            onChange={() => toggleInvoice(inv.id, inv.grandTotal - (inv.paidAmount || 0))}
+                            disabled={mode === 'view'}
+                          />
+                        </td>
+                        <td className="small text-muted">{new Date(inv.date).toLocaleDateString()}</td>
+                        <td className="small fw-bold text-center text-dark">{inv.invoiceNumber}</td>
+                        <td className="small fw-bold text-end text-dark">
+                          {inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))}
+                    {formData.customerId && customerInvoices.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="text-center py-5 text-muted small">
+                          {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
+                            ? "All invoices for this customer are fully paid" 
+                            : "No invoices found for this customer"}
+                        </td>
+                      </tr>
+                    )}
+                    {!formData.customerId && (
+                      <tr>
+                        <td colSpan={4} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
+                      </tr>
+                    )}
+                  </>
                 )}
               </tbody>
               <tfoot className="border-0">

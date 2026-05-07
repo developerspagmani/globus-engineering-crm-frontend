@@ -73,9 +73,10 @@ export const fetchInvoices = createAsyncThunk(
     fromDate?: string; 
     toDate?: string;
     type?: string;
+    invoice_nos?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type, invoice_nos } = params;
       let url = `/invoices?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -83,6 +84,7 @@ export const fetchInvoices = createAsyncThunk(
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (type && type !== 'all') url += `&type=${type}`;
+      if (invoice_nos) url += `&invoice_nos=${encodeURIComponent(invoice_nos)}`;
       
       const response = await api.get(url);
       return {
