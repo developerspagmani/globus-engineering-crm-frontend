@@ -32,8 +32,18 @@ export const fetchPendingPayments = createAsyncThunk(
             customerId: inv.customer_id?.toString() || inv.customerId?.toString() || '',
             customerName: inv.customer_name || inv.customerName || 'N/A',
             company_id: inv.company_id?.toString() || inv.companyId?.toString() || '',
-            date: inv.invoice_date || inv.date ? new Date(inv.invoice_date || inv.date).toISOString().split('T')[0] : '',
-            dueDate: inv.due_date || inv.dueDate ? new Date(inv.due_date || inv.dueDate).toISOString().split('T')[0] : '',
+            date: (() => {
+              const raw = inv.invoice_date || inv.date;
+              if (!raw) return '';
+              const d = new Date(raw);
+              return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+            })(),
+            dueDate: (() => {
+              const raw = inv.due_date || inv.dueDate;
+              if (!raw) return '';
+              const d = new Date(raw);
+              return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+            })(),
             grandTotal,
             paidAmount,
             status: inv.status?.toLowerCase() || 'draft',

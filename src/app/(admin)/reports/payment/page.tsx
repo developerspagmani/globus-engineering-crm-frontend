@@ -218,7 +218,14 @@ const PaymentReportPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Payment Report', active: true }]} /><h2 className="fw-900 mt-2">Payment Report</h2><p className="text-muted small mb-0">Track collection history and monitor outstanding dues.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-3">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title={activeTab === 'PAYMENT' ? "Collection History" : "Outstanding Dues"} onFetchAll={handleFetchAllForExport} />
+          <ReportActions 
+            setFromDate={activeTab === 'PENDING' ? setFromDate : undefined} 
+            setToDate={activeTab === 'PENDING' ? setToDate : undefined} 
+            fromDate={activeTab === 'PENDING' ? fromDate : undefined}
+            toDate={activeTab === 'PENDING' ? toDate : undefined}
+            title={activeTab === 'PAYMENT' ? "Collection History" : "Outstanding Dues"} 
+            onFetchAll={handleFetchAllForExport} 
+          />
           <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { 
             setFromDate(""); 
             setToDate(""); 
@@ -259,8 +266,20 @@ const PaymentReportPage = () => {
       </div>
 
       <div className="d-flex gap-2 mb-3">
-        <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PAYMENT' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => setActiveTab('PAYMENT')}>Payment History</button>
-        <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PENDING' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => setActiveTab('PENDING')}>Pending Payments (Ageing)</button>
+        <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PAYMENT' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => { 
+          setActiveTab('PAYMENT'); 
+          setFromDate(""); 
+          setToDate(""); 
+          setSearchTerm("");
+          setSelectedCustomerId("");
+        }}>Payment History</button>
+        <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PENDING' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => { 
+          setActiveTab('PENDING'); 
+          setFromDate(""); 
+          setToDate(""); 
+          setSearchTerm("");
+          setSelectedCustomerId("");
+        }}>Pending Payments (Ageing)</button>
       </div>
 
       <div className="card shadow-sm border-0 mb-4 rounded-4 overflow-hidden">

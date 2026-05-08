@@ -7,6 +7,8 @@ import autoTable from 'jspdf-autotable';
 interface ReportActionsProps {
   setFromDate?: (date: string) => void;
   setToDate?: (date: string) => void;
+  fromDate?: string;
+  toDate?: string;
   title?: string;
   orientation?: 'portrait' | 'landscape';
   onFetchAll?: () => Promise<{ headers: string[], data: string[][] }>;
@@ -15,6 +17,8 @@ interface ReportActionsProps {
 const ReportActions: React.FC<ReportActionsProps> = ({ 
   setFromDate, 
   setToDate, 
+  fromDate,
+  toDate,
   title = "Report", 
   orientation = 'portrait', 
   onFetchAll 
@@ -22,6 +26,12 @@ const ReportActions: React.FC<ReportActionsProps> = ({
   const [activePreset, setActivePreset] = React.useState<string | null>(null);
   const [printLoading, setPrintLoading] = React.useState(false);
   const [pdfLoading, setPdfLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!fromDate && !toDate) {
+      setActivePreset(null);
+    }
+  }, [fromDate, toDate]);
 
   const formatDate = (date: Date) => {
     const y = date.getFullYear();
@@ -31,6 +41,12 @@ const ReportActions: React.FC<ReportActionsProps> = ({
   };
 
   const handlePresetClick = (type: 'week' | 'month' | 'thisMonth' | 'year') => {
+    if (activePreset === type) {
+      setActivePreset(null);
+      setFromDate?.("");
+      setToDate?.("");
+      return;
+    }
     setActivePreset(type);
     const today = new Date();
     let from = new Date();

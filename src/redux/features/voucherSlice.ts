@@ -33,7 +33,11 @@ export const fetchVouchers = createAsyncThunk(
         items: response.data.items.map((v: any) => ({
           id: v.id.toString(),
           voucherNo: v.voucher_no,
-          date: v.date ? new Date(v.date).toISOString().split('T')[0] : '',
+          date: (() => {
+            if (!v.date) return '';
+            const d = new Date(v.date);
+            return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+          })(),
           type: v.type?.toLowerCase() || 'payment',
           partyId: v.party_id?.toString(),
           partyName: v.party_name,
