@@ -44,7 +44,7 @@ const InvoiceReportPage = () => {
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
     
-    let url = `/invoices?page=1&limit=10000&company_id=${activeCompany.id}`;
+    let url = `/invoices?page=1&limit=10000&company_id=${activeCompany.id}&type=INVOICE,BOTH`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (statusFilter && statusFilter !== 'all') url += `&status=${statusFilter}`;
     if (fromDate) url += `&fromDate=${fromDate}`;
