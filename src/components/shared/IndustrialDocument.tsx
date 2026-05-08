@@ -76,6 +76,12 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
    const partyType = data.partyType || (data.vendorName ? 'vendor' : 'customer');
    
    let enrichedData = { ...data };
+   
+   // Clean up 'Migrated' prefix from description if present
+   if (enrichedData.description && typeof enrichedData.description === 'string') {
+      enrichedData.description = enrichedData.description.replace(/^Migrated\s+/i, '');
+   }
+
    if (partyId) {
       if (partyType === 'customer' || !data.address) {
          const cust = customers.find((c: any) => String(c.id) === String(partyId));
@@ -314,7 +320,6 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                <div style={{ textAlign: 'center', flex: 1 }}>
                   <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '900', letterSpacing: '0.8pt' }}>{settings.companyName || company?.name?.toUpperCase() || 'GLOBUS ENGINEERING MAIN'}</h1>
                   <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>{settings.companySubHeader || 'An ISO 9001: 2015 Certified Company'}</div>
-                  <div style={{ fontSize: '10px', fontWeight: '900', marginTop: '1px' }}>Precision Machining & Quality Engineering Solutions</div>
                </div>
 
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>

@@ -26,7 +26,8 @@ export default function LedgerDetailPage() {
   const [dateFrom, setDateFrom] = useState<string>(searchParams.get('dateFrom') || '');
   const [dateTo, setDateTo] = useState<string>(searchParams.get('dateTo') || '');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPageUI = 20;
+  const FETCH_LIMIT = 5000;
 
   const partyId = params.id as string;
   const reportContainerRef = React.useRef<HTMLDivElement>(null);
@@ -63,8 +64,8 @@ export default function LedgerDetailPage() {
       (dispatch as any)(fetchLedgerEntries({ 
         partyId, 
         companyId: activeCompany.id,
-        page: currentPage,
-        limit: itemsPerPage,
+        page: 1, // Always fetch full data from page 1
+        limit: FETCH_LIMIT, // Fetch all for reporting
         dateFrom: dateFrom || filters.dateFrom,
         dateTo: dateTo || filters.dateTo
       }));
@@ -76,7 +77,7 @@ export default function LedgerDetailPage() {
     return () => {
       dispatch(resetLedgerState());
     };
-  }, [dispatch, activeCompany?.id, partyId, currentPage, itemsPerPage, dateFrom, dateTo, filters.dateFrom, filters.dateTo]);
+  }, [dispatch, activeCompany?.id, partyId, dateFrom, dateTo, filters.dateFrom, filters.dateTo]);
 
   useEffect(() => {
     const download = searchParams.get('download') === 'true';
@@ -177,8 +178,11 @@ export default function LedgerDetailPage() {
     isDebitOpening
   } = processedData;
 
-  const totalPages = ledgerPagination.totalPages;
-  const paginatedEntries = processedEntries;
+  const totalPagesUI = Math.ceil(processedEntries.length / itemsPerPageUI);
+  const paginatedEntries = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPageUI;
+    return processedEntries.slice(start, start + itemsPerPageUI);
+  }, [processedEntries, currentPage]);
 
   const handlePrint = () => { window.print(); };
 
@@ -186,11 +190,30 @@ export default function LedgerDetailPage() {
     if (!reportContainerRef.current) return;
     const canvas = await html2canvas(reportContainerRef.current, { scale: 2, useCORS: true });
     const imgData = canvas.toDataURL('image/png');
+    
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pdfWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // Add first page
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    // Add additional pages if content exceeds one page
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+    
     pdf.save(`LEDGER_${party?.name?.toUpperCase()}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
@@ -264,7 +287,7 @@ export default function LedgerDetailPage() {
                  <div className="col-md-4 border-start text-end">
                     <div className="px-3">
                         <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Current Balance Status</span>
-                        <h2 className={`fw-900 mb-0 ${closingBalance >= 0 ? 'text-success' : 'text-danger'}`} style={{ fontSize: '2.5rem' }}>
+                        <h2 className={`fw-900 mb-0 text-nowrap ${closingBalance >= 0 ? 'text-success' : 'text-danger'}`} style={{ fontSize: '2.5rem' }}>
                             ₹ {Math.abs(closingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             <small className="ms-2 fs-6 opacity-50">{closingBalance >= 0 ? (isVendor ? 'CR' : 'DR') : (isVendor ? 'DR' : 'CR')}</small>
                         </h2>
@@ -283,7 +306,7 @@ export default function LedgerDetailPage() {
                         <div className="d-flex align-items-center justify-content-between">
                             <div>
                                 <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Debits (DR)</span>
-                                <h4 className="fw-900 text-danger mb-0">₹ {totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
+                                <h4 className="fw-900 text-danger mb-0 text-nowrap">₹ {totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
                             </div>
                             <div className="bg-danger-subtle p-3 rounded-4"><i className="bi bi-dash-circle text-danger fs-4"></i></div>
                         </div>
@@ -296,7 +319,7 @@ export default function LedgerDetailPage() {
                         <div className="d-flex align-items-center justify-content-between">
                             <div>
                                 <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Credits (CR)</span>
-                                <h4 className="fw-900 text-success mb-0">₹ {totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
+                                <h4 className="fw-900 text-success mb-0 text-nowrap">₹ {totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
                             </div>
                             <div className="bg-success-subtle p-3 rounded-4"><i className="bi bi-plus-circle text-success fs-4"></i></div>
                         </div>
@@ -324,9 +347,9 @@ export default function LedgerDetailPage() {
                             <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0">Vch Type</th>
                             <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0">Vch No</th>
                             <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-center">Status</th>
-                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end">Debit (Dr)</th>
-                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end">Credit (Cr)</th>
-                            <th className="pe-5 py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end">Net Balance</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end text-nowrap">Debit (Dr)</th>
+                            <th className="py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end text-nowrap">Credit (Cr)</th>
+                            <th className="pe-5 py-4 text-capitalize fw-800 x-small text-muted tracking-widest border-0 text-end text-nowrap">Net Balance</th>
                         </tr>
                     </thead>
                     <tbody className="border-top-0">
@@ -384,13 +407,13 @@ export default function LedgerDetailPage() {
                                       );
                                     })()}
                                 </td>
-                                <td className={`py-3 text-end fw-bold ${e.debitValue > 0 ? 'text-danger' : 'text-light opacity-25'}`}>
+                                <td className={`py-3 text-end fw-bold text-nowrap ${e.debitValue > 0 ? 'text-danger' : 'text-light opacity-25'}`}>
                                     {e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '0.00'}
                                 </td>
-                                <td className={`py-3 text-end fw-bold ${e.creditValue > 0 ? 'text-success' : 'text-light opacity-25'}`}>
+                                <td className={`py-3 text-end fw-bold text-nowrap ${e.creditValue > 0 ? 'text-success' : 'text-light opacity-25'}`}>
                                     {e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '0.00'}
                                 </td>
-                                <td className="pe-5 py-3 text-end fw-900 border-start bg-light bg-opacity-25" style={{ fontSize: '10.5pt' }}>
+                                <td className="pe-5 py-3 text-end fw-900 border-start bg-light bg-opacity-25 text-nowrap" style={{ fontSize: '10.5pt' }}>
                                     ₹ {Math.abs(e.runningBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                     <span className="ms-1 x-small opacity-50">{e.runningBalance >= 0 ? (isVendor ? 'Cr' : 'Dr') : (isVendor ? 'Dr' : 'Cr')}</span>
                                 </td>
@@ -402,14 +425,14 @@ export default function LedgerDetailPage() {
         </div>
 
         {/* PAGINATION UI */}
-        {totalPages > 1 && (
+        {totalPagesUI > 1 && (
             <div className="d-flex justify-content-between align-items-center mt-4 hide-print">
                 <span className="text-muted small">
-                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, ledgerPagination.totalItems)} of {ledgerPagination.totalItems} entries
+                    Showing {(currentPage - 1) * itemsPerPageUI + 1} to {Math.min(currentPage * itemsPerPageUI, processedEntries.length)} of {processedEntries.length} entries
                 </span>
                 <PaginationComponent 
                     currentPage={currentPage} 
-                    totalPages={totalPages} 
+                    totalPages={totalPagesUI} 
                     onPageChange={(page) => setCurrentPage(page)} 
                 />
             </div>

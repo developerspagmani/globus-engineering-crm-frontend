@@ -219,7 +219,7 @@ const VoucherPage = () => {
                         <td className="text-nowrap text-muted small">{new Date(voucher.date).toLocaleDateString()}</td>
                         <td className="text-nowrap text-muted small">
                           <div className="fw-bold text-dark">{voucher.partyName}</div>
-                          <div className="x-small text-truncate" style={{ maxWidth: '150px' }}>{voucher.description}</div>
+                          <div className="x-small text-truncate" style={{ maxWidth: '150px' }}>{voucher.description?.replace(/^Migrated\s+/i, '')}</div>
                         </td>
                         <td className="text-nowrap text-end fw-bold">
                           <span className={voucher.type === 'payment' ? 'text-danger' : 'text-success'}>

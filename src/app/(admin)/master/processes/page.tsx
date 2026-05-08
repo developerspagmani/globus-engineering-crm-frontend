@@ -189,6 +189,14 @@ export default function ProcessDetailsPage() {
           </div>
 
           <div className="d-flex align-items-center gap-3">
+            {view === 'list' && (
+              <ExportExcel 
+                data={processes} 
+                fileName="Process_Master_List" 
+                headers={{ processName: 'Process Name', id: 'Internal ID' }}
+                buttonText="Export List"
+              />
+            )}
             {view === 'add' && editingId && isViewOnly && mounted && checkActionPermission(user, 'mod_processes', 'edit') && (
               <button 
                 className="btn btn-primary btn-page-action px-4"

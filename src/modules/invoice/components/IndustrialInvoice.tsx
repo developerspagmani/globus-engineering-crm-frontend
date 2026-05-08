@@ -412,7 +412,6 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                      {settings.companyName || company?.name?.toUpperCase() || 'GLOBUS ENGINEERING MAIN'}
                   </h1>
                   <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>{settings.companySubHeader || 'An ISO 9001: 2015 Certified Company'}</div>
-                  <div style={{ fontSize: '10px', fontWeight: '900', marginTop: '1px' }}>Precision Machining & Quality Engineering Solutions</div>
                </div>
 
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>

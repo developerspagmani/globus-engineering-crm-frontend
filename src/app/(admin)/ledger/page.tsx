@@ -150,52 +150,66 @@ export default function LedgerPage() {
 
   // --- EXPORT ACTIONS ---
   const handlePrint = () => {
-    const table = document.querySelector('table');
-    if (!table) return;
-
-    // Clone and cleanup
-    const printTable = table.cloneNode(true) as HTMLTableElement;
-    const headerRow = printTable.querySelector('thead tr');
-    if (headerRow) {
-      const lastTh = headerRow.querySelector('th:last-child');
-      if (lastTh) lastTh.remove();
-    }
-    const bodyRows = printTable.querySelectorAll('tbody tr');
-    bodyRows.forEach(row => {
-      const lastTd = row.querySelector('td:last-child');
-      if (lastTd) lastTd.remove();
-    });
+    const headers = ['SNO', 'PARTY NAME', 'STREET', 'CITY', 'STATE'];
+    const data = uniqueParties.map((p, idx) => [
+      (idx + 1).toString(),
+      p.name.toUpperCase(),
+      p.street1 || '-',
+      p.city || '-',
+      p.state || '-'
+    ]);
 
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Ledger Export</title>');
-    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: "Roboto", sans-serif;} th, td {border: 1px solid #ddd; padding: 10px; text-align: left;} th {background-color: #f2f2f2;} .text-capitalize {text-transform: uppercase;}</style>');
+    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: "Roboto", sans-serif; font-size: 10px;} th, td {border: 1px solid #ddd; padding: 8px; text-align: left;} th {background-color: #f2f2f2;} h2 {text-align: center; color: #333;}</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write('<h2 style="text-align: center;">Globus Engineering CRM - Ledger Report</h2>');
-    printWindow.document.write(printTable.outerHTML);
+    printWindow.document.write('<h2>Globus Engineering CRM - Ledger Report</h2>');
+    printWindow.document.write('<p style="text-align: center; font-size: 10px;">Total Parties: ' + uniqueParties.length + '</p>');
+    
+    let tableHtml = '<table><thead><tr>';
+    headers.forEach(h => { tableHtml += `<th>${h}</th>`; });
+    tableHtml += '</tr></thead><tbody>';
+    data.forEach(row => {
+      tableHtml += '<tr>';
+      row.forEach(cell => { tableHtml += `<td>${cell}</td>`; });
+      tableHtml += '</tr>';
+    });
+    tableHtml += '</tbody></table>';
+    
+    printWindow.document.write(tableHtml);
     printWindow.document.write('</body></html>');
     printWindow.document.close();
-    printWindow.print();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
   };
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    const table = document.querySelector('table');
-    if (!table) return;
+    const headers = [['SNO', 'PARTY NAME', 'STREET', 'CITY', 'STATE']];
+    const data = uniqueParties.map((p, idx) => [
+      (idx + 1).toString(),
+      p.name.toUpperCase(),
+      p.street1 || '-',
+      p.city || '-',
+      p.state || '-'
+    ]);
 
-    const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(h => (h as HTMLElement).innerText.trim());
-    const data = Array.from(table.querySelectorAll('tbody tr')).map(row => {
-      return Array.from(row.querySelectorAll('td')).slice(0, -1).map(td => (td as HTMLElement).innerText.trim());
-    });
-
+    doc.setFontSize(18);
     doc.text("Globus Engineering CRM - Ledger Report", 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Total Parties: ${uniqueParties.length} | Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+
     autoTable(doc, {
-      head: [headers],
+      head: headers,
       body: data,
-      startY: 20,
+      startY: 28,
       theme: 'grid',
       headStyles: { fillColor: [0, 188, 212] },
+      styles: { fontSize: 8 }
     });
 
     doc.save(`ledger_export_${new Date().toISOString().split('T')[0]}.pdf`);

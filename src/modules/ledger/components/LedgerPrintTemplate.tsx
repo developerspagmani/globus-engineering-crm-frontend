@@ -185,7 +185,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                 <td className="td-date">{formatLedgerDate(e.date)}</td>
                 <td>
                   <span className="byto">{prefix}</span>
-                  {e.description || e.vchType || '-'}
+                  {e.description?.replace(/^Migrated\s+/i, '') || e.vchType || '-'}
                 </td>
                 <td>{e.vchType || ''}</td>
                 <td>{e.vchNo || ''}</td>
