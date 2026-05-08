@@ -18,13 +18,39 @@ const InvoiceStatus = () => {
 
   React.useEffect(() => {
     if (activeCompany?.id) {
-       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 10000, type: 'WP' }));
+
+
+
     }
   }, [dispatch, activeCompany?.id]);
 
+  // Deduplicate logically to prevent visual doubling if database has duplicate records with different IDs
+  const uniqueInvoices = React.useMemo(() => {
+    const seen = new Set();
+    return (invoices || []).filter(inv => {
+      // Normalize values for a robust unique key
+      const cleanInvNo = String(inv.invoiceNumber || '').trim().replace(/^0+/, '');
+      const cleanDate = inv.date ? new Date(inv.date).toISOString().split('T')[0] : 'no-date';
+      const cleanAmount = Math.round(inv.grandTotal || 0);
+      const cleanCustomer = String(inv.customerName || '').toLowerCase().trim();
+      
+      const compositeKey = `${cleanInvNo}|${cleanDate}|${cleanAmount}|${cleanCustomer}`;
+      
+      if (seen.has(compositeKey)) return false;
+      seen.add(compositeKey);
+      return true;
+    });
+  }, [invoices]);
+
+
+
   if (isLoading) return <Loader />;
 
-  const filteredInvoices = (invoices || []).filter((inv: Invoice) => {
+  const filteredInvoices = uniqueInvoices.filter((inv: Invoice) => {
+    // 0. Strict Company Filter - Matches the logic used in 'All Invoices' module
+    if (activeCompany?.id && inv.company_id !== activeCompany.id) return false;
+
     // 1. Tab filtering
     let matchesTab = false;
     if (activeTab === 'all') {
