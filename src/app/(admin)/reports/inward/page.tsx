@@ -68,19 +68,6 @@ const InwardReportPage = () => {
     };
   };
 
-  if (!mounted) return null;
-
-  const totalPages = pagination.totalPages;
-  const paginatedItems = items;
-
-  // All counts come from backend aggregation — accurate across all pages
-  const totals = {
-    count: pagination.totalItems || 0,
-    completed: statusCounts.completed,
-    pending: statusCounts.pending,
-    parties: statusCounts.activeParties
-  };
-
   // Use IndustrialDocument format — same as inward detail page
   const [downloadingItem, setDownloadingItem] = useState<any>(null);
   const downloadRef = React.useRef<HTMLDivElement>(null);
@@ -104,6 +91,20 @@ const InwardReportPage = () => {
       captureAndDownload();
     }
   }, [downloadingItem]);
+
+  if (!mounted) return null;
+
+  const totalPages = pagination.totalPages;
+  const paginatedItems = items;
+
+  // All counts come from backend aggregation — accurate across all pages
+  const totals = {
+    count: pagination.totalItems || 0,
+    completed: statusCounts.completed,
+    pending: statusCounts.pending,
+    parties: statusCounts.activeParties
+  };
+
 
   const handlePrintRecord = (item: any) => {
     router.push(`/logistics-print?type=inward&id=${item.id}&print=true`);

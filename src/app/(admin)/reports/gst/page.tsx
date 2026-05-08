@@ -54,8 +54,22 @@ const GstReportPage = () => {
     const response = await api.get(url);
     const allInvoices = response.data.items;
     
+    let totalAmount = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalIgst = 0;
+
     const data = allInvoices.map((inv: any, idx: number) => {
       const taxable = parseFloat(inv.total || '0');
+      const cgst = parseFloat(inv.gst1 || '0');
+      const sgst = parseFloat(inv.gst2 || '0');
+      const igst = parseFloat(inv.igst || '0');
+      
+      totalAmount += taxable;
+      totalCgst += cgst;
+      totalSgst += sgst;
+      totalIgst += igst;
+
       return [
         (idx + 1).toString(),
         inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString() : 'N/A',
@@ -64,17 +78,19 @@ const GstReportPage = () => {
         inv.dc_no || '-',
         inv.invoice_no?.toString() || 'N/A',
         taxable.toLocaleString(),
-        parseFloat(inv.gst1 || '0').toLocaleString(),
-        parseFloat(inv.gst2 || '0').toLocaleString(),
-        parseFloat(inv.igst || '0').toLocaleString()
+        cgst.toLocaleString(),
+        sgst.toLocaleString(),
+        igst.toLocaleString()
       ];
     });
 
-    
+    data.push(['', '', '', '', '', 'TOTAL', totalAmount.toLocaleString(), totalCgst.toLocaleString(), totalSgst.toLocaleString(), totalIgst.toLocaleString()]);
+
     return {
       headers: ['SNO', 'DATE', 'CUSTOMER', 'GSTIN', 'DC NO', 'INVOICE NO', 'AMOUNT', 'CGST', 'SGST', 'IGST'],
       data
     };
+
   };
 
   if (!mounted) return null;

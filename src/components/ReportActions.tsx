@@ -23,11 +23,18 @@ const ReportActions: React.FC<ReportActionsProps> = ({
   const [printLoading, setPrintLoading] = React.useState(false);
   const [pdfLoading, setPdfLoading] = React.useState(false);
 
+  const formatDate = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
   const handlePresetClick = (type: 'week' | 'month' | 'thisMonth' | 'year') => {
     setActivePreset(type);
     const today = new Date();
     let from = new Date();
-    let to = today;
+    let to = new Date(); // Use a fresh copy of today
 
     if (type === 'week') {
       from.setDate(today.getDate() - 7);
@@ -47,9 +54,10 @@ const ReportActions: React.FC<ReportActionsProps> = ({
       }
     }
 
-    setFromDate?.(from.toISOString().split('T')[0]);
-    setToDate?.(to.toISOString().split('T')[0]);
+    setFromDate?.(formatDate(from));
+    setToDate?.(formatDate(to));
   };
+
 
   const handlePrint = async () => {
     let headers: string[] = [];
@@ -107,10 +115,12 @@ const ReportActions: React.FC<ReportActionsProps> = ({
     headers.forEach(h => { tableHtml += `<th>${h}</th>`; });
     tableHtml += '</tr></thead><tbody>';
     data.forEach(row => {
-      tableHtml += '<tr>';
+      const isTotalRow = row.some(cell => cell.toString().includes('TOTAL'));
+      tableHtml += `<tr style="${isTotalRow ? 'font-weight: bold; background-color: #f8f9fa;' : ''}">`;
       row.forEach(cell => { tableHtml += `<td>${cell}</td>`; });
       tableHtml += '</tr>';
     });
+
     tableHtml += '</tbody></table>';
 
     printWindow.document.write(tableHtml);
@@ -191,7 +201,15 @@ const ReportActions: React.FC<ReportActionsProps> = ({
       },
       alternateRowStyles: { fillColor: [248, 248, 248] },
       margin: { left: 14, right: 14 },
+      didParseCell: (dataArg) => {
+        const isTotalRow = (dataArg.row.raw as any).some((cell: any) => cell?.toString().includes('TOTAL'));
+        if (isTotalRow) {
+          dataArg.cell.styles.fontStyle = 'bold';
+          dataArg.cell.styles.fillColor = [245, 245, 245];
+        }
+      },
       didDrawPage: (dataArg) => {
+
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(`Official Audit Export | Generated: ${new Date().toLocaleString()} | Page ${dataArg.pageNumber}`, 14, doc.internal.pageSize.height - 10);

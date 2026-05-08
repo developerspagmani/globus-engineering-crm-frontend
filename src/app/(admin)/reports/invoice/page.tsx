@@ -53,20 +53,37 @@ const InvoiceReportPage = () => {
     const response = await api.get(url);
     const allInvoices = response.data.items;
     
-    const data = allInvoices.map((inv: any, idx: number) => [
-      (idx + 1).toString(),
-      inv.invoice_date ? new Date(inv.invoice_date).toISOString().split('T')[0] : 'N/A',
-      inv.invoice_no?.toString() || 'N/A',
-      inv.customer_name || 'N/A',
-      parseFloat(inv.total || '0').toLocaleString(),
-      parseFloat(inv.tax_total || '0').toLocaleString(),
-      parseFloat(inv.grand_total || '0').toLocaleString()
-    ]);
+    let totalSub = 0;
+    let totalTax = 0;
+    let totalGrand = 0;
+
+    const data = allInvoices.map((inv: any, idx: number) => {
+      const sub = parseFloat(inv.total || '0');
+      const tax = parseFloat(inv.tax_total || '0');
+      const grand = parseFloat(inv.grand_total || '0');
+      
+      totalSub += sub;
+      totalTax += tax;
+      totalGrand += grand;
+
+      return [
+        (idx + 1).toString(),
+        inv.invoice_date ? new Date(inv.invoice_date).toISOString().split('T')[0] : 'N/A',
+        inv.invoice_no?.toString() || 'N/A',
+        inv.customer_name || 'N/A',
+        sub.toLocaleString(),
+        tax.toLocaleString(),
+        grand.toLocaleString()
+      ];
+    });
+
+    data.push(['', '', '', 'TOTAL', totalSub.toLocaleString(), totalTax.toLocaleString(), totalGrand.toLocaleString()]);
 
     return {
       headers: ['SNO', 'DATE', 'INVOICE NO', 'CUSTOMER NAME', 'SUBTOTAL', 'TAXES', 'GRAND TOTAL'],
       data
     };
+
   };
 
   if (!mounted) return null;

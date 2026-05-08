@@ -38,6 +38,12 @@ const PaymentReportPage = () => {
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    if (vPagination.currentPage !== 1) dispatch(setVoucherPage(1));
+    if (pPagination.currentPage !== 1) dispatch(setPendingPaymentPage(1));
+  }, [searchTerm, fromDate, toDate, selectedCustomerId]);
+
   useEffect(() => {
     setMounted(true);
     if (activeCompany?.id) {
@@ -59,9 +65,39 @@ const PaymentReportPage = () => {
         fromDate: fromDate,
         toDate: toDate
       }));
+
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany?.id, vPagination.currentPage, pPagination.currentPage, searchTerm, fromDate, toDate, selectedCustomerId]);
+
+
+  const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'PAYMENT' | 'PENDING'} | null>(null);
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+  const { settings: invoiceSettings } = useSelector((state: RootState) => state.invoices);
+
+  useEffect(() => {
+    if (downloadingItem && downloadRef.current) {
+      const captureAndDownload = async () => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (downloadRef.current) {
+          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgProps = pdf.getImageProperties(imgData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          const fileName = downloadingItem.type === 'PENDING' 
+            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}.pdf`
+            : `VOUCHER_${downloadingItem.item.voucherNo || downloadingItem.item.id}.pdf`;
+          pdf.save(fileName);
+          setDownloadingItem(null);
+        }
+      };
+      captureAndDownload();
+    }
+  }, [downloadingItem]);
+
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
@@ -71,10 +107,13 @@ const PaymentReportPage = () => {
       if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+
       if (selectedCustomerId) url += `&partyId=${selectedCustomerId}`;
 
       const response = await api.get(url);
       const allVouchers = response.data.items;
+
+      const totalPaid = allVouchers.reduce((sum: number, v: any) => sum + (parseFloat(v.amount || '0')), 0);
 
       const data = allVouchers.map((v: any, idx: number) => [
         (idx + 1).toString(),
@@ -85,22 +124,29 @@ const PaymentReportPage = () => {
         parseFloat(v.amount || '0').toLocaleString()
       ]);
 
+      data.push(['', '', '', '', 'TOTAL', totalPaid.toLocaleString()]);
+
       return {
         headers: ['SNO', 'DATE', 'REF NO', 'CUSTOMER NAME', 'MODE', 'PAID AMOUNT'],
         data
       };
+
     } else {
       let url = `/invoices?page=1&limit=10000&status=pending&type=INVOICE,BOTH&company_id=${activeCompany.id}`;
       if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
 
+
       const response = await api.get(url);
       const allPending = response.data.items;
 
+      let totalPending = 0;
       const data = allPending.map((inv: any, idx: number) => {
         const grand = parseFloat(inv.grand_total || '0');
         const paid = parseFloat(inv.paid_amount || '0');
+        const pending = grand - paid;
+        totalPending += pending;
         const dateStr = inv.invoice_date || inv.date;
         return [
           (idx + 1).toString(),
@@ -108,16 +154,20 @@ const PaymentReportPage = () => {
           inv.invoice_no?.toString() || 'N/A',
           inv.customer_name || 'N/A',
           `${calculateDays(dateStr)} Days`,
-          (grand - paid).toLocaleString()
+          pending.toLocaleString()
         ];
       });
+
+      data.push(['', '', '', '', 'TOTAL', totalPending.toLocaleString()]);
 
       return {
         headers: ['SNO', 'DATE', 'INVOICE NO', 'CUSTOMER NAME', 'AGEING', 'PENDING AMOUNT'],
         data
       };
+
     }
   };
+
 
   if (!mounted) return null;
 
@@ -148,32 +198,8 @@ const PaymentReportPage = () => {
     criticalOverdue: pAggregates?.criticalOverdue || 0
   };
 
-  const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'PAYMENT' | 'PENDING'} | null>(null);
-  const downloadRef = React.useRef<HTMLDivElement>(null);
-  const { settings: invoiceSettings } = useSelector((state: RootState) => state.invoices);
 
-  useEffect(() => {
-    if (downloadingItem && downloadRef.current) {
-      const captureAndDownload = async () => {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        if (downloadRef.current) {
-          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
-          const imgData = canvas.toDataURL('image/png');
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const imgProps = pdf.getImageProperties(imgData);
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          const fileName = downloadingItem.type === 'PENDING' 
-            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}.pdf`
-            : `VOUCHER_${downloadingItem.item.voucherNo || downloadingItem.item.id}.pdf`;
-          pdf.save(fileName);
-          setDownloadingItem(null);
-        }
-      };
-      captureAndDownload();
-    }
-  }, [downloadingItem]);
+
 
   const handlePrintRecord = (item: any, type: 'PAYMENT' | 'PENDING') => {
     if (type === 'PENDING') {
@@ -193,9 +219,18 @@ const PaymentReportPage = () => {
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Payment Report', active: true }]} /><h2 className="fw-900 mt-2">Payment Report</h2><p className="text-muted small mb-0">Track collection history and monitor outstanding dues.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-3">
           <ReportActions setFromDate={setFromDate} setToDate={setToDate} title={activeTab === 'PAYMENT' ? "Collection History" : "Outstanding Dues"} onFetchAll={handleFetchAllForExport} />
-          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { (dispatch as any)(fetchVouchers({ company_id: activeCompany?.id })); (dispatch as any)(fetchPendingPayments({ company_id: activeCompany?.id })); }}><i className="bi bi-arrow-repeat fw-bold" style={{ color: 'var(--accent-color)' }}></i>
+          <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => { 
+            setFromDate(""); 
+            setToDate(""); 
+            setSearchTerm("");
+            setSelectedCustomerId("");
+            (dispatch as any)(fetchVouchers({ company_id: activeCompany?.id })); 
+            (dispatch as any)(fetchPendingPayments({ company_id: activeCompany?.id })); 
+          }}>
+            <i className="bi bi-arrow-repeat fw-bold" style={{ color: 'var(--accent-color)' }}></i>
             <span className="small fw-800 text-muted">Refresh</span>
           </button>
+
         </div>
       </div>
 

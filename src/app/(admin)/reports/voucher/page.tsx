@@ -15,6 +15,8 @@ import { useRouter } from 'next/navigation';
 
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import html2canvas from 'html2canvas';
+import api from '@/lib/axios';
+
 
 const VoucherReportPage = () => {
   const router = useRouter();
@@ -67,6 +69,39 @@ const VoucherReportPage = () => {
     }
   }, [downloadingItem]);
 
+  const handleFetchAllForExport = async () => {
+    if (!activeCompany?.id) return { headers: [], data: [] };
+
+    let url = `/vouchers?page=1&limit=10000&company_id=${activeCompany.id}`;
+    if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+    if (fromDate) url += `&fromDate=${fromDate}`;
+    if (toDate) url += `&toDate=${toDate}`;
+
+    const response = await api.get(url);
+    const allVouchers = response.data.items;
+
+    let totalAmount = 0;
+    const data = allVouchers.map((v: any, idx: number) => {
+      const amt = parseFloat(v.amount || '0');
+      totalAmount += amt;
+      return [
+        (idx + 1).toString(),
+        v.date ? new Date(v.date).toISOString().split('T')[0] : 'N/A',
+        v.voucher_no || 'N/A',
+        v.party_name || 'N/A',
+        v.type || 'N/A',
+        amt.toLocaleString()
+      ];
+    });
+
+    data.push(['', '', '', '', 'TOTAL', totalAmount.toLocaleString()]);
+
+    return {
+      headers: ['SNO', 'DATE', 'VOUCHER NO', 'PARTY NAME', 'TYPE', 'AMOUNT'],
+      data
+    };
+  };
+
   if (!mounted) return null;
 
   const totalPages = pagination.totalPages;
@@ -85,7 +120,8 @@ const VoucherReportPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div><Breadcrumb items={[{ label: 'Reports', active: false }, { label: 'Voucher Report', active: true }]} /><h2 className="fw-900 mt-2">Voucher Report</h2><p className="text-muted small mb-0">Record of all financial receipts and payments statements.</p></div>
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Voucher Report" />
+          <ReportActions setFromDate={setFromDate} setToDate={setToDate} title="Voucher Report" onFetchAll={handleFetchAllForExport} />
+
           <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => dispatch(fetchVouchers({ company_id: activeCompany?.id }) as any)}>
             <i className="bi bi-arrow-repeat text-primary fw-bold"></i>
             <span className="small fw-800 text-muted">Refresh</span>
