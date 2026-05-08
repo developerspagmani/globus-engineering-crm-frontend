@@ -273,7 +273,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          const inward = inwards.find(i => i.id === inwardId);
          if (inward) {
             populateFromInward(inward);
-            fetchPendingForCustomer(inward.customerId || inward.customer_id || '')
+            fetchPendingForCustomer((inward as any).customerId || (inward as any).customer_id || '')
                .then(() => setInwardInitLoading(false))
                .catch(() => setInwardInitLoading(false));
          } else {

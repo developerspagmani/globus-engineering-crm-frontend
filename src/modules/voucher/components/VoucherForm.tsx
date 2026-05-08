@@ -405,6 +405,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 // Reset local state if successful
                 setFormData({
                   date: new Date().toISOString().split('T')[0],
+                  paymentMode: 'cash',
                   chequeNo: '',
                   customerId: '',
                   customerName: '',
