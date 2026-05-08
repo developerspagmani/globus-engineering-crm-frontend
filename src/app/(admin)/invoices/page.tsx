@@ -8,7 +8,7 @@ import ModuleGuard from '@/components/ModuleGuard';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { checkActionPermission } from '@/config/permissions';
-import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import { setInvoiceFilters } from '@/redux/features/invoiceSlice';
 import ExportExcel from '@/components/shared/ExportExcel';
 
 import Breadcrumb from '@/components/Breadcrumb';
@@ -17,19 +17,16 @@ export default function InvoiceHistoryPage() {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, aggregates } = useSelector((state: RootState) => state.invoices);
+  const { items, aggregates, pagination } = useSelector((state: RootState) => state.invoices);
 
   React.useEffect(() => {
     setMounted(true);
-    (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id }));
-  }, [dispatch, activeCompany?.id]);
+  }, []);
 
   if (!mounted) return null;
 
-  // Filter items based on active company context
-  const filteredInvoices = activeCompany
-    ? items.filter(inv => inv.company_id === activeCompany.id)
-    : items;
+  // Use backend-driven pagination total (correctly filtered by InvoiceTable)
+  const filteredInvoices = items;
 
   // Analytics logic - Use backend aggregates for global totals
   const totalBilled = aggregates?.totalGrand || 0;
@@ -43,7 +40,7 @@ export default function InvoiceHistoryPage() {
           <div>
             <Breadcrumb items={[{ label: 'Billing Hub', active: true }]} />
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Invoices</h2>
-            <p className="text-muted small mb-0">Generate and manage industrial billing records • {filteredInvoices.length} total</p>
+            <p className="text-muted small mb-0">Generate and manage industrial billing records • {pagination.totalItems > 0 ? pagination.totalItems : filteredInvoices.length} total</p>
           </div>
           <div className="d-flex align-items-center gap-3">
             <ExportExcel 
