@@ -202,7 +202,7 @@ const InvoiceTable: React.FC = () => {
                   <td className="text-center pe-4">
                     <div className="d-flex justify-content-center gap-1 align-items-center">
                       <Link
-                        href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}` : `/invoices/${item.id}`}
+                        href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}` : `/invoices/${item.id}`}
                         className="btn-action-view"
                         title={activeTab === 'ADD_INVOICE' ? "Create Invoice" : "View Invoice"}
                       >

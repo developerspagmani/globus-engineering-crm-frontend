@@ -28,6 +28,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
+    paymentMode: 'cash',
     chequeNo: '',
     customerId: '',
     customerName: '',
@@ -74,6 +75,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       setFormData(prev => ({
         ...prev,
         date: initialData.date,
+        paymentMode: initialData.paymentMode || (initialData.chequeNo ? 'bank' : 'cash'),
         chequeNo: initialData.chequeNo || '',
         customerId: targetId,
         customerName: name,
@@ -130,8 +132,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         partyName: formData.customerName,
         partyType: 'customer',
         amount: formData.totalAmount,
-        paymentMode: formData.chequeNo ? 'bank' : 'cash',
-        chequeNo: formData.chequeNo,
+        paymentMode: formData.paymentMode as any,
+        chequeNo: formData.paymentMode === 'cash' ? '' : formData.chequeNo,
         description: `Payment for Invoices: ${formData.selectedInvoices.join(', ')}`,
         referenceNo: formData.selectedInvoices.join(', '),
         status: 'posted',
@@ -241,13 +243,17 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 disabled={mode === 'view'}
               />
             </div>
-            <div className="col-md-6 d-flex align-items-center gap-3">
+             <div className="col-md-6 d-flex align-items-center gap-3">
               <label className="text-muted small fw-bold col-3">Payment <span className="text-danger">*</span></label>
               <select
                 className="form-select"
                 name="paymentMode"
-                value={formData.chequeNo ? 'bank' : 'cash'}
-                onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value === 'cash' ? '' : prev.chequeNo }))}
+                value={formData.paymentMode}
+                onChange={e => setFormData(prev => ({ 
+                  ...prev, 
+                  paymentMode: e.target.value, 
+                  chequeNo: e.target.value === 'cash' ? '' : prev.chequeNo 
+                }))}
                 required
                 disabled={mode === 'view'}
               >
@@ -263,7 +269,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 placeholder="Cheque No (If Bank)"
                 value={formData.chequeNo}
                 onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value }))}
-                disabled={mode === 'view'}
+                disabled={mode === 'view' || formData.paymentMode === 'cash'}
               />
             </div>
             <div className="col-md-12 d-flex align-items-center gap-3">

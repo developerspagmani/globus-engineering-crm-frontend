@@ -26,9 +26,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    const { company, token: authToken } = useSelector((state: RootState) => state.auth);
    const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
-   const { items: inwards } = useSelector((state: RootState) => state.inward);
+   const { items: inwards, loading: inwardsLoading } = useSelector((state: RootState) => state.inward);
    const { settings } = useSelector((state: RootState) => state.invoices);
-   const { items: masterItems, processes: masterProcesses, priceFixings } = useSelector((state: RootState) => state.master);
+   const { items: masterItems, processes: masterProcesses, priceFixings, loading: masterLoading } = useSelector((state: RootState) => state.master);
 
    const typeParam = searchParams.get('type');
    const defaultBillType = typeParam === 'wp' ? 'With Process' : typeParam === 'wop' ? 'Without Process' : typeParam === 'both' ? 'Both' : 'With Process';
@@ -84,6 +84,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    const [loading, setLoading] = useState(false);
 
+   const [isComponentMounted, setIsComponentMounted] = useState(false);
+   const [sequenceLoading, setSequenceLoading] = useState(false);
+   const [inwardInitLoading, setInwardInitLoading] = useState(!!inwardId);
+
 
 
    useEffect(() => {
@@ -94,6 +98,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          (dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 }));
 
          if (mode === 'create') {
+            (dispatch as any)(fetchInwards({ company_id: company.id, status: 'all', limit: 1000 }));
+            setSequenceLoading(true);
             import('@/redux/features/invoiceSlice').then(async ({ fetchNextNumbers }) => {
                try {
                   const data = await (dispatch as any)(fetchNextNumbers({ companyId: company.id })).unwrap();
@@ -104,12 +110,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                   }));
                } catch (err) {
                   // console.error('Failed to pre-fetch next sequence numbers:', err);
+               } finally {
+                  setSequenceLoading(false);
                }
             });
          }
       } else {
          (dispatch as any)(fetchCustomers({}));
       }
+      setIsComponentMounted(true);
    }, [dispatch, company?.id, mode]);
 
    useEffect(() => {
@@ -264,8 +273,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          const inward = inwards.find(i => i.id === inwardId);
          if (inward) {
             populateFromInward(inward);
-            fetchPendingForCustomer(inward.customerId || '');
+            fetchPendingForCustomer(inward.customerId || inward.customer_id || '')
+               .then(() => setInwardInitLoading(false))
+               .catch(() => setInwardInitLoading(false));
+         } else {
+            setInwardInitLoading(false);
          }
+      } else if (!inwardId) {
+         setInwardInitLoading(false);
       }
    }, [inwardId, inwards, priceFixings, customers]);
 
@@ -399,6 +414,42 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    };
 
 
+
+   const memoizedItemOptions = React.useMemo(() => {
+      return (masterItems || []).map(mi => (
+         <option key={mi.id} value={mi.itemName}>
+            {mi.itemName}
+         </option>
+      ));
+   }, [masterItems]);
+
+   const memoizedProcessOptions = React.useMemo(() => {
+      return (masterProcesses || []).map(p => (
+         <option key={p.id} value={p.processName}>
+            {p.processName}
+         </option>
+      ));
+   }, [masterProcesses]);
+
+   const isPageLoading = !isComponentMounted || 
+                         customersLoading || 
+                         masterLoading || 
+                         sequenceLoading || 
+                         inwardInitLoading;
+
+   if (isPageLoading) {
+      return (
+         <div className="d-flex flex-column align-items-center justify-content-center py-5 my-5" style={{ minHeight: '400px', gap: '1.5rem' }}>
+            <div className="spinner-border text-primary" role="status" style={{ width: '3.5rem', height: '3.5rem', borderWidth: '4px' }}>
+               <span className="visually-hidden">Loading...</span>
+            </div>
+            <div className="text-center">
+               <h4 className="fw-bold text-dark mb-1">Loading Data...</h4>
+               <p className="text-muted small mb-0">Please wait while we prepare your invoice form.</p>
+            </div>
+         </div>
+      );
+   }
 
    return (
 
@@ -776,13 +827,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                  <td className="py-3">
                                     <select className="form-select bg-transparent fw-bold" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)}>
                                        <option value="">Select Item</option>
-                                       {masterItems.map(mi => <option key={mi.id} value={mi.itemName}>{mi.itemName}</option>)}
+                                       {memoizedItemOptions}
                                     </select>
                                  </td>
                                  <td className="py-3">
                                     <select className="form-select bg-transparent" value={String(item.process || '')} onChange={e => handleItemChange(index, 'process', e.target.value)}>
                                        <option value="">Select Process</option>
-                                       {masterProcesses.map(p => <option key={p.id} value={p.processName}>{p.processName}</option>)}
+                                       {memoizedProcessOptions}
                                     </select>
                                  </td>
                                  <td className="py-3">

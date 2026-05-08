@@ -306,8 +306,10 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                        <div className="col-8">
                            <select className="form-select border-warning-subtle bg-warning-light rounded-pill px-3 py-2 fw-bold" name="inwardId" value={formData.inwardId} onChange={handleChange} required disabled={mode === 'view' || (formData.partyType === 'customer' && !formData.customerId) || (formData.partyType === 'vendor' && !formData.vendorId)}>
                              <option value="">Select Inward Batch</option>
-                             {availableInwards.filter(i => (i.totalRemaining !== undefined ? i.totalRemaining > 0 : true)).map(i => (
-                                <option key={i.id} value={i.id}>{i.inwardNo} - Bal: {i.totalRemaining ?? 'New'} ({i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})</option>
+                             {availableInwards.map(i => (
+                                <option key={i.id} value={i.id}>
+                                   {i.inwardNo} - Bal: {i.totalRemaining ?? 0} {i.status === 'completed' || (i.totalRemaining !== undefined && i.totalRemaining <= 0) ? '(Completed)' : ''} ({i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})
+                                </option>
                              ))}
                           </select>
                        </div>
