@@ -36,6 +36,7 @@ const PrintContent = () => {
 
    const [data, setData] = useState<any>(null);
    const [loading, setLoading] = useState(true);
+   const [showDeclaration, setShowDeclaration] = useState(false);
    const accentColor = company?.invoiceSettings?.accentColor || '#0d6efd';
    const printRef = React.useRef<HTMLDivElement>(null);
 
@@ -139,13 +140,26 @@ const PrintContent = () => {
 
    return (
       <div className="print-preview-container container py-4">
-         <div className="no-print d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 p-3 bg-white rounded-4 shadow-sm border">
+         <div className="no-print d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 p-3 bg-white rounded-4 shadow-sm border w-100" style={{ maxWidth: '190mm' }}>
             <div className="d-flex align-items-center gap-3">
                <BackButton />
                <h4 className="m-0 fw-bold text-dark text-capitalize">{type} Preview</h4>
             </div>
             
-            <div className="d-flex gap-2">
+            <div className="d-flex align-items-center gap-3">
+               <div className="form-check form-switch mb-0">
+                  <input 
+                     className="form-check-input" 
+                     type="checkbox" 
+                     id="declarationToggle" 
+                     checked={showDeclaration} 
+                     onChange={(e) => setShowDeclaration(e.target.checked)}
+                  />
+                  <label className="form-check-label small fw-bold text-muted" htmlFor="declarationToggle">
+                     Include Declaration
+                  </label>
+               </div>
+               <div className="vr mx-2 opacity-25" style={{ height: '24px' }}></div>
                <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill" onClick={() => window.print()}>
                   <i className="bi bi-printer"></i> Print
                </button>
@@ -156,7 +170,12 @@ const PrintContent = () => {
          </div>
 
          <div ref={printRef}>
-            <IndustrialDocument data={data} type={type} company={company} />
+            <IndustrialDocument 
+               data={data} 
+               type={type} 
+               company={company} 
+               settings={{ ...company?.invoiceSettings, showDeclaration }} 
+            />
          </div>
          
          <style jsx>{`

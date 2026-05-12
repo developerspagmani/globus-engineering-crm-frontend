@@ -11,6 +11,8 @@ interface FullPageStatusProps {
   redirectUrl?: string;
   onClose?: () => void;
   buttonLabel?: string;
+  secondaryButtonLabel?: string;
+  onSecondaryAction?: () => void;
 }
 
 const FullPageStatus: React.FC<FullPageStatusProps> = ({
@@ -19,7 +21,9 @@ const FullPageStatus: React.FC<FullPageStatusProps> = ({
   message,
   redirectUrl,
   onClose,
-  buttonLabel
+  buttonLabel,
+  secondaryButtonLabel,
+  onSecondaryAction
 }) => {
   const router = useRouter();
 
@@ -95,14 +99,26 @@ const FullPageStatus: React.FC<FullPageStatusProps> = ({
           <h4 className="fw-900 text-dark mb-2 tracking-tight">{title}</h4>
           <p className="text-muted small px-3 mb-5 fw-medium" style={{ lineHeight: '1.6' }}>{message}</p>
           
-          <button 
-            type="button" 
-            className="btn w-100 py-3 rounded-3 fw-800 text-white border-0 shadow-sm transition-all hover-lift"
-            style={{ backgroundColor: style.color }}
-            onClick={handleAction}
-          >
-            {label.toUpperCase()}
-          </button>
+          <div className="d-flex flex-column gap-2">
+            {secondaryButtonLabel && onSecondaryAction && (
+              <button 
+                type="button" 
+                className="btn w-100 py-3 rounded-3 fw-800 border-0 shadow-sm transition-all hover-lift"
+                style={{ backgroundColor: '#f3f4f6', color: '#374151' }}
+                onClick={onSecondaryAction}
+              >
+                {secondaryButtonLabel.toUpperCase()}
+              </button>
+            )}
+            <button 
+              type="button" 
+              className="btn w-100 py-3 rounded-3 fw-800 text-white border-0 shadow-sm transition-all hover-lift"
+              style={{ backgroundColor: style.color }}
+              onClick={handleAction}
+            >
+              {label.toUpperCase()}
+            </button>
+          </div>
         </div>
       </div>
       <style jsx>{`

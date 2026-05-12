@@ -189,7 +189,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
     doc.setFillColor(30, 30, 30); doc.rect(0, 0, pageWidth, 45, 'F');
     doc.setTextColor(255, 255, 255); 
     doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text("GLOBUS ENGINEERING TOOLS", centerX, 18, { align: "center" });
-    doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.text("PRECISION INDUSTRIAL ENGINEERING & AUDIT LOGISTICS", centerX, 25, { align: "center" });
+    doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.text("No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.", centerX, 25, { align: "center" });
     doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5); doc.line(centerX - 70, 28, centerX + 70, 28);
     doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text(`${title.toUpperCase()} AUDIT STATEMENT`, centerX, 37, { align: "center" });
 

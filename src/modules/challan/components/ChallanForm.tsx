@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
@@ -10,6 +10,7 @@ import { createChallan, updateChallan } from '@/redux/features/challanSlice';
 import { fetchItems } from '@/redux/features/masterSlice';
 import { Challan } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 
 
 interface ChallanFormProps {
@@ -59,6 +60,70 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
     title: '',
     message: ''
   });
+
+  // Handle Automatic Pre-fill and Auto-Submit from Inward
+  const autoSubmitRef = useRef(false);
+
+  useEffect(() => {
+    if (mode === 'create' && !initialData && !autoSubmitRef.current) {
+      const savedData = localStorage.getItem('inward_auto_challan');
+      if (savedData) {
+        try {
+          const inward = JSON.parse(savedData);
+          const autoData = {
+            ...formData,
+            partyId: inward.partyId || '',
+            partyName: inward.partyName || '',
+            partyType: inward.partyType || 'customer',
+            items: inward.items.map((it: any) => ({
+              description: it.description || it.item_name || '',
+              quantity: it.quantity || 1,
+              unit: it.unit || 'pcs',
+              hsnCode: ''
+            })),
+            vehicleNo: inward.vehicleNo || '',
+            notes: `Generated automatically from Inward #${inward.inwardNo}`
+          };
+          
+          setFormData(autoData);
+          autoSubmitRef.current = true;
+          
+          // Clear storage immediately
+          localStorage.removeItem('inward_auto_challan');
+
+          // Trigger submission automatically
+          const performAutoSubmit = async () => {
+             setIsSubmitting(true);
+             try {
+                const uniqueId = `dc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                await dispatch(createChallan({ ...autoData, id: uniqueId, company_id: activeCompany?.id || '' } as any) as any).unwrap();
+                setModal({
+                   isOpen: true,
+                   type: 'success',
+                   title: 'Challan Generated!',
+                   message: `Challan #${autoData.challanNo} has been generated automatically from Inward #${inward.inwardNo}.`
+                });
+             } catch (err: any) {
+                setModal({
+                   isOpen: true,
+                   type: 'error',
+                   title: 'Auto-Generation Failed',
+                   message: err || 'Could not generate challan automatically. Please fill manually.'
+                });
+             } finally {
+                setIsSubmitting(false);
+             }
+          };
+
+          // Delay slightly to ensure Redux/State is ready
+          setTimeout(performAutoSubmit, 500);
+
+        } catch (e) {
+          console.error("Failed to parse auto-challan data", e);
+        }
+      }
+    }
+  }, [mode, initialData, activeCompany?.id, dispatch]);
 
   useEffect(() => {
     if (initialData) {
@@ -182,20 +247,16 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
             </div>
             <div className="col-md-6">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Party / Company <span className="text-danger">*</span></label>
-              <select 
-                className="form-select" 
-                name="partyId" 
-                value={formData.partyId} 
-                onChange={handleInputChange} 
-                required
+              <SearchableSelect
+                options={(formData.partyType === 'customer' ? companyCustomers : companyVendors).map(p => ({ 
+                  value: p.id, 
+                  label: p.company || p.name 
+                }))}
+                value={formData.partyId}
+                onChange={(val) => handleInputChange({ target: { name: 'partyId', value: val } } as any)}
+                placeholder={`Select ${formData.partyType === 'customer' ? 'Customer' : 'Vendor'}`}
                 disabled={mode === 'view'}
-              >
-                <option value="">Select {formData.partyType === 'customer' ? 'Customer' : 'Vendor'}</option>
-                {formData.partyType === 'customer' 
-                  ? companyCustomers.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)
-                  : companyVendors.map(v => <option key={v.id} value={v.id}>{v.company || v.name}</option>)
-                }
-              </select>
+              />
             </div>
             <div className="col-md-3">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Date <span className="text-danger">*</span></label>
@@ -258,20 +319,13 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                   {formData.items.map((item, index) => (
                     <tr key={index}>
                       <td className="px-3 py-2">
-                        <select 
-                          className="form-select" 
-                          value={item.description || ''} 
-                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                          required 
+                        <SearchableSelect
+                          options={masterItems.map(mi => ({ value: mi.itemName, label: `${mi.itemName} (${mi.itemCode})` }))}
+                          value={item.description || ''}
+                          onChange={(val) => handleItemChange(index, 'description', val)}
+                          placeholder="Select Item"
                           disabled={mode === 'view'}
-                        >
-                          <option value="">Select Item</option>
-                          {masterItems.map((mi) => (
-                            <option key={mi.id} value={mi.itemName}>
-                              {mi.itemName} ({mi.itemCode})
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </td>
                       <td className="px-2 py-2">
                         <input 

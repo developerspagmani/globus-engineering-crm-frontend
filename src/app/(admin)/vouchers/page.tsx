@@ -236,10 +236,10 @@ const VoucherPage = () => {
                           <div className="d-flex justify-content-center gap-1">
                             {mounted && checkActionPermission(user, 'mod_voucher', 'edit') && (
                               <>
-                                <Link href={`/vouchers/${voucher.id}/edit`} className="btn-action-view" title="View Detail">
+                                <Link href={`/vouchers/${voucher.id}`} className="btn-action-view" title="View Detail">
                                   <i className="bi bi-eye-fill"></i>
                                 </Link>
-                                <Link href={`/vouchers/${voucher.id}/edit?edit=true`} className="btn-action-edit" title="Edit Voucher">
+                                <Link href={`/vouchers/${voucher.id}?edit=true`} className="btn-action-edit" title="Edit Voucher">
                                   <i className="bi bi-pencil-fill"></i>
                                 </Link>
                               </>

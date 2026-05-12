@@ -193,7 +193,7 @@ const InvoiceSettings: React.FC = () => {
 
                   <div className="col-md-6">
                     <label className="form-label small text-muted text-uppercase fw-bold">Sub-Header (Certifications)</label>
-                    <input type="text" className="form-control" name="companySubHeader" value={(formData as any).companySubHeader || ''} onChange={handleInputChange} placeholder="An ISO 9001: 2015 Certified Company" />
+                    <input type="text" className="form-control" name="companySubHeader" value={(formData as any).companySubHeader || ''} onChange={handleInputChange} placeholder="No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006." />
                   </div>
                   <div className="col-12">
                     <label className="form-label small text-muted text-uppercase fw-bold">Supplier Address <span className="text-danger">*</span></label>

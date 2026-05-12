@@ -35,7 +35,50 @@ interface IndustrialInvoiceProps {
 }
 
 const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company, settings }) => {
-   const totalInWords = numberToWords(invoice.grandTotal);
+   const typeParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('type') : null;
+   
+   let displayItems = [...invoice.items];
+   let displayInvoice = { ...invoice };
+   let isWOP = typeParam === 'WOP' || String(invoice.type).toUpperCase() === 'WOP';
+
+   if (String(invoice.type).toUpperCase() === 'BOTH' && typeParam) {
+      if (typeParam === 'WP') {
+         displayItems = invoice.items.map(it => ({
+            ...it,
+            quantity: Number(it.quantity || 0) - Number(it.wopQty || 0),
+            amount: (Number(it.quantity || 0) - Number(it.wopQty || 0)) * (Number(it.unitPrice) || 0)
+         })).filter(it => it.quantity > 0);
+         
+         const subTotal = displayItems.reduce((sum, it) => sum + it.amount, 0);
+         const taxTotal = subTotal * ((invoice.taxRate || 0) / 100);
+         displayInvoice = {
+            ...invoice,
+            items: displayItems,
+            subTotal,
+            taxTotal,
+            grandTotal: subTotal + taxTotal
+         };
+         isWOP = false;
+      } else if (typeParam === 'WOP') {
+         displayItems = invoice.items.map(it => ({
+            ...it,
+            quantity: Number(it.wopQty || 0),
+            amount: 0,
+            unitPrice: 0
+         })).filter(it => it.quantity > 0);
+         
+         displayInvoice = {
+            ...invoice,
+            items: displayItems,
+            subTotal: 0,
+            taxTotal: 0,
+            grandTotal: 0
+         };
+         isWOP = true;
+      }
+   }
+
+   const totalInWords = numberToWords(displayInvoice.grandTotal);
 
    // PAGINATION CAPACITIES (Strictly calibrated for FULL header on ALL pages)
    const GLOBAL_PAGE_CAPACITY = 18;     // Full header/meta/address + 18 items as requested
@@ -64,10 +107,8 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    };
 
    const isPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
-   const typeParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('type') : null;
-   const isWOP = typeParam === 'WOP' || invoice.type === 'WOP';
 
-   const pagesData = paginate(invoice.items);
+   const pagesData = paginate(displayItems);
    const totalPages = pagesData.length;
 
    return (
@@ -75,7 +116,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          {pagesData.length > 0 && pagesData.map((pageItems, idx) => (
             <InvoicePage
                key={idx}
-               invoice={invoice}
+               invoice={displayInvoice}
                company={company}
                settings={settings}
                items={pageItems}
@@ -145,11 +186,11 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         }
         
         /* META GRID */
-        .p-meta { 
-           font-size: 10px; 
-           border-bottom: 1.5pt solid #000; 
-           page-break-inside: avoid;
-        }
+         .p-meta { 
+            font-size: 8.5px; 
+            border-bottom: 1.5pt solid #000; 
+            page-break-inside: avoid;
+         }
         .p-meta-row { 
            display: flex; 
            border-bottom: 1pt solid #000; 
@@ -179,13 +220,13 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         }
 
         /* ADDRESS SECTION */
-        .p-address { 
-           display: flex; 
-           border-bottom: 1.5pt solid #000; 
-           font-size: 8.5px; 
-           min-height: 80px; 
-           page-break-inside: avoid;
-        }
+         .p-address { 
+            display: flex; 
+            border-bottom: 1.5pt solid #000; 
+            font-size: 10.5px; 
+            min-height: 80px; 
+            page-break-inside: avoid;
+         }
         .p-addr-box { 
            flex: 1; 
            border-right: 1.5pt solid #000; 
@@ -201,11 +242,12 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            font-size: 9px;
            text-transform: uppercase;
         }
-        .p-addr-content { 
-           padding: 8px 10px; 
-           flex: 1; 
-           line-height: 1.4;
-        }
+         .p-addr-content { 
+            padding: 8px 10px; 
+            flex: 1; 
+            line-height: 1.4;
+            text-transform: uppercase;
+         }
 
         /* TABLE SECTION */
         .p-table-area { 
@@ -407,11 +449,17 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   ) : null}
                </div>
 
-               <div style={{ textAlign: 'center', flex: 1 }}>
+                <div style={{ textAlign: 'center', flex: 1 }}>
                   <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '900', letterSpacing: '0.8pt' }}>
-                     {settings.companyName || company?.name?.toUpperCase() || 'GLOBUS ENGINEERING MAIN'}
+                     {(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) 
+                        ? 'GLOBUS ENGINEERING TOOLS' 
+                        : settings.companyName.toUpperCase()}
                   </h1>
-                  <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>{settings.companySubHeader || 'An ISO 9001: 2015 Certified Company'}</div>
+                  <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>
+                     {(!settings.companySubHeader || settings.companySubHeader.includes('Machining') || settings.companySubHeader.includes('Quality')) 
+                        ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' 
+                        : settings.companySubHeader}
+                  </div>
                </div>
 
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -463,8 +511,8 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   <div className="p-addr-title">SUPPLIER DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div>Name</div><div>: <strong>{settings.companyName || company?.name || 'Globus Engineering Main'}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {settings.companyAddress || company?.address || 'No:24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Coimbatore - 641006'}</div>
+                        <div>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
+                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</div>
                         <div>GST No</div><div>: <strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
                         <div>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -497,8 +545,8 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   <thead>
                      <tr>
                         <th style={{ width: '40px' }}>S.No</th>
-                        <th>Description of Goods</th>
-                        <th style={{ width: '70px' }}>SAC Code</th>
+                        <th>Description</th>
+                        <th style={{ width: '70px' }}>HSN Code</th>
                         {!isWOP && <th style={{ width: '60px' }}>GST Rate</th>}
                         <th style={{ width: '60px' }}>Qty</th>
                         {!isWOP && <th style={{ width: '90px' }}>Price</th>}
@@ -608,7 +656,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                         <div style={{ marginBottom: '40px' }}>Receivers Sign :</div>
                      </div>
                      <div className="p-sign-box">
-                        <div>For <strong>{settings.companyName || company?.name || 'Globus Engineering Tools'}</strong></div>
+                        <div>FOR <strong>{(settings.companyName || company?.name || 'Globus Engineering Tools').toUpperCase()}</strong></div>
                         <img
                            src="/seal.png"
                            className="seal"

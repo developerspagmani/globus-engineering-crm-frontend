@@ -61,20 +61,28 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     dispatch(updateInvoiceSettings({ showDeclaration: !settings.showDeclaration }));
   };
 
-  // Sync settings from company context if they aren't loaded in Redux yet (handles direct navigation/refresh)
+  // Sync settings and reset declaration on mount or company change
   React.useEffect(() => {
-    if (company && (!settings.companyName || settings.companyName === 'GLOBUS ENGINEERING MAIN')) {
-      const dbSettings = company.invoiceSettings || {};
+    if (!company) return;
+
+    const dbSettings = company.invoiceSettings || {};
+    
+    // Check if we need to pull basic company info into settings
+    if (!settings.companyName || settings.companyName === 'GLOBUS ENGINEERING MAIN' || settings.companyName === 'Globus Engineering Tools') {
       const initialSettings = {
         ...settings,
         ...dbSettings,
+        showDeclaration: false,
         // Prioritize actual database columns for logos if JSON settings are empty or invalid
         logo: (dbSettings.logo && dbSettings.logo.length > 10) ? dbSettings.logo : (company.logo || settings.logo),
         logoSecondary: (dbSettings.logoSecondary && dbSettings.logoSecondary.length > 10) ? dbSettings.logoSecondary : (company.logoSecondary || settings.logoSecondary)
       };
       dispatch(initializeInvoiceSettings(initialSettings));
+    } else {
+      // Just ensure declaration is OFF for this specific preview session.
+      dispatch(updateInvoiceSettings({ showDeclaration: false }));
     }
-  }, [company, dispatch, settings.companyName]);
+  }, [company?.id, dispatch]); // Using company.id for a stable dependency array length
 
   const accentColor = settings.accentColor || '#0d6efd';
 

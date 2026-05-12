@@ -5,12 +5,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { addInvoice, updateInvoice } from '@/redux/features/invoiceSlice';
-import { fetchItems, fetchProcesses, fetchPriceFixings } from '@/redux/features/masterSlice';
+import { fetchItems, fetchProcesses, fetchPriceFixings, updatePriceFixingThunk } from '@/redux/features/masterSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { Invoice } from '@/types/modules';
 import BackButton from '@/components/BackButton';
 import FullPageStatus from '@/components/FullPageStatus';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 
 
 interface InvoiceFormProps {
@@ -128,7 +129,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    }, [company?.id, formData.company_id]);
 
    const findPrice = (compId: string, custId: string, itemName: string, procName: string) => {
-      if (!custId || !itemName) return 0;
+      if (!custId || !itemName) return null;
 
       const pf = priceFixings.find(pf => {
          const matchCust = String(pf.customerId) === String(custId);
@@ -138,7 +139,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          return matchCust && matchItem && (procName ? matchProc : true);
       });
 
-      return pf ? pf.price : 0;
+      return pf || null;
    };
 
    useEffect(() => {
@@ -212,13 +213,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                state: (inward as any).state || customer?.state || prev.state,
                inwardId: inward.id,
                items: (inward.items || []).map((item: any, idx: number) => {
-                  const unitPrice = findPrice(
+                  const pf = findPrice(
                      prev.company_id,
                      inward.customerId || inward.customer_id || prev.customerId,
                      item.item_name || item.description || '',
                      item.process || ''
-                  );
+                  ) as any;
 
+                  const unitPrice = pf ? pf.price : 0;
                   const qty = item.remainingQty ?? item.quantity ?? 0;
                   const amount = qty * unitPrice;
                   const tax = amount * (prev.taxRate / 100);
@@ -230,6 +232,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      quantity: qty,
                      wopQty: 0,
                      unitPrice: unitPrice,
+                     priceFixingId: pf ? pf.id : undefined,
                      amount: amount,
                      tax: tax,
                      total: amount + tax
@@ -300,6 +303,31 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
    }, [formData.items, formData.discount, formData.otherCharges, formData.taxRate, formData.subTotal, formData.taxTotal, formData.grandTotal]);
 
+   // Recalculate items when billType or taxRate changes
+   useEffect(() => {
+      if (formData.items.length > 0) {
+         const updatedItems = formData.items.map((item: any) => {
+            const taxableQty = formData.billType === 'Both' 
+               ? Math.max(0, (Number(item.quantity || 0) - Number(item.wopQty || 0)))
+               : (item.quantity || 0);
+            
+            const amount = taxableQty * (item.unitPrice || 0);
+            const tax = amount * (formData.taxRate / 100);
+            return {
+               ...item,
+               amount,
+               tax,
+               total: amount + tax
+            };
+         });
+         
+         const hasChanged = JSON.stringify(updatedItems) !== JSON.stringify(formData.items);
+         if (hasChanged) {
+            setFormData((prev: any) => ({ ...prev, items: updatedItems }));
+         }
+      }
+   }, [formData.billType, formData.taxRate]);
+
    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       if (name === 'customerId') {
@@ -364,11 +392,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       if (field === 'description' || field === 'process' || field === 'customerId') {
          const desc = field === 'description' ? value : item.description;
          const proc = field === 'process' ? value : item.process;
-         item.unitPrice = findPrice(formData.company_id, formData.customerId, desc, proc);
+         const pf = findPrice(formData.company_id, formData.customerId, desc, proc);
+         item.unitPrice = pf ? pf.price : 0;
+         item.priceFixingId = pf ? pf.id : undefined;
       }
 
-      if (field === 'quantity' || field === 'unitPrice' || field === 'description' || field === 'process') {
-         item.amount = (item.quantity || 0) * (item.unitPrice || 0);
+      if (field === 'quantity' || field === 'wopQty' || field === 'unitPrice' || field === 'description' || field === 'process') {
+         const taxableQty = formData.billType === 'Both' 
+            ? Math.max(0, (Number(item.quantity || 0) - Number(item.wopQty || 0)))
+            : (item.quantity || 0);
+            
+         item.amount = taxableQty * (item.unitPrice || 0);
          item.tax = item.amount * (formData.taxRate / 100);
          item.total = item.amount + item.tax;
       }
@@ -377,14 +411,52 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       setFormData((prev: any) => ({ ...prev, items: newItems }));
    };
 
+   const [isDirty, setIsDirty] = useState(false);
+
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (loading) return;
+      
+      // Safety Check: Ensure a customer is selected
+      if (!formData.customerId) {
+         setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Missing Data',
+            message: 'Please select a customer before submitting.'
+         });
+         return;
+      }
+
+      // Safety Check: If it's a "ghost" submission with no items
+      if (formData.items.length === 0 || !formData.items[0].description) {
+          setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Empty Invoice',
+            message: 'Cannot save an empty invoice. Please add items.'
+         });
+         return;
+      }
 
       try {
          setLoading(true);
          if (mode === 'create') {
             await (dispatch as any)(addInvoice(formData)).unwrap();
+            
+            // Sync Price Fixing Changes
+            for (const item of formData.items) {
+               if (item.priceFixingId && item.unitPrice > 0) {
+                  const masterPf = priceFixings.find(pf => pf.id === item.priceFixingId);
+                  if (masterPf && Number(masterPf.price) !== Number(item.unitPrice)) {
+                     await (dispatch as any)(updatePriceFixingThunk({ 
+                        id: item.priceFixingId, 
+                        price: Number(item.unitPrice) 
+                     })).unwrap();
+                  }
+               }
+            }
+
             setModal({
                isOpen: true,
                type: 'success',
@@ -393,6 +465,20 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             });
          } else {
             await (dispatch as any)(updateInvoice({ ...formData, id: initialData?.id || '' })).unwrap();
+
+            // Sync Price Fixing Changes (also for edit mode)
+            for (const item of formData.items) {
+               if (item.priceFixingId && item.unitPrice > 0) {
+                  const masterPf = priceFixings.find(pf => pf.id === item.priceFixingId);
+                  if (masterPf && Number(masterPf.price) !== Number(item.unitPrice)) {
+                     await (dispatch as any)(updatePriceFixingThunk({ 
+                        id: item.priceFixingId, 
+                        price: Number(item.unitPrice) 
+                     })).unwrap();
+                  }
+               }
+            }
+
             setModal({
                isOpen: true,
                type: 'success',
@@ -416,19 +502,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
 
    const memoizedItemOptions = React.useMemo(() => {
-      return (masterItems || []).map(mi => (
-         <option key={mi.id} value={mi.itemName}>
-            {mi.itemName}
-         </option>
-      ));
+      return (masterItems || []).map(mi => ({
+         value: mi.itemName,
+         label: mi.itemName
+      }));
    }, [masterItems]);
 
    const memoizedProcessOptions = React.useMemo(() => {
-      return (masterProcesses || []).map(p => (
-         <option key={p.id} value={p.processName}>
-            {p.processName}
-         </option>
-      ));
+      return (masterProcesses || []).map(p => ({
+         value: p.processName,
+         label: p.processName
+      }));
    }, [masterProcesses]);
 
    const isPageLoading = !isComponentMounted || 
@@ -473,143 +557,54 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         <h3 className="fw-bold mb-0 text-dark">{mode === 'create' ? 'Create New Invoice' : 'Edit Invoice'}</h3>
                      </div>
 
-                     {mode === 'create' && !inwardId && (
-                        <div className="d-flex align-items-center gap-3 ms-auto">
-                           <div
-                              className="d-flex align-items-center p-1"
-                              style={{
-                                 background: 'var(--bs-secondary-bg, #f1f3f5)',
-                                 borderRadius: '999px',
-                                 border: '0.5px solid rgba(0,0,0,0.08)',
-                                 gap: '2px',
-                              }}
-                           >
-                              <button
-                                 type="button"
-                                 onClick={() => setSelectionMode('CUSTOMER')}
-                                 style={{
-                                    padding: '6px 18px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    cursor: 'pointer',
-                                    background: selectionMode === 'CUSTOMER' ? '#f97316' : 'transparent',
-                                    color: selectionMode === 'CUSTOMER' ? '#fff' : '#6c757d',
-                                    transition: 'all 0.15s',
-                                 }}
-                              >
-                                 By Customer
-                              </button>
-                              <button
-                                 type="button"
-                                 onClick={() => setSelectionMode('GSTN')}
-                                 style={{
-                                    padding: '6px 18px',
-                                    borderRadius: '999px',
-                                    border: 'none',
-                                    fontSize: '13px',
-                                    fontWeight: 500,
-                                    cursor: 'pointer',
-                                    background: selectionMode === 'GSTN' ? '#f97316' : 'transparent',
-                                    color: selectionMode === 'GSTN' ? '#fff' : '#6c757d',
-                                    transition: 'all 0.15s',
-                                 }}
-                              >
-                                 By GSTIN
-                              </button>
-                           </div>
-
-                           <div style={{ width: '1px', height: '28px', background: 'rgba(0,0,0,0.12)' }} />
-
-                           {selectionMode === 'CUSTOMER' ? (
-                              <div
-                                 className="d-flex align-items-center gap-2"
-                                 style={{
-                                    border: '1px solid #dee2e6',
-                                    borderRadius: '8px',
-                                    padding: '6px 12px',
-                                    minWidth: '200px',
-                                    maxWidth: '240px',
-                                    background: '#fff',
-                                    cursor: 'pointer',
-                                 }}
-                              >
-                                 <i className="bi bi-person" style={{ fontSize: '15px', color: '#6c757d', flexShrink: 0, opacity: customersLoading ? 0.5 : 1 }}></i>
-                                 <select
-                                    name="customerId"
-                                    value={formData.customerId}
-                                    onChange={handleInputChange}
-                                    disabled={customersLoading}
-                                    style={{
-                                       border: 'none',
-                                       outline: 'none',
-                                       fontSize: '13px',
-                                       fontWeight: 500,
-                                       color: formData.customerId ? '#212529' : '#6c757d',
-                                       flex: 1,
-                                       appearance: 'none',
-                                       WebkitAppearance: 'none',
-                                       cursor: customersLoading ? 'not-allowed' : 'pointer',
-                                       background: 'transparent',
-                                       width: '100%',
-                                       padding: 0,
-                                    }}
-                                 >
-                                    {customersLoading ? (
-                                       <option value="">Loading customers...</option>
-                                    ) : (
-                                       <>
-                                          <option value="">Choose Customer</option>
-                                          {customers.map(c => (
-                                             <option key={c.id} value={c.id}>{c.name}</option>
-                                          ))}
-                                       </>
-                                    )}
-                                 </select>
-                                 {customersLoading ? (
-                                    <span className="spinner-border spinner-border-sm text-secondary ms-1" style={{ width: '13px', height: '13px' }}></span>
-                                 ) : (
-                                    <i className="bi bi-chevron-down" style={{ fontSize: '11px', color: '#6c757d', flexShrink: 0 }}></i>
-                                 )}
-                              </div>
-                           ) : (
-                              <div
-                                 className="d-flex align-items-center gap-2"
-                                 style={{
-                                    borderBottom: '1.5px solid #dee2e6',
-                                    paddingBottom: '4px',
-                                    minWidth: '220px',
-                                 }}
-                              >
-                                 <i className="bi bi-hash" style={{ fontSize: '16px', color: '#6c757d' }}></i>
-                                 <input
-                                    type="text"
-                                    className="bg-transparent fw-bold text-uppercase"
-                                    placeholder="Enter GSTIN"
-                                    name="gstin"
-                                    value={formData.gstin}
-                                    onChange={(e) => {
-                                       const val = e.target.value.toUpperCase();
-                                       handleInputChange(e);
-                                       if (val.length === 15) {
-                                          setTimeout(() => handleGstLookup(val), 100);
-                                       }
-                                    }}
-                                    maxLength={15}
-                                    style={{
-                                       border: 'none',
-                                       outline: 'none',
-                                       fontSize: '14px',
-                                       flex: 1,
-                                       letterSpacing: '0.04em',
-                                    }}
-                                 />
-                                 {gstLoading && <span className="spinner-border spinner-border-sm text-primary"></span>}
-                              </div>
-                           )}
-                        </div>
-                     )}
+                      {mode === 'create' && !inwardId && (
+                         <div className="d-flex align-items-center gap-3 ms-auto">
+                            <div
+                               className="d-flex align-items-center p-1"
+                               style={{
+                                  background: 'var(--bs-secondary-bg, #f1f3f5)',
+                                  borderRadius: '999px',
+                                  border: '0.5px solid rgba(0,0,0,0.08)',
+                                  gap: '2px',
+                               }}
+                            >
+                               <button
+                                  type="button"
+                                  onClick={() => setSelectionMode('CUSTOMER')}
+                                  style={{
+                                     padding: '6px 18px',
+                                     borderRadius: '999px',
+                                     border: 'none',
+                                     fontSize: '13px',
+                                     fontWeight: 500,
+                                     cursor: 'pointer',
+                                     background: selectionMode === 'CUSTOMER' ? '#f97316' : 'transparent',
+                                     color: selectionMode === 'CUSTOMER' ? '#fff' : '#6c757d',
+                                     transition: 'all 0.15s',
+                                  }}
+                               >
+                                  By Customer
+                               </button>
+                               <button
+                                  type="button"
+                                  onClick={() => setSelectionMode('GSTN')}
+                                  style={{
+                                     padding: '6px 18px',
+                                     borderRadius: '999px',
+                                     border: 'none',
+                                     fontSize: '13px',
+                                     fontWeight: 500,
+                                     cursor: 'pointer',
+                                     background: selectionMode === 'GSTN' ? '#f97316' : 'transparent',
+                                     color: selectionMode === 'GSTN' ? '#fff' : '#6c757d',
+                                     transition: 'all 0.15s',
+                                  }}
+                               >
+                                  By GSTIN
+                               </button>
+                            </div>
+                         </div>
+                      )}
                   </div>
 
                   {mode === 'create' && (
@@ -678,15 +673,37 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Customer <span className="text-danger">*</span></label>
                               <div className="col-sm-9">
-                                 <input
-                                    type="text"
-                                    className="form-control fw-bold px-2 bg-light bg-opacity-50"
-                                    style={{ height: '38px', cursor: 'not-allowed', fontSize: '0.85rem' }}
-                                    value={formData.customerName || ''}
-                                    readOnly
-                                    placeholder="Select customer to view name..."
-                                    required
-                                 />
+                                 {selectionMode === 'CUSTOMER' ? (
+                                    <SearchableSelect
+                                       options={customers.map(c => ({ value: c.id, label: c.name || (c as any).vendorName || '' }))}
+                                       value={formData.customerId}
+                                       onChange={(val) => handleInputChange({ target: { name: 'customerId', value: val } } as any)}
+                                       placeholder={customersLoading ? 'Loading...' : 'Select Customer'}
+                                       disabled={customersLoading || !!inwardId}
+                                       className="w-100"
+                                    />
+                                 ) : (
+                                    <div className="input-group input-group-sm border rounded overflow-hidden">
+                                       <span className="input-group-text border-0 bg-transparent ps-3"><i className="bi bi-hash text-muted"></i></span>
+                                       <input
+                                          type="text"
+                                          className="form-control border-0 shadow-none py-2 text-uppercase fw-bold"
+                                          placeholder="Enter GSTIN for lookup"
+                                          name="gstin"
+                                          value={formData.gstin}
+                                          onChange={(e) => {
+                                             const val = e.target.value.toUpperCase();
+                                             handleInputChange(e);
+                                             if (val.length === 15) {
+                                                setTimeout(() => handleGstLookup(val), 100);
+                                             }
+                                          }}
+                                          maxLength={15}
+                                          disabled={!!inwardId}
+                                       />
+                                       {gstLoading && <div className="input-group-text border-0 bg-transparent pe-3"><span className="spinner-border spinner-border-sm text-primary"></span></div>}
+                                    </div>
+                                 )}
                               </div>
                            </div>
                            <div className="row mb-3 align-items-center">
@@ -825,16 +842,30 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            {formData.items?.map((item: any, index: number) => (
                               <tr key={item.id} className="border-bottom">
                                  <td className="py-3">
-                                    <select className="form-select bg-transparent fw-bold" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)}>
-                                       <option value="">Select Item</option>
-                                       {memoizedItemOptions}
-                                    </select>
+                                    <SearchableSelect
+                                       options={[
+                                          ...memoizedItemOptions,
+                                          ...(item.description && !masterItems.some(mi => mi.itemName === item.description) 
+                                             ? [{ value: item.description, label: `${item.description} (Legacy)` }] 
+                                             : [])
+                                       ]}
+                                       value={item.description}
+                                       onChange={val => handleItemChange(index, 'description', val)}
+                                       placeholder="Select Item"
+                                    />
                                  </td>
                                  <td className="py-3">
-                                    <select className="form-select bg-transparent" value={String(item.process || '')} onChange={e => handleItemChange(index, 'process', e.target.value)}>
-                                       <option value="">Select Process</option>
-                                       {memoizedProcessOptions}
-                                    </select>
+                                    <SearchableSelect
+                                       options={[
+                                          ...memoizedProcessOptions,
+                                          ...(item.process && !masterProcesses.some(mp => mp.processName === item.process) 
+                                             ? [{ value: item.process, label: `${item.process} (Legacy)` }] 
+                                             : [])
+                                       ]}
+                                       value={String(item.process || '')}
+                                       onChange={val => handleItemChange(index, 'process', val)}
+                                       placeholder="Select Process"
+                                    />
                                  </td>
                                  <td className="py-3">
                                     <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />

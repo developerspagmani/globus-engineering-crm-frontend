@@ -15,9 +15,11 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     setMounted(true);
-    dispatch(fetchDashboardStats());
-    dispatch(fetchAuditLogs());
-  }, [dispatch]);
+    if (company?.id || user?.role === 'super_admin') {
+      dispatch(fetchDashboardStats());
+      dispatch(fetchAuditLogs());
+    }
+  }, [dispatch, company?.id, user?.role]);
   
   if (!mounted) return <div className="h-100 d-flex align-items-center justify-content-center py-5"><div className="spinner-border text-secondary" role="status"></div></div>;
 

@@ -25,11 +25,11 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
       showLogo: true,
       logo: company?.logo,
       logoSecondary: company?.logoSecondary,
-      showDeclaration: true,
+      showDeclaration: false,
       accentColor: '#0d6efd',
       companyName: company?.name || 'GLOBUS ENGINEERING MAIN',
-      companySubHeader: 'An ISO 9001: 2015 Certified Company',
-      companyAddress: company?.address || 'No:24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Coimbatore - 641006',
+      companySubHeader: 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.',
+      companyAddress: company?.address || 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.',
       gstNo: company?.gstin || '33AAIFG6568K1ZZ',
       stateDetails: 'Tamilnadu - Code : 33'
    };
@@ -168,10 +168,11 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            justify-content: space-between; 
            padding: 0 15px; 
         }
-        .p-meta { 
-           font-size: 10px; 
-           border-bottom: 1.5pt solid #000; 
-        }
+         .p-meta { 
+            font-size: 8.5px; 
+            border-bottom: 1.5pt solid #000; 
+            page-break-inside: avoid;
+         }
         .p-meta-row { 
            display: flex; 
            border-bottom: 1pt solid #000; 
@@ -197,12 +198,13 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            letter-spacing: 1px;
            text-transform: uppercase;
         }
-        .p-address { 
-           display: flex; 
-           border-bottom: 1.5pt solid #000; 
-           font-size: 8.5px; 
-           min-height: 80px; 
-        }
+         .p-address { 
+            display: flex; 
+            border-bottom: 1.5pt solid #000; 
+            font-size: 10.5px; 
+            min-height: 80px; 
+            page-break-inside: avoid;
+         }
         .p-addr-box { 
            flex: 1; 
            border-right: 1.5pt solid #000; 
@@ -218,11 +220,12 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            font-size: 9px;
            text-transform: uppercase;
         }
-        .p-addr-content { 
-           padding: 8px 10px; 
-           flex: 1; 
-           line-height: 1.4;
-        }
+         .p-addr-content { 
+            padding: 8px 10px; 
+            flex: 1; 
+            line-height: 1.4;
+            text-transform: uppercase;
+         }
         .p-table-area { 
            flex: 1; 
            display: flex; 
@@ -274,6 +277,15 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
         }
         .p-sign-box:last-child { border-right: 0; text-align: center; }
 
+        .p-declaration { 
+           padding: 6px 10px; 
+           font-size: 8.5px; 
+           line-height: 1.3; 
+           font-weight: bold; 
+           background: #fff;
+           border-top: 1pt solid #000;
+        }
+
         @media print {
            @page { size: A4; margin: 0mm !important; }
            html, body { margin: 0 !important; background: #fff !important; }
@@ -318,8 +330,16 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                </div>
 
                <div style={{ textAlign: 'center', flex: 1 }}>
-                  <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '900', letterSpacing: '0.8pt' }}>{settings.companyName || company?.name?.toUpperCase() || 'GLOBUS ENGINEERING MAIN'}</h1>
-                  <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>{settings.companySubHeader || 'An ISO 9001: 2015 Certified Company'}</div>
+                  <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '900', letterSpacing: '0.8pt' }}>
+                     {(!settings.companyName || settings.companyName === 'Globus Engineering Tools' || settings.companyName.includes('MACHINING')) 
+                        ? 'GLOBUS ENGINEERING TOOLS' 
+                        : settings.companyName.toUpperCase()}
+                  </h1>
+                  <div style={{ fontSize: '12px', fontWeight: '900', marginTop: '2px' }}>
+                     {(!settings.companySubHeader || settings.companySubHeader.includes('Machining') || settings.companySubHeader.includes('Quality')) 
+                        ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' 
+                        : settings.companySubHeader}
+                  </div>
                </div>
 
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -374,7 +394,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                    {type === 'voucher' && (
                      <div className="p-meta-col">
                         <span>MODE</span>
-                        <span>: <span className="p-meta-val">{(data.paymentMode || '-').toUpperCase()}</span></span>
+                        <span>: <span className="p-meta-val">{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-').toUpperCase()}</span></span>
                      </div>
                   )}
                </div>
@@ -409,8 +429,8 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">SUPPLIER DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div>Name</div><div>: <strong>{settings.companyName || company?.name || 'Globus Engineering Main'}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {settings.companyAddress || company?.address || 'No:24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Coimbatore - 641006'}</div>
+                        <div>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
+                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</div>
                         <div>GST No</div><div>: <strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
                         <div>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -446,9 +466,8 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         <tr>
                            <th style={{ width: '40px' }}>S.No</th>
                            <th style={{ textAlign: 'left', paddingLeft: '8px' }}>Particulars / Description</th>
-                           <th style={{ width: '120px' }}>Invoice Ref</th>
-                           <th style={{ width: '60px' }}>Mode</th>
-                           <th style={{ width: '110px', textAlign: 'right', paddingRight: '8px' }}>Amount (₹)</th>
+                           <th style={{ width: '80px' }}>Mode</th>
+                           <th style={{ width: '130px', textAlign: 'right', paddingRight: '8px' }}>Amount (₹)</th>
                         </tr>
                      </thead>
                      <tbody>
@@ -458,8 +477,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                            <td style={{ fontWeight: 'bold', paddingLeft: '8px' }}>
                               {data.description || `${(data.type || 'Payment').toUpperCase()} towards balance settlement`}
                            </td>
-                           <td style={{ textAlign: 'center' }}>{data.referenceNo || data.invoiceRef || '-'}</td>
-                           <td style={{ textAlign: 'center', textTransform: 'uppercase' }}>{data.paymentMode || '-'}</td>
+                           <td style={{ textAlign: 'center', textTransform: 'uppercase' }}>{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-')}</td>
                            <td style={{ textAlign: 'right', paddingRight: '8px', fontFamily: 'Courier New, monospace' }}>
                               {Number(data.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                            </td>
@@ -471,14 +489,13 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                               <td>&nbsp;</td>
                               <td>&nbsp;</td>
                               <td>&nbsp;</td>
-                              <td>&nbsp;</td>
                            </tr>
                         ))}
                         {/* Cheque row */}
                         {data.chequeNo && (
                            <tr style={{ background: '#f8f8f8' }}>
                               <td style={{ textAlign: 'center' }}>-</td>
-                              <td style={{ paddingLeft: '8px', fontStyle: 'italic' }} colSpan={3}>
+                              <td style={{ paddingLeft: '8px', fontStyle: 'italic' }} colSpan={2}>
                                  Cheque / DD No: <strong>{data.chequeNo}</strong>
                               </td>
                               <td>&nbsp;</td>
@@ -486,7 +503,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         )}
                         {/* Total row */}
                         <tr style={{ fontWeight: '900', background: '#f0f0f0', borderTop: '1.5pt solid #000' }}>
-                           <td colSpan={4} style={{ textAlign: 'right', paddingRight: '16px', fontSize: '11px' }}>
+                           <td colSpan={3} style={{ textAlign: 'right', paddingRight: '16px', fontSize: '11px' }}>
                               TOTAL AMOUNT
                            </td>
                            <td style={{ textAlign: 'right', paddingRight: '8px', fontSize: '11px', fontFamily: 'Courier New, monospace' }}>
@@ -501,7 +518,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                      <thead>
                         <tr>
                            <th style={{ width: '40px' }}>S.No</th>
-                           <th>Description of Goods / Services</th>
+                           <th>Description</th>
                            {type === 'inward' && <th style={{ width: '150px' }}>Process</th>}
                            {type === 'challan' && <th style={{ width: '120px' }}>HSN Code</th>}
                            <th style={{ width: '80px' }}>Quantity</th>
@@ -532,7 +549,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         {isLastPage && (
                            <tr style={{ fontWeight: '900', background: '#f0f0f0', borderTop: '1.5pt solid #000' }}>
                               <td colSpan={type === 'inward' ? 3 : (type === 'challan' ? 3 : 2)} style={{ textAlign: 'right', padding: '8px 15px', fontSize: '11px' }}>TOTAL QUANTITY</td>
-                              <td style={{ textAlign: 'center', fontSize: '11px' }}>{items.reduce((sum: number, it: any) => sum + (it.quantity || 0), 0)}</td>
+                              <td style={{ textAlign: 'center', fontSize: '11px' }}>{items.reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0)}</td>
                               <td style={{ textAlign: 'center', fontSize: '11px' }}>{items[0]?.unit || 'pcs'}</td>
                            </tr>
                         )}
@@ -551,10 +568,20 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         <div style={{ marginBottom: '40px' }}>Receiver's Signature:</div>
                      </div>
                      <div className="p-sign-box">
-                        <div>For <strong>{settings.companyName || company?.name || 'Globus Engineering Tools'}</strong></div>
+                        <div>FOR <strong>{(settings.companyName || company?.name || 'Globus Engineering Tools').toUpperCase()}</strong></div>
                         <div style={{ position: 'absolute', bottom: '10px', right: '10px', fontSize: '10px', opacity: 0.5 }}>Authorized Signatory</div>
                      </div>
                   </div>
+
+                  {settings.showDeclaration !== false && (
+                     <div className="p-declaration">
+                        {settings.declarationText || (
+                           <>
+                              <strong>Declaration:</strong> We declare that this document shows the actual price of the goods described and that all particulars are true and correct.
+                           </>
+                        )}
+                     </div>
+                  )}
                   
                   <div style={{ padding: '10px', fontSize: '8px', textAlign: 'center', opacity: 0.7 }}>
                      This is a computer generated document. No signature required.

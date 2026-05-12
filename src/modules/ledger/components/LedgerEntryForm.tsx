@@ -10,6 +10,7 @@ import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import FullPageStatus from '@/components/FullPageStatus';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 
 
 const LedgerEntryForm: React.FC = () => {
@@ -140,19 +141,12 @@ const LedgerEntryForm: React.FC = () => {
             </div>
             <div className="lef-field">
               <label className="lef-label">Customer</label>
-              <select
-                className="lef-input lef-select"
+              <SearchableSelect
+                options={customers.map(c => ({ value: c.id, label: c.company || c.name }))}
                 value={formData.customerId}
-                onChange={(e) => setFormData((p) => ({ ...p, customerId: e.target.value }))}
-                required
-              >
-                <option value="">Choose customer…</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.company || c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData(p => ({ ...p, customerId: String(val) }))}
+                placeholder="Choose customer…"
+              />
             </div>
           </div>
 
@@ -227,28 +221,19 @@ const LedgerEntryForm: React.FC = () => {
                     </span>
                   )}
                 </label>
-                <select
-                  className="lef-input lef-select"
+                <SearchableSelect
+                  options={[
+                    ...(customerInvoices.length > 0 ? [{ value: '', label: '-- NO LINK (GENERAL CREDIT) --' }] : []),
+                    ...customerInvoices.map(inv => ({
+                      value: inv.id,
+                      label: `Invoice #${inv.invoiceNumber} - Balance: ₹${(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}`
+                    }))
+                  ]}
                   value={formData.linkedInvoiceId}
-                  onChange={(e) => setFormData((p) => ({ ...p, linkedInvoiceId: e.target.value }))}
+                  onChange={(val) => setFormData(p => ({ ...p, linkedInvoiceId: String(val) }))}
+                  placeholder={customerInvoices.length > 0 ? "Select Invoice" : "No pending invoices found"}
                   disabled={!formData.customerId || customerInvoices.length === 0}
-                >
-                  {(customerInvoices.length > 0) ? (
-                    <>
-                      <option value="">-- NO LINK (GENERAL CREDIT) --</option>
-                      {customerInvoices.map((inv) => {
-                        const balanceRemaining = inv.grandTotal - (inv.paidAmount || 0);
-                        return (
-                          <option key={inv.id} value={inv.id}>
-                            Invoice #{inv.invoiceNumber} - Balance: ₹{balanceRemaining.toLocaleString()}
-                          </option>
-                        );
-                      })}
-                    </>
-                  ) : (
-                    <option value="">No pending invoices found</option>
-                  )}
-                </select>
+                />
               </div>
             )}
           </div>

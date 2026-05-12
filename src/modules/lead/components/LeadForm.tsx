@@ -7,6 +7,7 @@ import { RootState } from '@/redux/store';
 import { Lead } from '@/types/modules';
 import { addLead, updateLead } from '@/redux/features/leadSlice';
 import FullPageStatus from '@/components/FullPageStatus';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 
 
 interface LeadFormProps {
@@ -172,32 +173,48 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           <div className="row g-4 mb-4">
             <div className="col-md-4">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Industry</label>
-              <select className="form-select" name="industry" value={formData.industry} onChange={handleChange} disabled={mode === 'view'}>
-                <option value="Automotive">Automotive</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Construction">Construction</option>
-                <option value="Machinery">Machinery</option>
-              </select>
+              <SearchableSelect
+                options={[
+                  { value: 'Automotive', label: 'Automotive' },
+                  { value: 'Electronics', label: 'Electronics' },
+                  { value: 'Construction', label: 'Construction' },
+                  { value: 'Machinery', label: 'Machinery' }
+                ]}
+                value={formData.industry}
+                onChange={(val) => handleChange({ target: { name: 'industry', value: val } } as any)}
+                placeholder="Select Industry"
+                disabled={mode === 'view'}
+              />
             </div>
             <div className="col-md-4">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Lead Source <span className="text-danger">*</span></label>
-              <select className="form-select" name="source" value={formData.source} onChange={handleChange} required disabled={mode === 'view'}>
-                <option value="">Select Source</option>
-                <option value="Web">Website / Organic</option>
-                <option value="Exhibition">Engineering Exhibition</option>
-                <option value="Referral">Client Referral</option>
-                <option value="Cold Call">Direct Calling</option>
-              </select>
+              <SearchableSelect
+                options={[
+                  { value: 'Web', label: 'Website / Organic' },
+                  { value: 'Exhibition', label: 'Engineering Exhibition' },
+                  { value: 'Referral', label: 'Client Referral' },
+                  { value: 'Cold Call', label: 'Direct Calling' }
+                ]}
+                value={formData.source}
+                onChange={(val) => handleChange({ target: { name: 'source', value: val } } as any)}
+                placeholder="Select Source"
+                disabled={mode === 'view'}
+              />
             </div>
             <div className="col-md-4">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Current Status <span className="text-danger">*</span></label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
-                <option value="">Select Status</option>
-                <option value="new">New Entry</option>
-                <option value="contacted">Attempted Contact</option>
-                <option value="qualified">Qualified Lead</option>
-                <option value="converted">Deal Closed (Converted)</option>
-              </select>
+              <SearchableSelect
+                options={[
+                  { value: 'new', label: 'New Entry' },
+                  { value: 'contacted', label: 'Attempted Contact' },
+                  { value: 'qualified', label: 'Qualified Lead' },
+                  { value: 'converted', label: 'Deal Closed (Converted)' }
+                ]}
+                value={formData.status}
+                onChange={(val) => handleChange({ target: { name: 'status', value: val } } as any)}
+                placeholder="Select Status"
+                disabled={mode === 'view'}
+              />
             </div>
           </div>
 

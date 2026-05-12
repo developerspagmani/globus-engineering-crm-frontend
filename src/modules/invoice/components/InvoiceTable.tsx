@@ -238,25 +238,25 @@ const InvoiceTable: React.FC = () => {
                               <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
                             </button>
                           </li>
-                          {(item.type === 'BOTH' || item.type === 'INVOICE') && (
-                            <li>
-                              <button
-                                className="dropdown-item d-flex align-items-center gap-2 py-2 small"
-                                onClick={() => router.push(`/invoices/${item.id}?print=true&type=WP`)}
-                              >
-                                <i className="bi bi-printer text-muted small"></i> WP Print (Alt)
-                              </button>
-                            </li>
-                          )}
-                          {(item.type === 'BOTH' || item.type === 'WOP') && (
-                            <li>
-                              <button
-                                className="dropdown-item d-flex align-items-center gap-2 py-2 small"
-                                onClick={() => router.push(`/invoices/${item.id}?print=true&type=WOP`)}
-                              >
-                                <i className="bi bi-file-earmark-text text-muted small"></i> WOP Print (Alt)
-                              </button>
-                            </li>
+                           {item.type === 'BOTH' && (
+                            <>
+                              <li>
+                                <button
+                                  className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-primary"
+                                  onClick={() => router.push(`/invoices/${item.id}?print=true&type=WP`)}
+                                >
+                                  <i className="bi bi-printer-fill"></i> WP Print
+                                </button>
+                              </li>
+                              <li>
+                                <button
+                                  className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-danger"
+                                  onClick={() => router.push(`/invoices/${item.id}?print=true&type=WOP`)}
+                                >
+                                  <i className="bi bi-file-earmark-text-fill"></i> WOP Print
+                                </button>
+                              </li>
+                            </>
                           )}
                           {checkActionPermission(user, 'mod_invoice', 'delete') && (
                             <>

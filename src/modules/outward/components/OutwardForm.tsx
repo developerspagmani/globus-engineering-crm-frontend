@@ -12,6 +12,7 @@ import { fetchProcesses } from '@/redux/features/masterSlice';
 import { OutwardEntry } from '@/types/modules';
 import StatusModal from '@/components/StatusModal';
 import FullPageStatus from '@/components/FullPageStatus';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 
 
 interface OutwardFormProps {
@@ -270,33 +271,43 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                       <div className="row mb-3 align-items-center">
                          <label className="col-4 text-muted x-small fw-bold">CUSTOMER <span className="text-danger">*</span></label>
                          <div className="col-8">
-                             <select className="form-select fw-bold" name="customerId" value={formData.customerId} onChange={handleChange} required={formData.partyType === 'customer'} disabled={mode === 'view'}>
-                               <option value="">Select Customer</option>
-                               {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                             <SearchableSelect
+                               options={customers.map(c => ({ value: c.id, label: c.name }))}
+                               value={formData.customerId || ''}
+                               onChange={(val) => handleChange({ target: { name: 'customerId', value: val } } as any)}
+                               placeholder="Select Customer"
+                               disabled={mode === 'view'}
+                            />
                          </div>
                       </div>
                     ) : (
                       <>
-                        <div className="row mb-3 align-items-center">
-                           <label className="col-4 text-muted x-small fw-bold">VENDOR <span className="text-danger">*</span></label>
+                         <div className="row mb-3 align-items-center">
+                            <label className="col-4 text-muted x-small fw-bold">VENDOR <span className="text-danger">*</span></label>
 
-                           <div className="col-8">
-                               <select className="form-select fw-bold" name="vendorId" value={formData.vendorId} onChange={handleChange} required={formData.partyType === 'vendor'} disabled={mode === 'view'}>
-                                 <option value="">Select Vendor</option>
-                                 {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                              </select>
-                           </div>
-                        </div>
-                        <div className="row mb-3 align-items-center">
-                           <label className="col-4 text-muted small fw-bold text-info">ASSIGN PROCESS</label>
-                           <div className="col-8">
-                               <select className="form-select border-info-subtle bg-info-light rounded-pill px-3 py-2 fw-bold" name="processName" value={formData.processName} onChange={handleChange} required={formData.partyType === 'vendor'} disabled={mode === 'view'}>
-                                 <option value="">Select Process (for Vendor)</option>
-                                 {processes.map(p => <option key={p.id} value={p.processName}>{p.processName}</option>)}
-                              </select>
-                           </div>
-                        </div>
+                            <div className="col-8">
+                                <SearchableSelect
+                                  options={vendors.map(v => ({ value: v.id, label: v.name }))}
+                                  value={formData.vendorId || ''}
+                                  onChange={(val) => handleChange({ target: { name: 'vendorId', value: val } } as any)}
+                                  placeholder="Select Vendor"
+                                  disabled={mode === 'view'}
+                                />
+                            </div>
+                         </div>
+                         <div className="row mb-3 align-items-center">
+                            <label className="col-4 text-muted small fw-bold text-info">ASSIGN PROCESS</label>
+                            <div className="col-8">
+                                <SearchableSelect
+                                  className="w-100"
+                                  options={processes.map(p => ({ value: p.processName, label: p.processName }))}
+                                  value={formData.processName || ''}
+                                  onChange={(val) => handleChange({ target: { name: 'processName', value: val } } as any)}
+                                  placeholder="Select Process (for Vendor)"
+                                  disabled={mode === 'view'}
+                                />
+                            </div>
+                         </div>
                       </>
                     )}
 
@@ -304,14 +315,17 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                     <div className="row mb-3 align-items-center">
                        <label className="col-4 text-muted small fw-bold text-warning">INWARD REF <span className="text-danger">*</span></label>
                        <div className="col-8">
-                           <select className="form-select border-warning-subtle bg-warning-light rounded-pill px-3 py-2 fw-bold" name="inwardId" value={formData.inwardId} onChange={handleChange} required disabled={mode === 'view' || (formData.partyType === 'customer' && !formData.customerId) || (formData.partyType === 'vendor' && !formData.vendorId)}>
-                             <option value="">Select Inward Batch</option>
-                             {availableInwards.map(i => (
-                                <option key={i.id} value={i.id}>
-                                   {i.inwardNo} - Bal: {i.totalRemaining ?? 0} {i.status === 'completed' || (i.totalRemaining !== undefined && i.totalRemaining <= 0) ? '(Completed)' : ''} ({i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})
-                                </option>
-                             ))}
-                          </select>
+                           <SearchableSelect
+                               className="w-100"
+                               options={availableInwards.map(i => ({ 
+                                 value: i.id, 
+                                 label: `${i.inwardNo} - Bal: ${i.totalRemaining ?? 0} ${i.status === 'completed' || (i.totalRemaining !== undefined && i.totalRemaining <= 0) ? '(Completed)' : ''} (${i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})` 
+                               }))}
+                               value={formData.inwardId || ''}
+                               onChange={(val) => handleChange({ target: { name: 'inwardId', value: val } } as any)}
+                               placeholder="Select Inward Batch"
+                               disabled={mode === 'view' || (formData.partyType === 'customer' && !formData.customerId) || (formData.partyType === 'vendor' && !formData.vendorId)}
+                            />
                        </div>
                     </div>
 

@@ -166,9 +166,10 @@ export default function InwardListPage() {
                 <thead className="bg-light">
                   <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-4 border-0">SNO</th>
-                    <th className="py-4 border-0">CUSTOMER</th>
+                    <th className="py-4 border-0">PARTY</th>
                     <th className="py-4 border-0">PO NO</th>
                     <th className="py-4 border-0">DC NO</th>
+                    <th className="py-4 border-0">TYPE</th>
                     <th className="py-4 border-0">INWARD DATE</th>
                     <th className="py-4 border-0 text-center px-4" style={{ width: '130px' }}>ACTION</th>
                   </tr>
@@ -185,6 +186,15 @@ export default function InwardListPage() {
                       <td>
                         <span className="badge bg-light text-dark border-0 shadow-inner px-3 py-2" style={{ fontSize: '0.9rem', borderRadius: '10px' }}>
                           {item.dcNo || item.challanNo || '-'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge rounded-pill px-2 py-1 small fw-bold ${
+                          item.vendorId || (item as any).vendor_id || item.partyType === 'vendor' || (item as any).party_type === 'vendor' 
+                          ? 'bg-info-subtle text-info' 
+                          : 'bg-primary-subtle text-primary'
+                        }`}>
+                          {(item.vendorId || (item as any).vendor_id || item.partyType === 'vendor' || (item as any).party_type === 'vendor') ? 'VENDOR' : 'CUSTOMER'}
                         </span>
                       </td>
                       <td className="text-muted small fw-bold">{item.date}</td>

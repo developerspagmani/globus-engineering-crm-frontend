@@ -49,7 +49,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
   const companyAddress =
     (docSettings as any).companyAddress ||
     company?.address ||
-    'No:24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Coimbatore - 641 006';
+    'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.';
 
   // ── Accounting Logic ──────────────────────────────────────────────────
   const {

@@ -7,6 +7,7 @@ export interface InvoiceItem {
   tax: number;
   amount: number;
   total: number;
+  wopQty?: number;
 }
 
 export interface Invoice {
@@ -58,11 +59,14 @@ export interface Invoice {
 export interface InwardEntry {
   id: string;
   inwardNo: string;
+  partyType?: 'customer' | 'vendor'; // NEW: To distinguish vendor job work
   customerId?: string;
   customerName?: string;
   address?: string; // added to match mock UI
   vendorId?: string;
   vendorName?: string;
+  outwardId?: string; // NEW: Link to original dispatch
+  outwardNo?: string; // NEW: Display reference
   poReference?: string;
   poDate?: string;
   challanNo?: string;
@@ -129,11 +133,12 @@ export interface Voucher {
   partyType?: 'customer' | 'vendor' | 'other';
   company_id: string;
   amount: number;
-  paymentMode: 'cash' | 'bank' | 'online';
+  paymentMode: 'cash' | 'bank' | 'cheque' | 'netbanking' | 'card' | 'online';
   referenceNo?: string;
   chequeNo?: string;
   description: string;
   status: 'draft' | 'posted' | 'cancelled';
+  tdsAmount?: number;
   createdAt: string;
 }
 

@@ -48,6 +48,7 @@ export const fetchVouchers = createAsyncThunk(
           chequeNo: v.cheque_no,
           description: v.description_ || v.description || '',
           status: v.status?.toLowerCase() || 'posted',
+          tdsAmount: parseFloat(String(v.tds_amount || '0')) || 0,
           company_id: v.company_id?.toString() || (v as any).companyId?.toString() || '',
           createdAt: v.app_created_at
         })),
@@ -77,7 +78,8 @@ export const createVoucher = createAsyncThunk(
         cheque_no: data.chequeNo,
         description: data.description,
         status: data.status,
-        company_id: (data as any).company_id
+        company_id: (data as any).company_id,
+        tds_amount: data.tdsAmount
       };
       
       const response = await api.post('/vouchers', payload);
@@ -105,7 +107,8 @@ export const updateVoucher = createAsyncThunk(
         cheque_no: data.chequeNo,
         description: data.description,
         status: data.status,
-        company_id: (data as any).company_id
+        company_id: (data as any).company_id,
+        tds_amount: data.tdsAmount
       };
       
       const response = await api.put(`/vouchers/${data.id}`, payload);

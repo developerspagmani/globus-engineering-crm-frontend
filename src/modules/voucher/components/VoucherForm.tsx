@@ -9,6 +9,7 @@ import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { Voucher } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 
 
 
@@ -32,9 +33,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     chequeNo: '',
     customerId: '',
     customerName: '',
-    selectedInvoices: [] as string[],
-    totalAmount: 0
+    selectedInvoices: [] as { id: string, invoiceNo: string, amount: number, tds: number }[]
   });
+
+  const totalInvoiceAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const totalTdsAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.tds) || 0), 0);
+  const netPayableAmount = totalInvoiceAmount - totalTdsAmount;
 
   const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
     isOpen: false,
@@ -47,9 +51,15 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      const invoiceNosParam = (mode === 'view' || mode === 'edit') && initialData?.referenceNo
-        ? initialData.referenceNo
-        : undefined;
+      // 1. Determine which invoices to fetch
+      let invoiceNosParam = undefined;
+      
+      if ((mode === 'view' || mode === 'edit') && initialData?.referenceNo) {
+        invoiceNosParam = initialData.referenceNo;
+      } else {
+        // In create mode, if we have an invoiceId in URL, fetch it specifically
+        invoiceNosParam = searchParams.get('invoiceId') || undefined;
+      }
 
       (dispatch as any)(fetchInvoices({ 
         company_id: activeCompany.id, 
@@ -63,6 +73,60 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       }
     }
   }, [dispatch, activeCompany, customers.length, initialData?.referenceNo, mode]);
+
+  useEffect(() => {
+    const customerIdFromUrl = searchParams.get('customerId');
+    const invoiceIdFromUrl = searchParams.get('invoiceId');
+
+    if (mode === 'create') {
+      setFormData(prev => {
+        let updated = { ...prev };
+        let hasChanges = false;
+
+        // 1. Resolve Customer
+        if (customerIdFromUrl && !updated.customerId) {
+          const customer = customers.find(c => String(c.id) === String(customerIdFromUrl));
+          if (customer) {
+            updated.customerId = String(customerIdFromUrl);
+            updated.customerName = customer.company || customer.name || '';
+            hasChanges = true;
+          }
+        }
+
+        // 2. Resolve Invoice
+        if (invoiceIdFromUrl) {
+          const invoice = allInvoices.find(i => String(i.id) === String(invoiceIdFromUrl));
+          const existing = updated.selectedInvoices.find(item => item.id === String(invoiceIdFromUrl));
+
+          if (invoice) {
+            const pendingAmount = invoice.grandTotal - (invoice.paidAmount || 0);
+            const realNo = invoice.invoiceNumber || (invoice as any).invoice_no || String(invoiceIdFromUrl);
+
+            if (!existing || existing.amount === 0 || existing.invoiceNo === String(invoiceIdFromUrl)) {
+              updated.selectedInvoices = [{
+                id: String(invoice.id),
+                invoiceNo: realNo,
+                amount: pendingAmount,
+                tds: 0
+              }];
+              hasChanges = true;
+            }
+          } else if (updated.selectedInvoices.length === 0) {
+            // Initial placeholder
+            updated.selectedInvoices = [{
+              id: String(invoiceIdFromUrl),
+              invoiceNo: String(invoiceIdFromUrl),
+              amount: 0,
+              tds: 0
+            }];
+            hasChanges = true;
+          }
+        }
+        
+        return hasChanges ? updated : prev;
+      });
+    }
+  }, [searchParams, mode, customers, allInvoices]);
 
   useEffect(() => {
     if (initialData) {
@@ -79,13 +143,65 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         chequeNo: initialData.chequeNo || '',
         customerId: targetId,
         customerName: name,
-        selectedInvoices: initialData.referenceNo 
-          ? initialData.referenceNo.split(',').map(s => s.trim()) 
-          : [],
-        totalAmount: initialData.amount
+        selectedInvoices: (() => {
+          if (!initialData.referenceNo) return [];
+          
+          const results: any[] = [];
+          // Regex to match: InvoiceNo (Amount|TDS) or InvoiceNo (Amount) or just InvoiceNo
+          // It handles spaces, missing commas, and various symbols
+          const regex = /([^,(\s]+)\s*(?:\(([^)|]+)(?:\|([^)]+))?\))?/g;
+          let match;
+          
+          while ((match = regex.exec(initialData.referenceNo)) !== null) {
+            const invoiceNo = match[1].trim();
+            // Skip common noise like currency symbols if they got matched as invoice numbers
+            if (['₹', 'RS', 'INR'].includes(invoiceNo.toUpperCase())) continue;
+            
+            let amount = parseFloat((match[2] || '').replace(/[^\d.]/g, '')) || 0;
+            let tds = parseFloat((match[3] || '').replace(/[^\d.]/g, '')) || 0;
+            
+            // Robust matching: compare normalized strings (no leading zeros) or exact matches
+            const normNo = invoiceNo.replace(/^0+/, '');
+            const inv = allInvoices.find(i => {
+              const iNo = String(i.invoiceNumber || (i as any).invoice_no || '').replace(/^0+/, '');
+              return (iNo !== '' && iNo === normNo) || 
+                     String(i.invoiceNumber) === invoiceNo || 
+                     String(i.id) === invoiceNo;
+            });
+            
+            // Fallback for amount: if parsed as 0 and we found the invoice, use its remaining balance
+            if (amount === 0 && inv) {
+              amount = inv.grandTotal - (inv.paidAmount || 0);
+            }
+            
+            results.push({ 
+              id: inv?.id || invoiceNo, 
+              invoiceNo: inv?.invoiceNumber || invoiceNo, 
+              amount: amount,
+              tds: tds
+            });
+          }
+          
+          // Fallback 1: If it's a single invoice voucher and we parsed 0 amount (no brackets), use the voucher's total
+          if (results.length === 1 && results[0].amount === 0 && initialData.amount > 0) {
+            results[0].amount = initialData.amount;
+          }
+          
+          // Fallback 2: If regex found nothing but voucher has an amount, assume a single old-format reference
+          if (results.length === 0 && initialData.amount > 0 && initialData.referenceNo) {
+             results.push({
+               id: initialData.referenceNo,
+               invoiceNo: initialData.referenceNo,
+               amount: initialData.amount,
+               tds: 0
+             });
+          }
+          
+          return results;
+        })()
       }));
     }
-  }, [initialData, customers, customers.length]); // Dependency on customers.length ensures it re-runs when list size changes
+  }, [initialData, customers, allInvoices]); // Dependency on customers.length ensures it re-runs when list size changes
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
@@ -94,24 +210,49 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       ...prev,
       customerId: id,
       customerName: customer?.company || customer?.name || '',
-      selectedInvoices: [],
-      totalAmount: 0
+      selectedInvoices: []
     }));
   };
 
-  const toggleInvoice = (invoiceId: string, amount: number) => {
+  const toggleInvoice = (invoice: any) => {
     setFormData(prev => {
-      const isSelected = prev.selectedInvoices.includes(invoiceId);
-      const newSelected = isSelected
-        ? prev.selectedInvoices.filter(id => id !== invoiceId)
-        : [...prev.selectedInvoices, invoiceId];
-
-      const newAmount = isSelected ? prev.totalAmount - amount : prev.totalAmount + amount;
+      const isSelected = prev.selectedInvoices.find(item => item.id === invoice.id);
+      let newSelected;
+      
+      if (isSelected) {
+        newSelected = prev.selectedInvoices.filter(item => item.id !== invoice.id);
+      } else {
+        newSelected = [...prev.selectedInvoices, { 
+          id: invoice.id, 
+          invoiceNo: invoice.invoiceNumber || invoice.invoice_no || '', 
+          amount: invoice.grandTotal - (invoice.paidAmount || 0),
+          tds: 0
+        }];
+      }
 
       return {
         ...prev,
-        selectedInvoices: newSelected,
-        totalAmount: newAmount
+        selectedInvoices: newSelected
+      };
+    });
+  };
+
+  const handleInvoiceDetailChange = (invoiceId: string, field: 'invoiceNo' | 'amount' | 'tds', value: any) => {
+    setFormData(prev => {
+      const newSelected = prev.selectedInvoices.map(item => {
+        if (item.id === invoiceId) {
+          // Allow empty string in state for better input handling (backspace)
+          const finalVal = (field === 'amount' || field === 'tds') 
+            ? (value === '' ? '' : parseFloat(value)) 
+            : value;
+          return { ...item, [field]: finalVal };
+        }
+        return item;
+      });
+      
+      return {
+        ...prev,
+        selectedInvoices: newSelected
       };
     });
   };
@@ -131,11 +272,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         partyId: formData.customerId,
         partyName: formData.customerName,
         partyType: 'customer',
-        amount: formData.totalAmount,
+        amount: netPayableAmount,
+        tdsAmount: totalTdsAmount,
         paymentMode: formData.paymentMode as any,
         chequeNo: formData.paymentMode === 'cash' ? '' : formData.chequeNo,
-        description: `Payment for Invoices: ${formData.selectedInvoices.join(', ')}`,
-        referenceNo: formData.selectedInvoices.join(', '),
+        description: `Payment for Invoices: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount}${i.tds > 0 ? `, TDS: ₹${i.tds}` : ''})`).join(', ')}`,
+        referenceNo: formData.selectedInvoices.map(i => `${i.invoiceNo} (${i.amount}|${i.tds})`).join(', '),
         status: 'posted',
         company_id: user?.company_id || activeCompany?.id || ''
       };
@@ -180,34 +322,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   };
 
   const isInvoiceSelected = (inv: any) => {
-    return formData.selectedInvoices.some(ref => {
-      const r = ref.trim();
-      const invId = String(inv.id).trim();
-      const invNo = String(inv.invoice_no || '').trim();
-      const invNum = String(inv.invoiceNumber || '').trim();
-
-      // Direct ID match
-      if (r === invId) return true;
-
-      // Direct string matches
-      if (r === invNo || r === invNum) return true;
-
-      // Numeric value matches (stripping leading zeros/padding)
-      const numRef = parseInt(r, 10);
-      const numInvNo = parseInt(invNo, 10);
-      const numInvNum = parseInt(invNum, 10);
-
-      if (!isNaN(numRef)) {
-        if (numRef !== 0) {
-          return numRef === numInvNo || numRef === numInvNum;
-        } else {
-          // If ref is "0", only match if both are exactly "0" or 0
-          return invNo === '0' || invNum === '0';
-        }
-      }
-
-      return false;
-    });
+    return formData.selectedInvoices.some(item => item.id === inv.id);
   };
 
   // Filter invoices for selected customer
@@ -216,8 +331,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     const isSelected = isInvoiceSelected(inv);
     
     if (mode === 'view') {
-      // In view mode, ONLY show the invoices that are selected for this voucher
-      return isMatched && isSelected;
+      // In view mode, show ALL invoices that are part of this voucher
+      // Prioritize isSelected over isMatched to handle migrated data with customer mismatches
+      return isSelected;
     }
 
     const isNotPaid = inv.status?.toLowerCase() !== 'paid';
@@ -258,7 +374,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 disabled={mode === 'view'}
               >
                 <option value="cash">Cash</option>
-                <option value="bank">Bank / Cheque</option>
+                <option value="netbanking">Net Banking</option>
+                <option value="card">Card</option>
+                <option value="bank">Bank</option>
+                <option value="cheque">Cheque</option>
               </select>
             </div>
             <div className="col-md-6 d-flex align-items-center gap-3">
@@ -266,7 +385,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Cheque No (If Bank)"
+                placeholder="Ref No / Cheque No"
                 value={formData.chequeNo}
                 onChange={e => setFormData(prev => ({ ...prev, chequeNo: e.target.value }))}
                 disabled={mode === 'view' || formData.paymentMode === 'cash'}
@@ -279,18 +398,13 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   {formData.customerName || 'LOADING CUSTOMER...'}
                 </div>
               ) : (
-                <select
-                  className="form-select fw-semibold text-uppercase"
-                  style={{ fontSize: '0.85rem', height: '38px' }}
+                <SearchableSelect
+                  options={customers.map(c => ({ value: c.id, label: c.company || c.name }))}
                   value={formData.customerId}
-                  onChange={handleCustomerChange}
-                  required
-                >
-                  <option value="">Select Customer</option>
-                  {customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => handleCustomerChange({ target: { value: val } } as any)}
+                  placeholder="Select Customer"
+                  className="w-100"
+                />
               )}
             </div>
           </div>
@@ -303,6 +417,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   <th className="small fw-bold py-3 text-muted">INVOICE DATE</th>
                   <th className="small fw-bold py-3 text-muted text-center">INVOICE NO</th>
                   <th className="small fw-bold py-3 text-muted text-end">AMOUNT</th>
+                  <th className="small fw-bold py-3 text-muted text-end" style={{ width: '120px' }}>TDS</th>
+                  <th className="small fw-bold py-3 text-muted text-end">NET</th>
                 </tr>
               </thead>
               <tbody className="border-0">
@@ -317,24 +433,69 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   </tr>
                 ) : (
                   <>
-                    {customerInvoices.map(inv => (
-                      <tr key={inv.id} className="border-bottom border-light">
-                        <td className="text-center">
-                          <input
-                            type="checkbox"
-                            className="form-check-input shadow-none border-secondary-subtle"
-                            checked={isInvoiceSelected(inv)}
-                            onChange={() => toggleInvoice(inv.id, inv.grandTotal - (inv.paidAmount || 0))}
-                            disabled={mode === 'view'}
-                          />
-                        </td>
-                        <td className="small text-muted">{new Date(inv.date).toLocaleDateString()}</td>
-                        <td className="small fw-bold text-center text-dark">{inv.invoiceNumber}</td>
-                        <td className="small fw-bold text-end text-dark">
-                          {inv.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                        </td>
-                      </tr>
-                    ))}
+                    {(mode === 'view' ? formData.selectedInvoices : customerInvoices).map((invOrItem: any) => {
+                      const inv = mode === 'view' ? (allInvoices.find(i => String(i.id) === String(invOrItem.id)) || invOrItem) : invOrItem;
+                      const selectedData = mode === 'view' ? invOrItem : formData.selectedInvoices.find(item => String(item.id) === String(inv.id));
+                      const invoiceId = inv.id || inv.invoiceNo || Math.random().toString();
+                      return (
+                        <tr key={invoiceId} className="border-bottom border-light">
+                          <td className="text-center">
+                            <input
+                              type="checkbox"
+                              className="form-check-input shadow-none border-secondary-subtle"
+                              checked={!!selectedData}
+                              onChange={() => toggleInvoice(inv)}
+                              disabled={mode === 'view'}
+                            />
+                          </td>
+                          <td className="small text-muted">{inv.date ? new Date(inv.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
+                          <td className="small fw-bold text-center text-dark">
+                            {selectedData && mode !== 'view' ? (
+                              <input 
+                                type="text" 
+                                className="form-control form-control-sm border-0 border-bottom text-center bg-transparent" 
+                                value={selectedData.invoiceNo} 
+                                onChange={(e) => handleInvoiceDetailChange(inv.id, 'invoiceNo', e.target.value)}
+                                style={{ fontWeight: 'inherit' }}
+                              />
+                            ) : (
+                              selectedData?.invoiceNo || inv.invoiceNumber
+                            )}
+                          </td>
+                          <td className="small fw-bold text-end text-dark">
+                            {selectedData && mode !== 'view' ? (
+                              <input 
+                                type="number" 
+                                className="form-control form-control-sm border-0 border-bottom text-end bg-transparent" 
+                                value={selectedData.amount} 
+                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                onChange={(e) => handleInvoiceDetailChange(inv.id, 'amount', e.target.value)}
+                                style={{ fontWeight: 'inherit' }}
+                              />
+                            ) : (
+                              (Number(selectedData?.amount ?? inv.grandTotal ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                            )}
+                          </td>
+                          <td className="small fw-bold text-end text-dark">
+                            {selectedData && mode !== 'view' ? (
+                              <input 
+                                type="number" 
+                                className="form-control form-control-sm border-0 border-bottom text-end bg-transparent" 
+                                value={selectedData.tds} 
+                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                onChange={(e) => handleInvoiceDetailChange(inv.id, 'tds', e.target.value)}
+                                style={{ fontWeight: 'inherit' }}
+                              />
+                            ) : (
+                              (Number(selectedData?.tds ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                            )}
+                          </td>
+                          <td className="small fw-bold text-end text-dark">
+                            {(Number(selectedData?.amount ?? inv.grandTotal ?? 0) - Number(selectedData?.tds ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {formData.customerId && customerInvoices.length === 0 && (
                       <tr>
                         <td colSpan={4} className="text-center py-5 text-muted small">
@@ -354,9 +515,24 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               </tbody>
               <tfoot className="border-0">
                 <tr>
-                  <td colSpan={3}></td>
-                  <td className="fw-bold text-end py-4 fs-6 text-dark border-top border-dark border-2">
-                    {formData.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  <td colSpan={4}></td>
+                  <td className="text-end py-2 text-muted small fw-semibold">Gross Total:</td>
+                  <td className="fw-bold text-end py-2 text-dark" style={{ minWidth: '150px' }}>
+                    ₹ {totalInvoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={4}></td>
+                  <td className="text-end py-2 text-muted small fw-semibold">Total TDS:</td>
+                  <td className="fw-bold text-end py-2 text-muted">
+                    (-) ₹ {totalTdsAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={4}></td>
+                  <td className="text-end py-3 fs-6 fw-bold text-secondary border-top border-secondary-subtle">Net Payable:</td>
+                  <td className="fw-bold text-end py-3 fs-5 text-dark border-top border-secondary-subtle">
+                    ₹ {netPayableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
               </tfoot>
@@ -403,15 +579,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 }
                 
                 // Reset local state if successful
-                setFormData({
-                  date: new Date().toISOString().split('T')[0],
-                  paymentMode: 'cash',
-                  chequeNo: '',
-                  customerId: '',
-                  customerName: '',
-                  selectedInvoices: [],
-                  totalAmount: 0
-                });
+                setFormData(prev => ({
+                  ...prev,
+                  selectedInvoices: []
+                }));
                 router.push(redirectPath);
               }
             }}
