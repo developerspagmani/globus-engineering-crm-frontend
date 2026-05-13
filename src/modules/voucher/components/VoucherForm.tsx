@@ -12,6 +12,7 @@ import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
 
 import { fetchVendors } from '@/redux/features/vendorSlice';
+import { fetchInwards } from '@/redux/features/inwardSlice';
 
 interface VoucherFormProps {
   initialData?: Voucher;
@@ -25,6 +26,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   const redirectPath = searchParams.get('redirect') || '/vouchers';
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
+  const { items: inwards } = useSelector((state: RootState) => state.inward);
   const { items: allInvoices, loading: invoicesLoading } = useSelector((state: RootState) => state.invoices);
   const { user, company: activeCompany, token: authToken } = useSelector((state: RootState) => state.auth);
 
@@ -86,6 +88,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       // Ensure customers and vendors are fetched
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
       (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchInwards({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany]);
 
@@ -235,12 +238,32 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       ? customers.find(c => String(c.id) === String(id))
       : vendors.find(v => String(v.id) === String(id));
       
+    const invoiceIdFromUrl = searchParams.get('invoiceId');
+    let preservedSelectedInvoices: any[] = [];
+    
+    if (invoiceIdFromUrl) {
+      const invoice = allInvoices.find(i => String(i.id) === String(invoiceIdFromUrl));
+      if (invoice) {
+        const pendingAmount = invoice.grandTotal - (invoice.paidAmount || 0);
+        const realNo = invoice.invoiceNumber || (invoice as any).invoice_no || String(invoiceIdFromUrl);
+        preservedSelectedInvoices = [{
+          id: String(invoice.id),
+          invoiceNo: realNo,
+          amount: pendingAmount,
+          adjustmentType: 'TDS',
+          adjustmentValue: 0
+        }];
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       partyType: type,
       partyId: id,
       partyName: party?.name || (party as any)?.company || '',
-      selectedInvoices: []
+      customerId: type === 'customer' ? id : '',
+      vendorId: type === 'vendor' ? id : '',
+      selectedInvoices: preservedSelectedInvoices
     }));
   };
 
@@ -340,11 +363,22 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             });
             const data = await res.json();
             const existingVoucher = data.items && data.items.length > 0 ? data.items[0] : null;
+            
+            // Only consolidate if same party_id, party_type, and type, or if existing voucher has no party
+            const isSameParty = !existingVoucher || (
+              (!existingVoucher.party_id || String(existingVoucher.party_id) === String(voucherPayload.partyId)) &&
+              (!existingVoucher.party_type || String(existingVoucher.party_type) === String(voucherPayload.partyType)) &&
+              (!existingVoucher.type || String(existingVoucher.type) === String(voucherPayload.type))
+            );
 
-            if (existingVoucher) {
+            if (existingVoucher && isSameParty) {
               // Append to existing
               const updatedPayload = {
                 ...existingVoucher,
+                party_id: existingVoucher.party_id || voucherPayload.partyId,
+                party_name: existingVoucher.party_name || voucherPayload.partyName,
+                party_type: existingVoucher.party_type || voucherPayload.partyType,
+                type: existingVoucher.type || voucherPayload.type,
                 amount: Number(existingVoucher.amount || 0) + netPayableAmount,
                 tds_amount: Number(existingVoucher.tds_amount || 0) + totalAdjustmentAmount,
                 description: `${existingVoucher.description_ || existingVoucher.description || ''}\n${voucherPayload.description}`,
@@ -369,7 +403,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 throw new Error(errData.error || 'Failed to update existing voucher');
               }
             } else {
-              // Create new with inwardId
+              // Create new with inwardId (either no existing voucher, or it belongs to a different party/type)
               await (dispatch as any)(createVoucher({ 
                 ...voucherPayload, 
                 inward_id: inwardId, 
@@ -428,9 +462,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     return formData.selectedInvoices.some(item => item.id === inv.id);
   };
 
-  // Filter invoices for selected customer
+  // Filter invoices for selected customer or vendor
   const customerInvoices = allInvoices.filter(inv => {
-    const isMatched = String(inv.customerId) === String(formData.customerId);
     const isSelected = isInvoiceSelected(inv);
     
     if (mode === 'view') {
@@ -440,8 +473,20 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     }
 
     const isNotPaid = inv.status?.toLowerCase() !== 'paid';
-    // Show if it belongs to customer AND (is not paid OR was already selected for this voucher)
-    return isMatched && (isNotPaid || isSelected);
+
+    if (formData.partyType === 'vendor') {
+      // For vendor, find the inward entry linked to this invoice
+      const matchedInward = (inwards || []).find(inw => String(inw.id) === String(inv.inwardId));
+      // Check if that inward is linked to our selected vendor
+      const isMatched = !!matchedInward && (
+        String(matchedInward.vendorId) === String(formData.vendorId) ||
+        String((matchedInward as any).vendor_id) === String(formData.vendorId)
+      );
+      return isMatched && (isNotPaid || isSelected);
+    } else {
+      const isMatched = String(inv.customerId) === String(formData.customerId);
+      return isMatched && (isNotPaid || isSelected);
+    }
   });
 
   return (
@@ -511,7 +556,17 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               <select
                 className="form-select"
                 value={formData.partyType}
-                onChange={e => setFormData(prev => ({ ...prev, partyType: e.target.value as any, partyId: '', partyName: '' }))}
+                onChange={e => {
+                  const newType = e.target.value as 'customer' | 'vendor';
+                  setFormData(prev => ({
+                    ...prev,
+                    partyType: newType,
+                    partyId: '',
+                    partyName: '',
+                    customerId: '',
+                    vendorId: ''
+                  }));
+                }}
                 disabled={mode === 'view'}
               >
                 <option value="customer">Customer</option>
@@ -519,8 +574,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-12 d-flex align-items-center gap-3">
-              <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>SELECT PARTY</label>
-              {initialData ? (
+              <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>SELECT PARTY <span className="text-danger">*</span></label>
+              {mode !== 'create' ? (
                 <div className="w-100 fw-bold text-uppercase" style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '10px 12px', color: '#334155', backgroundColor: '#f8fafc', fontSize: '0.85rem', height: '38px', display: 'flex', alignItems: 'center' }}>
                   {formData.partyName || 'LOADING PARTY...'}
                 </div>
@@ -670,7 +725,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                        </React.Fragment>
                       );
                     })}
-                    {formData.customerId && customerInvoices.length === 0 && (
+                    {formData.partyType === 'customer' && formData.customerId && customerInvoices.length === 0 && (
                       <tr>
                         <td colSpan={5} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
@@ -679,9 +734,21 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                         </td>
                       </tr>
                     )}
-                    {!formData.customerId && (
+                    {formData.partyType === 'vendor' && formData.vendorId && customerInvoices.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="text-center py-5 text-muted small">
+                          No outstanding invoices found for this vendor
+                        </td>
+                      </tr>
+                    )}
+                    {formData.partyType === 'customer' && !formData.customerId && (
                       <tr>
                         <td colSpan={5} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
+                      </tr>
+                    )}
+                    {formData.partyType === 'vendor' && !formData.vendorId && (
+                      <tr>
+                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a vendor to view invoices</td>
                       </tr>
                     )}
                   </>
