@@ -44,6 +44,7 @@ export const fetchInwards = createAsyncThunk(
         date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
         dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : '',
         status: c.status || 'pending',
+        partyType: c.party_type || 'customer',
         items: (c.items || []).map((it: any) => ({
           ...it,
           itemName: it.item_name || it.itemName || it.description,
@@ -88,6 +89,7 @@ export const fetchInwardById = createAsyncThunk(
         date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
         dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : '',
         status: c.status || 'pending',
+        partyType: c.party_type || 'customer',
         items: (c.items || []).map((it: any) => ({
           ...it,
           itemName: it.item_name || it.itemName || it.description,
@@ -149,6 +151,7 @@ export const createInward = createAsyncThunk(
         items: c.items || data.items || [],
         outwardId: c.outward_id || (data as any).outwardId || '',
         outwardNo: c.outward_no || (data as any).outwardNo || '',
+        partyType: c.party_type || (data as any).partyType || 'customer',
         createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
       };
     } catch (err: any) {
@@ -205,6 +208,7 @@ export const updateInward = createAsyncThunk(
         items: c.items || data.items || [],
         outwardId: c.outward_id || (data as any).outwardId || '',
         outwardNo: c.outward_no || (data as any).outwardNo || '',
+        partyType: c.party_type || (data as any).partyType || 'customer',
         createdAt: c.app_created_at || c.created_at || c.createdAt || data.createdAt
       };
     } catch (err: any) {
