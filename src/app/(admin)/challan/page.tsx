@@ -163,6 +163,19 @@ const ChallanPage = () => {
               </select>
             </div>
 
+            <div className="filter-item-select">
+              <select
+                className="form-select search-bar"
+                value={filters.bill_type || 'all'}
+                onChange={(e) => dispatch(setChallanFilters({ bill_type: e.target.value }))}
+              >
+                <option value="all">All Bill Types</option>
+                <option value="With Process">With Process (WP)</option>
+                <option value="Without Process">Without Process (WOP)</option>
+                <option value="Both">Both (WP + WOP)</option>
+              </select>
+            </div>
+
             <div className="date-filter-group">
               <input
                 type="date"
@@ -211,7 +224,14 @@ const ChallanPage = () => {
                         <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                         <td className="text-nowrap fw-bold text-dark">
                           {challan.challanNo}
-                          <div className="text-muted x-small fw-normal text-capitalize">{challan.type.replace('_', ' ')}</div>
+                          <div className="d-flex align-items-center gap-1">
+                            <span className="text-muted x-small fw-normal text-capitalize">{challan.type.replace('_', ' ')}</span>
+                            {challan.bill_type && (
+                              <span className={`x-small fw-bold ${(challan.bill_type === 'Both' || (challan as any).billType === 'Both') ? 'text-primary' : ((challan.bill_type === 'Without Process' || (challan as any).billType === 'Without Process') ? 'text-accent' : 'text-success')}`} style={{ fontSize: '9px' }}>
+                                • {(challan.bill_type === 'Both' || (challan as any).billType === 'Both') ? 'BOTH' : ((challan.bill_type === 'Without Process' || (challan as any).billType === 'Without Process') ? 'WOP' : 'WP')}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="text-nowrap text-muted small">{new Date(challan.date).toLocaleDateString()}</td>
                         <td className="text-nowrap text-muted small">

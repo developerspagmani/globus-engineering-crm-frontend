@@ -34,6 +34,7 @@ export const fetchChallans = createAsyncThunk(
           vehicleNo: c.vehicle_no || '',
           driverName: c.driver_name || '',
           notes: c.notes || '',
+          bill_type: c.bill_type || 'With Process',
           createdAt: c.app_created_at || c.createdAt || ''
         })),
         pagination: response.data.pagination
@@ -64,6 +65,7 @@ export const fetchChallanById = createAsyncThunk(
         vehicleNo: c.vehicle_no || '',
         driverName: c.driver_name || '',
         notes: c.notes || '',
+        bill_type: c.bill_type || 'With Process',
         createdAt: c.app_created_at || c.createdAt || ''
       };
     } catch (err: any) {
@@ -87,6 +89,7 @@ export const createChallan = createAsyncThunk(
         items: data.items,
         vehicle_no: data.vehicleNo,
         driver_name: data.driverName,
+        bill_type: data.bill_type,
         company_id: data.company_id
       });
       const c = response.data;
@@ -104,6 +107,7 @@ export const createChallan = createAsyncThunk(
         vehicleNo: c.vehicle_no || data.vehicleNo,
         driverName: c.driver_name || data.driverName,
         notes: c.notes || data.notes,
+        bill_type: c.bill_type || data.bill_type,
         createdAt: c.app_created_at || c.createdAt || new Date().toISOString()
       };
     } catch (err: any) {
@@ -126,6 +130,7 @@ export const updateChallan = createAsyncThunk(
         items: data.items,
         vehicle_no: data.vehicleNo,
         driver_name: data.driverName,
+        bill_type: data.bill_type,
         company_id: data.company_id
       });
       const c = response.data || data;
@@ -143,6 +148,7 @@ export const updateChallan = createAsyncThunk(
         vehicleNo: c.vehicle_no || data.vehicleNo,
         driverName: c.driver_name || data.driverName,
         notes: c.notes || data.notes,
+        bill_type: c.bill_type || data.bill_type,
         createdAt: c.app_created_at || c.createdAt || data.createdAt
       };
     } catch (err: any) {
@@ -170,6 +176,7 @@ interface ChallanState {
   filters: {
     search: string;
     type: 'all' | 'delivery' | 'returnable' | 'job_work';
+    bill_type: string;
     status: 'all' | 'draft' | 'dispatched' | 'received' | 'cancelled';
     fromDate: string;
     toDate: string;
@@ -189,6 +196,7 @@ const initialState: ChallanState = {
   filters: {
     search: '',
     type: 'all',
+    bill_type: 'all',
     status: 'all',
     fromDate: '',
     toDate: '',

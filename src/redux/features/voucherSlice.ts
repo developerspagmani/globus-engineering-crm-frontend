@@ -79,7 +79,10 @@ export const createVoucher = createAsyncThunk(
         description: data.description,
         status: data.status,
         company_id: (data as any).company_id,
-        tds_amount: data.tdsAmount
+        tds_amount: data.tdsAmount,
+        inward_id: (data as any).inward_id,
+        inward_no: (data as any).inward_no,
+        items: (data as any).items
       };
       
       const response = await api.post('/vouchers', payload);
@@ -108,7 +111,10 @@ export const updateVoucher = createAsyncThunk(
         description: data.description,
         status: data.status,
         company_id: (data as any).company_id,
-        tds_amount: data.tdsAmount
+        tds_amount: data.tdsAmount,
+        inward_id: (data as any).inward_id,
+        inward_no: (data as any).inward_no,
+        items: (data as any).items
       };
       
       const response = await api.put(`/vouchers/${data.id}`, payload);

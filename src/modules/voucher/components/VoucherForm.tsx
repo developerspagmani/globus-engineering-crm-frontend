@@ -25,7 +25,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   const redirectPath = searchParams.get('redirect') || '/vouchers';
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: allInvoices, loading: invoicesLoading } = useSelector((state: RootState) => state.invoices);
-  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { user, company: activeCompany, token: authToken } = useSelector((state: RootState) => state.auth);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -33,12 +33,23 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     chequeNo: '',
     customerId: '',
     customerName: '',
-    selectedInvoices: [] as { id: string, invoiceNo: string, amount: number, tds: number }[]
-  });
+     selectedInvoices: [] as { id: string, invoiceNo: string, amount: number, adjustmentType: string, adjustmentValue: number }[]
+   });
+ 
+   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+ 
+   const toggleExpand = (id: string) => {
+     setExpandedRows(prev => {
+       const next = new Set(prev);
+       if (next.has(id)) next.delete(id);
+       else next.add(id);
+       return next;
+     });
+   };
 
   const totalInvoiceAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-  const totalTdsAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.tds) || 0), 0);
-  const netPayableAmount = totalInvoiceAmount - totalTdsAmount;
+  const totalAdjustmentAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0);
+  const netPayableAmount = totalInvoiceAmount - totalAdjustmentAmount;
 
   const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
     isOpen: false,
@@ -107,7 +118,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 id: String(invoice.id),
                 invoiceNo: realNo,
                 amount: pendingAmount,
-                tds: 0
+                adjustmentType: 'TDS',
+                adjustmentValue: 0
               }];
               hasChanges = true;
             }
@@ -117,7 +129,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               id: String(invoiceIdFromUrl),
               invoiceNo: String(invoiceIdFromUrl),
               amount: 0,
-              tds: 0
+              adjustmentType: 'TDS',
+              adjustmentValue: 0
             }];
             hasChanges = true;
           }
@@ -178,7 +191,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               id: inv?.id || invoiceNo, 
               invoiceNo: inv?.invoiceNumber || invoiceNo, 
               amount: amount,
-              tds: tds
+              adjustmentType: 'TDS',
+              adjustmentValue: tds
             });
           }
           
@@ -193,7 +207,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                id: initialData.referenceNo,
                invoiceNo: initialData.referenceNo,
                amount: initialData.amount,
-               tds: 0
+               adjustmentType: 'TDS',
+               adjustmentValue: 0
              });
           }
           
@@ -226,7 +241,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           id: invoice.id, 
           invoiceNo: invoice.invoiceNumber || invoice.invoice_no || '', 
           amount: invoice.grandTotal - (invoice.paidAmount || 0),
-          tds: 0
+          adjustmentType: 'TDS',
+          adjustmentValue: 0
         }];
       }
 
@@ -237,12 +253,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     });
   };
 
-  const handleInvoiceDetailChange = (invoiceId: string, field: 'invoiceNo' | 'amount' | 'tds', value: any) => {
+  const handleInvoiceDetailChange = (invoiceId: string, field: 'invoiceNo' | 'amount' | 'adjustmentType' | 'adjustmentValue', value: any) => {
     setFormData(prev => {
       const newSelected = prev.selectedInvoices.map(item => {
         if (item.id === invoiceId) {
           // Allow empty string in state for better input handling (backspace)
-          const finalVal = (field === 'amount' || field === 'tds') 
+          const finalVal = (field === 'amount' || field === 'adjustmentValue') 
             ? (value === '' ? '' : parseFloat(value)) 
             : value;
           return { ...item, [field]: finalVal };
@@ -273,11 +289,11 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         partyName: formData.customerName,
         partyType: 'customer',
         amount: netPayableAmount,
-        tdsAmount: totalTdsAmount,
+        tdsAmount: totalAdjustmentAmount,
         paymentMode: formData.paymentMode as any,
         chequeNo: formData.paymentMode === 'cash' ? '' : formData.chequeNo,
-        description: `Payment for Invoices: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount}${i.tds > 0 ? `, TDS: ₹${i.tds}` : ''})`).join(', ')}`,
-        referenceNo: formData.selectedInvoices.map(i => `${i.invoiceNo} (${i.amount}|${i.tds})`).join(', '),
+        description: `Payment for Invoices: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount}${i.adjustmentValue > 0 ? `, ${i.adjustmentType}: ₹${i.adjustmentValue}` : ''})`).join(', ')}`,
+        referenceNo: formData.selectedInvoices.map(i => `${i.invoiceNo} (${i.amount}|${i.adjustmentValue})`).join(', '),
         status: 'posted',
         company_id: user?.company_id || activeCompany?.id || ''
       };
@@ -291,15 +307,89 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       }
 
       if (mode === 'create') {
-        await (dispatch as any)(createVoucher(voucherPayload)).unwrap();
+        const firstInvoice = allInvoices.find(inv => inv.id === formData.selectedInvoices[0]?.id);
+        const inwardId = (firstInvoice as any)?.inwardId || (firstInvoice as any)?.inward_id;
+        const inwardNo = (firstInvoice as any)?.inwardNo || (firstInvoice as any)?.inward_no;
+
+        const currentPaymentItems = formData.selectedInvoices.map(i => ({
+          invoiceNo: i.invoiceNo,
+          amount: i.amount,
+          adjustmentType: i.adjustmentType,
+          adjustmentValue: i.adjustmentValue,
+          date: formData.date
+        }));
+
+        if (inwardId) {
+          try {
+            const activeToken = authToken || localStorage.getItem('token');
+            const res = await fetch(`/api/vouchers?inward_id=${inwardId}`, {
+              headers: { 'Authorization': `Bearer ${activeToken?.replace(/^"|"$/g, '')}` }
+            });
+            const data = await res.json();
+            const existingVoucher = data.items && data.items.length > 0 ? data.items[0] : null;
+
+            if (existingVoucher) {
+              // Append to existing
+              const updatedPayload = {
+                ...existingVoucher,
+                amount: Number(existingVoucher.amount || 0) + netPayableAmount,
+                tds_amount: Number(existingVoucher.tds_amount || 0) + totalAdjustmentAmount,
+                description: `${existingVoucher.description_ || existingVoucher.description || ''}\n${voucherPayload.description}`,
+                reference_no: `${existingVoucher.reference_no || ''}, ${voucherPayload.referenceNo}`,
+                inward_id: inwardId,
+                inward_no: inwardNo,
+                items: [...(existingVoucher.items || []), ...currentPaymentItems]
+              };
+              
+              const activeTokenClean = activeToken?.replace(/^"|"$/g, '');
+              const updateRes = await fetch(`/api/vouchers/${existingVoucher.id}`, {
+                method: 'PUT',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${activeTokenClean}` 
+                },
+                body: JSON.stringify(updatedPayload)
+              });
+
+              if (!updateRes.ok) {
+                const errData = await updateRes.json();
+                throw new Error(errData.error || 'Failed to update existing voucher');
+              }
+            } else {
+              // Create new with inwardId
+              await (dispatch as any)(createVoucher({ 
+                ...voucherPayload, 
+                inward_id: inwardId, 
+                inward_no: inwardNo,
+                items: currentPaymentItems
+              } as any)).unwrap();
+            }
+          } catch (vchErr) {
+             console.error("Consolidated Voucher failed", vchErr);
+             await (dispatch as any)(createVoucher({ ...voucherPayload, items: currentPaymentItems } as any)).unwrap();
+          }
+        } else {
+          await (dispatch as any)(createVoucher({ ...voucherPayload, items: currentPaymentItems } as any)).unwrap();
+        }
+
         setModal({
           isOpen: true,
           type: 'success',
           title: 'Success!',
-          message: "Voucher recorded successfully."
+          message: "Voucher recorded successfully. Consolidated records updated."
         });
       } else {
-        await (dispatch as any)(updateVoucher({ ...initialData!, ...voucherPayload } as any)).unwrap();
+        await (dispatch as any)(updateVoucher({ 
+          ...initialData!, 
+          ...voucherPayload,
+          items: formData.selectedInvoices.map(i => ({
+            invoiceNo: i.invoiceNo,
+            amount: i.amount,
+            adjustmentType: i.adjustmentType,
+            adjustmentValue: i.adjustmentValue,
+            date: formData.date
+          }))
+        } as any)).unwrap();
         setModal({
           isOpen: true,
           type: 'success',
@@ -417,14 +507,13 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   <th className="small fw-bold py-3 text-muted">INVOICE DATE</th>
                   <th className="small fw-bold py-3 text-muted text-center">INVOICE NO</th>
                   <th className="small fw-bold py-3 text-muted text-end">AMOUNT</th>
-                  <th className="small fw-bold py-3 text-muted text-end" style={{ width: '120px' }}>TDS</th>
                   <th className="small fw-bold py-3 text-muted text-end">NET</th>
                 </tr>
               </thead>
               <tbody className="border-0">
                 {invoicesLoading ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-5">
+                    <td colSpan={5} className="text-center py-5">
                       <div className="spinner-border text-primary spinner-border-sm me-2" role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
@@ -438,67 +527,112 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                       const selectedData = mode === 'view' ? invOrItem : formData.selectedInvoices.find(item => String(item.id) === String(inv.id));
                       const invoiceId = inv.id || inv.invoiceNo || Math.random().toString();
                       return (
-                        <tr key={invoiceId} className="border-bottom border-light">
-                          <td className="text-center">
-                            <input
-                              type="checkbox"
-                              className="form-check-input shadow-none border-secondary-subtle"
-                              checked={!!selectedData}
-                              onChange={() => toggleInvoice(inv)}
-                              disabled={mode === 'view'}
-                            />
-                          </td>
-                          <td className="small text-muted">{inv.date ? new Date(inv.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
-                          <td className="small fw-bold text-center text-dark">
-                            {selectedData && mode !== 'view' ? (
-                              <input 
-                                type="text" 
-                                className="form-control form-control-sm border-0 border-bottom text-center bg-transparent" 
-                                value={selectedData.invoiceNo} 
-                                onChange={(e) => handleInvoiceDetailChange(inv.id, 'invoiceNo', e.target.value)}
-                                style={{ fontWeight: 'inherit' }}
-                              />
-                            ) : (
-                              selectedData?.invoiceNo || inv.invoiceNumber
-                            )}
-                          </td>
-                          <td className="small fw-bold text-end text-dark">
-                            {selectedData && mode !== 'view' ? (
-                              <input 
-                                type="number" 
-                                className="form-control form-control-sm border-0 border-bottom text-end bg-transparent" 
-                                value={selectedData.amount} 
-                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                onChange={(e) => handleInvoiceDetailChange(inv.id, 'amount', e.target.value)}
-                                style={{ fontWeight: 'inherit' }}
-                              />
-                            ) : (
-                              (Number(selectedData?.amount ?? inv.grandTotal ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })
-                            )}
-                          </td>
-                          <td className="small fw-bold text-end text-dark">
-                            {selectedData && mode !== 'view' ? (
-                              <input 
-                                type="number" 
-                                className="form-control form-control-sm border-0 border-bottom text-end bg-transparent" 
-                                value={selectedData.tds} 
-                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                onChange={(e) => handleInvoiceDetailChange(inv.id, 'tds', e.target.value)}
-                                style={{ fontWeight: 'inherit' }}
-                              />
-                            ) : (
-                              (Number(selectedData?.tds ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })
-                            )}
-                          </td>
-                          <td className="small fw-bold text-end text-dark">
-                            {(Number(selectedData?.amount ?? inv.grandTotal ?? 0) - Number(selectedData?.tds ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </td>
-                        </tr>
+                        <React.Fragment key={invoiceId}>
+                          <tr className="border-bottom border-light">
+                            <td className="text-center">
+                              <div className="d-flex align-items-center justify-content-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  className="form-check-input shadow-none border-secondary-subtle"
+                                  checked={!!selectedData}
+                                  onChange={() => toggleInvoice(inv)}
+                                  disabled={mode === 'view'}
+                                />
+                                {selectedData && (
+                                  <button 
+                                    type="button" 
+                                    className="btn btn-link p-0 text-decoration-none border-0 shadow-none"
+                                    onClick={() => toggleExpand(invoiceId)}
+                                    style={{ color: '#f97316' }}
+                                  >
+                                    <i className={`bi bi-${expandedRows.has(invoiceId) ? 'dash-circle-fill' : 'plus-circle-fill'}`} style={{ fontSize: '16px' }}></i>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                           <td className="small text-muted">{inv.date ? new Date(inv.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
+                           <td className="small fw-bold text-center text-dark">
+                             {selectedData && mode !== 'view' ? (
+                               <input 
+                                 type="text" 
+                                 className="form-control form-control-sm border-0 border-bottom text-center bg-transparent" 
+                                 value={selectedData.invoiceNo} 
+                                 onChange={(e) => handleInvoiceDetailChange(inv.id, 'invoiceNo', e.target.value)}
+                                 style={{ fontWeight: 'inherit' }}
+                               />
+                             ) : (
+                               selectedData?.invoiceNo || inv.invoiceNumber
+                             )}
+                           </td>
+                           <td className="small fw-bold text-end text-dark">
+                             {selectedData && mode !== 'view' ? (
+                               <input 
+                                 type="number" 
+                                 className="form-control form-control-sm border-0 border-bottom text-end bg-transparent" 
+                                 value={selectedData.amount} 
+                                 onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                 onChange={(e) => handleInvoiceDetailChange(inv.id, 'amount', e.target.value)}
+                                 style={{ fontWeight: 'inherit' }}
+                               />
+                             ) : (
+                               (Number(selectedData?.amount ?? inv.grandTotal ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })
+                             )}
+                           </td>
+                           <td className="small fw-bold text-end text-dark">
+                             {(Number(selectedData?.amount ?? inv.grandTotal ?? 0) - Number(selectedData?.adjustmentValue ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                           </td>
+                         </tr>
+                         {selectedData && expandedRows.has(invoiceId) && (
+                           <tr className="bg-light-subtle border-bottom border-light">
+                             <td colSpan={1} className="py-0"></td>
+                             <td colSpan={4} className="py-2">
+                               <div className="d-flex align-items-center gap-4 ps-3 py-1 border-start border-orange border-3 ms-2">
+                                 <div className="d-flex flex-column">
+                                   <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Type</span>
+                                   <select 
+                                     className="form-select form-select-sm bg-white border border-light-subtle shadow-none fw-bold text-dark" 
+                                     style={{ width: '120px', fontSize: '11px', height: '30px', borderRadius: '6px' }}
+                                     value={selectedData.adjustmentType || 'TDS'}
+                                     onChange={e => handleInvoiceDetailChange(inv.id, 'adjustmentType', e.target.value)}
+                                     disabled={mode === 'view'}
+                                   >
+                                     <option value="TDS">TDS</option>
+                                     <option value="Others">Others</option>
+                                   </select>
+                                 </div>
+                                 <div className="d-flex flex-column">
+                                   <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Amount</span>
+                                   <div className="input-group input-group-sm" style={{ width: '130px' }}>
+                                     <span className="input-group-text bg-white border border-light-subtle border-end-0 small text-muted" style={{ borderRadius: '6px 0 0 6px' }}>₹</span>
+                                     <input 
+                                       type="number" 
+                                       className="form-control border border-light-subtle border-start-0 shadow-none fw-bold" 
+                                       style={{ fontSize: '11px', height: '30px', borderRadius: '0 6px 6px 0' }}
+                                       value={selectedData.adjustmentValue || 0}
+                                       onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                       onChange={e => handleInvoiceDetailChange(inv.id, 'adjustmentValue', e.target.value)}
+                                       placeholder="0.00"
+                                       disabled={mode === 'view'}
+                                     />
+                                   </div>
+                                 </div>
+                                 {selectedData.adjustmentValue > 0 && (
+                                   <div className="ms-auto pe-4 pt-3">
+                                     <span className="badge bg-soft-orange text-orange border border-orange-subtle rounded-pill px-3 py-2" style={{ fontSize: '10px' }}>
+                                       Applied {selectedData.adjustmentType}: ₹ {Number(selectedData.adjustmentValue).toFixed(2)}
+                                     </span>
+                                   </div>
+                                 )}
+                               </div>
+                             </td>
+                           </tr>
+                         )}
+                       </React.Fragment>
                       );
                     })}
                     {formData.customerId && customerInvoices.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="text-center py-5 text-muted small">
+                        <td colSpan={5} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
                             ? "All invoices for this customer are fully paid" 
                             : "No invoices found for this customer"}
@@ -507,7 +641,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     )}
                     {!formData.customerId && (
                       <tr>
-                        <td colSpan={4} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
+                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
                       </tr>
                     )}
                   </>
@@ -515,21 +649,21 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               </tbody>
               <tfoot className="border-0">
                 <tr>
-                  <td colSpan={4}></td>
+                  <td colSpan={3}></td>
                   <td className="text-end py-2 text-muted small fw-semibold">Gross Total:</td>
                   <td className="fw-bold text-end py-2 text-dark" style={{ minWidth: '150px' }}>
                     ₹ {totalInvoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={4}></td>
-                  <td className="text-end py-2 text-muted small fw-semibold">Total TDS:</td>
+                  <td colSpan={3}></td>
+                  <td className="text-end py-2 text-muted small fw-semibold">Total Adjustments:</td>
                   <td className="fw-bold text-end py-2 text-muted">
-                    (-) ₹ {totalTdsAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    (-) ₹ {totalAdjustmentAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={4}></td>
+                  <td colSpan={3}></td>
                   <td className="text-end py-3 fs-6 fw-bold text-secondary border-top border-secondary-subtle">Net Payable:</td>
                   <td className="fw-bold text-end py-3 fs-5 text-dark border-top border-secondary-subtle">
                     ₹ {netPayableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}

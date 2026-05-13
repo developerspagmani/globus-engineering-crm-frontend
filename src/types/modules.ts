@@ -116,7 +116,8 @@ export interface Challan {
   date: string;
   type: 'delivery' | 'returnable' | 'job_work';
   status: 'draft' | 'dispatched' | 'received' | 'cancelled';
-  items: { description: string; quantity: number; unit: string; hsnCode?: string }[];
+  items: { description: string; quantity: number; wopQty?: number; unit: string; hsnCode?: string }[];
+  bill_type?: 'With Process' | 'Without Process' | 'Both' | string;
   vehicleNo?: string;
   driverName?: string;
   notes?: string;
@@ -139,6 +140,9 @@ export interface Voucher {
   description: string;
   status: 'draft' | 'posted' | 'cancelled';
   tdsAmount?: number;
+  inward_id?: string;
+  inward_no?: string;
+  items?: any[];
   createdAt: string;
 }
 

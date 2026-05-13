@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RootState } from '@/redux/store';
+import api from '@/lib/axios';
 import { addInvoice, updateInvoice } from '@/redux/features/invoiceSlice';
 import { fetchItems, fetchProcesses, fetchPriceFixings, updatePriceFixingThunk } from '@/redux/features/masterSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
@@ -72,6 +73,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    const [inwardLoading, setInwardLoading] = useState(false);
 
    const [selectionMode, setSelectionMode] = useState<'CUSTOMER' | 'GSTN'>('CUSTOMER');
+
 
    const [gstLoading, setGstLoading] = useState(false);
    const [gstError, setGstError] = useState<string | null>(null);
@@ -354,7 +356,47 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
    };
 
+   const handleSearchByReference = async (query: string) => {
+      if (!query || query.length < 3) return;
+      
+      setInwardLoading(true);
+      try {
+         const activeToken = authToken || localStorage.getItem('token');
+         const res = await fetch(`/api/inward?search=${encodeURIComponent(query)}&status=pending&limit=10`, {
+            headers: {
+               'Authorization': `Bearer ${activeToken?.replace(/^"|"$/g, '')}`
+            }
+         });
+         const data = await res.json();
+         const results = data.items || [];
+         
+         if (results.length > 0) {
+            // Find exact match first
+            const exactMatch = results.find((r: any) => 
+               String(r.dcNo || r.dc_no || '').toLowerCase() === query.toLowerCase() || 
+               String(r.poReference || r.po_reference || '').toLowerCase() === query.toLowerCase()
+            );
+            
+            const target = exactMatch || results[0];
+            populateFromInward(target);
+            fetchPendingForCustomer(target.customerId || target.customer_id);
+         } else {
+            setModal({
+               isOpen: true,
+               type: 'error',
+               title: 'No Record Found',
+               message: `No pending inward record found for reference "${query}".`
+            });
+         }
+      } catch (err) {
+         console.error('Search failed', err);
+      } finally {
+         setInwardLoading(false);
+      }
+   };
+
    const handleGstLookup = async (gstinOverride?: string) => {
+
       const gstinToVerify = gstinOverride || formData.gstin;
       if (!gstinToVerify || gstinToVerify.length !== 15) {
          setGstError('Enter 15-digit GSTIN');
@@ -399,7 +441,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
       if (field === 'quantity' || field === 'wopQty' || field === 'unitPrice' || field === 'description' || field === 'process') {
          const taxableQty = formData.billType === 'Both' 
-            ? Math.max(0, (Number(item.quantity || 0) - Number(item.wopQty || 0)))
+            ? (Number(item.quantity || 0))
             : (item.quantity || 0);
             
          item.amount = taxableQty * (item.unitPrice || 0);
@@ -442,8 +484,58 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       try {
          setLoading(true);
          if (mode === 'create') {
-            await (dispatch as any)(addInvoice(formData)).unwrap();
+            const result = await (dispatch as any)(addInvoice(formData)).unwrap();
             
+             // CONSOLIDATED CHALLAN LOGIC
+             if (formData.inwardId) {
+                 try {
+                   console.log("Consolidating Challan for Inward:", formData.inwardId);
+                   const res = await api.get(`/challans?inward_id=${formData.inwardId}`);
+                   const existingChallan = res.data.items && res.data.items.length > 0 ? res.data.items[0] : null;
+
+                   const isWop = String(formData.billType).toLowerCase().includes('without');
+                   const currentItems = formData.items.map((it: any) => ({
+                      description: it.description,
+                      quantity: isWop ? 0 : Number(it.quantity || 0),
+                      wopQty: isWop ? Number(it.quantity || 0) : Number(it.wopQty || 0),
+                      unit: it.unit || 'pcs',
+                      hsnCode: it.hsnCode || ''
+                   }));
+
+                   const challanData = {
+                      challan_no: existingChallan ? existingChallan.challan_no : `DC-${formData.invoiceNumber}`,
+                      party_id: formData.customerId,
+                      party_name: formData.customerName,
+                      party_type: 'customer',
+                      type: 'delivery',
+                      status: 'dispatched',
+                      vehicle_no: formData.vehicleNo || 'N/A',
+                      driver_name: 'N/A',
+                      inward_id: formData.inwardId,
+                      inward_no: formData.inwardNo || formData.dcNo || formData.dc_no || 'N/A',
+                      bill_type: formData.billType || 'Both',
+                      items: existingChallan ? [...existingChallan.items, ...currentItems] : currentItems,
+                      company_id: formData.company_id || company?.id || ''
+                   };
+
+                   if (existingChallan) {
+                      await api.put(`/challans/${existingChallan.id}`, challanData);
+                   } else {
+                      await api.post(`/challans`, challanData);
+                   }
+                } catch (challanErr: any) {
+                   console.error("Consolidated Challan failed", challanErr);
+                   const errorDetail = challanErr.response?.data?.detail || challanErr.response?.data?.error || challanErr.message;
+                   setModal({
+                      isOpen: true,
+                      type: 'error',
+                      title: 'Challan Creation Failed',
+                      message: `Invoice was saved, but we couldn't create the consolidated challan. Error: ${errorDetail}`
+                   });
+                   return; 
+                }
+             }
+
             // Sync Price Fixing Changes
             for (const item of formData.items) {
                if (item.priceFixingId && item.unitPrice > 0) {
@@ -461,7 +553,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                isOpen: true,
                type: 'success',
                title: 'Success!',
-               message: "Invoice created successfully."
+               message: "Invoice created successfully. Consolidated Challan updated."
             });
          } else {
             await (dispatch as any)(updateInvoice({ ...formData, id: initialData?.id || '' })).unwrap();
@@ -682,7 +774,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                        disabled={customersLoading || !!inwardId}
                                        className="w-100"
                                     />
-                                 ) : (
+                                  ) : (
                                     <div className="input-group input-group-sm border rounded overflow-hidden">
                                        <span className="input-group-text border-0 bg-transparent ps-3"><i className="bi bi-hash text-muted"></i></span>
                                        <input
@@ -703,7 +795,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                        />
                                        {gstLoading && <div className="input-group-text border-0 bg-transparent pe-3"><span className="spinner-border spinner-border-sm text-primary"></span></div>}
                                     </div>
-                                 )}
+                                  )}
+
                               </div>
                            </div>
                            <div className="row mb-3 align-items-center">
@@ -787,13 +880,65 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Po No <span className="text-danger">*</span></label>
                               <div className="col-sm-9">
-                                 <input type="text" className="form-control shadow-none px-2" name="poNo" value={formData.poNo} onChange={handleInputChange} placeholder="Po No" style={{ height: '38px', fontSize: '0.85rem' }} required />
+                                  <div className="input-group">
+                                     <input 
+                                        type="text" 
+                                        className="form-control shadow-none px-2" 
+                                        name="poNo" 
+                                        value={formData.poNo} 
+                                        onChange={handleInputChange} 
+                                        onKeyDown={(e) => {
+                                           if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              handleSearchByReference(formData.poNo);
+                                           }
+                                        }}
+                                        placeholder="Type PO No & hit Enter" 
+                                        style={{ height: '38px', fontSize: '0.85rem' }} 
+                                        required 
+                                     />
+                                     <button 
+                                        type="button" 
+                                        className="btn btn-outline-secondary" 
+                                        onClick={() => handleSearchByReference(formData.poNo)}
+                                        title="Fetch Inward Details"
+                                     >
+                                        <i className="bi bi-search"></i>
+                                     </button>
+                                  </div>
+
                               </div>
                            </div>
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Dc No <span className="text-danger">*</span></label>
                               <div className="col-sm-9">
-                                 <input type="text" className="form-control shadow-none px-2" name="dcNo" value={formData.dcNo} onChange={handleInputChange} placeholder="Dc No" style={{ height: '38px', fontSize: '0.85rem' }} required />
+                                  <div className="input-group">
+                                     <input 
+                                        type="text" 
+                                        className="form-control shadow-none px-2" 
+                                        name="dcNo" 
+                                        value={formData.dcNo} 
+                                        onChange={handleInputChange} 
+                                        onKeyDown={(e) => {
+                                           if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              handleSearchByReference(formData.dcNo);
+                                           }
+                                        }}
+                                        placeholder="Type DC No & hit Enter" 
+                                        style={{ height: '38px', fontSize: '0.85rem' }} 
+                                        required 
+                                     />
+                                     <button 
+                                        type="button" 
+                                        className="btn btn-outline-secondary" 
+                                        onClick={() => handleSearchByReference(formData.dcNo)}
+                                        title="Fetch Inward Details"
+                                     >
+                                        <i className="bi bi-search"></i>
+                                     </button>
+                                  </div>
+
                               </div>
                            </div>
                         </div>
@@ -839,75 +984,76 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            </tr>
                         </thead>
                         <tbody>
-                           {formData.items?.map((item: any, index: number) => (
-                              <tr key={item.id} className="border-bottom">
-                                 <td className="py-3">
-                                    <SearchableSelect
-                                       options={[
-                                          ...memoizedItemOptions,
-                                          ...(item.description && !masterItems.some(mi => mi.itemName === item.description) 
-                                             ? [{ value: item.description, label: `${item.description} (Legacy)` }] 
-                                             : [])
-                                       ]}
-                                       value={item.description}
-                                       onChange={val => handleItemChange(index, 'description', val)}
-                                       placeholder="Select Item"
-                                    />
-                                 </td>
-                                 <td className="py-3">
-                                    <SearchableSelect
-                                       options={[
-                                          ...memoizedProcessOptions,
-                                          ...(item.process && !masterProcesses.some(mp => mp.processName === item.process) 
-                                             ? [{ value: item.process, label: `${item.process} (Legacy)` }] 
-                                             : [])
-                                       ]}
-                                       value={String(item.process || '')}
-                                       onChange={val => handleItemChange(index, 'process', val)}
-                                       placeholder="Select Process"
-                                    />
-                                 </td>
-                                 <td className="py-3">
-                                    <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
-                                 </td>
-                                 {formData.billType === 'Both' && (
-                                    <td className="py-3">
-                                       <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'wopQty', e.target.value)} />
-                                    </td>
-                                 )}
-                                 {formData.billType !== 'Without Process' && (
-                                    <>
-                                       <td className="py-3">
-                                          <input type="number" className="form-control bg-transparent p-1 text-end" value={item.unitPrice} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} />
-                                       </td>
-                                       <td className="py-3 text-end fw-semibold">
-                                          ₹ {(item.amount || 0).toFixed(2)}
-                                       </td>
-                                    </>
-                                 )}
-                                 <td className="py-3 text-center">
-                                    <button type="button" className="btn btn-danger p-1 d-flex align-items-center justify-content-center border-0 shadow-sm" style={{ width: '32px', height: '32px' }} onClick={() => {
-                                       const newItems = formData.items.filter((_: any, i: number) => i !== index);
-                                       setFormData((prev: any) => ({ ...prev, items: newItems }));
-                                    }}>
-                                       <i className="bi bi-x-lg"></i>
-                                    </button>
-                                 </td>
-                              </tr>
-                           ))}
+                            {formData.items?.map((item: any, index: number) => (
+                               <tr key={item.id} className="border-bottom">
+                                  <td className="py-3">
+                                     <SearchableSelect
+                                        options={[
+                                           ...memoizedItemOptions,
+                                           ...(item.description && !masterItems.some(mi => mi.itemName === item.description) 
+                                              ? [{ value: item.description, label: `${item.description} (Legacy)` }] 
+                                              : [])
+                                        ]}
+                                        value={item.description}
+                                        onChange={val => handleItemChange(index, 'description', val)}
+                                        placeholder="Select Item"
+                                     />
+                                  </td>
+                                  <td className="py-3">
+                                     <SearchableSelect
+                                        options={[
+                                           ...memoizedProcessOptions,
+                                           ...(item.process && !masterProcesses.some(mp => mp.processName === item.process) 
+                                              ? [{ value: item.process, label: `${item.process} (Legacy)` }] 
+                                              : [])
+                                        ]}
+                                        value={String(item.process || '')}
+                                        onChange={val => handleItemChange(index, 'process', val)}
+                                        placeholder="Select Process"
+                                     />
+                                  </td>
+                                  <td className="py-3">
+                                     <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
+                                  </td>
+                                  {formData.billType === 'Both' && (
+                                     <td className="py-3">
+                                        <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'wopQty', e.target.value)} />
+                                     </td>
+                                  )}
+                                  {formData.billType !== 'Without Process' && (
+                                     <>
+                                        <td className="py-3">
+                                           <input type="number" className="form-control bg-transparent p-1 text-end" value={item.unitPrice} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} />
+                                        </td>
+                                        <td className="py-3 text-end fw-semibold">
+                                           ₹ {(item.amount || 0).toFixed(2)}
+                                        </td>
+                                     </>
+                                  )}
+                                  <td className="py-3 text-center">
+                                     <button type="button" className="btn btn-danger p-1 d-flex align-items-center justify-content-center border-0 shadow-sm" style={{ width: '32px', height: '32px' }} onClick={() => {
+                                        const newItems = formData.items.filter((_: any, i: number) => i !== index);
+                                        setFormData((prev: any) => ({ ...prev, items: newItems }));
+                                     }}>
+                                        <i className="bi bi-x-lg"></i>
+                                     </button>
+                                  </td>
+                               </tr>
+                            ))}
+
                         </tbody>
                      </table>
                      <button type="button" className="btn btn-sm btn-link text-decoration-none mt-2" onClick={() => {
                         setFormData((prev: any) => ({
                            ...prev,
-                           items: [...(prev.items || []), { id: Date.now().toString(), description: '', process: '', quantity: 1, wopQty: 0, unitPrice: 0, tax: 0, amount: 0, total: 0 }]
-                        }));
-                     }}>+ Add Item</button>
-                  </div>
+                            items: [...(prev.items || []), { id: Date.now().toString(), description: '', process: '', quantity: 1, wopQty: 0, unitPrice: 0, tax: 0, amount: 0, total: 0 }]
+                         }));
+                      }}>+ Add Item</button>
+                   </div>
 
-                  {formData.billType !== 'Without Process' && (
-                     <div className="col-lg-5 ms-auto">
-                        <div className="mt-4 pt-4 border-top">
+                   {formData.billType !== 'Without Process' && (
+                      <div className="col-lg-5 ms-auto">
+                         <div className="mt-4 pt-4 border-top">
                            <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                               <h6 className="text-muted fw-bold small text-uppercase mb-0">Sub Total</h6>
                               <div className="d-flex align-items-center gap-2 text-dark fs-5 fw-bold">

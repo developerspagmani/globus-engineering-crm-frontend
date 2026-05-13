@@ -520,8 +520,15 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                            <th style={{ width: '40px' }}>S.No</th>
                            <th>Description</th>
                            {type === 'inward' && <th style={{ width: '150px' }}>Process</th>}
-                           {type === 'challan' && <th style={{ width: '120px' }}>HSN Code</th>}
-                           <th style={{ width: '80px' }}>Quantity</th>
+                           {type === 'challan' && <th style={{ width: '80px' }}>HSN Code</th>}
+                           {type === 'challan' && (data.bill_type === 'Both' || data.billType === 'Both') ? (
+                             <>
+                               <th style={{ width: '60px' }}>WP Qty</th>
+                               <th style={{ width: '60px' }}>WOP Qty</th>
+                             </>
+                           ) : (
+                             <th style={{ width: '80px' }}>{ (data.bill_type || data.billType) === 'Without Process' ? 'WOP Qty' : 'Quantity'}</th>
+                           )}
                            <th style={{ width: '60px' }}>Unit</th>
                         </tr>
                      </thead>
@@ -532,7 +539,14 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                               <td style={{ fontWeight: 'bold' }}>{item.description}</td>
                               {type === 'inward' && <td style={{ textAlign: 'center' }}>{item.process || '-'}</td>}
                               {type === 'challan' && <td style={{ textAlign: 'center' }}>{item.hsnCode || '-'}</td>}
-                              <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                              {type === 'challan' && (data.bill_type === 'Both' || data.billType === 'Both') ? (
+                                <>
+                                  <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                                  <td style={{ textAlign: 'center' }}>{item.wopQty || item.wop_qty || 0}</td>
+                                </>
+                              ) : (
+                                <td style={{ textAlign: 'center' }}>{(data.bill_type || data.billType) === 'Without Process' ? (item.wopQty || item.wop_qty || 0) : item.quantity}</td>
+                              )}
                               <td style={{ textAlign: 'center' }}>{item.unit || 'pcs'}</td>
                            </tr>
                         ))}
@@ -542,17 +556,33 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                               <td>&nbsp;</td>
                               {type === 'inward' && <td>&nbsp;</td>}
                               {type === 'challan' && <td>&nbsp;</td>}
-                              <td>&nbsp;</td>
+                              {type === 'challan' && (data.bill_type === 'Both' || data.billType === 'Both') ? (
+                                 <>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                 </>
+                              ) : (
+                                 <td>&nbsp;</td>
+                              )}
                               <td>&nbsp;</td>
                            </tr>
                         ))}
-                        {isLastPage && (
-                           <tr style={{ fontWeight: '900', background: '#f0f0f0', borderTop: '1.5pt solid #000' }}>
-                              <td colSpan={type === 'inward' ? 3 : (type === 'challan' ? 3 : 2)} style={{ textAlign: 'right', padding: '8px 15px', fontSize: '11px' }}>TOTAL QUANTITY</td>
-                              <td style={{ textAlign: 'center', fontSize: '11px' }}>{items.reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0)}</td>
-                              <td style={{ textAlign: 'center', fontSize: '11px' }}>{items[0]?.unit || 'pcs'}</td>
-                           </tr>
-                        )}
+                         {isLastPage && (
+                            <tr style={{ fontWeight: '900', background: '#f0f0f0', borderTop: '1.5pt solid #000' }}>
+                               <td colSpan={type === 'inward' ? 3 : (type === 'challan' ? 3 : 2)} style={{ textAlign: 'right', padding: '8px 15px', fontSize: '11px' }}>TOTAL QUANTITY</td>
+                               {type === 'challan' && (data.bill_type === 'Both' || data.billType === 'Both') ? (
+                                  <>
+                                     <td style={{ textAlign: 'center', fontSize: '11px' }}>{items.reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0)}</td>
+                                     <td style={{ textAlign: 'center', fontSize: '11px' }}>{items.reduce((sum: number, it: any) => sum + Number(it.wopQty || it.wop_qty || 0), 0)}</td>
+                                  </>
+                               ) : (
+                                  <td style={{ textAlign: 'center', fontSize: '11px' }}>
+                                     {items.reduce((sum: number, it: any) => sum + Number((data.bill_type || data.billType) === 'Without Process' ? (it.wopQty || it.wop_qty || 0) : (it.quantity || 0)), 0)}
+                                  </td>
+                               )}
+                               <td style={{ textAlign: 'center', fontSize: '11px' }}>{items[0]?.unit || 'pcs'}</td>
+                            </tr>
+                         )}
                      </tbody>
                   </table>
                )}

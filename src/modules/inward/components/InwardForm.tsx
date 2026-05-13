@@ -223,21 +223,8 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
           isOpen: true,
           type: 'success',
           title: 'Success!',
-          message: "Inward entry created successfully. Would you like to generate a Challan for this material?",
-          confirmLabel: 'Later',
-          secondaryLabel: 'Generate Challan',
-          onSecondary: () => {
-             // Pass inward details to challan form via localStorage or session (simpler than complex state for now)
-             localStorage.setItem('inward_auto_challan', JSON.stringify({
-                partyId: finalData.partyType === 'customer' ? finalData.customerId : finalData.vendorId,
-                partyName: finalData.partyType === 'customer' ? finalData.customerName : finalData.vendorName,
-                partyType: finalData.partyType,
-                items: finalData.items,
-                inwardId: result.id,
-                inwardNo: finalData.inwardNo
-             }));
-             router.push('/challan/new');
-          }
+          message: "Inward entry created successfully.",
+          confirmLabel: 'OK'
         });
       } else {
         await (dispatch as any)(updateInward({ ...initialData!, ...finalData })).unwrap();

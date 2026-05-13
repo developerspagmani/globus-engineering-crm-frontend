@@ -48,7 +48,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
     date: new Date().toISOString().split('T')[0],
     type: 'delivery',
     status: 'draft',
-    items: [{ description: '', quantity: 1, unit: 'pcs', hsnCode: '' }],
+    bill_type: 'Both',
+    items: [{ description: '', quantity: 1, wopQty: 0, unit: 'pcs', hsnCode: '' }],
     vehicleNo: '',
     driverName: '',
     notes: '',
@@ -78,6 +79,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
             items: inward.items.map((it: any) => ({
               description: it.description || it.item_name || '',
               quantity: it.quantity || 1,
+              wopQty: it.wopQty || 0,
               unit: it.unit || 'pcs',
               hsnCode: ''
             })),
@@ -136,7 +138,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
         date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         type: initialData.type || 'delivery',
         status: initialData.status || 'draft',
-        items: initialData.items && initialData.items.length > 0 ? initialData.items : [{ description: '', quantity: 1, unit: 'pcs', hsnCode: '' }],
+        bill_type: initialData.bill_type || 'Both',
+        items: initialData.items && initialData.items.length > 0 ? initialData.items.map(it => ({ ...it, wopQty: it.wopQty || 0 })) : [{ description: '', quantity: 1, wopQty: 0, unit: 'pcs', hsnCode: '' }],
         vehicleNo: initialData.vehicleNo || '',
         driverName: initialData.driverName || '',
         notes: initialData.notes || '',
@@ -165,7 +168,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { description: '', quantity: 1, unit: 'pcs', hsnCode: '' }]
+      items: [...prev.items, { description: '', quantity: 1, wopQty: 0, unit: 'pcs', hsnCode: '' }]
     }));
   };
 
@@ -309,7 +312,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 <thead className="table-light mt-0">
                   <tr>
                     <th className="px-3">Description</th>
-                    <th className="text-center" style={{ width: '120px' }}>Quantity</th>
+                    <th className="text-center" style={{ width: '120px' }}>WP Qty</th>
+                    <th className="text-center" style={{ width: '120px' }}>WOP Qty</th>
                     <th className="text-center" style={{ width: '100px' }}>Unit</th>
                     <th className="text-center" style={{ width: '150px' }}>HSN Code</th>
                     <th style={{ width: '50px' }}></th>
@@ -327,17 +331,28 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           disabled={mode === 'view'}
                         />
                       </td>
-                      <td className="px-2 py-2">
-                        <input 
-                          type="number" 
-                          className="form-control text-center" 
-                          value={item.quantity} 
-                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                          required 
-                          disabled={mode === 'view'}
-                        />
-                      </td>
+                        <td className="px-2 py-2">
+                          <input 
+                            type="number" 
+                            className="form-control text-center" 
+                            value={item.quantity} 
+                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                            onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                            required 
+                            disabled={mode === 'view'}
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <input 
+                            type="number" 
+                            className="form-control text-center" 
+                            value={item.wopQty} 
+                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                            onChange={(e) => handleItemChange(index, 'wopQty', e.target.value)}
+                            required 
+                            disabled={mode === 'view'}
+                          />
+                        </td>
                       <td className="px-2 py-2">
                         <input 
                           type="text" 
