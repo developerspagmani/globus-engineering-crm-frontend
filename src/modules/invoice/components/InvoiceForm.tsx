@@ -9,6 +9,7 @@ import { addInvoice, updateInvoice } from '@/redux/features/invoiceSlice';
 import { fetchItems, fetchProcesses, fetchPriceFixings, updatePriceFixingThunk } from '@/redux/features/masterSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
 import { Invoice } from '@/types/modules';
 import BackButton from '@/components/BackButton';
 import FullPageStatus from '@/components/FullPageStatus';
@@ -28,6 +29,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    const { company, token: authToken } = useSelector((state: RootState) => state.auth);
    const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
+   const { items: vendors, loading: vendorsLoading } = useSelector((state: RootState) => state.vendors);
    const { items: inwards, loading: inwardsLoading } = useSelector((state: RootState) => state.inward);
    const { settings } = useSelector((state: RootState) => state.invoices);
    const { items: masterItems, processes: masterProcesses, priceFixings, loading: masterLoading } = useSelector((state: RootState) => state.master);
@@ -99,6 +101,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          (dispatch as any)(fetchProcesses({ company_id: company.id, limit: 1000 }));
          (dispatch as any)(fetchPriceFixings({ company_id: company.id, limit: 1000 }));
          (dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 }));
+         (dispatch as any)(fetchVendors({ company_id: company.id, limit: 1000 }));
 
          if (mode === 'create') {
             (dispatch as any)(fetchInwards({ company_id: company.id, status: 'all', limit: 1000 }));
@@ -183,8 +186,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    }, [initialData]);
 
    const populateFromInward = (inward: any) => {
-      const customer = customers.find(c => String(c.id) === String(inward.customerId || inward.customer_id));
-      const formattedAddress = [customer?.street1, customer?.city, customer?.state].filter(Boolean).join(', ');
+      const partyId = inward.customerId || inward.customer_id || inward.vendorId || (inward as any).vendor_id;
+      const isVendor = !!(inward.vendorId || (inward as any).vendor_id || inward.partyType === 'vendor' || (inward as any).party_type === 'vendor');
+      
+      const party = isVendor 
+         ? vendors.find(v => String(v.id) === String(partyId))
+         : customers.find(c => String(c.id) === String(partyId));
+
+      const formattedAddress = isVendor 
+         ? [(party as any)?.address, (party as any)?.city, (party as any)?.state].filter(Boolean).join(', ')
+         : [(party as any)?.street1, (party as any)?.city, (party as any)?.state].filter(Boolean).join(', ');
 
       const formatToDateInput = (d: any) => {
          if (!d) return '';
@@ -200,8 +211,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
             return {
                ...prev,
-               customerId: inward.customerId || inward.customer_id || prev.customerId,
-               customerName: inward.customerName || inward.customer_name || prev.customerName,
+               customerId: partyId || prev.customerId,
+               customerName: inward.customerName || inward.customer_name || inward.vendorName || (inward as any).vendor_name || party?.name || (party as any)?.company || prev.customerName,
                address: inward.address || formattedAddress || prev.address,
                poNo: inward.po_reference || inward.poReference || '',
                po_no: inward.po_reference || inward.poReference || '',
@@ -211,8 +222,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                dc_no: inward.dc_no || inward.dcNo || '',
                dcDate: dDate,
                dc_date: dDate,
-               gstin: (inward as any).gstin || customer?.gst || prev.gstin,
-               state: (inward as any).state || customer?.state || prev.state,
+               gstin: (inward as any).gstin || party?.gst || (party as any)?.gstin || prev.gstin,
+               state: (inward as any).state || party?.state || prev.state,
                inwardId: inward.id,
                items: (inward.items || []).map((item: any, idx: number) => {
                   const pf = findPrice(
@@ -334,13 +345,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       const { name, value } = e.target;
       if (name === 'customerId') {
          const customer = customers.find(c => c.id === value);
+         const vendor = vendors.find(v => v.id === value);
+         const entity = customer || vendor;
+
          setFormData((prev: any) => ({
             ...prev,
             [name]: value,
-            customerName: customer?.name || '',
-            address: customer?.street1 || '',
-            gstin: customer?.gst || '',
-            state: customer?.state || '',
+            customerName: entity?.name || (entity as any)?.company || '',
+            address: (entity as any)?.address || (entity as any)?.street1 || '',
+            gstin: entity?.gst || (entity as any)?.gstin || '',
+            state: entity?.state || '',
             inwardId: undefined
          }));
 
@@ -379,7 +393,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             
             const target = exactMatch || results[0];
             populateFromInward(target);
-            fetchPendingForCustomer(target.customerId || target.customer_id);
+            fetchPendingForCustomer(target.customerId || target.customer_id || target.vendorId || (target as any).vendor_id);
          } else {
             setModal({
                isOpen: true,
@@ -609,6 +623,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    const isPageLoading = !isComponentMounted || 
                          customersLoading || 
+                         vendorsLoading ||
                          masterLoading || 
                          sequenceLoading || 
                          inwardInitLoading;
@@ -767,11 +782,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               <div className="col-sm-9">
                                  {selectionMode === 'CUSTOMER' ? (
                                     <SearchableSelect
-                                       options={customers.map(c => ({ value: c.id, label: c.name || (c as any).vendorName || '' }))}
+                                       options={[
+                                          ...customers.map(c => ({ value: c.id, label: `[C] ${c.company || c.name}` })),
+                                          ...vendors.map(v => ({ value: v.id, label: `[V] ${v.name}` }))
+                                       ]}
                                        value={formData.customerId}
                                        onChange={(val) => handleInputChange({ target: { name: 'customerId', value: val } } as any)}
-                                       placeholder={customersLoading ? 'Loading...' : 'Select Customer'}
-                                       disabled={customersLoading || !!inwardId}
+                                       placeholder={customersLoading || vendorsLoading ? 'Loading...' : 'Select Customer/Vendor'}
+                                       disabled={customersLoading || vendorsLoading || !!inwardId}
                                        className="w-100"
                                     />
                                   ) : (

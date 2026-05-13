@@ -11,7 +11,7 @@ import { Voucher } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
 
-
+import { fetchVendors } from '@/redux/features/vendorSlice';
 
 interface VoucherFormProps {
   initialData?: Voucher;
@@ -24,17 +24,22 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/vouchers';
   const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const { items: allInvoices, loading: invoicesLoading } = useSelector((state: RootState) => state.invoices);
   const { user, company: activeCompany, token: authToken } = useSelector((state: RootState) => state.auth);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
+    type: 'receipt' as 'receipt' | 'payment',
+    partyType: 'customer' as 'customer' | 'vendor',
     paymentMode: 'cash',
     chequeNo: '',
-    customerId: '',
-    customerName: '',
-     selectedInvoices: [] as { id: string, invoiceNo: string, amount: number, adjustmentType: string, adjustmentValue: number }[]
-   });
+    customerId: '', // Using customerId/vendorId internal keys but unified UI
+    vendorId: '',
+    partyId: '',
+    partyName: '',
+    selectedInvoices: [] as { id: string, invoiceNo: string, amount: number, adjustmentType: string, adjustmentValue: number }[]
+  });
  
    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
  
@@ -78,12 +83,11 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         invoice_nos: invoiceNosParam
       }));
 
-      // Ensure customers are fetched if the list is empty
-      if (customers.length === 0) {
-        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
-      }
+      // Ensure customers and vendors are fetched
+      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
     }
-  }, [dispatch, activeCompany, customers.length, initialData?.referenceNo, mode]);
+  }, [dispatch, activeCompany]);
 
   useEffect(() => {
     const customerIdFromUrl = searchParams.get('customerId');
@@ -99,7 +103,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           const customer = customers.find(c => String(c.id) === String(customerIdFromUrl));
           if (customer) {
             updated.customerId = String(customerIdFromUrl);
-            updated.customerName = customer.company || customer.name || '';
+            updated.partyName = customer.company || customer.name || '';
             hasChanges = true;
           }
         }
@@ -144,18 +148,26 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   useEffect(() => {
     if (initialData) {
       // Use String comparison to handle ID type mismatches (14 vs '14')
-      const targetId = String(initialData.partyId);
-      const foundCustomer = customers.find(c => String(c.id) === targetId);
+      const targetId = String(initialData.partyId || (initialData as any).party_id || '');
+      const type = (initialData.partyType || (initialData as any).party_type || 'customer') as 'customer' | 'vendor';
+      
+      const foundParty = type === 'customer' 
+        ? customers.find(c => String(c.id) === targetId)
+        : vendors.find(v => String(v.id) === targetId);
 
-      const name = initialData.partyName || foundCustomer?.company || foundCustomer?.name || '';
+      const name = initialData.partyName || (initialData as any).party_name || foundParty?.name || (foundParty as any)?.company || '';
 
       setFormData(prev => ({
         ...prev,
         date: initialData.date,
+        type: (initialData.type || 'receipt') as any,
+        partyType: type,
         paymentMode: initialData.paymentMode || (initialData.chequeNo ? 'bank' : 'cash'),
         chequeNo: initialData.chequeNo || '',
-        customerId: targetId,
-        customerName: name,
+        partyId: targetId,
+        partyName: name,
+        customerId: type === 'customer' ? targetId : '',
+        vendorId: type === 'vendor' ? targetId : '',
         selectedInvoices: (() => {
           if (!initialData.referenceNo) return [];
           
@@ -216,15 +228,18 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         })()
       }));
     }
-  }, [initialData, customers, allInvoices]); // Dependency on customers.length ensures it re-runs when list size changes
+  }, [initialData, customers, vendors, allInvoices]); // Dependency on customers/vendors ensure it re-runs when lists size changes
 
-  const handleCustomerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = e.target.value;
-    const customer = customers.find(c => String(c.id) === String(id));
+  const handlePartyChange = (id: string, type: 'customer' | 'vendor') => {
+    const party = type === 'customer' 
+      ? customers.find(c => String(c.id) === String(id))
+      : vendors.find(v => String(v.id) === String(id));
+      
     setFormData(prev => ({
       ...prev,
-      customerId: id,
-      customerName: customer?.company || customer?.name || '',
+      partyType: type,
+      partyId: id,
+      partyName: party?.name || (party as any)?.company || '',
       selectedInvoices: []
     }));
   };
@@ -277,28 +292,27 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.customerId) return;
+    if (!formData.partyId) return;
 
     try {
       setIsSubmitting(true);
       const voucherPayload: Omit<Voucher, 'id' | 'createdAt'> = {
         voucherNo: `VCH-${Date.now().toString().slice(-6)}`,
         date: formData.date,
-        type: 'receipt',
-        partyId: formData.customerId,
-        partyName: formData.customerName,
-        partyType: 'customer',
+        type: formData.type,
+        partyId: formData.partyId,
+        partyName: formData.partyName,
+        partyType: formData.partyType,
         amount: netPayableAmount,
         tdsAmount: totalAdjustmentAmount,
         paymentMode: formData.paymentMode as any,
         chequeNo: formData.paymentMode === 'cash' ? '' : formData.chequeNo,
-        description: `Payment for Invoices: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount}${i.adjustmentValue > 0 ? `, ${i.adjustmentType}: ₹${i.adjustmentValue}` : ''})`).join(', ')}`,
+        description: `Payment for ${formData.partyType}: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')}`,
         referenceNo: formData.selectedInvoices.map(i => `${i.invoiceNo} (${i.amount}|${i.adjustmentValue})`).join(', '),
         status: 'posted',
         company_id: user?.company_id || activeCompany?.id || ''
       };
       
-      // Mirror InwardForm logic to ensure company_id is present
       if (!(voucherPayload as any).company_id && activeCompany?.id) {
         (voucherPayload as any).company_id = activeCompany.id;
       }
@@ -481,18 +495,45 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 disabled={mode === 'view' || formData.paymentMode === 'cash'}
               />
             </div>
+            <div className="col-md-6 d-flex align-items-center gap-3">
+              <label className="text-muted small fw-bold col-3">Type <span className="text-danger">*</span></label>
+              <select
+                className="form-select fw-bold text-primary"
+                value={formData.type}
+                onChange={e => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
+                disabled={mode === 'view'}
+              >
+                <option value="receipt">RECEIPT (IN)</option>
+                <option value="payment">PAYMENT (OUT)</option>
+              </select>
+            </div>
+            <div className="col-md-6 d-flex align-items-center gap-3">
+              <label className="text-muted small fw-bold col-3">Party Type <span className="text-danger">*</span></label>
+              <select
+                className="form-select"
+                value={formData.partyType}
+                onChange={e => setFormData(prev => ({ ...prev, partyType: e.target.value as any, partyId: '', partyName: '' }))}
+                disabled={mode === 'view'}
+              >
+                <option value="customer">Customer</option>
+                <option value="vendor">Vendor</option>
+              </select>
+            </div>
             <div className="col-md-12 d-flex align-items-center gap-3">
-              <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>CUSTOMER <span className="text-danger">*</span></label>
+              <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>SELECT PARTY <span className="text-danger">*</span></label>
               {initialData ? (
                 <div className="w-100 fw-bold text-uppercase" style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '10px 12px', color: '#334155', backgroundColor: '#f8fafc', fontSize: '0.85rem', height: '38px', display: 'flex', alignItems: 'center' }}>
-                  {formData.customerName || 'LOADING CUSTOMER...'}
+                  {formData.partyName || 'LOADING PARTY...'}
                 </div>
               ) : (
                 <SearchableSelect
-                  options={customers.map(c => ({ value: c.id, label: c.company || c.name }))}
-                  value={formData.customerId}
-                  onChange={(val) => handleCustomerChange({ target: { value: val } } as any)}
-                  placeholder="Select Customer"
+                  options={formData.partyType === 'customer' 
+                    ? customers.map(c => ({ value: c.id, label: c.company || c.name }))
+                    : (vendors as any[]).map(v => ({ value: v.id, label: v.name }))
+                  }
+                  value={formData.partyId}
+                  onChange={(val) => handlePartyChange(String(val), formData.partyType)}
+                  placeholder={`Select ${formData.partyType === 'customer' ? 'Customer' : 'Vendor'}`}
                   className="w-100"
                 />
               )}

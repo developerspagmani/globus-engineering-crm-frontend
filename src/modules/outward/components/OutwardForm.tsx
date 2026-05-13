@@ -238,8 +238,12 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
   return (
     <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-      <div className="card-header bg-white py-3 border-0">
-         <h5 className="fw-bold mb-0 text-primary">Outward Detail / Dispatch Challan</h5>
+      <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+         <h5 className="fw-bold mb-0 text-primary">
+           {formData.partyType === 'vendor' ? 'Job Work Challan (to Vendor)' : 'Outward Detail / Dispatch Challan'}
+         </h5>
+         {formData.partyType === 'vendor' && <span className="badge bg-info text-dark rounded-pill">STEP 2: SEND TO VENDOR</span>}
+         {formData.partyType === 'customer' && formData.inwardId && <span className="badge bg-success rounded-pill">STEP 4: FINAL DELIVERY</span>}
       </div>
       <div className="card-body p-4 bg-light">
         <form onSubmit={handleSubmit}>
@@ -313,7 +317,9 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
                     {/* NEW SMART INWARD SELECTOR */}
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted small fw-bold text-warning">INWARD REF <span className="text-danger">*</span></label>
+                       <label className={`col-4 small fw-bold ${formData.partyType === 'vendor' ? 'text-danger' : 'text-warning'}`}>
+                          {formData.partyType === 'vendor' ? 'LINK CUST. INWARD *' : 'INWARD REF *'}
+                       </label>
                        <div className="col-8">
                            <SearchableSelect
                                className="w-100"
@@ -323,9 +329,11 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                                }))}
                                value={formData.inwardId || ''}
                                onChange={(val) => handleChange({ target: { name: 'inwardId', value: val } } as any)}
-                               placeholder="Select Inward Batch"
+                               placeholder={formData.partyType === 'vendor' ? "Select Original Customer Inward" : "Select Inward Batch"}
+                               required={true}
                                disabled={mode === 'view' || (formData.partyType === 'customer' && !formData.customerId) || (formData.partyType === 'vendor' && !formData.vendorId)}
                             />
+                            {formData.partyType === 'vendor' && <div className="x-small text-muted mt-1">Select the original inward from the customer to send for job work.</div>}
                        </div>
                     </div>
 

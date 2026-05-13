@@ -294,11 +294,13 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         <div className="card-body p-4 p-md-5">
           <form onSubmit={handleSubmit}>
   
-            {/* <div className="d-flex justify-content-between align-items-center mb-5 pb-3"> */}
-              <div></div> {/* placeholder for flex */}
-              {/* <h4 className="m-0 text-dark fw-normal" style={{ marginLeft: '120px' }}>Globus Engineering Tools</h4> */}
-              
-            {/* </div> */}
+            <div className="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
+               <h4 className="m-0 text-dark fw-bold">
+                 {formData.partyType === 'vendor' ? 'Job Work Return (from Vendor)' : 'Inward Entry'}
+               </h4>
+               {formData.partyType === 'vendor' && <span className="badge bg-warning text-dark rounded-pill px-3 py-2">STEP 3: RECEIVE BACK FROM VENDOR</span>}
+               {formData.partyType === 'customer' && <span className="badge bg-primary rounded-pill px-3 py-2">STEP 1: CUSTOMER INWARD</span>}
+            </div>
   
             <div className="row g-4 mb-5 align-items-center">
               <div className="col-md-6 d-flex">
@@ -379,7 +381,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
               {formData.partyType === 'vendor' && (
                 <div className="col-md-6 d-flex">
-                  <label className="form-label mb-0 align-self-center text-muted col-3">OUTWARD REF</label>
+                  <label className="form-label mb-0 align-self-center text-danger fw-bold col-3">OUTWARD REF *</label>
                   <SearchableSelect
                     className="flex-grow-1"
                     options={pendingOutwards
@@ -390,7 +392,8 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                     }
                     value={formData.outwardId || ''}
                     onChange={(val) => handleChange({ target: { name: 'outwardId', value: val } } as any)}
-                    placeholder={outwardLoading ? 'Loading Pending Dispatches...' : (pendingOutwards.length === 0 ? 'No Pending Dispatches' : 'Select Dispatch Reference…')}
+                    placeholder={outwardLoading ? 'Loading Pending Dispatches...' : (pendingOutwards.length === 0 ? 'No Pending Dispatches' : 'Select Vendor Challan Reference…')}
+                    required={true}
                     disabled={mode === 'view' || !formData.vendorId || pendingOutwards.length === 0}
                   />
                   {outwardLoading && <div className="spinner-border spinner-border-sm text-primary ms-2 align-self-center" role="status"></div>}
