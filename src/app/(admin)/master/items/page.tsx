@@ -264,13 +264,13 @@ export default function ItemDetailsPage() {
                 {/* Item Code Field */}
                 <div className="row mb-4 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Code <span className="text-danger">*</span></label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Code</label>
                   </div>
 
                   <div className="col-md-9">
                     <input
                       type="text"
-                      required
+                     
                       placeholder="e.g. ITM-001"
                       className="form-control"
                       style={{ fontSize: '0.85rem', height: '38px' }}
@@ -284,13 +284,13 @@ export default function ItemDetailsPage() {
                 {/* Item Name Field */}
                 <div className="row mb-4 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Name <span className="text-danger">*</span></label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Name</label>
                   </div>
 
                   <div className="col-md-9">
                     <input
                       type="text"
-                      required
+                     
                       placeholder="Item Name"
                       className="form-control"
                       style={{ fontSize: '0.85rem', height: '38px' }}

@@ -303,8 +303,8 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
    const targetRows = isLastPage ? (capacity - footerSpaceNeeded) : capacity;
    const fillerCount = type === 'voucher' ? 0 : Math.max(0, targetRows - items.length);
 
-   const partyName = data.customerName || data.vendorName || data.partyName || 'N/A';
-   const partyAddress = data.address || 'N/A';
+   const partyName = data.partyType === 'vendor' ? (data.vendorName || data.partyName || 'N/A Vendor') : (data.customerName || data.partyName || 'N/A Customer');
+   const partyAddress = data.address || data.partyAddress || 'N/A';
 
    return (
       <div className="invoice-page" style={{ pageBreakAfter: isLastPage ? 'avoid' : 'always' }}>

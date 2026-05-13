@@ -302,7 +302,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
   
             <div className="row g-4 mb-5 align-items-center">
               <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Party Type <span className="text-danger">*</span></label>
+                <label className="form-label mb-0 align-self-center text-muted col-3">Party Type</label>
                 <div className="flex-grow-1 d-flex gap-4">
                   <div className="form-check">
                     <input className="form-check-input" type="radio" name="partyType" id="partyCustomer" value="customer" checked={formData.partyType === 'customer'} onChange={handleChange} disabled={mode === 'view'} />
@@ -322,7 +322,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
               {formData.partyType === 'customer' ? (
                 <div className="col-md-6 d-flex">
-                  <label className="form-label mb-0 align-self-center text-muted col-3">Customer <span className="text-danger">*</span></label>
+                  <label className="form-label mb-0 align-self-center text-muted col-3">Customer</label>
 
                   <SearchableSelect
                     className="flex-grow-1"
@@ -335,7 +335,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                 </div>
               ) : (
                 <div className="col-md-6 d-flex">
-                  <label className="form-label mb-0 align-self-center text-muted col-3">Vendor <span className="text-danger">*</span></label>
+                  <label className="form-label mb-0 align-self-center text-muted col-3">Vendor</label>
 
                   <SearchableSelect
                     className="flex-grow-1"
@@ -379,7 +379,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
               {formData.partyType === 'vendor' && (
                 <div className="col-md-6 d-flex">
-                  <label className="form-label mb-0 align-self-center text-danger fw-bold col-3">OUTWARD REF *</label>
+                  <label className="form-label mb-0 align-self-center text-danger fw-bold col-3">OUTWARD REF</label>
                   <SearchableSelect
                     className="flex-grow-1"
                     options={pendingOutwards
@@ -391,8 +391,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                     value={formData.outwardId || ''}
                     onChange={(val) => handleChange({ target: { name: 'outwardId', value: val } } as any)}
                     placeholder={outwardLoading ? 'Loading Pending Dispatches...' : (pendingOutwards.length === 0 ? 'No Pending Dispatches' : 'Select Vendor Challan Reference…')}
-                    required={true}
-                    disabled={mode === 'view' || !formData.vendorId || pendingOutwards.length === 0}
+                    disabled={mode === 'view'}
                   />
                   {outwardLoading && <div className="spinner-border spinner-border-sm text-primary ms-2 align-self-center" role="status"></div>}
                 </div>
@@ -439,7 +438,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                     />
                   </div>
                   <div className="col-md-2">
-                    <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} required disabled={mode === 'view'} />
+                    <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} disabled={mode === 'view'} />
                   </div>
                   <div className="col-md-1 text-center">
                     {mode !== 'view' && (

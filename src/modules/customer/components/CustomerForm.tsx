@@ -177,7 +177,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   const renderInput = (label: string, name: keyof typeof formData, type = 'text', required = false) => (
     <div className="col-md-6 mb-3">
       <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">
-        {label} {required && <span className="text-danger">*</span>}
+        {label}
       </label>
 
       <input
@@ -187,7 +187,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         value={formData[name]}
         onChange={handleChange}
         placeholder={label}
-        required={required}
+       
         disabled={mode === 'view'}
       />
     </div>
@@ -205,8 +205,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
             </div>
             <div className="row g-3 mb-4">
               <div className="col-md-6 mb-3">
-                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Customer Type <span className="text-danger">*</span></label>
-                <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} required disabled={mode === 'view'}>
+                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Customer Type</label>
+                <select className="form-select" name="customerType" value={formData.customerType} onChange={handleChange} disabled={mode === 'view'}>
                   <option value="Customer">Customer</option>
                   <option value="Dealer">Dealer</option>
                   <option value="Distributor">Distributor</option>
@@ -217,8 +217,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               {renderInput('Phone Number', 'phone', 'text', true)}
 
               <div className="col-md-6 mb-3">
-                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Status <span className="text-danger">*</span></label>
-                <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
+                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Status</label>
+                <select className="form-select" name="status" value={formData.status} onChange={handleChange} disabled={mode === 'view'}>
                   <option value="active">Active</option>
                   <option value="lead">Lead</option>
                   <option value="inactive">Inactive</option>

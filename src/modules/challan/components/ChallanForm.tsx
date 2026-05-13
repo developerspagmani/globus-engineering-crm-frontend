@@ -224,19 +224,19 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
           {/* Header Info */}
           <div className="row g-4 mb-5">
             <div className="col-md-3">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Challan # <span className="text-danger">*</span></label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Challan #</label>
               <input 
                 type="text" 
                 className="form-control" 
                 name="challanNo" 
                 value={formData.challanNo} 
                 onChange={handleInputChange} 
-                required 
+                
                 disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-3">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Party Type <span className="text-danger">*</span></label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Party Type</label>
               <select 
                 className="form-select" 
                 name="partyType" 
@@ -249,7 +249,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-6">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Party / Company <span className="text-danger">*</span></label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Party / Company</label>
               <SearchableSelect
                 options={(formData.partyType === 'customer' ? companyCustomers : companyVendors).map(p => ({ 
                   value: p.id, 
@@ -262,14 +262,14 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-3">
-              <label className="form-label small fw-800 text-uppercase tracking-wider">Date <span className="text-danger">*</span></label>
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Date</label>
               <input 
                 type="date" 
                 className="form-control" 
                 name="date" 
                 value={formData.date} 
                 onChange={handleInputChange} 
-                required 
+                
                 disabled={mode === 'view'}
               />
             </div>
@@ -338,7 +338,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                             value={item.quantity} 
                             onWheel={(e) => (e.target as HTMLInputElement).blur()}
                             onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                            required 
+                            
                             disabled={mode === 'view'}
                           />
                         </td>
@@ -349,7 +349,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                             value={item.wopQty} 
                             onWheel={(e) => (e.target as HTMLInputElement).blur()}
                             onChange={(e) => handleItemChange(index, 'wopQty', e.target.value)}
-                            required 
+                            
                             disabled={mode === 'view'}
                           />
                         </td>
@@ -359,7 +359,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           className="form-control text-center" 
                           value={item.unit || ''} 
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                          required 
+                          
                           disabled={mode === 'view'}
                         />
                       </td>
@@ -400,7 +400,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                <span className="x-small fw-800 text-uppercase tracking-widest text-muted d-block mb-3">Transport & Logistics</span>
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-700">Vehicle Number <span className="text-danger">*</span></label>
+              <label className="form-label small fw-700">Vehicle Number</label>
               <input 
                 type="text" 
                 className="form-control" 
@@ -408,19 +408,19 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 placeholder="MH-12-XX-0000"
                 value={formData.vehicleNo} 
                 onChange={handleInputChange} 
-                required
+               
                 disabled={mode === 'view'}
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label small fw-700">Driver Name <span className="text-danger">*</span></label>
+              <label className="form-label small fw-700">Driver Name</label>
               <input 
                 type="text" 
                 className="form-control" 
                 name="driverName" 
                 value={formData.driverName} 
                 onChange={handleInputChange} 
-                required
+               
                 disabled={mode === 'view'}
               />
             </div>

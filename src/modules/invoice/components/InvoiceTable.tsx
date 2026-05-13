@@ -193,7 +193,7 @@ const InvoiceTable: React.FC = () => {
                   <td className="text-muted small">
                     {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? (item.dcNo || item.challanNo || item.dc_no || '-') : item.invoiceNumber}
                   </td>
-                  <td className="text-muted small">{item.date}</td>
+                  <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                   {activeTab !== 'WOP_LIST' && (
                     <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>
                       {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : `₹${item.grandTotal.toLocaleString()}`}

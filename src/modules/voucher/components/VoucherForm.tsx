@@ -292,7 +292,6 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.partyId) return;
 
     try {
       setIsSubmitting(true);
@@ -453,18 +452,18 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         <form onSubmit={handleSubmit}>
           <div className="row g-4 mb-5">
             <div className="col-md-6 d-flex align-items-center gap-3">
-              <label className="text-muted small fw-bold col-3">DATE <span className="text-danger">*</span></label>
+              <label className="text-muted small fw-bold col-3">DATE</label>
               <input
                 type="date"
                 className="form-control"
                 value={formData.date}
                 onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                required
+               
                 disabled={mode === 'view'}
               />
             </div>
              <div className="col-md-6 d-flex align-items-center gap-3">
-              <label className="text-muted small fw-bold col-3">Payment <span className="text-danger">*</span></label>
+              <label className="text-muted small fw-bold col-3">Payment</label>
               <select
                 className="form-select"
                 name="paymentMode"
@@ -474,7 +473,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   paymentMode: e.target.value, 
                   chequeNo: e.target.value === 'cash' ? '' : prev.chequeNo 
                 }))}
-                required
+               
                 disabled={mode === 'view'}
               >
                 <option value="cash">Cash</option>
@@ -496,7 +495,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               />
             </div>
             <div className="col-md-6 d-flex align-items-center gap-3">
-              <label className="text-muted small fw-bold col-3">Type <span className="text-danger">*</span></label>
+              <label className="text-muted small fw-bold col-3">Type</label>
               <select
                 className="form-select fw-bold text-primary"
                 value={formData.type}
@@ -508,7 +507,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-6 d-flex align-items-center gap-3">
-              <label className="text-muted small fw-bold col-3">Party Type <span className="text-danger">*</span></label>
+              <label className="text-muted small fw-bold col-3">Party Type</label>
               <select
                 className="form-select"
                 value={formData.partyType}
@@ -520,7 +519,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-12 d-flex align-items-center gap-3">
-              <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>SELECT PARTY <span className="text-danger">*</span></label>
+              <label className="text-muted x-small fw-bold" style={{ width: '12.5%', flexShrink: 0 }}>SELECT PARTY</label>
               {initialData ? (
                 <div className="w-100 fw-bold text-uppercase" style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '10px 12px', color: '#334155', backgroundColor: '#f8fafc', fontSize: '0.85rem', height: '38px', display: 'flex', alignItems: 'center' }}>
                   {formData.partyName || 'LOADING PARTY...'}

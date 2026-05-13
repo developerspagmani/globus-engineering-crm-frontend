@@ -26,10 +26,37 @@ export const fetchInwards = createAsyncThunk(
       if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
+      const mappedItems = (response.data.items || []).map((c: any) => ({
+        id: c.id.toString(),
+        inwardNo: String(c.inward_no || ''),
+        customerId: c.customer_id?.toString() || '',
+        customerName: String(c.customer_name || ''),
+        address: c.address || '',
+        vendorId: c.vendor_id?.toString() || '',
+        vendorName: c.vendor_name || '',
+        poReference: c.po_reference || '',
+        poDate: c.po_date ? new Date(c.po_date).toISOString().split('T')[0] : '',
+        challanNo: c.challan_no || '',
+        dcNo: c.dc_no || '',
+        dcDate: c.dc_date ? new Date(c.dc_date).toISOString().split('T')[0] : '',
+        vehicleNo: c.vehicle_no || '',
+        company_id: c.company_id?.toString() || '',
+        date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
+        dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : '',
+        status: c.status || 'pending',
+        items: (c.items || []).map((it: any) => ({
+          ...it,
+          itemName: it.item_name || it.itemName || it.description,
+          remainingQty: it.remaining_qty ?? it.remainingQty ?? it.quantity
+        })),
+        totalRemaining: c.totalRemaining ?? c.total_remaining,
+        createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
+      }));
+
       return {
-        items: response.data.items,
+        items: mappedItems,
         pagination: response.data.pagination,
-        statusCounts: response.data.statusCounts   // ← completed / pending / activeParties
+        statusCounts: response.data.statusCounts
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch inward entries');
@@ -47,7 +74,7 @@ export const fetchInwardById = createAsyncThunk(
         id: c.id.toString(),
         inwardNo: String(c.inward_no || ''),
         customerId: c.customer_id?.toString() || '',
-        customerName: String(c.customer_name || 'N/A'),
+        customerName: String(c.customer_name || ''),
         address: c.address || '',
         vendorId: c.vendor_id?.toString() || '',
         vendorName: c.vendor_name || '',
@@ -61,7 +88,11 @@ export const fetchInwardById = createAsyncThunk(
         date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
         dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : '',
         status: c.status || 'pending',
-        items: c.items || [],
+        items: (c.items || []).map((it: any) => ({
+          ...it,
+          itemName: it.item_name || it.itemName || it.description,
+          remainingQty: it.remaining_qty ?? it.remainingQty ?? it.quantity
+        })),
         createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
       };
     } catch (err: any) {
@@ -101,7 +132,7 @@ export const createInward = createAsyncThunk(
         id: c.id.toString(),
         inwardNo: String(c.inward_no || data.inwardNo || ''),
         customerId: c.customer_id?.toString() || data.customerId || '',
-        customerName: String(c.customer_name || data.customerName || 'N/A'),
+        customerName: String(c.customer_name || data.customerName || ''),
         address: c.address || data.address || '',
         vendorId: c.vendor_id?.toString() || data.vendorId || '',
         vendorName: c.vendor_name || data.vendorName || '',
@@ -157,7 +188,7 @@ export const updateInward = createAsyncThunk(
         id: c.id?.toString() || data.id,
         inwardNo: String(c.inward_no || data.inwardNo || ''),
         customerId: c.customer_id?.toString() || data.customerId || '',
-        customerName: String(c.customer_name || data.customerName || 'N/A'),
+        customerName: String(c.customer_name || data.customerName || ''),
         address: c.address || data.address || '',
         vendorId: c.vendor_id?.toString() || data.vendorId || '',
         vendorName: c.vendor_name || data.vendorName || '',

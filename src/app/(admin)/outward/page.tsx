@@ -184,7 +184,7 @@ export default function OutwardListPage() {
                       </td>
                       <td><span className="badge bg-light text-dark border-0 shadow-inner px-2 py-1 fw-bold" style={{ borderRadius: '6px' }}>{item.invoiceReference || '-'}</span></td>
                       <td className="text-muted small fw-bold text-capitalize">{item.vehicleNo || '-'}</td>
-                      <td className="text-muted small fw-bold">{item.date}</td>
+                      <td className="text-nowrap text-muted small fw-bold">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                       <td>
                         <span className={`badge rounded-pill px-3 py-1 small fw-bold ${item.status === 'completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
                           {(item.status || 'pending').toUpperCase()}

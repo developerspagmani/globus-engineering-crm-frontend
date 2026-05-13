@@ -215,7 +215,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
   const renderInput = (label: string, name: keyof typeof formData, type = 'text', required = false) => (
     <div className="col-md-6 mb-3">
       <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">
-        {label} {required && <span className="text-danger">*</span>}
+        {label}
       </label>
 
       <input
@@ -225,7 +225,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
         value={formData[name]}
         onChange={handleChange}
         placeholder={label}
-        required={required}
+        
         disabled={mode === 'view'}
       />
     </div>
@@ -244,13 +244,13 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
             {user?.role === 'super_admin' && (
               <div className="col-md-12 mb-3">
                  <div className="p-3 bg-light rounded border border-warning shadow-sm">
-                    <label className="form-label fw-bold text-dark x-small text-uppercase mb-2 d-block">Associate with Company (System-Level Permission) <span className="text-danger">*</span></label>
+                    <label className="form-label fw-bold text-dark x-small text-uppercase mb-2 d-block">Associate with Company (System-Level Permission)</label>
                     <select 
                       className="form-select border-primary fw-bold" 
                       name="company_id" 
                       value={formData.company_id} 
                       onChange={handleChange}
-                      required
+                     
                       disabled={mode === 'view'}
                     >
                       <option value="">-- Choose Company --</option>
@@ -263,8 +263,8 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
               </div>
             )}
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Vendor Type <span className="text-danger">*</span></label>
-              <select className="form-select" name="vendorType" value={formData.vendorType} onChange={handleChange} required disabled={mode === 'view'}>
+              <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Vendor Type</label>
+              <select className="form-select" name="vendorType" value={formData.vendorType} onChange={handleChange} disabled={mode === 'view'}>
                 <option value="New">New</option>
                 <option value="Regular">Regular</option>
                 <option value="Contractor">Contractor</option>
@@ -277,8 +277,8 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
 
             
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Category <span className="text-danger">*</span></label>
-              <select className="form-select" name="category" value={formData.category} onChange={handleChange} required disabled={mode === 'view'}>
+              <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Category</label>
+              <select className="form-select" name="category" value={formData.category} onChange={handleChange} disabled={mode === 'view'}>
                 <option value="Raw Materials">Raw Materials</option>
                 <option value="Logistics">Logistics</option>
                 <option value="Machinery">Machinery</option>
@@ -287,8 +287,8 @@ const VendorForm: React.FC<VendorFormProps> = ({ initialData, mode }) => {
               </select>
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Status <span className="text-danger">*</span></label>
-              <select className="form-select" name="status" value={formData.status} onChange={handleChange} required disabled={mode === 'view'}>
+              <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Status</label>
+              <select className="form-select" name="status" value={formData.status} onChange={handleChange} disabled={mode === 'view'}>
                 <option value="active">Active</option>
                 <option value="pending">Pending</option>
                 <option value="inactive">Inactive</option>

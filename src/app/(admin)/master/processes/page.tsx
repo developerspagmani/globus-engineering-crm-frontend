@@ -225,12 +225,12 @@ export default function ProcessDetailsPage() {
               <form onSubmit={handleSubmit}>
                 <div className="row mb-5 align-items-center">
                   <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Process <span className="text-danger">*</span></label>
+                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Process</label>
                   </div>
                   <div className="col-md-9">
                     <input
                       type="text"
-                      required
+                     
                       placeholder="Process Name"
                       className="form-control"
                       style={{ fontSize: '0.85rem', height: '38px' }}
