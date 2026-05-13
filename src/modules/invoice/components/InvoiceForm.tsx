@@ -783,8 +783,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                  {selectionMode === 'CUSTOMER' ? (
                                     <SearchableSelect
                                        options={[
-                                          ...customers.map(c => ({ value: c.id, label: `[C] ${c.company || c.name}` })),
-                                          ...vendors.map(v => ({ value: v.id, label: `[V] ${v.name}` }))
+                                          ...customers.map(c => ({ value: c.id, label: `${c.company || c.name}` })),
+                                          ...vendors.map(v => ({ value: v.id, label: `${v.name}` }))
                                        ]}
                                        value={formData.customerId}
                                        onChange={(val) => handleInputChange({ target: { name: 'customerId', value: val } } as any)}
@@ -898,7 +898,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Po No <span className="text-danger">*</span></label>
                               <div className="col-sm-9">
-                                  <div className="input-group">
                                      <input 
                                         type="text" 
                                         className="form-control shadow-none px-2" 
@@ -911,26 +910,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                               handleSearchByReference(formData.poNo);
                                            }
                                         }}
-                                        placeholder="Type PO No & hit Enter" 
+                                        placeholder="Type PO No" 
                                         style={{ height: '38px', fontSize: '0.85rem' }} 
                                         required 
                                      />
-                                     <button 
-                                        type="button" 
-                                        className="btn btn-outline-secondary" 
-                                        onClick={() => handleSearchByReference(formData.poNo)}
-                                        title="Fetch Inward Details"
-                                     >
-                                        <i className="bi bi-search"></i>
-                                     </button>
-                                  </div>
 
                               </div>
                            </div>
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Dc No <span className="text-danger">*</span></label>
                               <div className="col-sm-9">
-                                  <div className="input-group">
                                      <input 
                                         type="text" 
                                         className="form-control shadow-none px-2" 
@@ -943,19 +932,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                               handleSearchByReference(formData.dcNo);
                                            }
                                         }}
-                                        placeholder="Type DC No & hit Enter" 
+                                        placeholder="Type DC No" 
                                         style={{ height: '38px', fontSize: '0.85rem' }} 
                                         required 
                                      />
-                                     <button 
-                                        type="button" 
-                                        className="btn btn-outline-secondary" 
-                                        onClick={() => handleSearchByReference(formData.dcNo)}
-                                        title="Fetch Inward Details"
-                                     >
-                                        <i className="bi bi-search"></i>
-                                     </button>
-                                  </div>
 
                               </div>
                            </div>

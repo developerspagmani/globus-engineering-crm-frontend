@@ -239,11 +239,9 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
   return (
     <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
       <div className="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-         <h5 className="fw-bold mb-0 text-primary">
+         <h5 className="fw-bold mb-0 text-dark">
            {formData.partyType === 'vendor' ? 'Job Work Challan (to Vendor)' : 'Outward Detail / Dispatch Challan'}
          </h5>
-         {formData.partyType === 'vendor' && <span className="badge bg-info text-dark rounded-pill">STEP 2: SEND TO VENDOR</span>}
-         {formData.partyType === 'customer' && formData.inwardId && <span className="badge bg-success rounded-pill">STEP 4: FINAL DELIVERY</span>}
       </div>
       <div className="card-body p-4 bg-light">
         <form onSubmit={handleSubmit}>
@@ -317,7 +315,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
                     {/* NEW SMART INWARD SELECTOR */}
                     <div className="row mb-3 align-items-center">
-                       <label className={`col-4 small fw-bold ${formData.partyType === 'vendor' ? 'text-danger' : 'text-warning'}`}>
+                       <label className={`col-4 small fw-bold text-muted`}>
                           {formData.partyType === 'vendor' ? 'LINK CUST. INWARD *' : 'INWARD REF *'}
                        </label>
                        <div className="col-8">
@@ -385,7 +383,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
 
           <div className="bg-white p-4 rounded-4 shadow-sm mb-4">
-            <h6 className="fw-bold mb-4 d-flex align-items-center"><i className="bi bi-box-seam me-2 text-primary"></i> DISPATCH ITEMS</h6>
+            <h6 className="fw-bold mb-4 d-flex align-items-center"><i className="bi bi-box-seam me-2 text-secondary"></i> DISPATCH ITEMS</h6>
             <div className="table-responsive">
                <table className="table table-borderless align-middle">
                   <thead>

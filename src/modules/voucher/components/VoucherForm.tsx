@@ -584,7 +584,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                     type="button" 
                                     className="btn btn-link p-0 text-decoration-none border-0 shadow-none"
                                     onClick={() => toggleExpand(invoiceId)}
-                                    style={{ color: '#f97316' }}
+                                    style={{ color: '#6c757d' }}
                                   >
                                     <i className={`bi bi-${expandedRows.has(invoiceId) ? 'dash-circle-fill' : 'plus-circle-fill'}`} style={{ fontSize: '16px' }}></i>
                                   </button>
@@ -659,7 +659,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                  </div>
                                  {selectedData.adjustmentValue > 0 && (
                                    <div className="ms-auto pe-4 pt-3">
-                                     <span className="badge bg-soft-orange text-orange border border-orange-subtle rounded-pill px-3 py-2" style={{ fontSize: '10px' }}>
+                                     <span className="badge bg-light text-secondary border border-secondary-subtle rounded-pill px-3 py-2" style={{ fontSize: '10px' }}>
                                        Applied {selectedData.adjustmentType}: ₹ {Number(selectedData.adjustmentValue).toFixed(2)}
                                      </span>
                                    </div>
@@ -720,7 +720,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 <button 
                   type="submit" 
                   className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2" 
-                  style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px' }}
+                  style={{ backgroundColor: '#6c757d', border: 'none', minWidth: '150px' }}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (

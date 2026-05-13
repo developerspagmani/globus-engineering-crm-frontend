@@ -189,15 +189,11 @@ export default function InwardListPage() {
                         </span>
                       </td>
                       <td>
-                        <span className={`badge rounded-pill px-2 py-1 small fw-bold ${
-                          item.vendorId || (item as any).vendor_id || item.partyType === 'vendor' || (item as any).party_type === 'vendor' 
-                          ? 'bg-info-subtle text-info' 
-                          : 'bg-primary-subtle text-primary'
-                        }`}>
+                        <span className={`badge rounded-pill px-2 py-1 small fw-bold bg-secondary-subtle text-secondary`}>
                           {(item.vendorId || (item as any).vendor_id || item.partyType === 'vendor' || (item as any).party_type === 'vendor') ? 'VENDOR' : 'CUSTOMER'}
                         </span>
                       </td>
-                      <td className="text-muted small fw-bold">{item.date}</td>
+                      <td className="text-muted small fw-bold">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
                           <Link href={`/inward/${item.id}/edit`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>

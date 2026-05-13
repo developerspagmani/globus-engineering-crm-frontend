@@ -298,8 +298,6 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                <h4 className="m-0 text-dark fw-bold">
                  {formData.partyType === 'vendor' ? 'Job Work Return (from Vendor)' : 'Inward Entry'}
                </h4>
-               {formData.partyType === 'vendor' && <span className="badge bg-warning text-dark rounded-pill px-3 py-2">STEP 3: RECEIVE BACK FROM VENDOR</span>}
-               {formData.partyType === 'customer' && <span className="badge bg-primary rounded-pill px-3 py-2">STEP 1: CUSTOMER INWARD</span>}
             </div>
   
             <div className="row g-4 mb-5 align-items-center">
@@ -469,7 +467,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                   type="submit" 
                   className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2" 
                   disabled={isSubmitting}
-                  style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px' }}
+                  style={{ backgroundColor: '#6c757d', border: 'none', minWidth: '150px' }}
                 >
                   {isSubmitting ? (
                     <>
