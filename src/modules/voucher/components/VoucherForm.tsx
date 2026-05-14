@@ -327,20 +327,21 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         partyName: formData.partyName,
         partyType: formData.partyType,
         amount: netPayableAmount,
-        tdsAmount: totalAdjustmentAmount,
+        tdsAmount: formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0),
+        othersAmount: formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0),
         paymentMode: formData.paymentMode as any,
         chequeNo: formData.paymentMode === 'cash' ? '' : formData.chequeNo,
-        description: `Payment for ${formData.partyType}: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')}`,
-        referenceNo: formData.selectedInvoices.map(i => `${i.invoiceNo} (${i.amount}|${i.adjustmentValue})`).join(', '),
+        description: `Payment for ${formData.partyType}: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')} (Adjust: ₹${totalAdjustmentAmount})`,
+        referenceNo: formData.selectedInvoices.map(i => `${i.invoiceNo} (${i.amount}|${i.adjustmentType}:${i.adjustmentValue})`).join(', '),
         status: 'posted',
         company_id: user?.company_id || activeCompany?.id || ''
       };
       
-      if (!(voucherPayload as any).company_id && activeCompany?.id) {
-        (voucherPayload as any).company_id = activeCompany.id;
+      if (!voucherPayload.company_id && activeCompany?.id) {
+        voucherPayload.company_id = activeCompany.id;
       }
-      if (!(voucherPayload as any).company_id && user?.company_id) {
-        (voucherPayload as any).company_id = user.company_id;
+      if (!voucherPayload.company_id && user?.company_id) {
+        voucherPayload.company_id = user.company_id;
       }
 
       if (mode === 'create') {
@@ -363,16 +364,17 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               headers: { 'Authorization': `Bearer ${activeToken?.replace(/^"|"$/g, '')}` }
             });
             const data = await res.json();
-            const existingVoucher = data.items && data.items.length > 0 ? data.items[0] : null;
             
-            // Only consolidate if same party_id, party_type, and type, or if existing voucher has no party
-            const isSameParty = !existingVoucher || (
-              (!existingVoucher.party_id || String(existingVoucher.party_id) === String(voucherPayload.partyId)) &&
-              (!existingVoucher.party_type || String(existingVoucher.party_type) === String(voucherPayload.partyType)) &&
-              (!existingVoucher.type || String(existingVoucher.type) === String(voucherPayload.type))
-            );
-
-            if (existingVoucher && isSameParty) {
+            // Find the correct voucher for this specific party and type
+            const existingVoucher = data.items && data.items.length > 0 
+              ? data.items.find((v: any) => 
+                  String(v.party_id) === String(voucherPayload.partyId) && 
+                  String(v.party_type) === String(voucherPayload.partyType) &&
+                  String(v.type) === String(voucherPayload.type)
+                ) 
+              : null;
+            
+            if (existingVoucher) {
               // Append to existing
               const updatedPayload = {
                 ...existingVoucher,
@@ -381,7 +383,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 party_type: existingVoucher.party_type || voucherPayload.partyType,
                 type: existingVoucher.type || voucherPayload.type,
                 amount: Number(existingVoucher.amount || 0) + netPayableAmount,
-                tds_amount: Number(existingVoucher.tds_amount || 0) + totalAdjustmentAmount,
+                tdsAmount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0),
+                othersAmount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0),
                 description: `${existingVoucher.description_ || existingVoucher.description || ''}\n${voucherPayload.description}`,
                 reference_no: `${existingVoucher.reference_no || ''}, ${voucherPayload.referenceNo}`,
                 inward_id: inwardId,
@@ -414,10 +417,16 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             }
           } catch (vchErr) {
              console.error("Consolidated Voucher failed", vchErr);
-             await (dispatch as any)(createVoucher({ ...voucherPayload, items: currentPaymentItems } as any)).unwrap();
+             await (dispatch as any)(createVoucher({ 
+               ...voucherPayload, 
+               items: currentPaymentItems 
+             } as any)).unwrap();
           }
         } else {
-          await (dispatch as any)(createVoucher({ ...voucherPayload, items: currentPaymentItems } as any)).unwrap();
+          await (dispatch as any)(createVoucher({ 
+            ...voucherPayload, 
+            items: currentPaymentItems 
+          } as any)).unwrap();
         }
 
         setModal({

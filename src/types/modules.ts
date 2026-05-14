@@ -140,6 +140,7 @@ export interface Voucher {
   description: string;
   status: 'draft' | 'posted' | 'cancelled';
   tdsAmount?: number;
+  othersAmount?: number;
   inward_id?: string;
   inward_no?: string;
   items?: any[];

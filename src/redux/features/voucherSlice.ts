@@ -49,11 +49,12 @@ export const fetchVouchers = createAsyncThunk(
           description: v.description_ || v.description || '',
           status: v.status?.toLowerCase() || 'posted',
           tdsAmount: parseFloat(String(v.tds_amount || '0')) || 0,
+          othersAmount: parseFloat(String(v.others_amount || '0')) || 0,
           company_id: v.company_id?.toString() || (v as any).companyId?.toString() || '',
           createdAt: v.app_created_at
         })),
         pagination: response.data.pagination,
-        aggregates: response.data.aggregates || { totalCollected: 0, totalTDS: 0 }
+        aggregates: response.data.aggregates || { totalCollected: 0, totalTDS: 0, totalOthers: 0 }
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch vouchers');
@@ -80,6 +81,7 @@ export const createVoucher = createAsyncThunk(
         status: data.status,
         company_id: (data as any).company_id,
         tds_amount: data.tdsAmount,
+        others_amount: data.othersAmount,
         inward_id: (data as any).inward_id,
         inward_no: (data as any).inward_no,
         items: (data as any).items
@@ -112,6 +114,7 @@ export const updateVoucher = createAsyncThunk(
         status: data.status,
         company_id: (data as any).company_id,
         tds_amount: data.tdsAmount,
+        others_amount: data.othersAmount,
         inward_id: (data as any).inward_id,
         inward_no: (data as any).inward_no,
         items: (data as any).items
@@ -157,6 +160,7 @@ interface VoucherState {
   aggregates: {
     totalCollected: number;
     totalTDS: number;
+    totalOthers: number;
   };
 }
 
@@ -180,6 +184,7 @@ const initialState: VoucherState = {
   aggregates: {
     totalCollected: 0,
     totalTDS: 0,
+    totalOthers: 0,
   },
 };
 
@@ -208,7 +213,7 @@ const voucherSlice = createSlice({
           state.pagination.totalPages = action.payload.pagination.totalPages;
           state.pagination.currentPage = action.payload.pagination.page;
         }
-        state.aggregates = action.payload.aggregates || { totalCollected: 0, totalTDS: 0 };
+        state.aggregates = action.payload.aggregates || { totalCollected: 0, totalTDS: 0, totalOthers: 0 };
         state.error = null;
       })
       .addCase(fetchVouchers.rejected, (state, action) => {

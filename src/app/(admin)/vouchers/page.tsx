@@ -34,10 +34,13 @@ const VoucherPage = () => {
         company_id: activeCompany.id,
         page: pagination.currentPage,
         limit: pagination.itemsPerPage,
-        search: filters.search
+        search: filters.search,
+        type: filters.type,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.fromDate, filters.toDate]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
@@ -132,7 +135,7 @@ const VoucherPage = () => {
 
       {/* Summary Cards */}
       <div className="row g-3 mb-4 animate-fade-in-up">
-        <div className="col-md-6 col-lg-3">
+        <div className="col-md-4">
           <div className="card border-0 shadow-sm h-100 overflow-hidden" style={{ borderRadius: '16px', background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)' }}>
             <div className="card-body p-4 position-relative">
               <div className="position-absolute" style={{ right: '-10px', top: '-10px', opacity: '0.15' }}>
@@ -145,7 +148,7 @@ const VoucherPage = () => {
           </div>
         </div>
         
-        <div className="col-md-6 col-lg-3">
+        <div className="col-md-4">
           <div className="card border-0 shadow-sm h-100 overflow-hidden" style={{ borderRadius: '16px', background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' }}>
             <div className="card-body p-4 position-relative">
               <div className="position-absolute" style={{ right: '-10px', top: '-10px', opacity: '0.15' }}>
@@ -154,6 +157,19 @@ const VoucherPage = () => {
               <h6 className="text-white text-uppercase fw-bold x-small tracking-wider mb-2 opacity-75">Total TDS Reduced</h6>
               <h3 className="text-white fw-900 mb-0">₹{(aggregates.totalTDS || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
               <div className="mt-2 text-white x-small opacity-75 fw-medium">Sum of all tax deductions</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-4">
+          <div className="card border-0 shadow-sm h-100 overflow-hidden" style={{ borderRadius: '16px', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+            <div className="card-body p-4 position-relative">
+              <div className="position-absolute" style={{ right: '-10px', top: '-10px', opacity: '0.15' }}>
+                <i className="bi bi-plus-slash-minus" style={{ fontSize: '80px' }}></i>
+              </div>
+              <h6 className="text-white text-uppercase fw-bold x-small tracking-wider mb-2 opacity-75">Total Others Reduced</h6>
+              <h3 className="text-white fw-900 mb-0">₹{(aggregates.totalOthers || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
+              <div className="mt-2 text-white x-small opacity-75 fw-medium">Sum of all other deductions</div>
             </div>
           </div>
         </div>
@@ -223,6 +239,7 @@ const VoucherPage = () => {
                   <th className="py-3 border-0 small fw-bold text-muted">Party / Account</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-end">Amount</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-end">TDS</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-end">Others</th>
                   <th className="py-3 border-0 small fw-bold text-muted">Mode</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-center">Status</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
@@ -231,7 +248,7 @@ const VoucherPage = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8}>
+                    <td colSpan={9}>
                       <Loader text="Fetching Voucher Records..." />
                     </td>
                   </tr>
@@ -258,6 +275,9 @@ const VoucherPage = () => {
                         </td>
                         <td className="text-nowrap text-end fw-bold text-muted small">
                           {(voucher.tdsAmount || 0) > 0 ? `₹${voucher.tdsAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
+                        </td>
+                        <td className="text-nowrap text-end fw-bold text-muted small">
+                          {(voucher.othersAmount || 0) > 0 ? `₹${voucher.othersAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                         </td>
                         <td className="text-nowrap text-muted small text-capitalize fw-bold">{voucher.paymentMode}</td>
                         <td className="text-center">
