@@ -383,6 +383,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                   <SearchableSelect
                     className="flex-grow-1"
                     options={pendingOutwards
+                      .filter(o => (o.totalRemaining || 0) > 0)
                       .map(o => ({ 
                         value: o.id, 
                         label: `${o.outwardNo} (${o.date ? new Date(o.date).toLocaleDateString() : 'N/A'}) - ${o.totalRemaining || 0} Units Pending` 
@@ -402,14 +403,10 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
               <div className="row g-2 mb-3 fw-bold text-muted small">
                 <div className="col-md-4">Item</div>
                 <div className="col-md-3">Process</div>
-                <div className={mode === 'view' ? "col-md-1 text-center" : "col-md-4"}>Original Qty</div>
+                <div className={mode === 'view' ? "col-md-2 text-center" : "col-md-4"}>Original Qty</div>
                 {mode === 'view' && (
                   <>
-                    <div className="col-md-1 text-center text-primary">Billed</div>
-                    <div className="col-md-1 text-center text-success">Dispatched</div>
-                    <div className="col-md-1 text-center text-warning">At Vendor</div>
-                    <div className="col-md-1 text-center text-info">Vendor Bal</div>
-                    <div className="col-md-1 text-center fw-900 text-dark">Remaining</div>
+                    <div className="col-md-3 text-center fw-900 text-dark">Balance</div>
                   </>
                 )}
                 {mode !== 'view' && <div className="col-md-1 text-center">Action</div>}
@@ -445,24 +442,12 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                       disabled={mode === 'view'}
                     />
                   </div>
-                  <div className={mode === 'view' ? "col-md-1" : "col-md-4"}>
+                  <div className={mode === 'view' ? "col-md-2" : "col-md-4"}>
                     <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none text-center" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} disabled={mode === 'view'} />
                   </div>
                   {mode === 'view' && (
                     <>
-                      <div className="col-md-1 text-center">
-                        <span className="badge bg-primary-subtle text-primary border-0 rounded-pill px-2">{item.invoicedQty || 0}</span>
-                      </div>
-                      <div className="col-md-1 text-center">
-                        <span className="badge bg-success-subtle text-success border-0 rounded-pill px-2">{item.dispatchedQty || 0}</span>
-                      </div>
-                      <div className="col-md-1 text-center">
-                        <span className="badge bg-warning-subtle text-warning border-0 rounded-pill px-2">{item.atVendorQty || 0}</span>
-                      </div>
-                      <div className="col-md-1 text-center">
-                        <span className="badge bg-info-subtle text-info border-0 rounded-pill px-2">{item.vendorWorkBalance || 0}</span>
-                      </div>
-                      <div className="col-md-1 text-center fw-bold">
+                      <div className="col-md-3 text-center fw-bold">
                         <span className="text-dark">{item.dispatchBalance || 0}</span>
                       </div>
                     </>
