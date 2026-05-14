@@ -59,25 +59,37 @@ export interface Invoice {
 export interface InwardEntry {
   id: string;
   inwardNo: string;
-  partyType?: 'customer' | 'vendor'; // NEW: To distinguish vendor job work
+  partyType?: 'customer' | 'vendor';
   customerId?: string;
   customerName?: string;
-  address?: string; // added to match mock UI
+  address?: string;
   vendorId?: string;
   vendorName?: string;
-  outwardId?: string; // NEW: Link to original dispatch
-  outwardNo?: string; // NEW: Display reference
+  outwardId?: string;
+  outwardNo?: string;
   poReference?: string;
   poDate?: string;
   challanNo?: string;
   dcNo?: string;
   dcDate?: string;
-  dueDate?: string; // NEW: Manual due date field
+  dueDate?: string;
   vehicleNo?: string;
   company_id: string;
   date: string;
   status: 'pending' | 'completed' | 'cancelled';
-  items: { description: string; process?: string; quantity: number; unit?: string }[];
+  items: { 
+    description: string; 
+    process?: string; 
+    quantity: number; 
+    unit?: string;
+    invoicedQty?: number;
+    dispatchedQty?: number;
+    atVendorQty?: number;
+    billingBalance?: number;
+    vendorWorkBalance?: number;
+    dispatchBalance?: number;
+    remainingQty?: number;
+  }[];
   totalRemaining?: number;
   createdAt: string;
 }

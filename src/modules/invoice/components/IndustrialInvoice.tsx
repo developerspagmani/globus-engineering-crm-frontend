@@ -268,13 +268,14 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            background: #e9e9e9; 
            text-transform: uppercase;
            font-weight: bold;
+           vertical-align: middle;
         }
         .p-table td { 
            border: 1pt solid #000; 
            padding: 2px 6px; 
            font-size: 9px; 
            font-weight: bold; 
-           vertical-align: top;
+           vertical-align: middle;
            height: 21px; 
            line-height: 1.2;
            word-break: break-all;

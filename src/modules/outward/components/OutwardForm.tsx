@@ -149,9 +149,13 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
           ...prev,
           inwardId: value,
           inwardNo: selectedInward.inwardNo,
-          items: selectedInward.items.filter((i: any) => (i.remainingQty || 0) > 0).map((i: any) => ({
+          items: selectedInward.items.filter((i: any) => 
+            prev.partyType === 'vendor' 
+              ? (i.vendorWorkBalance || 0) > 0 
+              : (i.dispatchBalance || 0) > 0
+          ).map((i: any) => ({
             description: i.description || i.item_name,
-            quantity: i.remainingQty || 0,
+            quantity: prev.partyType === 'vendor' ? (i.vendorWorkBalance || 0) : (i.dispatchBalance || 0),
             unit: i.unit || 'pcs'
           }))
         }));
@@ -321,10 +325,16 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                        <div className="col-8">
                            <SearchableSelect
                                className="w-100"
-                               options={availableInwards.map(i => ({ 
-                                 value: i.id, 
-                                 label: `${i.inwardNo} - Bal: ${i.totalRemaining ?? 0} ${i.status === 'completed' || (i.totalRemaining !== undefined && i.totalRemaining <= 0) ? '(Completed)' : ''} (${i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})` 
-                               }))}
+                               options={availableInwards.map(i => {
+                                 const relevantBal = formData.partyType === 'vendor'
+                                   ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
+                                   : i.items.reduce((sum: number, it: any) => sum + (it.dispatchBalance || 0), 0);
+                                 
+                                 return { 
+                                   value: i.id, 
+                                   label: `${i.inwardNo} - Bal: ${relevantBal} ${i.status === 'completed' || relevantBal <= 0 ? '(Completed)' : ''} (${i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})` 
+                                 };
+                               })}
                                value={formData.inwardId || ''}
                                onChange={(val) => handleChange({ target: { name: 'inwardId', value: val } } as any)}
                                placeholder={formData.partyType === 'vendor' ? "Select Original Customer Inward" : "Select Inward Batch"}

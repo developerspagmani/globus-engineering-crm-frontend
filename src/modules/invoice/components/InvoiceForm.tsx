@@ -234,7 +234,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                   ) as any;
 
                   const unitPrice = pf ? pf.price : 0;
-                  const qty = item.remainingQty ?? item.quantity ?? 0;
+                  const qty = item.billingBalance ?? item.remainingQty ?? item.quantity ?? 0;
                   const amount = qty * unitPrice;
                   const tax = amount * (prev.taxRate / 100);
 
@@ -695,7 +695,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     <option value="">Select Inward Reference</option>
                                     {pendingInwards.map(i => (
                                        <option key={i.id} value={i.id}>
-                                          #{i.inward_no} - {i.po_reference || 'No PO'} ({i.items.reduce((s: number, it: any) => s + (it.remainingQty || 0), 0)} pending)
+                                          #{i.inward_no} - {i.po_reference || 'No PO'} ({i.items.reduce((s: number, it: any) => s + (it.billingBalance || 0), 0)} pending)
                                        </option>
                                     ))}
                                  </>

@@ -400,16 +400,24 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
   
             <div className="mt-5 border-top pt-4 border-bottom pb-4 mb-4">
               <div className="row g-2 mb-3 fw-bold text-muted small">
-                <div className="col-md-5">Item</div>
-                <div className="col-md-4">Process</div>
-                <div className="col-md-2">Qty</div>
-
-                <div className="col-md-1 text-center">Action</div>
+                <div className="col-md-4">Item</div>
+                <div className="col-md-3">Process</div>
+                <div className={mode === 'view' ? "col-md-1 text-center" : "col-md-4"}>Original Qty</div>
+                {mode === 'view' && (
+                  <>
+                    <div className="col-md-1 text-center text-primary">Billed</div>
+                    <div className="col-md-1 text-center text-success">Dispatched</div>
+                    <div className="col-md-1 text-center text-warning">At Vendor</div>
+                    <div className="col-md-1 text-center text-info">Vendor Bal</div>
+                    <div className="col-md-1 text-center fw-900 text-dark">Remaining</div>
+                  </>
+                )}
+                {mode !== 'view' && <div className="col-md-1 text-center">Action</div>}
               </div>
   
               {formData.items.map((item, index) => (
                 <div className="row g-2 mb-3 align-items-center" key={index}>
-                  <div className="col-md-5">
+                  <div className="col-md-4">
                     <SearchableSelect
                       options={[
                         ...masterItems.map(mi => ({ value: mi.itemName, label: `${mi.itemName} (${mi.itemCode})` })),
@@ -423,7 +431,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                       disabled={mode === 'view'}
                     />
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <SearchableSelect
                       options={[
                         ...masterProcesses.map(mp => ({ value: mp.processName, label: mp.processName })),
@@ -437,9 +445,28 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                       disabled={mode === 'view'}
                     />
                   </div>
-                  <div className="col-md-2">
-                    <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} disabled={mode === 'view'} />
+                  <div className={mode === 'view' ? "col-md-1" : "col-md-4"}>
+                    <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none text-center" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} disabled={mode === 'view'} />
                   </div>
+                  {mode === 'view' && (
+                    <>
+                      <div className="col-md-1 text-center">
+                        <span className="badge bg-primary-subtle text-primary border-0 rounded-pill px-2">{item.invoicedQty || 0}</span>
+                      </div>
+                      <div className="col-md-1 text-center">
+                        <span className="badge bg-success-subtle text-success border-0 rounded-pill px-2">{item.dispatchedQty || 0}</span>
+                      </div>
+                      <div className="col-md-1 text-center">
+                        <span className="badge bg-warning-subtle text-warning border-0 rounded-pill px-2">{item.atVendorQty || 0}</span>
+                      </div>
+                      <div className="col-md-1 text-center">
+                        <span className="badge bg-info-subtle text-info border-0 rounded-pill px-2">{item.vendorWorkBalance || 0}</span>
+                      </div>
+                      <div className="col-md-1 text-center fw-bold">
+                        <span className="text-dark">{item.dispatchBalance || 0}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="col-md-1 text-center">
                     {mode !== 'view' && (
                       <button type="button" className="btn btn-link text-danger p-0 border-0 fs-5 text-decoration-none shadow-none" onClick={() => removeItem(index)} disabled={formData.items.length === 1}>
