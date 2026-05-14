@@ -1,4 +1,5 @@
 'use client';
+// Trigger re-evaluation for admin group
 
 import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';

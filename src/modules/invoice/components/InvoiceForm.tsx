@@ -480,55 +480,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          if (mode === 'create') {
             const result = await (dispatch as any)(addInvoice(formData)).unwrap();
             
-             // CONSOLIDATED CHALLAN LOGIC
-             if (formData.inwardId) {
-                 try {
-                   console.log("Consolidating Challan for Inward:", formData.inwardId);
-                   const res = await api.get(`/challans?inward_id=${formData.inwardId}`);
-                   const existingChallan = res.data.items && res.data.items.length > 0 ? res.data.items[0] : null;
-
-                   const isWop = String(formData.billType).toLowerCase().includes('without');
-                   const currentItems = formData.items.map((it: any) => ({
-                      description: it.description,
-                      quantity: isWop ? 0 : Number(it.quantity || 0),
-                      wopQty: isWop ? Number(it.quantity || 0) : Number(it.wopQty || 0),
-                      unit: it.unit || 'pcs',
-                      hsnCode: it.hsnCode || ''
-                   }));
-
-                   const challanData = {
-                      challan_no: existingChallan ? existingChallan.challan_no : `DC-${formData.invoiceNumber}`,
-                      party_id: formData.customerId,
-                      party_name: formData.customerName,
-                      party_type: 'customer',
-                      type: 'delivery',
-                      status: 'dispatched',
-                      vehicle_no: formData.vehicleNo || 'N/A',
-                      driver_name: 'N/A',
-                      inward_id: formData.inwardId,
-                      inward_no: formData.inwardNo || formData.dcNo || formData.dc_no || 'N/A',
-                      bill_type: formData.billType || 'Both',
-                      items: existingChallan ? [...existingChallan.items, ...currentItems] : currentItems,
-                      company_id: formData.company_id || company?.id || ''
-                   };
-
-                   if (existingChallan) {
-                      await api.put(`/challans/${existingChallan.id}`, challanData);
-                   } else {
-                      await api.post(`/challans`, challanData);
-                   }
-                } catch (challanErr: any) {
-                   console.error("Consolidated Challan failed", challanErr);
-                   const errorDetail = challanErr.response?.data?.detail || challanErr.response?.data?.error || challanErr.message;
-                   setModal({
-                      isOpen: true,
-                      type: 'error',
-                      title: 'Challan Creation Failed',
-                      message: `Invoice was saved, but we couldn't create the consolidated challan. Error: ${errorDetail}`
-                   });
-                   return; 
-                }
-             }
+             console.log("Invoice created successfully, backend handled challan consolidation.");
 
             // Sync Price Fixing Changes
             for (const item of formData.items) {

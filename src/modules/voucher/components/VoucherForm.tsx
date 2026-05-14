@@ -261,6 +261,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       partyType: type,
       partyId: id,
       partyName: party?.name || (party as any)?.company || '',
+      type: type === 'vendor' ? 'payment' : 'receipt',
       customerId: type === 'customer' ? id : '',
       vendorId: type === 'vendor' ? id : '',
       selectedInvoices: preservedSelectedInvoices
@@ -561,6 +562,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   setFormData(prev => ({
                     ...prev,
                     partyType: newType,
+                    type: newType === 'vendor' ? 'payment' : 'receipt',
                     partyId: '',
                     partyName: '',
                     customerId: '',

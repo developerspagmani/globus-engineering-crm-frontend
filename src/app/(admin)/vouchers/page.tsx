@@ -22,7 +22,7 @@ const VoucherPage = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.voucher);
+  const { items, filters, pagination, loading, aggregates } = useSelector((state: RootState) => state.voucher);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
 
@@ -130,7 +130,36 @@ const VoucherPage = () => {
         </div>
       </div>
 
-      {/* Filters Card */}      
+      {/* Summary Cards */}
+      <div className="row g-3 mb-4 animate-fade-in-up">
+        <div className="col-md-6 col-lg-3">
+          <div className="card border-0 shadow-sm h-100 overflow-hidden" style={{ borderRadius: '16px', background: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)' }}>
+            <div className="card-body p-4 position-relative">
+              <div className="position-absolute" style={{ right: '-10px', top: '-10px', opacity: '0.15' }}>
+                <i className="bi bi-wallet2" style={{ fontSize: '80px' }}></i>
+              </div>
+              <h6 className="text-white text-uppercase fw-bold x-small tracking-wider mb-2 opacity-75">Total Transaction Amount</h6>
+              <h3 className="text-white fw-900 mb-0">₹{aggregates.totalCollected?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
+              <div className="mt-2 text-white x-small opacity-75 fw-medium">For current filtered results</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="col-md-6 col-lg-3">
+          <div className="card border-0 shadow-sm h-100 overflow-hidden" style={{ borderRadius: '16px', background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' }}>
+            <div className="card-body p-4 position-relative">
+              <div className="position-absolute" style={{ right: '-10px', top: '-10px', opacity: '0.15' }}>
+                <i className="bi bi-shield-check" style={{ fontSize: '80px' }}></i>
+              </div>
+              <h6 className="text-white text-uppercase fw-bold x-small tracking-wider mb-2 opacity-75">Total TDS Reduced</h6>
+              <h3 className="text-white fw-900 mb-0">₹{(aggregates.totalTDS || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h3>
+              <div className="mt-2 text-white x-small opacity-75 fw-medium">Sum of all tax deductions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters Card */}
       <div className="card filter-card">
         <div className="card-body p-3">
           <div className="filter-bar-row">
@@ -193,6 +222,7 @@ const VoucherPage = () => {
                   <th className="py-3 border-0 small fw-bold text-muted">Date</th>
                   <th className="py-3 border-0 small fw-bold text-muted">Party / Account</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-end">Amount</th>
+                  <th className="py-3 border-0 small fw-bold text-muted text-end">TDS</th>
                   <th className="py-3 border-0 small fw-bold text-muted">Mode</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-center">Status</th>
                   <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
@@ -225,6 +255,9 @@ const VoucherPage = () => {
                           <span className={voucher.type === 'payment' ? 'text-danger' : 'text-success'}>
                             ₹{voucher.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </span>
+                        </td>
+                        <td className="text-nowrap text-end fw-bold text-muted small">
+                          {(voucher.tdsAmount || 0) > 0 ? `₹${voucher.tdsAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                         </td>
                         <td className="text-nowrap text-muted small text-capitalize fw-bold">{voucher.paymentMode}</td>
                         <td className="text-center">

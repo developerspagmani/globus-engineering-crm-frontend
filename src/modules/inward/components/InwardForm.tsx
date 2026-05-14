@@ -379,7 +379,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
               {formData.partyType === 'vendor' && (
                 <div className="col-md-6 d-flex">
-                  <label className="form-label mb-0 align-self-center text-danger fw-bold col-3">OUTWARD REF</label>
+                  <label className="form-label mb-0 align-self-center text-muted fw-bold col-3">OUTWARD REF</label>
                   <SearchableSelect
                     className="flex-grow-1"
                     options={pendingOutwards

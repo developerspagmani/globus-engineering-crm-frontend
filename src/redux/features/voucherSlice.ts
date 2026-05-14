@@ -53,7 +53,7 @@ export const fetchVouchers = createAsyncThunk(
           createdAt: v.app_created_at
         })),
         pagination: response.data.pagination,
-        aggregates: response.data.aggregates || { totalCollected: 0 }
+        aggregates: response.data.aggregates || { totalCollected: 0, totalTDS: 0 }
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch vouchers');
@@ -156,6 +156,7 @@ interface VoucherState {
   };
   aggregates: {
     totalCollected: number;
+    totalTDS: number;
   };
 }
 
@@ -178,6 +179,7 @@ const initialState: VoucherState = {
   },
   aggregates: {
     totalCollected: 0,
+    totalTDS: 0,
   },
 };
 
@@ -206,7 +208,7 @@ const voucherSlice = createSlice({
           state.pagination.totalPages = action.payload.pagination.totalPages;
           state.pagination.currentPage = action.payload.pagination.page;
         }
-        state.aggregates = action.payload.aggregates || { totalCollected: 0 };
+        state.aggregates = action.payload.aggregates || { totalCollected: 0, totalTDS: 0 };
         state.error = null;
       })
       .addCase(fetchVouchers.rejected, (state, action) => {
