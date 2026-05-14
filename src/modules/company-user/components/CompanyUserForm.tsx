@@ -93,12 +93,31 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
     setModulePermissions(prev => {
       const existing = prev.find(p => p.moduleId === moduleId);
       if (existing) {
-        // If it exists, toggle canRead. If canRead becomes false, maybe disable all?
         return prev.map(p => p.moduleId === moduleId ? { ...p, canRead: !p.canRead } : p);
       } else {
         return [...prev, { moduleId, canRead: true, canCreate: false, canEdit: false, canDelete: false }];
       }
     });
+  };
+
+  const handleSelectAll = () => {
+    setModulePermissions(companyModules.map(m => ({
+      moduleId: m.id,
+      canRead: true,
+      canCreate: true,
+      canEdit: true,
+      canDelete: true
+    })));
+  };
+
+  const handleDeselectAll = () => {
+    setModulePermissions(companyModules.map(m => ({
+      moduleId: m.id,
+      canRead: false,
+      canCreate: false,
+      canEdit: false,
+      canDelete: false
+    })));
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -244,8 +263,18 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
           </div>
 
           <div className="mb-4">
-            <h5 className="fw-bold mb-3">Module Access & Permissions</h5>
-            <p className="text-muted small mb-4">Granularly control which modules this user can access and what actions they can perform.</p>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h5 className="fw-bold mb-1">Module Access & Permissions</h5>
+                <p className="text-muted small mb-0">Granularly control which modules this user can access and what actions they can perform.</p>
+              </div>
+              {mode !== 'view' && (
+                <div className="d-flex gap-2">
+                  <button type="button" className="btn btn-sm btn-outline-primary px-3 rounded-pill fw-bold" onClick={handleSelectAll}>Select All</button>
+                  <button type="button" className="btn btn-sm btn-outline-secondary px-3 rounded-pill fw-bold" onClick={handleDeselectAll}>Deselect All</button>
+                </div>
+              )}
+            </div>
             
             <div className="table-responsive">
               <table className="table table-bordered align-middle">
@@ -288,31 +317,37 @@ const CompanyUserForm: React.FC<CompanyUserFormProps> = ({ initialData, mode }) 
                           </div>
                         </td>
                         <td className="text-center">
-                          <input 
-                            type="checkbox" 
-                            className="form-check-input shadow-none cursor-pointer"
-                            checked={perm.canCreate}
-                            disabled={!perm.canRead || mode === 'view'}
-                            onChange={() => handlePermissionToggle(module.id, 'canCreate')}
-                          />
+                          <div className="form-check form-switch d-inline-block">
+                            <input 
+                              type="checkbox" 
+                              className="form-check-input cursor-pointer"
+                              checked={perm.canCreate}
+                              disabled={!perm.canRead || mode === 'view'}
+                              onChange={() => handlePermissionToggle(module.id, 'canCreate')}
+                            />
+                          </div>
                         </td>
                         <td className="text-center">
-                          <input 
-                            type="checkbox" 
-                            className="form-check-input shadow-none cursor-pointer"
-                            checked={perm.canEdit}
-                            disabled={!perm.canRead || mode === 'view'}
-                            onChange={() => handlePermissionToggle(module.id, 'canEdit')}
-                          />
+                          <div className="form-check form-switch d-inline-block">
+                            <input 
+                              type="checkbox" 
+                              className="form-check-input cursor-pointer"
+                              checked={perm.canEdit}
+                              disabled={!perm.canRead || mode === 'view'}
+                              onChange={() => handlePermissionToggle(module.id, 'canEdit')}
+                            />
+                          </div>
                         </td>
                         <td className="text-center">
-                          <input 
-                            type="checkbox" 
-                            className="form-check-input shadow-none cursor-pointer"
-                            checked={perm.canDelete}
-                            disabled={!perm.canRead || mode === 'view'}
-                            onChange={() => handlePermissionToggle(module.id, 'canDelete')}
-                          />
+                          <div className="form-check form-switch d-inline-block">
+                            <input 
+                              type="checkbox" 
+                              className="form-check-input cursor-pointer"
+                              checked={perm.canDelete}
+                              disabled={!perm.canRead || mode === 'view'}
+                              onChange={() => handlePermissionToggle(module.id, 'canDelete')}
+                            />
+                          </div>
                         </td>
                       </tr>
                     );

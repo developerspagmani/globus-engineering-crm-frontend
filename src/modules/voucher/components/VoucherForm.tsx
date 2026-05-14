@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { createVoucher, updateVoucher } from '@/redux/features/voucherSlice';
+import { createVoucher, updateVoucher, fetchVouchers } from '@/redux/features/voucherSlice';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { Voucher } from '@/types/modules';
@@ -114,14 +114,15 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         // 2. Resolve Invoice
         if (invoiceIdFromUrl) {
           const invoice = allInvoices.find(i => String(i.id) === String(invoiceIdFromUrl));
-          const existing = updated.selectedInvoices.find(item => item.id === String(invoiceIdFromUrl));
+          const existingIndex = updated.selectedInvoices.findIndex(item => String(item.id) === String(invoiceIdFromUrl));
 
           if (invoice) {
             const pendingAmount = invoice.grandTotal - (invoice.paidAmount || 0);
             const realNo = invoice.invoiceNumber || (invoice as any).invoice_no || String(invoiceIdFromUrl);
 
-            if (!existing || existing.amount === 0 || existing.invoiceNo === String(invoiceIdFromUrl)) {
-              updated.selectedInvoices = [{
+            // If it doesn't exist, add it
+            if (existingIndex === -1) {
+              updated.selectedInvoices = [...updated.selectedInvoices, {
                 id: String(invoice.id),
                 invoiceNo: realNo,
                 amount: pendingAmount,
@@ -129,9 +130,22 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 adjustmentValue: 0
               }];
               hasChanges = true;
+            } else {
+              // If it exists but has 0 amount (placeholder), update the amount but PRESERVE user input for TDS
+              const existing = updated.selectedInvoices[existingIndex];
+              if (existing.amount === 0) {
+                const newSelected = [...updated.selectedInvoices];
+                newSelected[existingIndex] = {
+                  ...existing,
+                  invoiceNo: realNo,
+                  amount: pendingAmount
+                };
+                updated.selectedInvoices = newSelected;
+                hasChanges = true;
+              }
             }
           } else if (updated.selectedInvoices.length === 0) {
-            // Initial placeholder
+            // Initial placeholder if nothing exists yet
             updated.selectedInvoices = [{
               id: String(invoiceIdFromUrl),
               invoiceNo: String(invoiceIdFromUrl),
@@ -270,14 +284,14 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   const toggleInvoice = (invoice: any) => {
     setFormData(prev => {
-      const isSelected = prev.selectedInvoices.find(item => item.id === invoice.id);
+      const isSelected = prev.selectedInvoices.find(item => String(item.id) === String(invoice.id));
       let newSelected;
       
       if (isSelected) {
-        newSelected = prev.selectedInvoices.filter(item => item.id !== invoice.id);
+        newSelected = prev.selectedInvoices.filter(item => String(item.id) !== String(invoice.id));
       } else {
         newSelected = [...prev.selectedInvoices, { 
-          id: invoice.id, 
+          id: String(invoice.id), 
           invoiceNo: invoice.invoiceNumber || invoice.invoice_no || '', 
           amount: invoice.grandTotal - (invoice.paidAmount || 0),
           adjustmentType: 'TDS',
@@ -295,7 +309,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   const handleInvoiceDetailChange = (invoiceId: string, field: 'invoiceNo' | 'amount' | 'adjustmentType' | 'adjustmentValue', value: any) => {
     setFormData(prev => {
       const newSelected = prev.selectedInvoices.map(item => {
-        if (item.id === invoiceId) {
+        if (String(item.id) === String(invoiceId)) {
           // Allow empty string in state for better input handling (backspace)
           const finalVal = (field === 'amount' || field === 'adjustmentValue') 
             ? (value === '' ? '' : parseFloat(value)) 
@@ -320,7 +334,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     try {
       setIsSubmitting(true);
       const voucherPayload: Omit<Voucher, 'id' | 'createdAt'> = {
-        voucherNo: `VCH-${Date.now().toString().slice(-6)}`,
+        voucherNo: (mode === 'edit' && initialData?.voucherNo) ? initialData.voucherNo : `VCH-${Date.now().toString().slice(-6)}`,
         date: formData.date,
         type: formData.type,
         partyId: formData.partyId,
@@ -345,7 +359,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       }
 
       if (mode === 'create') {
-        const firstInvoice = allInvoices.find(inv => inv.id === formData.selectedInvoices[0]?.id);
+        const firstInvoice = allInvoices.find(inv => String(inv.id) === String(formData.selectedInvoices[0]?.id));
         const inwardId = (firstInvoice as any)?.inwardId || (firstInvoice as any)?.inward_id;
         const inwardNo = (firstInvoice as any)?.inwardNo || (firstInvoice as any)?.inward_no;
 
@@ -406,6 +420,13 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 const errData = await updateRes.json();
                 throw new Error(errData.error || 'Failed to update existing voucher');
               }
+
+              // IMPORTANT: Refresh Redux state after consolidation so TDS cards and lists update
+              if (activeCompany?.id) {
+                (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+                (dispatch as any)(fetchVouchers({ company_id: activeCompany.id, limit: 1000 }));
+              }
+              router.push('/vouchers'); // Navigate away to show updated list
             } else {
               // Create new with inwardId (either no existing voucher, or it belongs to a different party/type)
               await (dispatch as any)(createVoucher({ 
@@ -414,6 +435,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 inward_no: inwardNo,
                 items: currentPaymentItems
               } as any)).unwrap();
+              
+              // Refresh state after new creation too
+              if (activeCompany?.id) {
+                (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+                (dispatch as any)(fetchVouchers({ company_id: activeCompany.id, limit: 1000 }));
+              }
             }
           } catch (vchErr) {
              console.error("Consolidated Voucher failed", vchErr);
@@ -827,7 +854,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               if (modal.type === 'success') {
                 // Refresh invoices to update balances in Pending Payment/Ledger before redirecting
                 if (activeCompany?.id) {
-                  (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
+                  (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+                  (dispatch as any)(fetchVouchers({ company_id: activeCompany.id, limit: 1000 }));
                 }
                 
                 // Reset local state if successful

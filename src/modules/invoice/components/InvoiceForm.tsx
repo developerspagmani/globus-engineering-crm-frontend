@@ -320,9 +320,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    useEffect(() => {
       if (formData.items.length > 0) {
          const updatedItems = formData.items.map((item: any) => {
-            const taxableQty = formData.billType === 'Both' 
-               ? Math.max(0, (Number(item.quantity || 0) - Number(item.wopQty || 0)))
-               : (item.quantity || 0);
+            const taxableQty = (item.quantity || 0);
             
             const amount = taxableQty * (item.unitPrice || 0);
             const tax = amount * (formData.taxRate / 100);
@@ -454,9 +452,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
 
       if (field === 'quantity' || field === 'wopQty' || field === 'unitPrice' || field === 'description' || field === 'process') {
-         const taxableQty = formData.billType === 'Both' 
-            ? (Number(item.quantity || 0))
-            : (item.quantity || 0);
+         const taxableQty = (item.quantity || 0);
             
          item.amount = taxableQty * (item.unitPrice || 0);
          item.tax = item.amount * (formData.taxRate / 100);

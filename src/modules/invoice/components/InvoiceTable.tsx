@@ -27,7 +27,7 @@ const InvoiceTable: React.FC = () => {
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: invoices, filters, pagination, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
   const { items: inwards, loading: inwardLoading } = useSelector((state: RootState) => state.inward);
-  const initialTab = searchParams.get('tab') as any || 'INVOICELIST';
+  const initialTab = searchParams.get('tab') as any || 'ADD_INVOICE';
   const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST'>(initialTab);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null; type: 'invoice' | 'inward' | null }>({ isOpen: false, id: null, type: null });
 

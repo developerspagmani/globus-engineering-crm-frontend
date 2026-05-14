@@ -51,7 +51,7 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
               {mounted && user?.role === 'super_admin' ? (
                 <div className="dropdown">
                   <button 
-                    className="btn btn-link p-0 text-muted text-decoration-none dropdown-toggle border-0 fw-600 d-flex align-items-center gap-2"
+                    className="btn btn-link p-0 text-dark text-decoration-none dropdown-toggle border-0 fw-600 d-flex align-items-center gap-2"
                     type="button"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
@@ -92,7 +92,7 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
                   </ul>
                 </div>
               ) : (
-                <span className="text-muted d-flex align-items-center gap-2">
+                <span className="text-dark fw-600 d-flex align-items-center gap-2">
                   <i className="bi bi-building" style={{ color: 'var(--accent-color)' }}></i>
                   {mounted && company ? company.name : (mounted ? 'System' : '')}
                 </span>

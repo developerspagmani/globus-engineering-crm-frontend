@@ -52,6 +52,20 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
     }));
   };
 
+  const handleSelectAll = () => {
+    setFormData(prev => ({
+      ...prev,
+      activeModules: allModules.map(m => m.id)
+    }));
+  };
+
+  const handleDeselectAll = () => {
+    setFormData(prev => ({
+      ...prev,
+      activeModules: []
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -137,7 +151,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
                     />
                     <label className={`btn btn-outline-${plan === 'enterprise' ? 'dark' : plan === 'premium' ? 'info' : 'primary'} w-100 py-3 text-uppercase fw-bold small rounded-3`} htmlFor={`plan-${plan}`}>
                       <div className="mb-1">{plan}</div>
-                      <div className="x-small opacity-75 fw-normal">Level {plan === 'basic' ? '1' : plan === 'premium' ? '2' : '3'} Access</div>
+                      <div className="x-small fw-normal text-muted" style={{ opacity: 1 }}>Level {plan === 'basic' ? '1' : plan === 'premium' ? '2' : '3'} Access</div>
                     </label>
                   </div>
                 ))}
@@ -146,14 +160,34 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
           </div>
 
           <div className="mb-5">
-            <h5 className="fw-bold text-dark mb-4 pb-2 border-bottom">Module Access Provisioning</h5>
+            <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+              <h5 className="fw-bold text-dark mb-0">Module Access Provisioning</h5>
+              {mode !== 'view' && (
+                <div className="d-flex gap-2">
+                  <button 
+                    type="button" 
+                    className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold"
+                    onClick={handleSelectAll}
+                  >
+                    Select All
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold"
+                    onClick={handleDeselectAll}
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="row g-3">
               {allModules.map((module) => (
                 <div key={module.id} className="col-md-6 col-lg-4">
                   <div
                     className={`p-3 rounded-3 border cursor-pointer transition-all h-100 ${formData.activeModules.includes(module.id)
-                      ? 'border-primary bg-primary bg-opacity-10 shadow-sm'
-                      : 'bg-light bg-opacity-25'
+                      ? 'border-secondary bg-light shadow-sm'
+                      : 'bg-white'
                       } ${mode === 'view' ? 'pe-none opacity-75' : ''}`}
                     onClick={() => mode !== 'view' && handleToggleModule(module.id)}
                   >
@@ -167,8 +201,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialData, mode }) => {
                         disabled={mode === 'view'}
                       />
                       <div>
-                        <div className="small fw-bold text-dark">{module.name}</div>
-                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>{module.id}</div>
+                        <div className="small fw-bold text-dark" style={{ color: '#0f172a' }}>{module.name}</div>
+                        <div className="text-secondary fw-semibold" style={{ fontSize: '0.7rem', color: '#64748b' }}>{module.id}</div>
                       </div>
                     </div>
                   </div>

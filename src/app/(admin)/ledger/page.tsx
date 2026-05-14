@@ -15,6 +15,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 import LedgerPrintTemplate from '@/modules/ledger/components/LedgerPrintTemplate';
+import LedgerAuditPrintTemplate from '@/modules/ledger/components/LedgerAuditPrintTemplate';
 import { LedgerEntry } from '@/types/modules';
 import ExportExcel from '@/components/shared/ExportExcel';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -29,6 +30,9 @@ export default function LedgerPage() {
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const [partyTypeFilter, setPartyTypeFilter] = React.useState<'all' | 'customer' | 'vendor'>('all');
   const [mounted, setMounted] = React.useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditData, setAuditData] = useState<LedgerEntry[]>([]);
+  const auditPrintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -246,6 +250,67 @@ export default function LedgerPage() {
     setDownloadingItem(party);
   };
 
+  const handlePrintAudit = async () => {
+    if (!activeCompany?.id) return;
+    setAuditLoading(true);
+    try {
+      // Use the existing thunk to fetch full data for the date range
+      const response = await (dispatch as any)(fetchLedgerEntries({
+        companyId: activeCompany.id,
+        page: 1,
+        limit: 10000, // Large limit to capture all transactions for the period
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo
+      })).unwrap();
+
+      setAuditData(response.items);
+      
+      // Allow time for the hidden component to render
+      setTimeout(async () => {
+        if (auditPrintRef.current) {
+          const canvas = await html2canvas(auditPrintRef.current, { 
+            scale: 2, 
+            useCORS: true,
+            logging: false,
+            windowWidth: 1200 // Ensure consistent width for capture
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          
+          const imgProps = pdf.getImageProperties(imgData);
+          const imgWidth = pdfWidth;
+          const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+          
+          let heightLeft = imgHeight;
+          let position = 0;
+
+          // Add first page
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+
+          // Add subsequent pages
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
+          }
+
+          const dateStr = new Date().toISOString().split('T')[0];
+          pdf.save(`FULL_LEDGER_AUDIT_${dateStr}.pdf`);
+          setAuditData([]);
+        }
+        setAuditLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error("Audit generation failed:", error);
+      setAuditLoading(false);
+    }
+  };
+
 
   return (
     <ModuleGuard moduleId="mod_ledger">
@@ -321,6 +386,20 @@ export default function LedgerPage() {
                   value={filters.dateTo}
                   onChange={(e) => dispatch(setLedgerFilters({ dateTo: e.target.value }))}
                 />
+                <button 
+                  className="btn btn-audit btn-sm ms-2 d-flex align-items-center gap-2 rounded-pill px-3 shadow-sm"
+                  style={{ height: '38px' }}
+                  onClick={handlePrintAudit}
+                  disabled={auditLoading}
+                  title="Download Full Ledger Audit for this period"
+                >
+                  {auditLoading ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  ) : (
+                    <i className="bi bi-printer-fill"></i>
+                  )}
+                  <span className="fw-bold small">Print Audit</span>
+                </button>
               </div>
             </div>
           </div>
@@ -433,8 +512,30 @@ export default function LedgerPage() {
           :global(.sidebar), :global(.header), .h2, h2, .text-muted, .pagination, .card-header { display: none !important; }
           .card { border: none !important; box-shadow: none !important; }
         }
+
+        .btn-audit {
+          background-color: white;
+          border: 1px solid #dee2e6 !important;
+          color: #1a1a1a;
+          transition: all 0.3s ease;
+        }
+
+        .btn-audit:hover {
+          background-color: #1a1a1a !important;
+          color: white !important;
+          border-color: #1a1a1a !important;
+        }
+
+        .btn-audit i {
+          color: #475569;
+          transition: all 0.3s ease;
+        }
+
+        .btn-audit:hover i {
+          color: #0dcaf0 !important; /* Cyan info color on hover */
+        }
       `}</style>
-      {/* Hidden Download Generator */}
+      {/* Hidden Download Generators */}
       {downloadingItem && (
         <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
           <div ref={downloadRef}>
@@ -443,6 +544,19 @@ export default function LedgerPage() {
                entries={ledgerEntries.filter(e => String(e.partyId) === String(downloadingItem.id))} 
                company={activeCompany} 
             />
+          </div>
+        </div>
+      )}
+
+      {auditData.length > 0 && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <div ref={auditPrintRef} style={{ width: '210mm' }}>
+             <LedgerAuditPrintTemplate 
+                entries={auditData} 
+                company={activeCompany} 
+                dateFrom={filters.dateFrom} 
+                dateTo={filters.dateTo} 
+             />
           </div>
         </div>
       )}

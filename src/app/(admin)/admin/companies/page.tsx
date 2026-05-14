@@ -73,12 +73,12 @@ export default function CompaniesPage() {
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
-              <thead className="bg-light bg-opacity-50">
+              <thead className="bg-light">
                 <tr>
-                  <th className="px-4 py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest">Company Identity</th>
-                  <th className="py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest">Plan Tier</th>
-                  <th className="py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest text-center">Modules Allocated</th>
-                  <th className="py-3 border-0 x-small fw-800 text-muted text-capitalize tracking-widest text-end px-4">Actions</th>
+                  <th className="px-4 py-3 border-0 x-small fw-800 text-secondary text-capitalize tracking-widest">Company Identity</th>
+                  <th className="py-3 border-0 x-small fw-800 text-secondary text-capitalize tracking-widest">Plan Tier</th>
+                  <th className="py-3 border-0 x-small fw-800 text-secondary text-capitalize tracking-widest text-center">Modules Allocated</th>
+                  <th className="py-3 border-0 x-small fw-800 text-secondary text-capitalize tracking-widest text-end px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -86,7 +86,7 @@ export default function CompaniesPage() {
                   <tr key={company.id} className="border-bottom-0">
                     <td className="px-4 py-3">
                       <div className="d-flex align-items-center">
-                        <div className="bg-primary bg-gradient text-white p-3 rounded-4 me-3 shadow-sm d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
+                        <div className="bg-light text-secondary p-3 rounded-4 me-3 border d-flex align-items-center justify-content-center" style={{ width: '48px', height: '48px' }}>
                           <i className="bi bi-building fs-5"></i>
                         </div>
                         <div>
@@ -97,8 +97,7 @@ export default function CompaniesPage() {
                     </td>
                     <td>
                       <span className={`badge ${company.plan === 'enterprise' ? 'bg-dark' :
-                          company.plan === 'premium' ? 'bg-info bg-opacity-10 text-info' :
-                            'bg-primary bg-opacity-10 text-primary'
+                          'bg-light text-secondary border'
                         } rounded-pill px-3 py-1 fw-800 x-small`}>
                         {company.plan.toUpperCase()}
                       </span>
@@ -106,8 +105,8 @@ export default function CompaniesPage() {
                     <td className="text-center">
                       <div className="d-flex flex-wrap gap-1 justify-content-center">
                         {company.activeModules.map((modId: string) => (
-                          <span key={modId} className="badge bg-light text-muted border-0 small px-2 py-1 rounded-pill" style={{ fontSize: '0.65rem' }}>
-                            {modId.split('_')[1]}
+                          <span key={modId} className="badge bg-light text-secondary border small px-2 py-1 rounded-pill" style={{ fontSize: '0.65rem', fontWeight: '700' }}>
+                            {modId.split('_')[1] || modId}
                           </span>
                         ))}
                       </div>
