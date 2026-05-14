@@ -418,7 +418,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                               <input type="text" className="form-control" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} disabled={mode === 'view'} placeholder="Item name or part number" />
                            </td>
                            <td className="py-3 px-3 text-center">
-                              <input type="number" className="form-control text-center px-3 py-2 fw-bold text-primary" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} disabled={mode === 'view'} />
+                              <input type="number" className="form-control text-center px-3 py-2 fw-bold " value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} disabled={mode === 'view'} />
                            </td>
                            <td className="py-3 px-3 text-center">
                               <select className="form-select text-center" value={item.unit} onChange={e => handleItemChange(index, 'unit', e.target.value)} disabled={mode === 'view'}>
