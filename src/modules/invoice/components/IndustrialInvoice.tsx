@@ -43,10 +43,11 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
    if (String(invoice.type).toUpperCase() === 'BOTH' && typeParam) {
       if (typeParam === 'WP') {
+         // `quantity` already stores the WP (billed) quantity — do NOT subtract wopQty
          displayItems = invoice.items.map(it => ({
             ...it,
-            quantity: Number(it.quantity || 0) - Number(it.wopQty || 0),
-            amount: (Number(it.quantity || 0) - Number(it.wopQty || 0)) * (Number(it.unitPrice) || 0)
+            quantity: Number(it.quantity || 0),
+            amount: Number(it.amount || 0)
          })).filter(it => it.quantity > 0);
          
          const subTotal = displayItems.reduce((sum, it) => sum + it.amount, 0);
@@ -200,10 +201,13 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            flex: 1; 
            border-right: 1pt solid #000; 
            padding: 4px 8px; 
-           display: flex; 
-           justify-content: space-between; 
+           display: grid;
+           grid-template-columns: auto 8px 1fr;
+           align-items: center;
+           gap: 0;
         }
         .p-meta-col:last-child { border-right: 0; }
+        .p-meta-colon { text-align: center; padding: 0 2px; }
         .p-meta-val { font-weight: bold; }
 
         .tax-invoice-label {
@@ -488,18 +492,45 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                <div className="p-meta-row">
                   <div className="p-meta-col">
                      <span>{isWOP ? 'Delivery Challan No' : 'Invoice No'}</span>
-                     <span>: <span className="p-meta-val">{isWOP ? (invoice.dcNo || invoice.dc_no) : invoice.invoiceNumber}</span></span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">{isWOP ? (invoice.dcNo || invoice.dc_no) : invoice.invoiceNumber}</span>
                   </div>
-                  <div className="p-meta-col"><span>DC No</span><span>: <span className="p-meta-val">{invoice.dcNo || invoice.dc_no || ''}</span></span></div>
-                  <div className="p-meta-col"><span>PO No</span><span>: <span className="p-meta-val">{invoice.poNo || invoice.po_no || ''}</span></span></div>
-                  <div className="p-meta-col"><span>State</span><span>: <span className="p-meta-val">TamilNadu-33</span></span></div>
+                  <div className="p-meta-col">
+                     <span>DC No</span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">{invoice.dcNo || invoice.dc_no || ''}</span>
+                  </div>
+                  <div className="p-meta-col">
+                     <span>PO No</span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">{invoice.poNo || invoice.po_no || ''}</span>
+                  </div>
+                  <div className="p-meta-col">
+                     <span>State</span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">TamilNadu-33</span>
+                  </div>
                </div>
                <div className="p-meta-row">
-                  <div className="p-meta-col"><span>Invoice Date</span><span>: <span className="p-meta-val">{(invoice.date) ? new Date(invoice.date as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
-                  <div className="p-meta-col"><span>DC Date</span><span>: <span className="p-meta-val">{(invoice.dcDate || invoice.dc_date) ? new Date((invoice.dcDate || invoice.dc_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
-                  <div className="p-meta-col"><span>PO Date</span><span>: <span className="p-meta-val">{(invoice.poDate || invoice.po_date) ? new Date((invoice.poDate || invoice.po_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span></span></div>
                   <div className="p-meta-col">
-                     <span>Reverse Charge</span><span>: <span className="p-meta-val">N</span></span>
+                     <span>Invoice Date</span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">{(invoice.date) ? new Date(invoice.date as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span>
+                  </div>
+                  <div className="p-meta-col">
+                     <span>DC Date</span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">{(invoice.dcDate || invoice.dc_date) ? new Date((invoice.dcDate || invoice.dc_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span>
+                  </div>
+                  <div className="p-meta-col">
+                     <span>PO Date</span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">{(invoice.poDate || invoice.po_date) ? new Date((invoice.poDate || invoice.po_date) as any).toLocaleDateString('en-GB').replace(/\//g, '-') : ''}</span>
+                  </div>
+                  <div className="p-meta-col">
+                     <span>Reverse Charge</span>
+                     <span className="p-meta-colon">:</span>
+                     <span className="p-meta-val">N</span>
                   </div>
                </div>
             </div>
@@ -511,13 +542,13 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                <div className="p-addr-box">
                   <div className="p-addr-title">SUPPLIER DETAILS :</div>
                   <div className="p-addr-content">
-                     <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</div>
-                        <div>GST No</div><div>: <strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
-                        <div>State</div>
+                     <div style={{ display: 'grid', gridTemplateColumns: '55px 10px 1fr', rowGap: '2px', alignItems: 'start' }}>
+                        <div>Name</div><div>:</div><div><strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
+                        <div>Address</div><div>:</div><div style={{ lineHeight: '1.3' }}>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</div>
+                        <div>GST No</div><div>:</div><div><strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
+                        <div>State</div><div>:</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                           <span>: {settings.stateDetails?.split(' - ')[0] || 'Tamilnadu'}</span>
+                           <span>{settings.stateDetails?.split(' - ')[0] || 'Tamilnadu'}</span>
                            <span>{settings.stateDetails?.split(' - ')[1] || 'Code : 33'}</span>
                         </div>
                      </div>
@@ -526,13 +557,13 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                <div className="p-addr-box">
                   <div className="p-addr-title">RECEIPIENTS DETAILS :</div>
                   <div className="p-addr-content">
-                     <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div>Name</div><div>: <strong>{invoice.customerName}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {invoice.address || 'N/A'}</div>
-                        <div>GST No</div><div>: <strong>{invoice.gstin || 'N/A'}</strong></div>
-                        <div>State</div>
+                     <div style={{ display: 'grid', gridTemplateColumns: '55px 10px 1fr', rowGap: '2px', alignItems: 'start' }}>
+                        <div>Name</div><div>:</div><div><strong>{invoice.customerName}</strong></div>
+                        <div>Address</div><div>:</div><div style={{ lineHeight: '1.3' }}>{invoice.address || 'N/A'}</div>
+                        <div>GST No</div><div>:</div><div><strong>{invoice.gstin || 'N/A'}</strong></div>
+                        <div>State</div><div>:</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                           <span>: {invoice.state || 'N/A'}</span>
+                           <span>{invoice.state || 'N/A'}</span>
                            <span>Code : {invoice.state?.toLowerCase() === 'telangana' ? '36' : '33'}</span>
                         </div>
                      </div>
@@ -635,18 +666,18 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                      <div className="p-details-row">
                         <div className="p-details-box">
                            <div className="p-details-head">Company Details</div>
-                           <div style={{ padding: '6px 12px' }}>
-                              <div>VAT TIN &nbsp;: {settings.vatTin || '33132028969'}</div>
-                              <div>CST NO &nbsp;: {settings.cstNo || '1091562'}</div>
-                              <div>PAN NO &nbsp;: {settings.panNo || 'AAIFG6568K'}</div>
+                           <div style={{ padding: '6px 12px', display: 'grid', gridTemplateColumns: '48px 10px 1fr', rowGap: '3px', fontSize: '9px', alignItems: 'center' }}>
+                              <span>VAT TIN</span><span>:</span><span>{settings.vatTin || '33132028969'}</span>
+                              <span>CST NO</span><span>:</span><span>{settings.cstNo || '1091562'}</span>
+                              <span>PAN NO</span><span>:</span><span>{settings.panNo || 'AAIFG6568K'}</span>
                            </div>
                         </div>
                         <div className="p-details-box">
                            <div className="p-details-head">Bank Details</div>
-                           <div style={{ padding: '6px 12px' }}>
-                              <div>Bank &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{settings.bankName || 'INDIAN OVERSEAS BANK'}</strong></div>
-                              <div>A/C No &nbsp;&nbsp;: <strong>{settings.bankAcc || '170902000000962'}</strong></div>
-                              <div>IFSC &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <strong>{settings.bankBranchIfsc || 'IOBA0001709'}</strong></div>
+                           <div style={{ padding: '6px 12px', display: 'grid', gridTemplateColumns: '48px 10px 1fr', rowGap: '3px', fontSize: '9px', alignItems: 'center' }}>
+                              <span>Bank</span><span>:</span><span><strong>{settings.bankName || 'INDIAN OVERSEAS BANK'}</strong></span>
+                              <span>A/C No</span><span>:</span><span><strong>{settings.bankAcc || '170902000000962'}</strong></span>
+                              <span>IFSC</span><span>:</span><span><strong>{settings.bankBranchIfsc || 'IOBA0001709'}</strong></span>
                            </div>
                         </div>
                      </div>
