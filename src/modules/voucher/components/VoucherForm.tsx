@@ -69,20 +69,11 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      // 1. Determine which invoices to fetch
-      let invoiceNosParam = undefined;
-      
-      if ((mode === 'view' || mode === 'edit') && initialData?.referenceNo) {
-        invoiceNosParam = initialData.referenceNo;
-      } else {
-        // In create mode, if we have an invoiceId in URL, fetch it specifically
-        invoiceNosParam = searchParams.get('invoiceId') || undefined;
-      }
-
+      // In edit/view mode, fetch all invoices so we can match by ID or number.
+      // The referenceNo is a complex formatted string, not a simple filter param.
       (dispatch as any)(fetchInvoices({ 
         company_id: activeCompany.id, 
-        limit: 1000,
-        invoice_nos: invoiceNosParam
+        limit: 1000
       }));
 
       // Ensure customers and vendors are fetched
@@ -195,13 +186,22 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         selectedInvoices: (() => {
           // Priority 1: Use structured items array if available
           if (initialData.items && Array.isArray(initialData.items) && initialData.items.length > 0) {
-            return initialData.items.map((it: any) => ({
-              id: it.id || it.invoiceNo || it.invoice_no,
-              invoiceNo: it.invoiceNo || it.invoice_no,
-              amount: Number(it.amount || 0),
-              adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
-              adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
-            }));
+            return initialData.items.map((it: any) => {
+              // Resolve real UUID from allInvoices to ensure all downstream matching (toggle, detail change) works
+              const itNo = String(it.invoiceNo || it.invoice_no || it.id || '').replace(/^0+/, '');
+              const resolvedInv = allInvoices.find((i: any) => {
+                const iNo = String(i.invoiceNumber || i.invoice_no || '').replace(/^0+/, '');
+                return iNo !== '' && itNo !== '' && iNo === itNo;
+              });
+              return {
+                id: resolvedInv ? String(resolvedInv.id) : (it.id || it.invoiceNo || it.invoice_no),
+                invoiceNo: it.invoiceNo || it.invoice_no || resolvedInv?.invoiceNumber || '',
+                invoiceDate: it.invoiceDate || it.invoice_date || (resolvedInv as any)?.invoice_date || (resolvedInv as any)?.date || '',
+                amount: Number(it.amount || 0),
+                adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
+                adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
+              };
+            });
           }
 
           // Priority 2: Fallback to parsing referenceNo string (Legacy support)
@@ -527,33 +527,45 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     const invId = String(inv.id || '');
     const invNo = String(inv.invoiceNumber || inv.invoice_no || '');
     const invInwardId = String(inv.inwardId || inv.inward_id || '');
+    const normInvNo = invNo.replace(/^0+/, '');
 
     return formData.selectedInvoices.some(item => {
       const itemId = String(item.id || '');
       const itemNo = String(item.invoiceNo || '');
       const itemInwardId = String((item as any).inwardId || (item as any).inward_id || '');
+      const normItemNo = itemNo.replace(/^0+/, '');
 
       // 1. Match by Database ID (strongest)
       if (invId !== '' && itemId !== '' && invId === itemId) return true;
       
-      // 2. Match by Number + Inward context (to distinguish between years)
-      if (invNo !== '' && itemNo !== '' && invNo === itemNo) {
-         // Strict Context Matching:
-         // If both have Inward IDs, they MUST match.
-         if (invInwardId !== '' && itemInwardId !== '') {
-            if (invInwardId === itemInwardId) return true;
-         } 
-         // If one has an Inward ID and the other doesn't, they are DIFFERENT records.
-         else if (invInwardId !== '' || itemInwardId !== '') {
-            return false;
-         }
-         // If neither has an Inward ID, we fall back to matching by number (legacy data).
-         else {
-            return true;
-         }
+      // 2. Match by normalized invoice number (handles '0015' vs '15')
+      const numbersMatch = (invNo !== '' && itemNo !== '' && invNo === itemNo) ||
+                           (normInvNo !== '' && normItemNo !== '' && normInvNo === normItemNo);
+
+      if (numbersMatch) {
+        // Both have inwardIds → they must match
+        if (invInwardId !== '' && itemInwardId !== '') {
+          return invInwardId === itemInwardId;
+        }
+        // Item has no inwardId (loaded from stored voucher data) → match by number alone
+        if (itemInwardId === '') return true;
+        // Invoice has no inwardId but item does → different record
+        return false;
       }
       
       return false;
+    });
+  };
+
+  // Check if an invoice was originally part of this voucher (used to keep rows visible when unchecked in edit)
+  const isOriginalVoucherInvoice = (inv: any) => {
+    if (!initialData?.items) return false;
+    const invNo = String(inv.invoiceNumber || inv.invoice_no || '').replace(/^0+/, '');
+    const invId = String(inv.id || '');
+    return (initialData.items as any[]).some((it: any) => {
+      if (invId !== '' && String(it.id || '') === invId) return true;
+      const itNo = String(it.invoiceNo || it.invoice_no || it.id || '').replace(/^0+/, '');
+      return itNo !== '' && invNo !== '' && itNo === invNo;
     });
   };
 
@@ -562,6 +574,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     const isSelected = isInvoiceSelected(inv);
     
     if (mode === 'view') return isSelected;
+
+    // In edit mode: always show invoices that are selected OR were originally part of this voucher
+    // This ensures rows don't disappear when unchecked (since original invoices are now PAID)
+    if (mode === 'edit' && (isSelected || isOriginalVoucherInvoice(inv))) return true;
 
     const isNotPaid = inv.status?.toLowerCase() !== 'paid' && inv.status?.toLowerCase() !== 'completed';
     
@@ -573,7 +589,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
        // If this invoice is NOT from our inward, hide it (unless it's already selected)
        if (invInwardId !== vchInwardId && !isSelected) return false;
        // Otherwise (if it matches or is selected), show it
-       if (invInwardId === vchInwardId) return true;
+       if (invInwardId === vchInwardId) return isNotPaid || isSelected;
     }
 
     if (formData.partyType === 'vendor') {
@@ -588,10 +604,18 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     }
   });
 
-  // Deduplicate to prevent repeating rows
-  const uniqueCustomerInvoices = Array.from(
-    new Map(customerInvoices.map((inv: any) => [String(inv.id || inv.invoiceNumber), inv])).values()
-  );
+  // Deduplicate by normalized invoice number — prefer selected invoices over unselected ones
+  const invoicesByNormNo = new Map<string, any>();
+  customerInvoices.forEach((inv: any) => {
+    const normNo = String(inv.invoiceNumber || inv.invoice_no || inv.id || '').replace(/^0+/, '');
+    const key = normNo || String(inv.id);
+    const existing = invoicesByNormNo.get(key);
+    // Keep the selected invoice; otherwise keep first found
+    if (!existing || (!isInvoiceSelected(existing) && isInvoiceSelected(inv))) {
+      invoicesByNormNo.set(key, inv);
+    }
+  });
+  const uniqueCustomerInvoices = Array.from(invoicesByNormNo.values());
 
   return (
 
@@ -769,7 +793,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                 )}
                               </div>
                             </td>
-                           <td className="small text-muted">{inv.date ? new Date(inv.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
+                           <td className="small text-muted">{(inv.date || inv.invoice_date) ? new Date(inv.date || inv.invoice_date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                            <td className="small fw-bold text-center text-dark">
                              {selectedData && mode !== 'view' ? (
                                <input 
@@ -805,8 +829,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                            <tr className="bg-light-subtle border-bottom border-light">
                              <td colSpan={1} className="py-0"></td>
                              <td colSpan={4} className="py-2">
-                               <div className="d-flex align-items-center gap-4 ps-3 py-1 border-start border-orange border-3 ms-2">
-                                 <div className="d-flex flex-column">
+                               <div className="d-flex align-items-center justify-content-end gap-4 ps-3 py-1 border-start border-orange border-3 ms-2">
+                                 <div className="d-flex flex-column text-end">
                                    <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Type</span>
                                    <select 
                                      className="form-select form-select-sm bg-white border border-light-subtle shadow-none fw-bold text-dark" 
@@ -819,8 +843,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                      <option value="Others">Others</option>
                                    </select>
                                  </div>
-                                 <div className="d-flex flex-column">
-                                   <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Amount</span>
+                                 <div className="d-flex flex-column text-end">
+                                   <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Amt</span>
                                    <div className="input-group input-group-sm" style={{ width: '130px' }}>
                                      <span className="input-group-text bg-white border border-light-subtle border-end-0 small text-muted" style={{ borderRadius: '6px 0 0 6px' }}>₹</span>
                                      <input 
@@ -835,13 +859,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                      />
                                    </div>
                                  </div>
-                                 {selectedData.adjustmentValue > 0 && (
-                                   <div className="ms-auto pe-4 pt-3">
-                                     <span className="badge bg-light text-secondary border border-secondary-subtle rounded-pill px-3 py-2" style={{ fontSize: '10px' }}>
-                                       Applied {selectedData.adjustmentType}: ₹ {Number(selectedData.adjustmentValue).toFixed(2)}
-                                     </span>
-                                   </div>
-                                 )}
+                                 <div className="d-flex flex-column text-end ms-2">
+                                   <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Net Calculation</span>
+                                    <div className="fw-bold text-dark" style={{ fontSize: '11px', height: '30px', display: 'flex', alignItems: 'center' }}>
+                                      ₹ {Number(selectedData.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} - ₹ {Number(selectedData.adjustmentValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })} = <span className="ms-2">₹ {(Number(selectedData.amount) - Number(selectedData.adjustmentValue || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                 </div>
                                </div>
                              </td>
                            </tr>
