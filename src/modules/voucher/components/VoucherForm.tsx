@@ -106,6 +106,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           const customer = customers.find(c => String(c.id) === String(customerIdFromUrl));
           if (customer) {
             updated.customerId = String(customerIdFromUrl);
+            updated.partyId = String(customerIdFromUrl);
             updated.partyName = customer.company || customer.name || '';
             hasChanges = true;
           }
@@ -160,6 +161,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         return hasChanges ? updated : prev;
       });
     }
+    
+    // Auto-expand rows in view mode to show adjustments
+    if (mode === 'view' && initialData?.items && expandedRows.size === 0) {
+      const ids = initialData.items.map((it: any) => String(it.id || it.invoiceNo || it.invoice_no));
+      setExpandedRows(new Set(ids));
+    }
   }, [searchParams, mode, customers, allInvoices]);
 
   useEffect(() => {
@@ -186,23 +193,33 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         customerId: type === 'customer' ? targetId : '',
         vendorId: type === 'vendor' ? targetId : '',
         selectedInvoices: (() => {
+          // Priority 1: Use structured items array if available
+          if (initialData.items && Array.isArray(initialData.items) && initialData.items.length > 0) {
+            return initialData.items.map((it: any) => ({
+              id: it.id || it.invoiceNo || it.invoice_no,
+              invoiceNo: it.invoiceNo || it.invoice_no,
+              amount: Number(it.amount || 0),
+              adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
+              adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
+            }));
+          }
+
+          // Priority 2: Fallback to parsing referenceNo string (Legacy support)
           if (!initialData.referenceNo) return [];
           
           const results: any[] = [];
-          // Regex to match: InvoiceNo (Amount|TDS) or InvoiceNo (Amount) or just InvoiceNo
-          // It handles spaces, missing commas, and various symbols
           const regex = /([^,(\s]+)\s*(?:\(([^)|]+)(?:\|([^)]+))?\))?/g;
           let match;
           
           while ((match = regex.exec(initialData.referenceNo)) !== null) {
             const invoiceNo = match[1].trim();
-            // Skip common noise like currency symbols if they got matched as invoice numbers
             if (['₹', 'RS', 'INR'].includes(invoiceNo.toUpperCase())) continue;
             
             let amount = parseFloat((match[2] || '').replace(/[^\d.]/g, '')) || 0;
-            let tds = parseFloat((match[3] || '').replace(/[^\d.]/g, '')) || 0;
+            const adjStr = match[3] || '';
+            let adjValue = parseFloat(adjStr.replace(/[^\d.]/g, '')) || 0;
+            let adjType = adjStr.toUpperCase().includes('OTHERS') ? 'Others' : 'TDS';
             
-            // Robust matching: compare normalized strings (no leading zeros) or exact matches
             const normNo = invoiceNo.replace(/^0+/, '');
             const inv = allInvoices.find(i => {
               const iNo = String(i.invoiceNumber || (i as any).invoice_no || '').replace(/^0+/, '');
@@ -211,7 +228,6 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                      String(i.id) === invoiceNo;
             });
             
-            // Fallback for amount: if parsed as 0 and we found the invoice, use its remaining balance
             if (amount === 0 && inv) {
               amount = inv.grandTotal - (inv.paidAmount || 0);
             }
@@ -220,17 +236,11 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               id: inv?.id || invoiceNo, 
               invoiceNo: inv?.invoiceNumber || invoiceNo, 
               amount: amount,
-              adjustmentType: 'TDS',
-              adjustmentValue: tds
+              adjustmentType: adjType,
+              adjustmentValue: adjValue
             });
           }
           
-          // Fallback 1: If it's a single invoice voucher and we parsed 0 amount (no brackets), use the voucher's total
-          if (results.length === 1 && results[0].amount === 0 && initialData.amount > 0) {
-            results[0].amount = initialData.amount;
-          }
-          
-          // Fallback 2: If regex found nothing but voucher has an amount, assume a single old-format reference
           if (results.length === 0 && initialData.amount > 0 && initialData.referenceNo) {
              results.push({
                id: initialData.referenceNo,
@@ -333,7 +343,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
     try {
       setIsSubmitting(true);
-      const voucherPayload: Omit<Voucher, 'id' | 'createdAt'> = {
+      const calculatedTDS = formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0);
+      const calculatedOthers = formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0);
+
+      const voucherPayload: any = {
         voucherNo: (mode === 'edit' && initialData?.voucherNo) ? initialData.voucherNo : `VCH-${Date.now().toString().slice(-6)}`,
         date: formData.date,
         type: formData.type,
@@ -341,8 +354,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         partyName: formData.partyName,
         partyType: formData.partyType,
         amount: netPayableAmount,
-        tdsAmount: formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0),
-        othersAmount: formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0),
+        tdsAmount: calculatedTDS,
+        tds_amount: calculatedTDS, // Support snake_case backend
+        othersAmount: calculatedOthers,
+        others_amount: calculatedOthers, // Support snake_case backend
         paymentMode: formData.paymentMode as any,
         chequeNo: formData.paymentMode === 'cash' ? '' : formData.chequeNo,
         description: `Payment for ${formData.partyType}: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')} (Adjust: ₹${totalAdjustmentAmount})`,
@@ -367,7 +382,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           invoiceNo: i.invoiceNo,
           amount: i.amount,
           adjustmentType: i.adjustmentType,
+          adjustment_type: i.adjustmentType,
           adjustmentValue: i.adjustmentValue,
+          adjustment_value: i.adjustmentValue,
           date: formData.date
         }));
 
@@ -382,8 +399,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             // Find the correct voucher for this specific party and type
             const existingVoucher = data.items && data.items.length > 0 
               ? data.items.find((v: any) => 
-                  String(v.party_id) === String(voucherPayload.partyId) && 
-                  String(v.party_type) === String(voucherPayload.partyType) &&
+                  String(v.party_id || v.partyId) === String(voucherPayload.partyId) && 
+                  String(v.party_type || v.partyType) === String(voucherPayload.partyType) &&
                   String(v.type) === String(voucherPayload.type)
                 ) 
               : null;
@@ -392,15 +409,17 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               // Append to existing
               const updatedPayload = {
                 ...existingVoucher,
-                party_id: existingVoucher.party_id || voucherPayload.partyId,
-                party_name: existingVoucher.party_name || voucherPayload.partyName,
-                party_type: existingVoucher.party_type || voucherPayload.partyType,
+                party_id: existingVoucher.party_id || existingVoucher.partyId || voucherPayload.partyId,
+                party_name: existingVoucher.party_name || existingVoucher.partyName || voucherPayload.partyName,
+                party_type: existingVoucher.party_type || existingVoucher.partyType || voucherPayload.partyType,
                 type: existingVoucher.type || voucherPayload.type,
                 amount: Number(existingVoucher.amount || 0) + netPayableAmount,
-                tdsAmount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0),
-                othersAmount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0),
+                tdsAmount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + calculatedTDS,
+                tds_amount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + calculatedTDS,
+                othersAmount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + calculatedOthers,
+                others_amount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + calculatedOthers,
                 description: `${existingVoucher.description_ || existingVoucher.description || ''}\n${voucherPayload.description}`,
-                reference_no: `${existingVoucher.reference_no || ''}, ${voucherPayload.referenceNo}`,
+                reference_no: `${existingVoucher.reference_no || existingVoucher.referenceNo || ''}, ${voucherPayload.referenceNo}`,
                 inward_id: inwardId,
                 inward_no: inwardNo,
                 items: [...(existingVoucher.items || []), ...currentPaymentItems]
@@ -470,7 +489,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             invoiceNo: i.invoiceNo,
             amount: i.amount,
             adjustmentType: i.adjustmentType,
+            adjustment_type: i.adjustmentType,
             adjustmentValue: i.adjustmentValue,
+            adjustment_value: i.adjustmentValue,
             date: formData.date
           }))
         } as any)).unwrap();
@@ -480,6 +501,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           title: 'Success!',
           message: "Voucher updated successfully."
         });
+        
+        // Refresh state after update so cards/totals are accurate
+        if (activeCompany?.id) {
+          (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+          (dispatch as any)(fetchVouchers({ company_id: activeCompany.id, limit: 1000 }));
+        }
       }
 
 
@@ -496,35 +523,75 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
   };
 
   const isInvoiceSelected = (inv: any) => {
-    return formData.selectedInvoices.some(item => item.id === inv.id);
+    if (!inv) return false;
+    const invId = String(inv.id || '');
+    const invNo = String(inv.invoiceNumber || inv.invoice_no || '');
+    const invInwardId = String(inv.inwardId || inv.inward_id || '');
+
+    return formData.selectedInvoices.some(item => {
+      const itemId = String(item.id || '');
+      const itemNo = String(item.invoiceNo || '');
+      const itemInwardId = String((item as any).inwardId || (item as any).inward_id || '');
+
+      // 1. Match by Database ID (strongest)
+      if (invId !== '' && itemId !== '' && invId === itemId) return true;
+      
+      // 2. Match by Number + Inward context (to distinguish between years)
+      if (invNo !== '' && itemNo !== '' && invNo === itemNo) {
+         // Strict Context Matching:
+         // If both have Inward IDs, they MUST match.
+         if (invInwardId !== '' && itemInwardId !== '') {
+            if (invInwardId === itemInwardId) return true;
+         } 
+         // If one has an Inward ID and the other doesn't, they are DIFFERENT records.
+         else if (invInwardId !== '' || itemInwardId !== '') {
+            return false;
+         }
+         // If neither has an Inward ID, we fall back to matching by number (legacy data).
+         else {
+            return true;
+         }
+      }
+      
+      return false;
+    });
   };
 
   // Filter invoices for selected customer or vendor
-  const customerInvoices = allInvoices.filter(inv => {
+  const customerInvoices = allInvoices.filter((inv: any) => {
     const isSelected = isInvoiceSelected(inv);
     
-    if (mode === 'view') {
-      // In view mode, show ALL invoices that are part of this voucher
-      // Prioritize isSelected over isMatched to handle migrated data with customer mismatches
-      return isSelected;
-    }
+    if (mode === 'view') return isSelected;
 
-    const isNotPaid = inv.status?.toLowerCase() !== 'paid';
+    const isNotPaid = inv.status?.toLowerCase() !== 'paid' && inv.status?.toLowerCase() !== 'completed';
+    
+    // Smart Filtering: If voucher is linked to a specific inward, show ONLY that context
+    const vchInwardId = String((initialData as any)?.inwardId || (initialData as any)?.inward_id || '');
+    const invInwardId = String(inv.inwardId || inv.inward_id || '');
+
+    if (vchInwardId !== '') {
+       // If this invoice is NOT from our inward, hide it (unless it's already selected)
+       if (invInwardId !== vchInwardId && !isSelected) return false;
+       // Otherwise (if it matches or is selected), show it
+       if (invInwardId === vchInwardId) return true;
+    }
 
     if (formData.partyType === 'vendor') {
-      // For vendor, find the inward entry linked to this invoice
-      const matchedInward = (inwards || []).find(inw => String(inw.id) === String(inv.inwardId));
-      // Check if that inward is linked to our selected vendor
+      const matchedInward = (inwards || []).find(inw => String(inw.id) === invInwardId);
       const isMatched = !!matchedInward && (
-        String(matchedInward.vendorId) === String(formData.vendorId) ||
-        String((matchedInward as any).vendor_id) === String(formData.vendorId)
+        String(matchedInward.vendorId || (matchedInward as any).vendor_id) === String(formData.vendorId)
       );
-      return isMatched && (isNotPaid || isSelected);
+      return (isMatched && isNotPaid) || isSelected;
     } else {
-      const isMatched = String(inv.customerId) === String(formData.customerId);
-      return isMatched && (isNotPaid || isSelected);
+      const isMatched = String(inv.customerId || inv.customer_id) === String(formData.customerId);
+      return (isMatched && isNotPaid) || isSelected;
     }
   });
+
+  // Deduplicate to prevent repeating rows
+  const uniqueCustomerInvoices = Array.from(
+    new Map(customerInvoices.map((inv: any) => [String(inv.id || inv.invoiceNumber), inv])).values()
+  );
 
   return (
 
@@ -655,9 +722,28 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   </tr>
                 ) : (
                   <>
-                    {(mode === 'view' ? formData.selectedInvoices : customerInvoices).map((invOrItem: any) => {
-                      const inv = mode === 'view' ? (allInvoices.find(i => String(i.id) === String(invOrItem.id)) || invOrItem) : invOrItem;
-                      const selectedData = mode === 'view' ? invOrItem : formData.selectedInvoices.find(item => String(item.id) === String(inv.id));
+                    {(mode === 'view' ? formData.selectedInvoices : uniqueCustomerInvoices).map((invOrItem: any) => {
+                      const inv: any = mode === 'view' ? (allInvoices.find(i => String(i.id) === String(invOrItem.id)) || invOrItem) : invOrItem;
+                      const selectedData = mode === 'view' ? invOrItem : formData.selectedInvoices.find(item => {
+                        const itemId = String(item.id || '');
+                        const itemNo = String(item.invoiceNo || '');
+                        const itemInwardId = String((item as any).inwardId || (item as any).inward_id || '');
+                        const invId = String(inv.id || '');
+                        const invNo = String(inv.invoiceNumber || inv.invoice_no || '');
+                        const invInwardId = String(inv.inwardId || inv.inward_id || '');
+                        
+                        if (invId !== '' && itemId !== '' && invId === itemId) return true;
+                        if (invNo !== '' && itemNo !== '' && invNo === itemNo) {
+                          if (invInwardId !== '' && itemInwardId !== '') {
+                            if (invInwardId === itemInwardId) return true;
+                          } else if (invInwardId !== '' || itemInwardId !== '') {
+                            return false;
+                          } else {
+                            return true;
+                          }
+                        }
+                        return false;
+                      });
                       const invoiceId = inv.id || inv.invoiceNo || Math.random().toString();
                       return (
                         <React.Fragment key={invoiceId}>
@@ -763,7 +849,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                        </React.Fragment>
                       );
                     })}
-                    {formData.partyType === 'customer' && formData.customerId && customerInvoices.length === 0 && (
+                    {formData.partyType === 'customer' && formData.customerId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
                         <td colSpan={5} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
@@ -772,7 +858,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                         </td>
                       </tr>
                     )}
-                    {formData.partyType === 'vendor' && formData.vendorId && customerInvoices.length === 0 && (
+                    {formData.partyType === 'vendor' && formData.vendorId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
                         <td colSpan={5} className="text-center py-5 text-muted small">
                           No outstanding invoices found for this vendor

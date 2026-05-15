@@ -29,7 +29,7 @@ export default function LedgerDetailPage() {
   const itemsPerPageUI = 20;
   const FETCH_LIMIT = 5000;
 
-  const partyId = params.id as string;
+  const partyId = params.partyId as string;
   const reportContainerRef = React.useRef<HTMLDivElement>(null);
 
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);

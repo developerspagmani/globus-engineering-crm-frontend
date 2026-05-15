@@ -51,10 +51,22 @@ export const fetchVouchers = createAsyncThunk(
           tdsAmount: parseFloat(String(v.tds_amount || '0')) || 0,
           othersAmount: parseFloat(String(v.others_amount || '0')) || 0,
           company_id: v.company_id?.toString() || (v as any).companyId?.toString() || '',
-          createdAt: v.app_created_at
+          createdAt: v.app_created_at,
+          // Map internal items to camelCase for the form to recognize them
+          items: (v.items || []).map((it: any) => ({
+            ...it,
+            id: it.id || it.invoiceNo || it.invoice_no,
+            invoiceNo: it.invoiceNo || it.invoice_no,
+            adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
+            adjustmentValue: parseFloat(String(it.adjustmentValue || it.adjustment_value || '0')) || 0
+          }))
         })),
         pagination: response.data.pagination,
-        aggregates: response.data.aggregates || { totalCollected: 0, totalTDS: 0, totalOthers: 0 }
+        aggregates: {
+          totalCollected: parseFloat(String(response.data.aggregates?.total_collected || response.data.aggregates?.totalCollected || '0')),
+          totalTDS: parseFloat(String(response.data.aggregates?.total_tds || response.data.aggregates?.totalTDS || '0')),
+          totalOthers: parseFloat(String(response.data.aggregates?.total_others || response.data.aggregates?.totalOthers || '0'))
+        }
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch vouchers');
@@ -221,19 +233,45 @@ const voucherSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(createVoucher.fulfilled, (state, action) => {
+        const v = action.payload;
         state.items.unshift({
-          ...action.payload,
-          id: action.payload.id.toString(),
-          description: action.payload.description_ || action.payload.description || ''
+          ...v,
+          id: v.id.toString(),
+          voucherNo: v.voucher_no || v.voucherNo,
+          description: v.description_ || v.description || '',
+          tdsAmount: parseFloat(String(v.tds_amount || v.tdsAmount || '0')) || 0,
+          othersAmount: parseFloat(String(v.others_amount || v.othersAmount || '0')) || 0,
+          inwardId: v.inward_id,
+          inwardNo: v.inward_no,
+          items: (v.items || []).map((it: any) => ({
+            ...it,
+            id: it.id || it.invoiceNo || it.invoice_no,
+            invoiceNo: it.invoiceNo || it.invoice_no,
+            adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
+            adjustmentValue: parseFloat(String(it.adjustmentValue || it.adjustment_value || '0')) || 0
+          }))
         });
       })
       .addCase(updateVoucher.fulfilled, (state, action) => {
-        const index = state.items.findIndex(item => item.id === action.payload.id.toString());
+        const v = action.payload;
+        const index = state.items.findIndex(item => item.id === v.id.toString());
         if (index !== -1) {
           state.items[index] = {
-            ...action.payload,
-            id: action.payload.id.toString(),
-            description: action.payload.description_ || action.payload.description || ''
+            ...v,
+            id: v.id.toString(),
+            voucherNo: v.voucher_no || v.voucherNo,
+            description: v.description_ || v.description || '',
+            tdsAmount: parseFloat(String(v.tds_amount || v.tdsAmount || '0')) || 0,
+            othersAmount: parseFloat(String(v.others_amount || v.othersAmount || '0')) || 0,
+            inwardId: v.inward_id,
+            inwardNo: v.inward_no,
+            items: (v.items || []).map((it: any) => ({
+              ...it,
+              id: it.id || it.invoiceNo || it.invoice_no,
+              invoiceNo: it.invoiceNo || it.invoice_no,
+              adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
+              adjustmentValue: parseFloat(String(it.adjustmentValue || it.adjustment_value || '0')) || 0
+            }))
           };
         }
       })

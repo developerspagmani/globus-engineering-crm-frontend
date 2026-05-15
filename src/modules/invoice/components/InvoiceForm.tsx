@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import api from '@/lib/axios';
 import { addInvoice, updateInvoice } from '@/redux/features/invoiceSlice';
-import { fetchItems, fetchProcesses, fetchPriceFixings, updatePriceFixingThunk } from '@/redux/features/masterSlice';
+import { fetchItems, fetchProcesses, fetchPriceFixings, updatePriceFixingThunk, createPriceFixingThunk } from '@/redux/features/masterSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
@@ -470,23 +470,68 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       if (loading) return;
       
 
-
       try {
          setLoading(true);
+
+         // Clean items to remove internal UI fields (like priceFixingId) before sending to backend
+         const cleanedItems = formData.items.map(({ priceFixingId, ...rest }: any) => rest);
+         const submissionData = { ...formData, items: cleanedItems };
+
          if (mode === 'create') {
-            const result = await (dispatch as any)(addInvoice(formData)).unwrap();
+            const result = await (dispatch as any)(addInvoice(submissionData)).unwrap();
             
              console.log("Invoice created successfully, backend handled challan consolidation.");
 
             // Sync Price Fixing Changes
             for (const item of formData.items) {
-               if (item.priceFixingId && item.unitPrice > 0) {
-                  const masterPf = priceFixings.find(pf => pf.id === item.priceFixingId);
-                  if (masterPf && Number(masterPf.price) !== Number(item.unitPrice)) {
-                     await (dispatch as any)(updatePriceFixingThunk({ 
-                        id: item.priceFixingId, 
-                        price: Number(item.unitPrice) 
-                     })).unwrap();
+               if (item.unitPrice > 0) {
+                  try {
+                     if (item.priceFixingId) {
+                        // UPDATE EXISTING
+                        const masterPf = priceFixings.find(pf => String(pf.id) === String(item.priceFixingId));
+                        if (masterPf && Number(masterPf.price) !== Number(item.unitPrice)) {
+                           await (dispatch as any)(updatePriceFixingThunk({ 
+                              ...masterPf,
+                              price: Number(item.unitPrice) 
+                           })).unwrap();
+                        }
+                     } else {
+                        // CREATE NEW IF NOT EXISTS
+                        const existingPf = findPrice(formData.company_id, formData.customerId, item.description, item.process);
+                        
+                        if (!existingPf) {
+                           const masterItem = masterItems.find(mi => String(mi.itemName).toLowerCase() === String(item.description).toLowerCase());
+                           const masterProc = masterProcesses.find(mp => String(mp.processName).toLowerCase() === String(item.process).toLowerCase());
+                           
+                           // ONLY CREATE IF ALL DATA IS PRESENT
+                           if (formData.customerId && formData.customerName && masterItem?.id) {
+                              await (dispatch as any)(createPriceFixingThunk({
+                                 customerId: String(formData.customerId),
+                                 customerName: String(formData.customerName),
+                                 itemId: String(masterItem.id),
+                                 itemName: String(item.description),
+                                 processId: masterProc?.id ? String(masterProc.id) : '',
+                                 processName: item.process || '',
+                                 price: Number(item.unitPrice),
+                                 company_id: String(formData.company_id)
+                              })).unwrap();
+                           }
+                        } else if (Number(existingPf.price) !== Number(item.unitPrice)) {
+                           await (dispatch as any)(updatePriceFixingThunk({ 
+                              id: existingPf.id, 
+                              price: Number(item.unitPrice),
+                              customerId: String(formData.customerId),
+                              customerName: String(formData.customerName),
+                              itemId: String(existingPf.itemId),
+                              itemName: String(item.description),
+                              processId: String(existingPf.processId),
+                              processName: String(item.process || ''),
+                              company_id: String(formData.company_id)
+                           })).unwrap();
+                        }
+                     }
+                  } catch (pfErr: any) {
+                     console.error("Price fixing sync failed for item:", item.description, pfErr?.response?.data || pfErr.message || pfErr);
                   }
                }
             }
@@ -498,17 +543,58 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                message: "Invoice created successfully. Consolidated Challan updated."
             });
          } else {
-            await (dispatch as any)(updateInvoice({ ...formData, id: initialData?.id || '' })).unwrap();
+            await (dispatch as any)(updateInvoice({ ...submissionData, id: initialData?.id || '' })).unwrap();
 
             // Sync Price Fixing Changes (also for edit mode)
             for (const item of formData.items) {
-               if (item.priceFixingId && item.unitPrice > 0) {
-                  const masterPf = priceFixings.find(pf => pf.id === item.priceFixingId);
-                  if (masterPf && Number(masterPf.price) !== Number(item.unitPrice)) {
-                     await (dispatch as any)(updatePriceFixingThunk({ 
-                        id: item.priceFixingId, 
-                        price: Number(item.unitPrice) 
-                     })).unwrap();
+               if (item.unitPrice > 0) {
+                  try {
+                     if (item.priceFixingId) {
+                        // UPDATE EXISTING
+                        const masterPf = priceFixings.find(pf => String(pf.id) === String(item.priceFixingId));
+                        if (masterPf && Number(masterPf.price) !== Number(item.unitPrice)) {
+                           await (dispatch as any)(updatePriceFixingThunk({ 
+                              ...masterPf,
+                              price: Number(item.unitPrice) 
+                           })).unwrap();
+                        }
+                     } else {
+                        // CREATE NEW IF NOT EXISTS
+                        const existingPf = findPrice(formData.company_id, formData.customerId, item.description, item.process);
+                        
+                        if (!existingPf) {
+                           const masterItem = masterItems.find(mi => String(mi.itemName).toLowerCase() === String(item.description).toLowerCase());
+                           const masterProc = masterProcesses.find(mp => String(mp.processName).toLowerCase() === String(item.process).toLowerCase());
+                           
+                           // ONLY CREATE IF ALL DATA IS PRESENT
+                           if (formData.customerId && formData.customerName && masterItem?.id) {
+                              await (dispatch as any)(createPriceFixingThunk({
+                                 customerId: String(formData.customerId),
+                                 customerName: String(formData.customerName),
+                                 itemId: String(masterItem.id),
+                                 itemName: String(item.description),
+                                 processId: masterProc?.id ? String(masterProc.id) : '',
+                                 processName: item.process || '',
+                                 price: Number(item.unitPrice),
+                                 company_id: String(formData.company_id)
+                              })).unwrap();
+                           }
+                        } else if (Number(existingPf.price) !== Number(item.unitPrice)) {
+                           await (dispatch as any)(updatePriceFixingThunk({ 
+                              id: existingPf.id, 
+                              price: Number(item.unitPrice),
+                              customerId: String(formData.customerId),
+                              customerName: String(formData.customerName),
+                              itemId: String(existingPf.itemId),
+                              itemName: String(item.description),
+                              processId: String(existingPf.processId),
+                              processName: String(item.process || ''),
+                              company_id: String(formData.company_id)
+                           })).unwrap();
+                        }
+                     }
+                  } catch (pfErr: any) {
+                     console.error("Price fixing sync failed for item in edit mode:", item.description, pfErr?.response?.data || pfErr.message || pfErr);
                   }
                }
             }

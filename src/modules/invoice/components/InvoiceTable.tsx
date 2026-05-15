@@ -28,7 +28,7 @@ const InvoiceTable: React.FC = () => {
   const { items: invoices, filters, pagination, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
   const { items: inwards, loading: inwardLoading } = useSelector((state: RootState) => state.inward);
   const initialTab = searchParams.get('tab') as any || 'ADD_INVOICE';
-  const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST' | 'ALL_LIST'>(initialTab);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null; type: 'invoice' | 'inward' | null }>({ isOpen: false, id: null, type: null });
 
   const handleTabChange = (tab: any) => { setActiveTab(tab); const params = new URLSearchParams(searchParams.toString()); params.set('tab', tab); router.push(`${pathname}?${params.toString()}`); };
@@ -95,7 +95,8 @@ const InvoiceTable: React.FC = () => {
       const typeMap: any = {
         'INVOICELIST': 'WP',
         'WOP_LIST': 'WOP',
-        'BOTH_LIST': 'BOTH'
+        'BOTH_LIST': 'BOTH',
+        'ALL_LIST': 'all'
       };
       
       (dispatch as any)(fetchInvoices({
@@ -152,13 +153,16 @@ const InvoiceTable: React.FC = () => {
   const renderTabs = () => (
     <div className="d-flex text-uppercase py-2 mb-0 px-3 bg-white border-bottom align-items-center">
       <div className="d-flex gap-2">
-        {['ADD_INVOICE', 'INVOICELIST', 'WOP_LIST', 'BOTH_LIST'].map(tab => (
+        {['ADD_INVOICE', 'INVOICELIST', 'WOP_LIST', 'BOTH_LIST', 'ALL_LIST'].map(tab => (
           <button
             key={tab}
             className={`btn shadow-none border-0 rounded-3 py-2 px-3 fw-bold small transition-all ${activeTab === tab ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'text-muted'}`}
             onClick={() => handleTabChange(tab)}
           >
-            {tab === 'ADD_INVOICE' ? 'Invoice Selection' : tab === 'INVOICELIST' ? 'WP List' : tab === 'WOP_LIST' ? 'WOP List' : 'Both List'}
+            {tab === 'ADD_INVOICE' ? 'Invoice Selection' : 
+             tab === 'INVOICELIST' ? 'WP List' : 
+             tab === 'WOP_LIST' ? 'WOP List' : 
+             tab === 'BOTH_LIST' ? 'Both List' : 'All Invoices'}
           </button>
         ))}
       </div>
