@@ -182,8 +182,9 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            flex: 1; 
            border-right: 1pt solid #000; 
            padding: 4px 8px; 
-           display: flex; 
-           justify-content: space-between; 
+           display: grid;
+           grid-template-columns: 78px 14px 1fr;
+           align-items: center;
         }
         .p-meta-col:last-child { border-right: 0; }
         .p-meta-val { font-weight: bold; }
@@ -368,55 +369,65 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                <div className="p-meta-row">
                   <div className="p-meta-col">
                      <span>{type.toUpperCase()} NO</span>
-                     <span>: <span className="p-meta-val">{data.outwardNo || data.inwardNo || data.challanNo || data.voucherNo}</span></span>
+                     <span>:</span>
+                     <span className="p-meta-val">{data.outwardNo || data.inwardNo || data.challanNo || data.voucherNo}</span>
                   </div>
                   <div className="p-meta-col">
                      <span>DATE</span>
-                     <span>: <span className="p-meta-val">{data.date ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</span></span>
+                     <span>:</span>
+                     <span className="p-meta-val">{data.date ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</span>
                   </div>
                   {type === 'outward' && (
                      <div className="p-meta-col">
                         <span>INVOICE REF</span>
-                        <span>: <span className="p-meta-val">{data.invoiceReference || '-'}</span></span>
+                        <span>:</span>
+                        <span className="p-meta-val">{data.invoiceReference || '-'}</span>
                      </div>
                   )}
                   {type === 'inward' && (
                      <div className="p-meta-col">
                         <span>PO REF</span>
-                        <span>: <span className="p-meta-val">{data.poReference || '-'}</span></span>
+                        <span>:</span>
+                        <span className="p-meta-val">{data.poReference || '-'}</span>
                      </div>
                   )}
                   {type === 'challan' && (
                      <div className="p-meta-col">
                         <span>TYPE</span>
-                        <span>: <span className="p-meta-val">{(data.type || 'delivery').toUpperCase()}</span></span>
+                        <span>:</span>
+                        <span className="p-meta-val">{(data.type || 'delivery').toUpperCase()}</span>
                      </div>
                   )}
-                   {type === 'voucher' && (
+                  {type === 'voucher' && (
                      <div className="p-meta-col">
                         <span>MODE</span>
-                        <span>: <span className="p-meta-val">{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-').toUpperCase()}</span></span>
+                        <span>:</span>
+                        <span className="p-meta-val">{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-').toUpperCase()}</span>
                      </div>
                   )}
                </div>
                <div className="p-meta-row">
                   <div className="p-meta-col">
                      <span>VEHICLE NO</span>
-                     <span>: <span className="p-meta-val">{data.vehicleNo || '-'}</span></span>
+                     <span>:</span>
+                     <span className="p-meta-val">{data.vehicleNo || '-'}</span>
                   </div>
                   <div className="p-meta-col">
                      <span>STATE</span>
-                     <span>: <span className="p-meta-val">TamilNadu-33</span></span>
+                     <span>:</span>
+                     <span className="p-meta-val">TamilNadu-33</span>
                   </div>
                   {type === 'voucher' ? (
                      <div className="p-meta-col">
                         <span>REF NO</span>
-                        <span>: <span className="p-meta-val">{data.referenceNo || '-'}</span></span>
+                        <span>:</span>
+                        <span className="p-meta-val">{data.referenceNo || '-'}</span>
                      </div>
                   ) : (
                      <div className="p-meta-col">
                         <span>{type === 'inward' ? 'DC NO' : 'CHALLAN NO'}</span>
-                        <span>: <span className="p-meta-val">{data.dcNo || data.challanNo || '-'}</span></span>
+                        <span>:</span>
+                        <span className="p-meta-val">{data.dcNo || data.challanNo || '-'}</span>
                      </div>
                   )}
                </div>
@@ -431,7 +442,11 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
                         <div>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</div>
+                        <div style={{ alignSelf: 'start' }}>Address</div>
+                        <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
+                           <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
+                           <span>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</span>
+                        </div>
                         <div>GST No</div><div>: <strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
                         <div>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -446,7 +461,11 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
                         <div>Name</div><div>: <strong>{partyName}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div><div style={{ lineHeight: '1.2' }}>: {partyAddress !== 'N/A' ? partyAddress : 'N/A'}</div>
+                        <div style={{ alignSelf: 'start' }}>Address</div>
+                        <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
+                           <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
+                           <span>{partyAddress !== 'N/A' ? partyAddress : 'N/A'}</span>
+                        </div>
                         <div>GST No</div><div>: <strong>{data.gstin || 'N/A'}</strong></div>
                         <div>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -598,9 +617,9 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                      <div className="p-sign-box">
                         <div style={{ marginBottom: '40px' }}>Receiver's Signature:</div>
                      </div>
-                     <div className="p-sign-box">
-                        <div>FOR <strong>{(settings.companyName || company?.name || 'Globus Engineering Tools').toUpperCase()}</strong></div>
-                        <div style={{ position: 'absolute', bottom: '10px', right: '10px', fontSize: '10px', opacity: 0.5 }}>Authorized Signatory</div>
+                     <div className="p-sign-box" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ textAlign: 'center' }}>FOR <strong>{(settings.companyName || company?.name || 'Globus Engineering Tools').toUpperCase()}</strong></div>
+                        <div style={{ fontSize: '10px', opacity: 0.6, textAlign: 'center' }}>Authorized Signatory</div>
                      </div>
                   </div>
 

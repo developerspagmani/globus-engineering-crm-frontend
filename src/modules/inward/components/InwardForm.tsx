@@ -403,12 +403,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
               <div className="row g-2 mb-3 fw-bold text-muted small">
                 <div className="col-md-4">Item</div>
                 <div className="col-md-3">Process</div>
-                <div className={mode === 'view' ? "col-md-2 text-center" : "col-md-4"}>Original Qty</div>
-                {mode === 'view' && (
-                  <>
-                    <div className="col-md-3 text-center fw-900 text-dark">Balance</div>
-                  </>
-                )}
+                <div className="col-md-4 text-center">Original Qty</div>
                 {mode !== 'view' && <div className="col-md-1 text-center">Action</div>}
               </div>
   
@@ -442,16 +437,9 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                       disabled={mode === 'view'}
                     />
                   </div>
-                  <div className={mode === 'view' ? "col-md-2" : "col-md-4"}>
+                  <div className="col-md-4">
                     <input type="number" className="form-control border-bottom rounded-0 px-2 shadow-none text-center" value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} disabled={mode === 'view'} />
                   </div>
-                  {mode === 'view' && (
-                    <>
-                      <div className="col-md-3 text-center fw-bold">
-                        <span className="text-dark">{item.dispatchBalance || 0}</span>
-                      </div>
-                    </>
-                  )}
                   <div className="col-md-1 text-center">
                     {mode !== 'view' && (
                       <button type="button" className="btn btn-link text-danger p-0 border-0 fs-5 text-decoration-none shadow-none" onClick={() => removeItem(index)} disabled={formData.items.length === 1}>

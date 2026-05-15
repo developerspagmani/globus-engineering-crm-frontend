@@ -312,10 +312,10 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 <thead className="table-light mt-0">
                   <tr>
                     <th className="px-3">Description</th>
+                    <th className="text-center" style={{ width: '150px' }}>HSN Code</th>
                     <th className="text-center" style={{ width: '120px' }}>WP Qty</th>
                     <th className="text-center" style={{ width: '120px' }}>WOP Qty</th>
                     <th className="text-center" style={{ width: '100px' }}>Unit</th>
-                    <th className="text-center" style={{ width: '150px' }}>HSN Code</th>
                     <th style={{ width: '50px' }}></th>
                   </tr>
                 </thead>
@@ -331,35 +331,32 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                           disabled={mode === 'view'}
                         />
                       </td>
-                        <td className="px-2 py-2">
-                          <input 
-                            type="number" 
-                            className="form-control text-center" 
-                            value={item.quantity} 
-                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                            onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                            
-                            disabled={mode === 'view'}
-                          />
-                        </td>
-                        <td className="px-2 py-2">
-                          <input 
-                            type="number" 
-                            className="form-control text-center" 
-                            value={item.wopQty} 
-                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                            onChange={(e) => handleItemChange(index, 'wopQty', e.target.value)}
-                            
-                            disabled={mode === 'view'}
-                          />
-                        </td>
                       <td className="px-2 py-2">
                         <input 
                           type="text" 
                           className="form-control text-center" 
-                          value={item.unit || ''} 
-                          onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                          
+                          value={item.hsnCode || ''} 
+                          onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
+                          disabled={mode === 'view'}
+                        />
+                      </td>
+                      <td className="px-2 py-2">
+                        <input 
+                          type="number" 
+                          className="form-control text-center" 
+                          value={item.quantity} 
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                          disabled={mode === 'view'}
+                        />
+                      </td>
+                      <td className="px-2 py-2">
+                        <input 
+                          type="number" 
+                          className="form-control text-center" 
+                          value={item.wopQty} 
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          onChange={(e) => handleItemChange(index, 'wopQty', e.target.value)}
                           disabled={mode === 'view'}
                         />
                       </td>
@@ -367,8 +364,8 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                         <input 
                           type="text" 
                           className="form-control text-center" 
-                          value={item.hsnCode || ''} 
-                          onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)}
+                          value={item.unit || ''} 
+                          onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                           disabled={mode === 'view'}
                         />
                       </td>
