@@ -164,12 +164,13 @@ const StoreVisitForm: React.FC<StoreVisitFormProps> = ({ store, initialData, onS
           </div>
 
           <div className="text-end d-flex gap-2 justify-content-end pt-3">
-            <button type="button" className="btn btn-light px-4 py-2 rounded-pill fw-800 text-muted border" onClick={onCancel}>
+            <button type="button" className="btn px-4 py-2 rounded-pill fw-800 text-white" style={{ backgroundColor: '#475569', border: 'none' }} onClick={onCancel}>
               CLEAR
             </button>
-            <button 
-              type="submit" 
-              className="btn btn-primary px-5 py-2 rounded-pill shadow-accent fw-800 tracking-wider d-flex align-items-center gap-2"
+            <button
+              type="submit"
+              className="btn px-5 py-2 rounded-pill fw-800 tracking-wider d-flex align-items-center gap-2 text-white"
+              style={{ backgroundColor: 'var(--accent-color)', border: 'none' }}
               disabled={isSubmitting}
             >
               {isSubmitting ? (

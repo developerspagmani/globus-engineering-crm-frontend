@@ -198,7 +198,7 @@ export default function ItemDetailsPage() {
     <ModuleGuard moduleId="mod_items">
       <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
         {/* Header Section Standardized */}
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div className={`d-flex justify-content-between align-items-center ${view === 'add' ? 'mb-2' : 'mb-4'} flex-wrap gap-3`}>
           <div className="d-flex align-items-center">
             {view === 'add' && (
               <button 
@@ -258,89 +258,89 @@ export default function ItemDetailsPage() {
 
         <div className="p-0">
           {view === 'add' ? (
-            <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
-              <form onSubmit={handleSubmit}>
+            <div style={{ maxWidth: '600px' }}>
+              <div className="card border-0 shadow-sm rounded-3">
+              <div className="card-body p-4">
+                <form onSubmit={handleSubmit}>
 
-                {/* Item Code Field */}
-                <div className="row mb-4 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Code</label>
-                  </div>
-
-                  <div className="col-md-9">
-                    <input
-                      type="text"
-                     
-                      placeholder="e.g. ITM-001"
-                      className="form-control"
-                      style={{ fontSize: '0.85rem', height: '38px' }}
-                      value={formData.itemCode}
-                      onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
-                      disabled={isViewOnly}
-                    />
-                  </div>
-                </div>
-
-                {/* Item Name Field */}
-                <div className="row mb-4 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Item Name</label>
+                  {/* Item Code Field */}
+                  <div className="row mb-3 align-items-center g-3">
+                    <div className="col-auto">
+                      <label className="text-dark fw-normal text-nowrap" style={{ fontSize: '0.9rem', minWidth: '90px' }}>Item Code</label>
+                    </div>
+                    <div className="col">
+                      <input
+                        type="text"
+                        placeholder="e.g. ITM-001"
+                        className="form-control"
+                        style={{ fontSize: '0.85rem', height: '38px' }}
+                        value={formData.itemCode}
+                        onChange={(e) => setFormData({ ...formData, itemCode: e.target.value })}
+                        disabled={isViewOnly}
+                      />
+                    </div>
                   </div>
 
-                  <div className="col-md-9">
-                    <input
-                      type="text"
-                     
-                      placeholder="Item Name"
-                      className="form-control"
-                      style={{ fontSize: '0.85rem', height: '38px' }}
-                      value={formData.itemName}
-                      onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
-                      disabled={isViewOnly}
-                    />
+                  {/* Item Name Field */}
+                  <div className="row mb-3 align-items-center g-3">
+                    <div className="col-auto">
+                      <label className="text-dark fw-normal text-nowrap" style={{ fontSize: '0.9rem', minWidth: '90px' }}>Item Name</label>
+                    </div>
+                    <div className="col">
+                      <input
+                        type="text"
+                        placeholder="Item Name"
+                        className="form-control"
+                        style={{ fontSize: '0.85rem', height: '38px' }}
+                        value={formData.itemName}
+                        onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
+                        disabled={isViewOnly}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Action Buttons */}
-                {!isViewOnly ? (
-                  <div className="d-flex justify-content-center gap-3 mt-5">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="btn px-4 py-2 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
-                      style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px', borderRadius: '4px' }}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
-                        </>
-                      ) : (
-                        editingId ? 'UPDATE' : 'SUBMIT'
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setFormData({ itemCode: '', itemName: '' }); setEditingId(null); setView('list'); }}
-                      className="btn px-4 py-2 text-white fw-bold rounded-1"
-                      style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
-                    >
-                      {editingId ? 'CANCEL' : 'CLEAR'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="d-flex justify-content-center gap-3 mt-5">
-                    <button
-                      type="button"
-                      onClick={() => setView('list')}
-                      className="btn px-4 py-2 text-white fw-bold rounded-1"
-                      style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
-                    >
-                      BACK
-                    </button>
-                  </div>
-                )}
-              </form>
+                  {/* Action Buttons */}
+                  {!isViewOnly ? (
+                    <div className="d-flex justify-content-start gap-3 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => editingId ? setView('list') : setFormData({ itemCode: '', itemName: '' })}
+                        className="btn px-4 py-2 text-white fw-bold rounded-1"
+                        style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
+                      >
+                        {editingId ? 'CANCEL' : 'CLEAR'}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="btn px-4 py-2 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
+                        style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px', borderRadius: '4px' }}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
+                          </>
+                        ) : (
+                          editingId ? 'UPDATE' : 'SUBMIT'
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="d-flex justify-content-start gap-3 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setView('list')}
+                        className="btn px-4 py-2 text-white fw-bold rounded-1"
+                        style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
+                      >
+                        BACK
+                      </button>
+                    </div>
+                  )}
+                </form>
+              </div>
+            </div>
             </div>
           ) : (
             <div className="animate-fade-in">

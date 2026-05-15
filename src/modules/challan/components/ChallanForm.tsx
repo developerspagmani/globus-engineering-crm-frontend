@@ -437,8 +437,16 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
           <div className="d-flex justify-content-end gap-2 mt-4">
             {mode !== 'view' ? (
               <>
-                <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.push('/challan')}>CLEAR</button>
-                <button type="submit" className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm" disabled={isSubmitting}>
+                <button type="button" className="btn px-5 py-2 rounded-pill fw-bold text-white" style={{ backgroundColor: '#475569', border: 'none' }} onClick={() => setFormData({
+                  challanNo: `DC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                  partyId: '', partyName: '', partyType: 'customer',
+                  company_id: activeCompany?.id || '',
+                  date: new Date().toISOString().split('T')[0],
+                  type: 'delivery', status: 'draft', bill_type: 'Both',
+                  items: [{ description: '', quantity: 1, wopQty: 0, unit: 'pcs', hsnCode: '' }],
+                  vehicleNo: '', driverName: '', notes: '',
+                })}>CLEAR</button>
+                <button type="submit" className="btn px-5 py-2 rounded-pill fw-bold shadow-sm text-white" style={{ backgroundColor: 'var(--accent-color)', border: 'none' }} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2"></span>
@@ -450,7 +458,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                 </button>
               </>
             ) : (
-              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push('/challan')}>BACK TO LIST</button>
+              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push('/challan')}>BACK</button>
             )}
           </div>
         </form>

@@ -32,6 +32,13 @@ const ReportsPage = () => {
       icon: 'bi-file-text',
       color: '#f59e0b',
       href: '/reports/gst'
+    },
+    {
+      title: 'TDS & Deduction',
+      description: 'Analysis of tax deductions and adjustments.',
+      icon: 'bi-scissors',
+      color: '#ef4444',
+      href: '/reports/tds'
     }
   ];
 

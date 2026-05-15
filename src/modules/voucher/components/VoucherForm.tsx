@@ -189,12 +189,27 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       });
     }
     
-    // Auto-expand rows in view mode to show adjustments
+    // Auto-expand rows in view mode to show TDS adjustments by default
     if (mode === 'view' && initialData?.items && expandedRows.size === 0) {
-      const ids = initialData.items.map((it: any) => String(it.id || it.invoiceNo || it.invoice_no));
-      setExpandedRows(new Set(ids));
+      const ids = initialData.items.map((it: any) => 
+        String(it.id || it.invoiceNo || it.invoice_no || it.invoiceNumber || '')
+      ).filter(Boolean);
+      if (ids.length > 0) setExpandedRows(new Set(ids));
     }
   }, [searchParams, mode, customers, vendors, allInvoices]);
+
+  // Secondary auto-expand: triggers once selectedInvoices are loaded asynchronously in view mode
+  useEffect(() => {
+    if (mode === 'view' && formData.selectedInvoices.length > 0) {
+      setExpandedRows(prev => {
+        if (prev.size > 0) return prev; // already expanded
+        const ids = formData.selectedInvoices.map((it: any) =>
+          String(it.id || it.invoiceNo || it.invoice_no || it.invoiceNumber || '')
+        ).filter(Boolean);
+        return ids.length > 0 ? new Set(ids) : prev;
+      });
+    }
+  }, [mode, formData.selectedInvoices]);
 
   useEffect(() => {
     if (initialData) {
@@ -933,16 +948,16 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                (Number(selectedData?.amount ?? inv.grandTotal ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })
                              )}
                            </td>
-                           <td className="small fw-bold text-end text-dark">
+                           <td className="small fw-bold text-end" style={{ color: '#000' }}>
                              {(Number(selectedData?.amount ?? inv.grandTotal ?? 0) - Number(selectedData?.adjustmentValue ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                            </td>
                          </tr>
-                         {selectedData && expandedRows.has(invoiceId) && (
+                         {selectedData && (expandedRows.has(invoiceId) || mode === 'view') && (
                            <tr className="bg-light-subtle border-bottom border-light">
                              <td colSpan={1} className="py-0"></td>
                              <td colSpan={4} className="py-2">
-                               <div className="d-flex align-items-center justify-content-end gap-4 ps-3 py-1 border-start border-orange border-3 ms-2">
-                                 <div className="d-flex flex-column text-end">
+                               <div className="d-flex align-items-center justify-content-start gap-4 py-1 border-start border-orange border-3" style={{ marginLeft: '60px', paddingLeft: '90px' }}>
+                                 <div className="d-flex flex-column text-start">
                                    <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Type</span>
                                    <select 
                                      className="form-select form-select-sm bg-white border border-light-subtle shadow-none fw-bold text-dark" 
@@ -955,7 +970,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                      <option value="Others">Others</option>
                                    </select>
                                  </div>
-                                 <div className="d-flex flex-column text-end">
+                                 <div className="d-flex flex-column text-start">
                                    <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Amt</span>
                                    <div className="input-group input-group-sm" style={{ width: '130px' }}>
                                      <span className="input-group-text bg-white border border-light-subtle border-end-0 small text-muted" style={{ borderRadius: '6px 0 0 6px' }}>₹</span>
@@ -971,12 +986,13 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                                      />
                                    </div>
                                  </div>
-                                 <div className="d-flex flex-column text-end ms-2">
-                                   <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Net Calculation</span>
-                                    <div className="fw-bold text-dark" style={{ fontSize: '11px', height: '30px', display: 'flex', alignItems: 'center' }}>
-                                      ₹ {Number(selectedData.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} - ₹ {Number(selectedData.adjustmentValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })} = <span className="ms-2">₹ {(Number(selectedData.amount) - Number(selectedData.adjustmentValue || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                 <div className="flex-grow-1"></div>
+                                 <div className="d-flex flex-column justify-content-end ms-1">
+                                    <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>&nbsp;</span>
+                                    <div className="fw-bold" style={{ fontSize: '13px', height: '30px', display: 'flex', alignItems: 'center', color: '#64748b' }}>
+                                      -{Number(selectedData.adjustmentValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                     </div>
-                                 </div>
+                                  </div>
                                </div>
                              </td>
                            </tr>
@@ -1039,13 +1055,18 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             </table>
           </div>
   
-          <div className="d-flex justify-content-center gap-3 mt-5">
+          <div className="d-flex justify-content-end gap-2 mt-5">
             {mode !== 'view' ? (
               <>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2" 
-                  style={{ backgroundColor: '#6c757d', border: 'none', minWidth: '150px' }}
+                <button type="button" className="btn px-5 py-2 rounded-pill fw-bold text-white" style={{ backgroundColor: '#475569', border: 'none' }} onClick={() => setFormData(prev => ({
+                  ...prev,
+                  partyId: '', partyName: '', customerId: '', vendorId: '',
+                  selectedInvoices: [], chequeNo: ''
+                }))}>CLEAR</button>
+                <button
+                  type="submit"
+                  className="btn px-5 py-2 rounded-pill fw-bold shadow-sm text-white d-flex align-items-center gap-2"
+                  style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px' }}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -1057,10 +1078,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     mode === 'create' ? 'SUBMIT' : 'SAVE CHANGES'
                   )}
                 </button>
-                <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.push(redirectPath)}>CLEAR</button>
               </>
             ) : (
-              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push(redirectPath)}>BACK TO LIST</button>
+              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push(redirectPath)}>BACK</button>
             )}
           </div>
         </form>

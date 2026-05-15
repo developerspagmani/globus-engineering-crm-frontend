@@ -250,63 +250,164 @@ export default function LedgerPage() {
     setDownloadingItem(party);
   };
 
+  // Helper: Build the audit HTML for a print window
+  const buildAuditHtml = (entries: LedgerEntry[], companyName: string, companyAddress: string, fromLabel: string, toLabel: string) => {
+    const fmt = (n: number) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate()}-${dt.toLocaleString('en-GB',{month:'short'})}-${String(dt.getFullYear()).slice(-2)}`; };
+    const sorted = [...entries].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const totalDebit = entries.reduce((s,e) => s + (e.type==='debit' ? Number(e.amount) : 0), 0);
+    const totalCredit = entries.reduce((s,e) => s + (e.type==='credit' ? Number(e.amount) : 0), 0);
+    const rows = sorted.map((e,i) => `
+      <tr style="background:${i%2===0?'#fff':'#fafafa'}">
+        <td>${fmtDate(e.date)}</td>
+        <td class="cap">${e.partyName||'-'}</td>
+        <td>${e.description||'-'}</td>
+        <td>${e.vchType||'JOURNAL'}</td>
+        <td>${e.vchNo||'-'}</td>
+        <td class="right">${e.type==='debit' ? fmt(Number(e.amount)) : ''}</td>
+        <td class="right">${e.type==='credit' ? fmt(Number(e.amount)) : ''}</td>
+      </tr>`).join('');
+    const net = totalDebit > totalCredit
+      ? `₹ ${fmt(totalDebit - totalCredit)} (DR)`
+      : `₹ ${fmt(totalCredit - totalDebit)} (CR)`;
+    const today = new Date().toLocaleDateString('en-GB');
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ledger Audit</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;background:#fff;padding:15mm 15mm;}
+      .hdr-wrap{margin-bottom:30px;}
+      .co-name{text-align:center;font-size:22pt;font-weight:bold;margin-bottom:4px;letter-spacing:1px;}
+      .co-addr{text-align:center;font-size:10pt;margin-bottom:15px;color:#333;}
+      .rpt-title{text-align:center;font-size:16pt;font-weight:bold;text-decoration:underline;margin-bottom:20px;text-transform:uppercase;}
+      
+      .meta-grid{width:100%;margin-bottom:20px;border-top:1px solid #000;padding-top:10px;}
+      .meta-row{display:flex;justify-content:space-between;margin-bottom:5px;}
+      .meta-item{width:48%;display:flex;font-size:10pt;}
+      .meta-label{width:140px;font-weight:bold;}
+      .meta-val{flex:1;}
+
+      table{width:100%;border-collapse:collapse;}
+      th,td{border:1px solid #000;padding:6px 8px;text-align:left;}
+      th{background:#f2f2f2;font-weight:bold;text-transform:uppercase;font-size:9pt;}
+      .right{text-align:right;}
+      .cap{text-transform:capitalize;}
+      .ft-total td{border-top:2px solid #000;background:#fafafa;font-weight:bold;}
+      .ft-net td{border-top:1px solid #000;background:#eee;font-weight:bold;}
+      @media print{
+        @page{margin:10mm;size:A4 portrait;}
+        body{padding:0;}
+      }
+    </style></head><body>
+    <div class="hdr-wrap">
+      <div class="co-name">${companyName}</div>
+      <div class="co-addr">${companyAddress}</div>
+      <div class="rpt-title">FULL LEDGER AUDIT REPORT</div>
+      
+      <div class="meta-grid">
+        <div class="meta-row">
+          <div class="meta-item">
+            <span class="meta-label">Report Type</span>
+            <span class="meta-val">: Full Audit Statement</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Statement Period</span>
+            <span class="meta-val">: ${fromLabel} to ${toLabel}</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-item">
+            <span class="meta-label">Generated On</span>
+            <span class="meta-val">: ${today}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Party Name</th><th>Particulars</th><th>Vch Type</th><th>Vch No</th><th class="right">Debit</th><th class="right">Credit</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr class="ft-total"><td colspan="5" class="right">TOTAL PERIOD TRANSACTIONS</td><td class="right">${fmt(totalDebit)}</td><td class="right">${fmt(totalCredit)}</td></tr>
+        <tr class="ft-net"><td colspan="5" class="right">NET DIFFERENCE</td><td colspan="2" class="right">${net}</td></tr>
+      </tfoot>
+    </table>
+    <script>window.onload=()=>{setTimeout(()=>{window.print();},500);}<\/script>
+    </body></html>`;
+  };
+
+  // Print Audit → opens browser print preview (user can choose PDF or printer)
   const handlePrintAudit = async () => {
     if (!activeCompany?.id) return;
     setAuditLoading(true);
     try {
-      // Use the existing thunk to fetch full data for the date range
       const response = await (dispatch as any)(fetchLedgerEntries({
         companyId: activeCompany.id,
         page: 1,
-        limit: 10000, // Large limit to capture all transactions for the period
+        limit: 10000,
         dateFrom: filters.dateFrom,
         dateTo: filters.dateTo
       })).unwrap();
 
+      const entries: LedgerEntry[] = response.items;
+      const companyName = activeCompany?.name?.toUpperCase() || 'GLOBUS ENGINEERING';
+      const companyAddress = (activeCompany as any)?.address || 'COIMBATORE';
+      const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate()}-${dt.toLocaleString('en-GB',{month:'short'})}-${String(dt.getFullYear()).slice(-2)}`; };
+      const fromLabel = filters.dateFrom ? fmtDate(filters.dateFrom) : 'Start';
+      const toLabel = filters.dateTo ? fmtDate(filters.dateTo) : 'Today';
+
+      const html = buildAuditHtml(entries, companyName, companyAddress, fromLabel, toLabel);
+      const pw = window.open('', '_blank', 'width=900,height=700');
+      if (pw) {
+        pw.document.write(html);
+        pw.document.close();
+      }
+    } catch (error) {
+      console.error('Print audit failed:', error);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  // Download Audit PDF → silently saves as PDF (no preview)
+  const handleDownloadAuditPDF = async () => {
+    if (!activeCompany?.id) return;
+    setAuditLoading(true);
+    try {
+      const response = await (dispatch as any)(fetchLedgerEntries({
+        companyId: activeCompany.id,
+        page: 1,
+        limit: 10000,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo
+      })).unwrap();
       setAuditData(response.items);
-      
-      // Allow time for the hidden component to render
+
       setTimeout(async () => {
         if (auditPrintRef.current) {
-          const canvas = await html2canvas(auditPrintRef.current, { 
-            scale: 2, 
-            useCORS: true,
-            logging: false,
-            windowWidth: 1200 // Ensure consistent width for capture
-          });
-          
+          const canvas = await html2canvas(auditPrintRef.current, { scale: 2, useCORS: true, logging: false, windowWidth: 1200 });
           const imgData = canvas.toDataURL('image/png');
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
-          
           const imgProps = pdf.getImageProperties(imgData);
           const imgWidth = pdfWidth;
           const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-          
           let heightLeft = imgHeight;
           let position = 0;
-
-          // Add first page
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
           heightLeft -= pdfHeight;
-
-          // Add subsequent pages
           while (heightLeft > 0) {
             position = heightLeft - imgHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pdfHeight;
           }
-
-          const dateStr = new Date().toISOString().split('T')[0];
-          pdf.save(`FULL_LEDGER_AUDIT_${dateStr}.pdf`);
+          pdf.save(`FULL_LEDGER_AUDIT_${new Date().toISOString().split('T')[0]}.pdf`);
           setAuditData([]);
         }
         setAuditLoading(false);
       }, 1000);
     } catch (error) {
-      console.error("Audit generation failed:", error);
+      console.error('Audit PDF download failed:', error);
       setAuditLoading(false);
     }
   };
@@ -391,7 +492,7 @@ export default function LedgerPage() {
                   style={{ height: '38px' }}
                   onClick={handlePrintAudit}
                   disabled={auditLoading}
-                  title="Download Full Ledger Audit for this period"
+                  title="Preview & Print ledger audit (or Save as PDF via browser)"
                 >
                   {auditLoading ? (
                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -399,6 +500,16 @@ export default function LedgerPage() {
                     <i className="bi bi-printer-fill"></i>
                   )}
                   <span className="fw-bold small">Print Audit</span>
+                </button>
+                <button 
+                  className="btn btn-audit btn-sm ms-1 d-flex align-items-center gap-2 rounded-pill px-3 shadow-sm"
+                  style={{ height: '38px' }}
+                  onClick={handleDownloadAuditPDF}
+                  disabled={auditLoading}
+                  title="Download Full Ledger Audit as PDF file"
+                >
+                  <i className="bi bi-file-earmark-pdf-fill"></i>
+                  <span className="fw-bold small">PDF</span>
                 </button>
               </div>
             </div>
@@ -532,7 +643,7 @@ export default function LedgerPage() {
         }
 
         .btn-audit:hover i {
-          color: #0dcaf0 !important; /* Cyan info color on hover */
+          color: #ffffff !important;
         }
       `}</style>
       {/* Hidden Download Generators */}

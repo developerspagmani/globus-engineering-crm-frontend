@@ -450,7 +450,46 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
           <div className="d-flex justify-content-end gap-2 mt-4">
             {mode !== 'view' ? (
               <>
-                <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => router.push('/outward')}>CLEAR</button>
+                <button type="button" className="btn px-5 py-2 rounded-pill fw-bold text-white" style={{ backgroundColor: '#475569', border: 'none' }} onClick={() => {
+                  if (mode === 'edit' && initialData) {
+                    setFormData({
+                      outwardNo: initialData.outwardNo,
+                      partyType: initialData.partyType || 'customer',
+                      customerId: String(initialData.customerId || ''),
+                      customerName: initialData.customerName || '',
+                      vendorId: String(initialData.vendorId || ''),
+                      vendorName: initialData.vendorName || '',
+                      processName: initialData.processName || '',
+                      invoiceReference: initialData.invoiceReference || '',
+                      challanNo: initialData.challanNo || '',
+                      vehicleNo: initialData.vehicleNo || '',
+                      driverName: initialData.driverName || '',
+                      notes: initialData.notes || '',
+                      company_id: initialData.company_id,
+                      inwardId: initialData.inwardId || '',
+                      inwardNo: initialData.inwardNo || '',
+                      date: initialData.date,
+                      status: initialData.status,
+                      items: initialData.items,
+                      amount: initialData.amount || 0,
+                    });
+                  } else {
+                    setFormData({
+                      outwardNo: `CH-${Math.floor(1000 + Math.random() * 9000)}`,
+                      partyType: 'customer',
+                      customerId: '', customerName: '',
+                      vendorId: '', vendorName: '',
+                      processName: '', invoiceReference: '',
+                      challanNo: '', vehicleNo: '', driverName: '', notes: '',
+                      company_id: activeCompany?.id || '',
+                      inwardId: '', inwardNo: '',
+                      date: new Date().toISOString().split('T')[0],
+                      status: 'completed',
+                      items: [{ description: '', quantity: 0, unit: 'pcs' }],
+                      amount: 0,
+                    });
+                  }
+                }}>CLEAR</button>
                 <button type="submit" className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm" disabled={saving}>
                   {saving ? (
                     <>
@@ -463,7 +502,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                 </button>
               </>
             ) : (
-              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push('/outward')}>BACK TO LIST</button>
+              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push('/outward')}>BACK</button>
             )}
           </div>
         </form>

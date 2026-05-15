@@ -459,26 +459,52 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
               )}
             </div>
   
-            <div className="mt-5 text-center d-flex justify-content-center gap-3">
+            <div className="mt-5 d-flex justify-content-end gap-2">
               {mode !== 'view' && (
                 <>
-                  <button 
-                  type="submit" 
-                  className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2" 
-                  disabled={isSubmitting}
-                  style={{ backgroundColor: '#6c757d', border: 'none', minWidth: '150px' }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      <span>SUBMITTING...</span>
-                    </>
-                  ) : (
-                    mode === 'create' ? 'SUBMIT' : 'UPDATE'
-                  )}
-                </button>
-                <button type="button" className="btn btn-light px-5 py-2 rounded-pill fw-bold border" onClick={() => mode === 'create' ? setFormData({ ...formData, poReference: '', dcNo: '', poDate: '', dcDate: '', items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }] } as any) : router.push('/inward')}>CLEAR</button>
-              </>
+                  <button type="button" className="btn px-5 py-2 rounded-pill fw-bold text-white" style={{ backgroundColor: '#475569', border: 'none' }} onClick={() => {
+                    if (mode === 'edit' && initialData) {
+                      setFormData({
+                        inwardNo: initialData.inwardNo,
+                        partyType: initialData.customerId ? 'customer' : (initialData.vendorId ? 'vendor' : 'customer'),
+                        customerId: String(initialData.customerId || ''),
+                        customerName: initialData.customerName || '',
+                        vendorId: initialData.vendorId || '',
+                        vendorName: initialData.vendorName || '',
+                        outwardId: (initialData as any).outwardId || '',
+                        outwardNo: (initialData as any).outwardNo || '',
+                        poReference: initialData.poReference || '',
+                        poDate: initialData.poDate || '',
+                        challanNo: initialData.challanNo || '',
+                        dcNo: initialData.dcNo || '',
+                        dcDate: initialData.dcDate || '',
+                        dueDate: initialData.dueDate || '',
+                        vehicleNo: initialData.vehicleNo || '',
+                        company_id: initialData.company_id || '',
+                        date: initialData.date,
+                        status: initialData.status,
+                        items: initialData.items,
+                      } as any);
+                    } else {
+                      setFormData({ ...formData, poReference: '', dcNo: '', poDate: '', dcDate: '', items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }] } as any);
+                    }
+                  }}>CLEAR</button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2"
+                    disabled={isSubmitting}
+                    style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px' }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>SUBMITTING...</span>
+                      </>
+                    ) : (
+                      mode === 'create' ? 'SUBMIT' : 'UPDATE'
+                    )}
+                  </button>
+                </>
               )}
               {mode === 'view' && (
                 <button type="button" className="btn btn-secondary px-4 rounded-1" onClick={() => router.push('/inward')}>BACK</button>

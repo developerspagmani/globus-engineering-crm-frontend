@@ -249,131 +249,116 @@ export default function PriceFixingPage() {
 
         <div className="p-0">
           {(view === 'add' || view === 'view') ? (
-            <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
-              <div className="mb-4">
-                <h5 className="fw-bold text-primary">{view === 'view' ? 'View Price Fixing' : editingId ? 'Edit Price Fixing' : 'Add Price Fixing'}</h5>
+            <div style={{ maxWidth: '600px' }}>
+              <div className="card border-0 shadow-sm rounded-3">
+                <div className="card-body p-4">
+                  <form onSubmit={handleSubmit}>
+                    <div className="row g-3 mb-3 align-items-center">
+                      <label className="col-auto text-muted fw-bold text-uppercase" style={{ fontSize: '0.70rem', minWidth: '110px' }}>Customer <span className="text-danger">*</span></label>
+                      <div className="col">
+                        <select
+                          required
+                          className="form-select form-select-sm"
+                          value={formData.customerId}
+                          onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                          disabled={view === 'view'}
+                        >
+                          <option value="">{customersLoading ? 'Loading Customers...' : 'Select Customer'}</option>
+                          {customers.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="row g-3 mb-3 align-items-center">
+                      <label className="col-auto text-muted fw-bold text-uppercase" style={{ fontSize: '0.70rem', minWidth: '110px' }}>Item <span className="text-danger">*</span></label>
+                      <div className="col">
+                        <select
+                          required
+                          className="form-select form-select-sm"
+                          value={formData.itemId}
+                          onChange={(e) => setFormData({ ...formData, itemId: e.target.value })}
+                          disabled={view === 'view'}
+                        >
+                          <option value="">Select Item</option>
+                          {items.map(i => <option key={i.id} value={String(i.id)}>{i.itemName}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="row g-3 mb-3 align-items-center">
+                      <label className="col-auto text-muted fw-bold text-uppercase" style={{ fontSize: '0.70rem', minWidth: '110px' }}>Process <span className="text-danger">*</span></label>
+                      <div className="col">
+                        <select
+                          required
+                          className="form-select form-select-sm"
+                          value={formData.processId}
+                          onChange={(e) => setFormData({ ...formData, processId: e.target.value })}
+                          disabled={view === 'view'}
+                        >
+                          <option value="">Select Process</option>
+                          {processes.map(p => <option key={p.id} value={String(p.id)}>{p.processName}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="row g-3 mb-4 align-items-center">
+                      <label className="col-auto text-muted fw-bold text-uppercase" style={{ fontSize: '0.70rem', minWidth: '110px' }}>Price <span className="text-danger">*</span></label>
+                      <div className="col">
+                        <input
+                          type="number"
+                          step="0.01"
+                          required
+                          placeholder="Price"
+                          className="form-control form-control-sm"
+                          value={formData.price}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          disabled={view === 'view'}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="d-flex justify-content-start gap-3 mt-4">
+                      {view !== 'view' ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => editingId ? setView('list') : setFormData({ customerId: '', itemId: '', processId: '', price: '' })}
+                            className="btn px-4 py-2 text-white fw-bold rounded-1"
+                            style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
+                          >
+                            {editingId ? 'CANCEL' : 'CLEAR'}
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="btn px-4 py-2 text-white fw-bold rounded-1 d-flex align-items-center justify-content-center gap-2"
+                            style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '120px' }}
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
+                              </>
+                            ) : (
+                              editingId ? 'UPDATE' : 'SUBMIT'
+                            )}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setView('list')}
+                          className="btn px-4 py-2 text-white fw-bold rounded-1"
+                          style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
+                        >
+                          BACK
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
               </div>
-              <form onSubmit={handleSubmit}>
-                <div className="row mb-5 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Customer <span className="text-danger">*</span></label>
-                  </div>
-
-                  <div className="col-md-9">
-                    <select
-                      required
-                      className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
-                      value={formData.customerId}
-                      onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                      disabled={view === 'view'}
-                    >
-                      <option value="">{customersLoading ? 'Loading Customers...' : 'Select Customer'}</option>
-                      {customers.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="row mb-5 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Item <span className="text-danger">*</span></label>
-                  </div>
-
-                  <div className="col-md-9">
-                    <select
-                      required
-                      className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
-                      value={formData.itemId}
-                      onChange={(e) => setFormData({ ...formData, itemId: e.target.value })}
-                      disabled={view === 'view'}
-                    >
-                      <option value="">Select Item</option>
-                      {items.map(i => <option key={i.id} value={String(i.id)}>{i.itemName}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="row mb-5 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Process <span className="text-danger">*</span></label>
-                  </div>
-
-                  <div className="col-md-9">
-                    <select
-                      required
-                      className="form-select border-0 border-bottom rounded-0 px-0 shadow-none bg-transparent"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
-                      value={formData.processId}
-                      onChange={(e) => setFormData({ ...formData, processId: e.target.value })}
-                      disabled={view === 'view'}
-                    >
-                      <option value="">Select Process</option>
-                      {processes.map(p => <option key={p.id} value={String(p.id)}>{p.processName}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="row mb-5 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '1.1rem' }}>Price <span className="text-danger">*</span></label>
-                  </div>
-
-                  <div className="col-md-9">
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      placeholder="Price"
-                      className="form-control border-0 border-bottom rounded-0 px-0 shadow-none"
-                      style={{ borderBottomColor: '#ddd !important', fontSize: '1.1rem' }}
-                      value={formData.price}
-                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      disabled={view === 'view'}
-                    />
-                  </div>
-                </div>
-
-                <div className="d-flex justify-content-center gap-3 mt-5">
-                  {view !== 'view' ? (
-                    <>
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="btn px-4 py-2 text-white fw-bold rounded-1 d-flex align-items-center justify-content-center gap-2"
-                        style={{ backgroundColor: '#da3e00', border: 'none', minWidth: '120px' }}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
-                          </>
-                        ) : (
-                          editingId ? 'UPDATE' : 'SUBMIT'
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setFormData({ customerId: '', itemId: '', processId: '', price: '' }); setEditingId(null); }}
-                        className="btn px-4 py-2 text-white fw-bold rounded-1"
-                        style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
-                      >
-                        {editingId ? 'CANCEL' : 'CLEAR'}
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setView('list')}
-                      className="btn px-4 py-2 text-white fw-bold rounded-1"
-                      style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
-                    >
-                      BACK
-                    </button>
-                  )}
-                </div>
-              </form>
             </div>
           ) : (
             <div className="animate-fade-in">

@@ -161,7 +161,7 @@ export default function ProcessDetailsPage() {
     <ModuleGuard moduleId="mod_processes">
       <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
         {/* Header Section Standardized */}
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div className={`d-flex justify-content-between align-items-center ${view === 'add' ? 'mb-2' : 'mb-4'} flex-wrap gap-3`}>
           <div className="d-flex align-items-center">
             {view === 'add' && (
               <button
@@ -221,65 +221,68 @@ export default function ProcessDetailsPage() {
 
         <div className="p-0">
           {view === 'add' ? (
-            <div className="mx-auto" style={{ maxWidth: '900px', marginTop: '40px' }}>
-              <form onSubmit={handleSubmit}>
-                <div className="row mb-5 align-items-center">
-                  <div className="col-md-3">
-                    <label className="text-dark fw-normal" style={{ fontSize: '0.9rem' }}>Process</label>
-                  </div>
-                  <div className="col-md-9">
-                    <input
-                      type="text"
-                     
-                      placeholder="Process Name"
-                      className="form-control"
-                      style={{ fontSize: '0.85rem', height: '38px' }}
-                      value={formData.processName}
-                      onChange={(e) => setFormData({ ...formData, processName: e.target.value })}
-                      disabled={isViewOnly}
-                    />
-                  </div>
-                </div>
+            <div style={{ maxWidth: '600px' }}>
+              <div className="card border-0 shadow-sm rounded-3">
+                <div className="card-body p-4">
+                  <form onSubmit={handleSubmit}>
+                    <div className="row mb-3 align-items-center g-3">
+                      <div className="col-auto">
+                        <label className="text-dark fw-normal text-nowrap" style={{ fontSize: '0.9rem', minWidth: '90px' }}>Process</label>
+                      </div>
+                      <div className="col">
+                        <input
+                          type="text"
+                          placeholder="Process Name"
+                          className="form-control"
+                          style={{ fontSize: '0.85rem', height: '38px' }}
+                          value={formData.processName}
+                          onChange={(e) => setFormData({ ...formData, processName: e.target.value })}
+                          disabled={isViewOnly}
+                        />
+                      </div>
+                    </div>
 
-                <div className="d-flex justify-content-center gap-3 mt-5">
-                  {!isViewOnly ? (
-                    <>
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="btn px-4 py-2 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
-                        style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px', borderRadius: '4px' }}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
-                          </>
-                        ) : (
-                          editingId ? 'UPDATE' : 'SUBMIT'
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setFormData({ processName: '' }); setEditingId(null); setView('list'); }}
-                        className="btn px-4 py-2 text-white fw-bold rounded-1"
-                        style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
-                      >
-                        {editingId ? 'CANCEL' : 'CLEAR'}
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setView('list')}
-                      className="btn px-4 py-2 text-white fw-bold rounded-1"
-                      style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
-                    >
-                      BACK
-                    </button>
-                  )}
+                    <div className="d-flex justify-content-start gap-3 mt-4">
+                      {!isViewOnly ? (
+                        <>
+            <button
+              type="button"
+              onClick={() => editingId ? setView('list') : setFormData({ processName: '' })}
+              className="btn px-4 py-2 text-white fw-bold rounded-1"
+              style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
+            >
+              {editingId ? 'CANCEL' : 'CLEAR'}
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn px-4 py-2 text-white fw-bold d-flex align-items-center justify-content-center gap-2"
+              style={{ backgroundColor: 'var(--accent-color)', border: 'none', minWidth: '150px', borderRadius: '4px' }}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>{editingId ? 'UPDATING...' : 'SAVING...'}</span>
+                </>
+              ) : (
+                editingId ? 'UPDATE' : 'SUBMIT'
+              )}
+            </button>
+          </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setView('list')}
+                          className="btn px-4 py-2 text-white fw-bold rounded-1"
+                          style={{ backgroundColor: '#475569', border: 'none', minWidth: '100px' }}
+                        >
+                          BACK
+                        </button>
+                      )}
+                    </div>
+                  </form>
                 </div>
-              </form>
+              </div>
             </div>
           ) : (
             <div className="animate-fade-in">

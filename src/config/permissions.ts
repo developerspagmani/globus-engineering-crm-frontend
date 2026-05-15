@@ -54,7 +54,7 @@ export const navigationConfig: NavItem[] = [
       { name: 'Payment Report', icon: 'bi-cash-stack', path: '/reports/payment', moduleId: 'mod_voucher' },
       { name: 'Invoice Report', icon: 'bi-file-earmark-bar-graph', path: '/reports/invoice', moduleId: 'mod_invoice' },
       { name: 'Inward Report', icon: 'bi-box-arrow-in-left', path: '/reports/inward', moduleId: 'mod_inward' },
-      // { name: 'Voucher', icon: 'bi-receipt-cutoff', path: '/reports/voucher', moduleId: 'mod_voucher' },
+      { name: 'TDS Report', icon: 'bi-scissors', path: '/reports/tds', moduleId: 'mod_voucher' },
       { name: 'GST Report', icon: 'bi-file-text', path: '/reports/gst', moduleId: 'mod_invoice' },
     ]
   },
