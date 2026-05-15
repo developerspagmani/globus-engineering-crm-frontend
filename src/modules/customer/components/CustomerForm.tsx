@@ -7,6 +7,7 @@ import { RootState } from '@/redux/store';
 import { createCustomer, updateCustomer } from '@/redux/features/customerSlice';
 import { Customer } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
+import StateSelect from '@/components/shared/StateSelect';
 
 
 interface CustomerFormProps {
@@ -238,8 +239,25 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               {renderInput('Street 2', 'street2')}
               {renderInput('City', 'city', 'text', true)}
               {renderInput('Area', 'area')}
-              {renderInput('State', 'state', 'text', true)}
-              {renderInput('State Code', 'stateCode', 'text', true)}
+              <div className="col-md-6 mb-3">
+                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">State</label>
+                <StateSelect
+                  value={formData.state}
+                  onChange={(name, code) => setFormData(prev => ({ ...prev, state: name, stateCode: code }))}
+                  disabled={mode === 'view'}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">State Code</label>
+                <input
+                  type="text"
+                  className="form-control bg-light"
+                  value={formData.stateCode}
+                  readOnly
+                  placeholder="Auto-filled"
+                  style={{ cursor: 'not-allowed' }}
+                />
+              </div>
               {renderInput('Pin code', 'pinCode', 'text', true)}
 
             </div>
