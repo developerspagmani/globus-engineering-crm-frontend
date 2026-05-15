@@ -374,9 +374,17 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       }
 
       if (mode === 'create') {
-        const firstInvoice = allInvoices.find(inv => String(inv.id) === String(formData.selectedInvoices[0]?.id));
-        const inwardId = (firstInvoice as any)?.inwardId || (firstInvoice as any)?.inward_id;
-        const inwardNo = (firstInvoice as any)?.inwardNo || (firstInvoice as any)?.inward_no;
+        // Scan ALL selected invoices for an inward link — not just the first one
+        // (the first invoice may have been fetched without inwardId populated)
+        let inwardId: string | null = null;
+        let inwardNo: string | null = null;
+        for (const sel of formData.selectedInvoices) {
+          const inv = allInvoices.find(i => String(i.id) === String(sel.id));
+          const iid = (inv as any)?.inwardId || (inv as any)?.inward_id;
+          const ino = (inv as any)?.inwardNo || (inv as any)?.inward_no;
+          if (iid) { inwardId = String(iid); inwardNo = ino ? String(ino) : null; break; }
+        }
+        console.log('[VoucherForm] Resolved inwardId:', inwardId, 'inwardNo:', inwardNo);
 
         const currentPaymentItems = formData.selectedInvoices.map(i => ({
           invoiceNo: i.invoiceNo,
@@ -397,11 +405,17 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             const data = await res.json();
             
             // Find the correct voucher for this specific party and type
+            console.log('[VoucherForm] Existing vouchers for inward:', data.items?.map((v: any) => ({
+              id: v.id, voucherNo: v.voucherNo || v.voucher_no,
+              partyId: v.party_id || v.partyId, partyType: v.party_type || v.partyType, type: v.type
+            })));
+            console.log('[VoucherForm] Matching against:', { partyId: voucherPayload.partyId, partyType: voucherPayload.partyType, type: voucherPayload.type });
+
             const existingVoucher = data.items && data.items.length > 0 
               ? data.items.find((v: any) => 
-                  String(v.party_id || v.partyId) === String(voucherPayload.partyId) && 
-                  String(v.party_type || v.partyType) === String(voucherPayload.partyType) &&
-                  String(v.type) === String(voucherPayload.type)
+                  String(v.party_id || v.partyId).trim() === String(voucherPayload.partyId).trim() && 
+                  String(v.party_type || v.partyType).trim().toLowerCase() === String(voucherPayload.partyType).trim().toLowerCase() &&
+                  String(v.type).trim().toLowerCase() === String(voucherPayload.type).trim().toLowerCase()
                 ) 
               : null;
             
@@ -469,10 +483,72 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
              } as any)).unwrap();
           }
         } else {
-          await (dispatch as any)(createVoucher({ 
-            ...voucherPayload, 
-            items: currentPaymentItems 
-          } as any)).unwrap();
+          // No inwardId on the invoice — fallback: search for existing voucher by partyId + type + date
+          // to still attempt consolidation (e.g. 3rd invoice paid separately without inward link)
+          try {
+            const activeToken = authToken || localStorage.getItem('token');
+            const fallbackRes = await fetch(
+              `/api/vouchers?company_id=${voucherPayload.company_id}&partyId=${voucherPayload.partyId}&limit=50`,
+              { headers: { 'Authorization': `Bearer ${activeToken?.replace(/^\"|\"$/g, '')}` } }
+            );
+            const fallbackData = await fallbackRes.json();
+            console.log('[VoucherForm] Fallback voucher search (no inwardId):', fallbackData.items?.length, 'vouchers for party');
+
+            const fallbackVoucher = fallbackData.items && fallbackData.items.length > 0
+              ? fallbackData.items.find((v: any) =>
+                  String(v.party_id || v.partyId).trim() === String(voucherPayload.partyId).trim() &&
+                  String(v.party_type || v.partyType).trim().toLowerCase() === String(voucherPayload.partyType).trim().toLowerCase() &&
+                  String(v.type).trim().toLowerCase() === String(voucherPayload.type).trim().toLowerCase() &&
+                  // Only consolidate into vouchers from same date to avoid cross-date merges
+                  String(v.date || '').slice(0, 10) === String(voucherPayload.date || '').slice(0, 10)
+                )
+              : null;
+
+            if (fallbackVoucher) {
+              console.log('[VoucherForm] Fallback: appending to existing voucher', fallbackVoucher.voucher_no || fallbackVoucher.id);
+              const activeTokenClean = activeToken?.replace(/^\"|\"$/g, '');
+              const updatedPayload = {
+                ...fallbackVoucher,
+                party_id: fallbackVoucher.party_id || voucherPayload.partyId,
+                party_name: fallbackVoucher.party_name || voucherPayload.partyName,
+                party_type: fallbackVoucher.party_type || voucherPayload.partyType,
+                type: fallbackVoucher.type || voucherPayload.type,
+                amount: Number(fallbackVoucher.amount || 0) + netPayableAmount,
+                tds_amount: Number(fallbackVoucher.tds_amount || 0) + calculatedTDS,
+                tdsAmount: Number(fallbackVoucher.tds_amount || 0) + calculatedTDS,
+                others_amount: Number(fallbackVoucher.others_amount || 0) + calculatedOthers,
+                othersAmount: Number(fallbackVoucher.others_amount || 0) + calculatedOthers,
+                description: `${fallbackVoucher.description_ || fallbackVoucher.description || ''}\n${voucherPayload.description}`,
+                reference_no: `${fallbackVoucher.reference_no || ''}, ${voucherPayload.referenceNo}`,
+                items: [...(fallbackVoucher.items || []), ...currentPaymentItems]
+              };
+              await fetch(`/api/vouchers/${fallbackVoucher.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${activeTokenClean}` },
+                body: JSON.stringify(updatedPayload)
+              });
+              if (activeCompany?.id) {
+                (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+                (dispatch as any)(fetchVouchers({ company_id: activeCompany.id, limit: 1000 }));
+              }
+            } else {
+              // Truly no matching existing voucher — create new
+              await (dispatch as any)(createVoucher({ 
+                ...voucherPayload, 
+                items: currentPaymentItems 
+              } as any)).unwrap();
+              if (activeCompany?.id) {
+                (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000 }));
+                (dispatch as any)(fetchVouchers({ company_id: activeCompany.id, limit: 1000 }));
+              }
+            }
+          } catch (fallbackErr) {
+            console.error('[VoucherForm] Fallback consolidation failed, creating new:', fallbackErr);
+            await (dispatch as any)(createVoucher({ 
+              ...voucherPayload, 
+              items: currentPaymentItems 
+            } as any)).unwrap();
+          }
         }
 
         setModal({

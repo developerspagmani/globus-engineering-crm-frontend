@@ -284,6 +284,12 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            line-height: 1.2;
            word-break: break-all;
         }
+        /* WOP (delivery challan) — compact rows since no price/amount columns */
+        .wop-table td {
+           height: 14px !important;
+           padding: 1px 6px !important;
+           font-size: 9px;
+        }
         .p-table tr.total-row td { 
            border-top: 1.5pt solid #000; 
            border-bottom: 1.pt solid #000;
@@ -404,6 +410,12 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            .p-table {
               flex: 1 !important;
               width: 100% !important;
+           }
+           /* WOP delivery challan — compact rows must also apply at print time */
+           .wop-table td {
+              height: 14px !important;
+              padding: 1px 6px !important;
+              font-size: 9px !important;
            }
            .industrial-print-container > *:last-child {
               page-break-after: avoid !important;
@@ -573,7 +585,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
 
             {/* Items Table */}
             <div className="p-table-area">
-               <table className="p-table">
+               <table className={isWOP ? 'p-table wop-table' : 'p-table'}>
                   <thead>
                      <tr>
                         <th style={{ width: '40px' }}>S.No</th>
@@ -587,12 +599,12 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   </thead>
                   <tbody>
                      {items.map((item: any, idx: number) => (
-                        <tr key={idx}>
-                           <td style={{ textAlign: 'center' }}>{startSno + idx}</td>
-                           <td style={{ fontWeight: 'bold' }}>{item.description}</td>
-                           <td style={{ textAlign: 'center' }}>{item.hsnCode || '998898'}</td>
+                        <tr key={idx} style={isWOP ? { height: '14px' } : {}}>
+                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{startSno + idx}</td>
+                           <td style={{ fontWeight: 'bold', ...(isWOP && { height: '14px', padding: '1px 6px' }) }}>{item.description}</td>
+                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{item.hsnCode || '998898'}</td>
                            {!isWOP && <td style={{ textAlign: 'center' }}>{taxRate}%</td>}
-                           <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{item.quantity}</td>
                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.unitPrice.toFixed(2)}</td>}
                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.amount.toFixed(2)}</td>}
                         </tr>
@@ -600,12 +612,12 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
 
                      {/* Full Filler Rows to occupy entire page height */}
                      {[...Array(fillerCount)].map((_, i) => (
-                        <tr key={`filler-${i}`}>
-                           <td style={{ textAlign: 'center' }}>&nbsp;</td>
-                           <td>&nbsp;</td>
-                           <td>&nbsp;</td>
+                        <tr key={`filler-${i}`} style={isWOP ? { height: '14px' } : {}}>
+                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>&nbsp;</td>
+                           <td style={isWOP ? { height: '14px', padding: '1px 6px' } : {}}>&nbsp;</td>
+                           <td style={isWOP ? { height: '14px', padding: '1px 4px' } : {}}>&nbsp;</td>
                            {!isWOP && <td>&nbsp;</td>}
-                           <td>&nbsp;</td>
+                           <td style={isWOP ? { height: '14px', padding: '1px 4px' } : {}}>&nbsp;</td>
                            {!isWOP && <td>&nbsp;</td>}
                            {!isWOP && <td>&nbsp;</td>}
                         </tr>
