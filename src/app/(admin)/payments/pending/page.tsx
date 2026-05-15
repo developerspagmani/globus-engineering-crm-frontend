@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { fetchInvoices, setInvoicePage } from '@/redux/features/invoiceSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
@@ -165,7 +166,7 @@ const PendingPaymentPage = () => {
                           <td className="text-dark fw-bold text-uppercase" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
                           <td className="text-muted small">{inv.poNo || '-'}</td>
                           <td className="text-muted small">{inv.dcNo || '-'}</td>
-                          <td className="text-primary fw-bold small">{inv.invoiceNumber}</td>
+                          <td className="text-dark fw-bold small"><Link href={`/invoices/${inv.id}`} className="text-primary fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{inv.invoiceNumber}</Link></td>
                           <td className="text-muted small">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
                           <td className="text-dark fw-bold small">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
                           <td className="text-center">

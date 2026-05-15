@@ -195,7 +195,9 @@ const InvoiceTable: React.FC = () => {
                   <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                   <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
                   <td className="text-muted small">
-                    {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? (item.dcNo || item.challanNo || item.dc_no || '-') : item.invoiceNumber}
+                    {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? (item.dcNo || item.challanNo || item.dc_no || '-') : (
+                      <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{item.invoiceNumber}</Link>
+                    )}
                   </td>
                   <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                   {activeTab !== 'WOP_LIST' && (

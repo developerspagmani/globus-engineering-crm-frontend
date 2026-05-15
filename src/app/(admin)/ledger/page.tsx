@@ -438,7 +438,7 @@ export default function LedgerPage() {
                       <td className="text-muted small text-center">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td>
                         <div className="d-flex flex-column">
-                           <span className="fw-bold text-dark text-capitalize">{party.name}</span>
+                           <Link href={`/ledger/${party.id}`} className="fw-bold text-dark text-capitalize text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{party.name}</Link>
                         </div>
                       </td>
                       <td className="text-muted small">{party.street1 || '-'}</td>

@@ -106,7 +106,7 @@ const CustomerTable: React.FC = () => {
                   {paginatedItems.map((customer, index) => (
                     <tr key={customer.id}>
                       <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                      <td className="fw-bold text-dark text-nowrap">{customer.name || '-'}</td>
+                      <td className="fw-bold text-dark text-nowrap"><Link href={`/customers/${customer.id}`} className="text-primary fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{customer.name || '-'}</Link></td>
                       <td className="text-muted small">{customer.email || customer.emailId1 || '-'}</td>
                       <td className="text-muted small">{customer.phone || customer.phoneNumber1 || '-'}</td>
                       <td><span className="badge bg-light text-dark border-0 shadow-sm fw-semibold p-2">{customer.gst || '-'}</span></td>

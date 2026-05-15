@@ -258,7 +258,7 @@ const VoucherPage = () => {
                       <tr key={voucher.id}>
                         <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                         <td className="text-nowrap fw-bold text-dark">
-                          {voucher.voucherNo}
+                          <Link href={`/vouchers/${voucher.id}`} className="text-dark fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{voucher.voucherNo}</Link>
                           <div className={`x-small text-capitalize fw-normal ${getTypeColor(voucher.type)}`}>
                             {voucher.type}
                           </div>

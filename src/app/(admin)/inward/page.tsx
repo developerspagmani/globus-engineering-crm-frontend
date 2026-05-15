@@ -179,9 +179,9 @@ export default function InwardListPage() {
                     <tr key={item.id} className="border-bottom border-light">
                       <td className="px-4 text-muted">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td>
-                        <div className="fw-900 text-dark fs-6 mb-0">
+                        <Link href={`/inward/${item.id}/edit`} className="fw-900 text-dark fs-6 mb-0 text-decoration-none hover-underline d-block" style={{ cursor: 'pointer' }}>
                           {item.partyType === 'vendor' ? (item.vendorName || 'N/A Vendor') : (item.customerName || 'N/A Customer')}
-                        </div>
+                        </Link>
                         <div className="x-small text-muted text-capitalize">{item.address || (item.items?.[0]?.description) || '-'}</div>
                       </td>
                       <td className="text-dark fs-7">{item.poReference || '-'}</td>

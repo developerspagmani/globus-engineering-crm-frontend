@@ -223,7 +223,7 @@ const ChallanPage = () => {
                       <tr key={challan.id}>
                         <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                         <td className="text-nowrap fw-bold text-dark">
-                          {challan.challanNo}
+                          <Link href={`/challan/${challan.id}/edit`} className="text-dark fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{challan.challanNo}</Link>
                           <div className="d-flex align-items-center gap-1">
                             <span className="text-muted x-small fw-normal text-capitalize">{challan.type.replace('_', ' ')}</span>
                             {challan.bill_type && (
