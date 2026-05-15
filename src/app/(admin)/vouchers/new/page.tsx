@@ -14,22 +14,31 @@ const NewVoucherPageContent = () => {
   const customerId = searchParams.get('customerId');
   const invoiceId = searchParams.get('invoiceId');
   
-  const { items: invoices } = useSelector((state: RootState) => state.invoices);
-  const targetInvoice = invoices.find(inv => inv.id === invoiceId);
+  const vendorId = searchParams.get('vendorId');
+  const partyTypeFromUrl = searchParams.get('partyType'); // 'vendor' or 'customer'
+  const isVendorPayment = partyTypeFromUrl === 'vendor' && !!vendorId;
 
-  const initialData = targetInvoice ? {
-    partyId: targetInvoice.customerId,
-    partyName: targetInvoice.customerName,
-    partyType: 'customer' as const,
-    amount: targetInvoice.grandTotal - (targetInvoice.paidAmount || 0),
-    description: `Payment for Invoice #${targetInvoice.invoiceNumber}`,
-    type: 'receipt' as const,
+  const { items: invoices } = useSelector((state: RootState) => state.invoices);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
+
+  const targetInvoice = invoices.find(inv => String(inv.id) === String(invoiceId));
+  const targetVendor = isVendorPayment ? vendors.find((v: any) => String(v.id) === String(vendorId)) : null;
+
+  const initialData = (targetInvoice || isVendorPayment) ? {
+    partyId: isVendorPayment ? (vendorId || '') : (targetInvoice?.customerId || customerId || ''),
+    partyName: isVendorPayment
+      ? ((targetVendor as any)?.name || (targetVendor as any)?.company || '')
+      : (targetInvoice?.customerName || ''),
+    partyType: (isVendorPayment ? 'vendor' : 'customer') as 'vendor' | 'customer',
+    amount: targetInvoice ? (targetInvoice.grandTotal - (targetInvoice.paidAmount || 0)) : 0,
+    description: targetInvoice ? `Payment for Invoice #${targetInvoice.invoiceNumber}` : '',
+    type: (isVendorPayment ? 'payment' : 'receipt') as 'payment' | 'receipt',
     date: new Date().toISOString().split('T')[0],
     voucherNo: `VCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     paymentMode: 'bank' as const,
     status: 'draft' as const,
-    company_id: targetInvoice.company_id,
-    referenceNo: String(targetInvoice.id)
+    company_id: targetInvoice?.company_id || '',
+    referenceNo: targetInvoice ? String(targetInvoice.id) : ''
   } : undefined;
 
   const router = useRouter();

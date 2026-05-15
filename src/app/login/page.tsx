@@ -26,8 +26,8 @@ function LoginContent() {
 
   useEffect(() => {
     setMounted(true);
-    // Fetch REAL companies from database for the dropdown
-    api.get('/companies')
+    // Fetch REAL companies from database — add cache-buster so deleted companies disappear immediately
+    api.get(`/companies?_t=${Date.now()}`)
       .then(res => {
         setDbCompanies(res.data);
         if (res.data.length > 0) {

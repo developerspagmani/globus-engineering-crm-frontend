@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { fetchInvoices, setInvoicePage } from '@/redux/features/invoiceSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchInwards } from '@/redux/features/inwardSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
@@ -24,12 +25,14 @@ const PendingPaymentPage = () => {
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, pagination, loading } = useSelector((state: RootState) => state.invoices);
   const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: inwards } = useSelector((state: RootState) => state.inward);
 
   useEffect(() => {
     setMounted(true);
     if (activeCompany?.id) {
       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000, status: 'pending' }));
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      (dispatch as any)(fetchInwards({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -70,6 +73,16 @@ const PendingPaymentPage = () => {
   // Open the invoice's own print page — exactly the same format as invoice print
   const handlePrintPending = (inv: any) => {
     router.push(`/invoices/${inv.id}?print=true`);
+  };
+
+  // Build the correct voucher creation URL — vendor invoices need partyType=vendor
+  const getVoucherUrl = (inv: any) => {
+    const inward = inwards.find(iw => String(iw.id) === String(inv.inwardId));
+    const vendorId = (inward as any)?.vendorId || (inward as any)?.vendor_id;
+    if (vendorId) {
+      return `/vouchers/new?partyType=vendor&vendorId=${vendorId}&invoiceId=${inv.id}&redirect=/payments/pending`;
+    }
+    return `/vouchers/new?partyType=customer&customerId=${inv.customerId}&invoiceId=${inv.id}&redirect=/payments/pending`;
   };
 
   return (
@@ -181,7 +194,7 @@ const PendingPaymentPage = () => {
                               <button
                                 className="btn-action-edit"
                                 title="Add Payment"
-                                onClick={() => router.push(`/vouchers/new?customerId=${inv.customerId}&invoiceId=${inv.id}&redirect=/payments/pending`)}
+                                onClick={() => router.push(getVoucherUrl(inv))}
                               >
                                 <i className="bi bi-wallet2 px-1"></i>
                               </button>

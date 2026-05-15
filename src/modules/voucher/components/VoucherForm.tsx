@@ -36,12 +36,31 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     partyType: 'customer' as 'customer' | 'vendor',
     paymentMode: 'cash',
     chequeNo: '',
-    customerId: '', // Using customerId/vendorId internal keys but unified UI
+    customerId: '',
     vendorId: '',
     partyId: '',
     partyName: '',
     selectedInvoices: [] as { id: string, invoiceNo: string, amount: number, adjustmentType: string, adjustmentValue: number }[]
   });
+
+  // On mount: read partyType from URL and set form state immediately (window.location is guaranteed client-side)
+  // This runs BEFORE the initialData effect so correct defaults are set first
+  useEffect(() => {
+    if (mode !== 'create') return;
+    const params = new URLSearchParams(window.location.search);
+    const pt = params.get('partyType');
+    const vid = params.get('vendorId');
+    if (pt === 'vendor' && vid) {
+      setFormData(prev => ({
+        ...prev,
+        partyType: 'vendor',
+        type: 'payment',
+        vendorId: vid,
+        partyId: vid,
+        customerId: ''
+      }));
+    }
+  }, []); // empty deps = run once on mount only
  
    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
  
@@ -85,6 +104,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     const customerIdFromUrl = searchParams.get('customerId');
+    const vendorIdFromUrl = searchParams.get('vendorId');
+    const partyTypeFromUrl = searchParams.get('partyType'); // 'customer' or 'vendor'
     const invoiceIdFromUrl = searchParams.get('invoiceId');
 
     if (mode === 'create') {
@@ -92,8 +113,23 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         let updated = { ...prev };
         let hasChanges = false;
 
-        // 1. Resolve Customer
-        if (customerIdFromUrl && !updated.customerId) {
+        // 1a. Resolve Vendor name (partyType=vendor in URL)
+        // Guard on partyName (not vendorId) because vendorId is pre-set in initial state from URL
+        if (partyTypeFromUrl === 'vendor' && vendorIdFromUrl && !updated.partyName) {
+          const vendor = (vendors as any[]).find(v => String(v.id) === String(vendorIdFromUrl));
+          if (vendor) {
+            updated.partyType = 'vendor';
+            updated.type = 'payment';
+            updated.vendorId = String(vendorIdFromUrl);
+            updated.partyId = String(vendorIdFromUrl);
+            updated.partyName = vendor.name || (vendor as any).company || '';
+            updated.customerId = '';
+            hasChanges = true;
+          }
+        }
+
+        // 1b. Resolve Customer
+        if ((!partyTypeFromUrl || partyTypeFromUrl === 'customer') && customerIdFromUrl && !updated.customerId) {
           const customer = customers.find(c => String(c.id) === String(customerIdFromUrl));
           if (customer) {
             updated.customerId = String(customerIdFromUrl);
@@ -158,7 +194,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       const ids = initialData.items.map((it: any) => String(it.id || it.invoiceNo || it.invoice_no));
       setExpandedRows(new Set(ids));
     }
-  }, [searchParams, mode, customers, allInvoices]);
+  }, [searchParams, mode, customers, vendors, allInvoices]);
 
   useEffect(() => {
     if (initialData) {
