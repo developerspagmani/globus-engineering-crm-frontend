@@ -45,12 +45,32 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
 
   return (
     <div className="audit-wrap">
-      <div className="audit-header">
-        <div className="co-name">{companyName}</div>
-        <div className="co-addr">{companyAddress}</div>
-        <div className="report-title">FULL LEDGER AUDIT REPORT</div>
-        <div className="date-range">Period: {dateRangeLabel()}</div>
+      <div className="industrial-header">
+         <div className="header-logo-box">
+            <svg viewBox="0 0 100 100" className="header-svg">
+              <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" strokeWidth="2" />
+              <circle cx="50" cy="50" r="28" fill="none" stroke="#000" strokeWidth="2" />
+              <text x="50" y="62" fontSize="32" fontWeight="900" textAnchor="middle" fill="#000">S</text>
+            </svg>
+         </div>
+         <div className="header-center">
+            <h1 className="company-name-large">{companyName}</h1>
+            <div className="company-addr-small">{companyAddress}</div>
+         </div>
+         <div className="header-iso-box">
+            <div className="iso-border">
+               <div className="iso-q">Q</div>
+               <div className="iso-tuv-box">
+                  <div className="iso-tuv">TÜV</div>
+                  <div className="iso-sud">SÜD</div>
+               </div>
+               <div className="iso-std">ISO 9001</div>
+            </div>
+         </div>
       </div>
+
+      <div className="report-title-bar">FULL LEDGER AUDIT REPORT</div>
+      <div className="period-bar">Period: {dateRangeLabel()}</div>
 
       <table className="audit-table">
         <thead>
@@ -102,16 +122,55 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
           font-family: 'Times New Roman', Times, serif;
           font-size: 10pt;
         }
-        .audit-header {
-          text-align: center;
-          margin-bottom: 20px;
-          border-bottom: 2px solid #000;
-          padding-bottom: 10px;
+        .audit-wrap {
+          padding: 15mm 10mm;
+          background: white;
+          color: black;
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 10pt;
         }
-        .co-name { font-size: 16pt; font-weight: bold; }
-        .co-addr { font-size: 10pt; margin-bottom: 10px; }
-        .report-title { font-size: 14pt; font-weight: bold; text-decoration: underline; margin-top: 10px; }
-        .date-range { font-size: 11pt; margin-top: 5px; font-style: italic; }
+        .industrial-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border: 1.5pt solid #000;
+          padding: 10px 15px;
+          margin-bottom: 0;
+        }
+        .header-logo-box { width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; }
+        .header-svg { width: 100%; height: 100%; }
+        .header-center { text-align: center; flex: 1; padding: 0 20px; }
+        .company-name-large { margin: 0; font-size: 22pt; font-weight: 900; letter-spacing: 0.8pt; }
+        .company-addr-small { font-size: 9pt; font-weight: bold; margin-top: 4px; color: #333; }
+        
+        .header-iso-box { width: 75px; display: flex; justify-content: flex-end; align-items: center; }
+        .iso-border { width: 60px; border: 1.5pt solid #000; text-align: center; }
+        .iso-q { font-size: 8pt; font-weight: 900; border-bottom: 1pt solid #000; background: #f0f0f0; padding: 1px 0; }
+        .iso-tuv-box { padding: 2px 0; }
+        .iso-tuv { font-size: 14pt; font-weight: 900; line-height: 1; }
+        .iso-sud { font-size: 9pt; font-weight: 900; }
+        .iso-std { font-size: 7pt; font-weight: 900; border-top: 1pt solid #000; padding: 1px 0; }
+
+        .report-title-bar {
+          text-align: center;
+          font-size: 12pt;
+          font-weight: 900;
+          padding: 6px 0;
+          border: 1.5pt solid #000;
+          border-top: 0;
+          background-color: #f2f2f2;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+        }
+        .period-bar {
+          text-align: center;
+          font-size: 10pt;
+          font-style: italic;
+          border: 1.5pt solid #000;
+          border-top: 0;
+          padding: 4px 0;
+          margin-bottom: 20px;
+        }
         
         .audit-table {
           width: 100%;

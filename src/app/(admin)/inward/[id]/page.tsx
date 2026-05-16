@@ -9,6 +9,7 @@ import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 export default function InwardDetailPage() {
   const { id } = useParams();
@@ -60,6 +61,8 @@ export default function InwardDetailPage() {
             <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Inward: {inward.inwardNo}</h2>
             <p className="text-muted small mb-0">Review material receipts and inward logistics.</p>
           </div>
+          
+          <div className="flex-grow-1"></div>
           <div className="d-flex gap-2">
             <Link 
               href={`/logistics-print?type=inward&id=${inward.id}&print=true`}
@@ -69,15 +72,6 @@ export default function InwardDetailPage() {
               <i className="bi bi-printer"></i>
               <span>Print Inward</span>
             </Link>
-            {!isEdit && (
-              <button 
-                onClick={() => router.push(`/inward/${id}?edit=true`)}
-                className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
-              >
-                <i className="bi bi-pencil"></i>
-                <span>Edit Inward</span>
-              </button>
-            )}
           </div>
         </div>
 

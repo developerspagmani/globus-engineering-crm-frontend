@@ -9,6 +9,7 @@ import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import { fetchChallans } from '@/redux/features/challanSlice';
 import Link from 'next/link';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 export default function ChallanDetailPage() {
   const { id } = useParams();
@@ -60,6 +61,8 @@ export default function ChallanDetailPage() {
             <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Challan: {challan.challanNo}</h2>
             <p className="text-muted small mb-0">Track and manage material movement details.</p>
           </div>
+          
+          <div className="flex-grow-1"></div>
           <div className="d-flex gap-2">
             <Link 
               href={`/logistics-print?type=challan&id=${challan.id}&print=true`}
@@ -69,15 +72,6 @@ export default function ChallanDetailPage() {
               <i className="bi bi-printer"></i>
               <span>Print Challan</span>
             </Link>
-            {!isEdit && (
-              <button 
-                onClick={() => router.push(`/challan/${id}?edit=true`)}
-                className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
-              >
-                <i className="bi bi-pencil"></i>
-                <span>Edit Challan</span>
-              </button>
-            )}
           </div>
         </div>
 

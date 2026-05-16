@@ -5,6 +5,8 @@ import { logout, setCompanyContext } from '@/redux/features/authSlice';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Company } from '@/types/modules';
+import { usePathname, useSearchParams } from 'next/navigation';
+import PageModeIndicator from './PageModeIndicator';
 
 interface NavbarProps {
   onToggleSidebar: () => void;
@@ -16,6 +18,44 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
   const { items: companies } = useSelector((state: RootState) => state.companies);
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Dynamic Mode Detection Logic
+  const getPageModeInfo = () => {
+    const segments = pathname.split('/').filter(Boolean);
+    const module = segments[0];
+    const id = segments[1];
+    const subAction = segments[2];
+    const isEditParam = searchParams.get('edit') === 'true';
+
+    // List of modules that support mode switching
+    const supportedModules = ['inward', 'outward', 'invoices', 'vouchers', 'challan', 'vendors', 'customers'];
+    
+    if (!supportedModules.includes(module)) return null;
+
+    let mode: 'view' | 'edit' | 'create' = 'view';
+    let editUrl = '';
+    let viewUrl = '';
+
+    if (id === 'new' || id === 'create') {
+      mode = 'create';
+    } else if (id && (subAction === 'edit' || isEditParam)) {
+      mode = 'edit';
+      viewUrl = `/${module}/${id}`;
+    } else if (id) {
+      mode = 'view';
+      editUrl = `/${module}/${id}${module === 'vouchers' || module === 'invoices' ? '/edit' : '?edit=true'}`;
+    } else if (pathname.includes('/new-entry')) {
+      mode = 'create';
+    } else {
+      return null; // Not a detail/edit/create page
+    }
+
+    return { mode, editUrl, viewUrl };
+  };
+
+  const modeInfo = getPageModeInfo();
 
   React.useEffect(() => {
     setMounted(true);
@@ -101,6 +141,17 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
             <li className="breadcrumb-item small active fw-700 ms-2" style={{ color: 'var(--accent-color)' }} aria-current="page">Dashboard</li>
           </ol>
         </nav>
+      </div>
+
+      {/* Center: Page Mode Indicator */}
+      <div className="flex-grow-1 d-flex justify-content-center px-3">
+        {modeInfo && (
+          <PageModeIndicator 
+            mode={modeInfo.mode} 
+            editUrl={modeInfo.editUrl} 
+            viewUrl={modeInfo.viewUrl} 
+          />
+        )}
       </div>
 
       <div className="d-flex align-items-center">

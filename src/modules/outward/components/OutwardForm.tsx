@@ -13,6 +13,7 @@ import { OutwardEntry } from '@/types/modules';
 import StatusModal from '@/components/StatusModal';
 import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 
 interface OutwardFormProps {

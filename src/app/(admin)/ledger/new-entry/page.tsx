@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ModuleGuard from '@/components/ModuleGuard';
 import LedgerEntryForm from '@/modules/ledger/components/LedgerEntryForm';
 import Link from 'next/link';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 export default function NewLedgerEntryPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function NewLedgerEntryPage() {
             <h2 className="fw-bold mb-0 text-dark">Add Ledger Entry</h2>
             <p className="text-muted small mb-0">Record manual adjustments or opening balances for clients.</p>
           </div>
+          <div className="flex-grow-1"></div>
         </div>
 
         <div className="row">

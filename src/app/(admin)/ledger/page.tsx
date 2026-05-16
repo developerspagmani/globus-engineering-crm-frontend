@@ -274,13 +274,51 @@ export default function LedgerPage() {
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ledger Audit</title>
     <style>
       *{box-sizing:border-box;margin:0;padding:0;}
-      body{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;background:#fff;padding:15mm 15mm;}
-      .hdr-wrap{margin-bottom:30px;}
-      .co-name{text-align:center;font-size:22pt;font-weight:bold;margin-bottom:4px;letter-spacing:1px;}
-      .co-addr{text-align:center;font-size:10pt;margin-bottom:15px;color:#333;}
-      .rpt-title{text-align:center;font-size:16pt;font-weight:bold;text-decoration:underline;margin-bottom:20px;text-transform:uppercase;}
+      body{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;background:#fff;padding:15mm 10mm;}
       
-      .meta-grid{width:100%;margin-bottom:20px;border-top:1px solid #000;padding-top:10px;}
+      .industrial-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1.5pt solid #000;
+        padding: 10px 15px;
+        margin-bottom: 0;
+      }
+      .header-logo-box { width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; }
+      .header-center { text-align: center; flex: 1; padding: 0 20px; }
+      .company-name-large { margin: 0; font-size: 22pt; font-weight: 900; letter-spacing: 0.8pt; }
+      .company-addr-small { font-size: 9pt; font-weight: bold; margin-top: 4px; color: #333; }
+      
+      .header-iso-box { width: 75px; display: flex; justify-content: flex-end; align-items: center; }
+      .iso-border { width: 60px; border: 1.5pt solid #000; text-align: center; }
+      .iso-q { font-size: 8pt; font-weight: 900; border-bottom: 1pt solid #000; background: #f0f0f0; padding: 1px 0; }
+      .iso-tuv-box { padding: 2px 0; }
+      .iso-tuv { font-size: 14pt; font-weight: 900; line-height: 1; }
+      .iso-sud { font-size: 9pt; font-weight: 900; }
+      .iso-std { font-size: 7pt; font-weight: 900; border-top: 1pt solid #000; padding: 1px 0; }
+
+      .report-title-bar {
+        text-align: center;
+        font-size: 12pt;
+        font-weight: 900;
+        padding: 6px 0;
+        border: 1.5pt solid #000;
+        border-top: 0;
+        background-color: #f2f2f2;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .period-bar {
+        text-align: center;
+        font-size: 10pt;
+        font-style: italic;
+        border: 1.5pt solid #000;
+        border-top: 0;
+        padding: 4px 0;
+        margin-bottom: 20px;
+      }
+
+      .meta-grid{width:100%;margin-bottom:20px;border:1.5pt solid #000;border-top:0;padding:10px;}
       .meta-row{display:flex;justify-content:space-between;margin-bottom:5px;}
       .meta-item{width:48%;display:flex;font-size:10pt;}
       .meta-label{width:140px;font-weight:bold;}
@@ -299,9 +337,31 @@ export default function LedgerPage() {
       }
     </style></head><body>
     <div class="hdr-wrap">
-      <div class="co-name">${companyName}</div>
-      <div class="co-addr">${companyAddress}</div>
-      <div class="rpt-title">FULL LEDGER AUDIT REPORT</div>
+      <div class="industrial-header">
+         <div class="header-logo-box">
+            <svg viewBox="0 0 100 100" style="width:100%;height:100%">
+              <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" stroke-width="2" />
+              <circle cx="50" cy="50" r="28" fill="none" stroke="#000" stroke-width="2" />
+              <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Arial, sans-serif">S</text>
+            </svg>
+         </div>
+         <div class="header-center">
+            <h1 class="company-name-large">${companyName}</h1>
+            <div class="company-addr-small">${companyAddress}</div>
+         </div>
+         <div class="header-iso-box">
+            <div class="iso-border">
+               <div class="iso-q">Q</div>
+               <div class="iso-tuv-box">
+                  <div class="iso-tuv">TÜV</div>
+                  <div class="iso-sud">SÜD</div>
+               </div>
+               <div class="iso-std">ISO 9001</div>
+            </div>
+         </div>
+      </div>
+      <div class="report-title-bar">FULL LEDGER AUDIT REPORT</div>
+      <div class="period-bar">Period: ${fromLabel} to ${toLabel}</div>
       
       <div class="meta-grid">
         <div class="meta-row">

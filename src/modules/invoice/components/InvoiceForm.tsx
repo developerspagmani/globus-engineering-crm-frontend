@@ -14,6 +14,7 @@ import { Invoice } from '@/types/modules';
 import BackButton from '@/components/BackButton';
 import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 
 interface InvoiceFormProps {

@@ -11,6 +11,7 @@ import { fetchInwards } from '@/redux/features/inwardSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 
 const LedgerEntryForm: React.FC = () => {

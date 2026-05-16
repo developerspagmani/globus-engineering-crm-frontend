@@ -46,23 +46,47 @@ const TDSReportPage = () => {
     const response = await api.get(url);
     const allVouchers = response.data.items;
 
-    const data = allVouchers.map((v: any, idx: number) => [
+    // Aggregate by Party Name for Industrial Audit Report
+    const aggregatedMap = new Map();
+    
+    allVouchers.forEach((v: any) => {
+      const party = v.party_name || v.partyName || 'N/A';
+      if (!aggregatedMap.has(party)) {
+        aggregatedMap.set(party, {
+          partyName: party,
+          tdsAmount: 0,
+          othersAmount: 0,
+          totalAdjustment: 0
+        });
+      }
+      const record = aggregatedMap.get(party);
+      record.tdsAmount += parseFloat(String(v.tds_amount || v.tdsAmount || 0));
+      record.othersAmount += parseFloat(String(v.others_amount || v.othersAmount || 0));
+      record.totalAdjustment = record.tdsAmount + record.othersAmount;
+    });
+
+    const data = Array.from(aggregatedMap.values()).map((item: any, idx: number) => [
       (idx + 1).toString(),
-      v.date ? new Date(v.date).toISOString().split('T')[0] : 'N/A',
-      v.voucherNo || 'N/A',
-      v.partyName || 'N/A',
-      v.type?.toUpperCase() || 'N/A',
-      Number(v.amount || 0).toLocaleString(),
-      Number(v.tdsAmount || 0).toLocaleString(),
-      Number(v.othersAmount || 0).toLocaleString(),
-      v.paymentMode?.toUpperCase() || 'N/A',
-      v.status?.toUpperCase() || 'N/A'
+      item.partyName.toUpperCase(),
+      item.tdsAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }),
+      item.othersAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 }),
+      item.totalAdjustment.toLocaleString('en-IN', { minimumFractionDigits: 2 })
     ]);
 
-    data.push(['', '', '', 'TOTAL', '', aggregates.totalCollected?.toLocaleString() || '0', aggregates.totalTDS?.toLocaleString() || '0', aggregates.totalOthers?.toLocaleString() || '0', '', '']);
+    const totalTds = Array.from(aggregatedMap.values()).reduce((sum: number, item: any) => sum + item.tdsAmount, 0);
+    const totalOthers = Array.from(aggregatedMap.values()).reduce((sum: number, item: any) => sum + item.othersAmount, 0);
+    const totalAdj = Array.from(aggregatedMap.values()).reduce((sum: number, item: any) => sum + item.totalAdjustment, 0);
+
+    data.push([
+      '', 
+      'TOTAL', 
+      totalTds.toLocaleString('en-IN', { minimumFractionDigits: 2 }), 
+      totalOthers.toLocaleString('en-IN', { minimumFractionDigits: 2 }), 
+      totalAdj.toLocaleString('en-IN', { minimumFractionDigits: 2 })
+    ]);
 
     return {
-      headers: ['SNO', 'DATE', 'VCH NO', 'PARTY NAME', 'TYPE', 'AMOUNT', 'TDS', 'OTHERS', 'MODE', 'STATUS'],
+      headers: ['SNO', 'CUSTOMER NAME', 'TOTAL TDS', 'OTHER ADJUSTMENT', 'TOTAL ADJUSTMENT'],
       data
     };
   };
@@ -91,6 +115,7 @@ const TDSReportPage = () => {
             toDate={filters.toDate}
             title="TDS Report" 
             onFetchAll={handleFetchAllForExport} 
+            variant="industrial"
           />
           <button className="btn btn-white shadow-sm border border-light px-3 d-flex align-items-center gap-2" style={{ height: '36px', borderRadius: '18px' }} onClick={() => dispatch(fetchVouchers({ company_id: activeCompany?.id }) as any)}>
             <i className="bi bi-arrow-repeat text-primary fw-bold"></i>

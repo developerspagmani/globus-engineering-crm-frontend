@@ -13,6 +13,7 @@ import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import { fetchOutwards } from '@/redux/features/outwardSlice';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 
 

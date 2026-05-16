@@ -8,6 +8,7 @@ import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import InvoicePreview from '@/modules/invoice/components/InvoicePreview';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 export default function InvoiceDetailPage() {
   const params = useParams();
@@ -46,7 +47,9 @@ export default function InvoiceDetailPage() {
             Invoice with ID: {id} not found.
           </div>
         ) : (
-          <InvoicePreview invoice={invoice} company={company} />
+          <>
+            <InvoicePreview invoice={invoice} company={company} />
+          </>
         )}
       </div>
     </ModuleGuard>

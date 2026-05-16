@@ -9,6 +9,7 @@ import Link from 'next/link';
 import BackButton from '@/components/BackButton';
 import { fetchVouchers } from '@/redux/features/voucherSlice';
 import Loader from '@/components/Loader';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 const EditVoucherPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -61,6 +62,9 @@ const EditVoucherPage = () => {
           <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Voucher: {voucher.voucherNo}</h2>
           <p className="text-muted small mb-0">{isEdit ? 'Update transaction details and narration.' : 'Review transaction details and narration.'}</p>
         </div>
+        
+        <div className="flex-grow-1"></div>
+
         {!isEdit && !isReadOnly && (
           <div className="ms-auto d-flex gap-2">
             <Link
@@ -70,13 +74,6 @@ const EditVoucherPage = () => {
               <i className="bi bi-printer"></i>
               <span>Print Voucher</span>
             </Link>
-            <button
-              className="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-accent"
-              onClick={() => setIsEdit(true)}
-            >
-              <i className="bi bi-pencil-square"></i>
-              <span>Edit Voucher</span>
-            </button>
           </div>
         )}
       </div>

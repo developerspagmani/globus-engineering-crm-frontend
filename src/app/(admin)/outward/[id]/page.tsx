@@ -9,6 +9,7 @@ import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import { fetchOutwards } from '@/redux/features/outwardSlice';
 import Link from 'next/link';
+import PageModeIndicator from '@/components/PageModeIndicator';
 
 export default function OutwardDetailPage() {
   const { id } = useParams();
@@ -60,6 +61,8 @@ export default function OutwardDetailPage() {
             <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Outward: {outward.outwardNo}</h2>
             <p className="text-muted small mb-0">Track material dispatches and outward logistics.</p>
           </div>
+          
+          <div className="flex-grow-1"></div>
           <div className="d-flex gap-2">
             <Link 
               href={`/logistics-print?type=outward&id=${outward.id}&print=true`}
@@ -69,15 +72,6 @@ export default function OutwardDetailPage() {
               <i className="bi bi-printer"></i>
               <span>Print Outward</span>
             </Link>
-            {!isEdit && (
-              <button 
-                onClick={() => router.push(`/outward/${id}?edit=true`)}
-                className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
-              >
-                <i className="bi bi-pencil"></i>
-                <span>Edit Outward</span>
-              </button>
-            )}
           </div>
         </div>
 

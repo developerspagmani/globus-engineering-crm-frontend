@@ -42,9 +42,15 @@ export default function AdminLayout({
     <div className="admin-container">
       {!isSalesMap && <AdminSidebar collapsed={sidebarCollapsed} />}
       <main className={`main-wrapper ${isSalesMap ? '' : (sidebarCollapsed ? 'expanded' : '')}`} style={isSalesMap ? { marginLeft: 0 } : {}}>
-        {!isSalesMap && <AdminNavbar onToggleSidebar={toggleSidebar} />}
+        {!isSalesMap && (
+          <React.Suspense fallback={<div className="h-16"></div>}>
+            <AdminNavbar onToggleSidebar={toggleSidebar} />
+          </React.Suspense>
+        )}
         <div className={`content-area ${isSalesMap ? 'p-0 m-0' : ''}`}>
-          {children}
+          <React.Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-primary"></div></div>}>
+            {children}
+          </React.Suspense>
         </div>
       </main>
     </div>
