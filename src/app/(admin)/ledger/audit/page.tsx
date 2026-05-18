@@ -107,6 +107,7 @@ export default function CompanyAuditPage() {
               company={activeCompany} 
               dateFrom={dateFrom} 
               dateTo={dateTo} 
+              hideHeaderOnScreen={true}
             />
           </div>
         )}

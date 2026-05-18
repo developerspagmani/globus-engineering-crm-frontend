@@ -8,6 +8,7 @@ import { RootState } from '@/redux/store';
 import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters, setLedgerPage } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
+import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import { checkActionPermission } from '@/config/permissions';
@@ -25,6 +26,7 @@ export default function LedgerPage() {
   const router = useRouter();
   const { company: activeCompany, user: currentUser } = useSelector((state: RootState) => state.auth);
   const { items: ledgerEntries, loading: ledgerLoading, filters, pagination } = useSelector((state: RootState) => state.ledger);
+  const { settings } = useSelector((state: RootState) => state.invoices) || {};
   
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
@@ -48,6 +50,7 @@ export default function LedgerPage() {
        }));
        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
        (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
     }
   }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
 
@@ -252,6 +255,36 @@ export default function LedgerPage() {
 
   // Helper: Build the audit HTML for a print window
   const buildAuditHtml = (entries: LedgerEntry[], companyName: string, companyAddress: string, fromLabel: string, toLabel: string) => {
+    const docSettings = settings || activeCompany?.invoiceSettings || {};
+    const showLogo = docSettings.showLogo !== false;
+    const logoUrl = (docSettings.logo && docSettings.logo.length > 10) ? docSettings.logo : activeCompany?.logo;
+    const logoSecondaryUrl = (docSettings.logoSecondary && docSettings.logoSecondary.length > 10) ? docSettings.logoSecondary : activeCompany?.logoSecondary;
+
+    const logoHtml = logoUrl && showLogo 
+      ? `<img src="${logoUrl}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;" />`
+      : showLogo
+        ? `<svg viewBox="0 0 100 100" style="width:100%;height:100%">
+             <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" stroke-width="2" />
+             <circle cx="50" cy="50" r="28" fill="none" stroke="#000" stroke-width="2" />
+             <circle cx="50" cy="50" r="22" fill="none" stroke="#000" stroke-width="1.2" />
+             <path d="M50 20 L50 10 M50 80 L50 90 M20 50 L10 50 M80 50 L90 50" stroke="#000" stroke-width="2" />
+             <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Arial, sans-serif">S</text>
+           </svg>`
+        : '';
+
+    const logoSecondaryHtml = logoSecondaryUrl && showLogo
+      ? `<img src="${logoSecondaryUrl}" alt="Secondary Logo" style="max-width:100%;max-height:100%;object-fit:contain;" />`
+      : showLogo
+        ? `<div class="iso-border">
+             <div class="iso-q">Q</div>
+             <div class="iso-tuv-box">
+                <div class="iso-tuv">TÜV</div>
+                <div class="iso-sud">SÜD</div>
+             </div>
+             <div class="iso-std">ISO 9001</div>
+           </div>`
+        : '';
+
     const fmt = (n: number) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${String(dt.getDate()).padStart(2, '0')}.${String(dt.getMonth() + 1).padStart(2, '0')}.${dt.getFullYear()}`; };
     const sorted = [...entries].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -288,7 +321,7 @@ export default function LedgerPage() {
       .company-name-large { margin: 0; font-size: 22pt; font-weight: 900; letter-spacing: 0.8pt; }
       .company-addr-small { font-size: 9pt; font-weight: bold; margin-top: 4px; color: #333; }
       
-      .header-iso-box { width: 75px; display: flex; justify-content: flex-end; align-items: center; }
+      .header-iso-box { width: 75px; height: 75px; display: flex; justify-content: flex-end; align-items: center; }
       .iso-border { width: 60px; border: 1.5pt solid #000; text-align: center; }
       .iso-q { font-size: 8pt; font-weight: 900; border-bottom: 1pt solid #000; background: #f0f0f0; padding: 1px 0; }
       .iso-tuv-box { padding: 2px 0; }
@@ -337,25 +370,14 @@ export default function LedgerPage() {
     <div class="hdr-wrap">
       <div class="industrial-header">
          <div class="header-logo-box">
-            <svg viewBox="0 0 100 100" style="width:100%;height:100%">
-              <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" stroke-width="2" />
-              <circle cx="50" cy="50" r="28" fill="none" stroke="#000" stroke-width="2" />
-              <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Arial, sans-serif">S</text>
-            </svg>
+            ${logoHtml}
          </div>
          <div class="header-center">
             <h1 class="company-name-large">${companyName}</h1>
             <div class="company-addr-small">${companyAddress}</div>
          </div>
          <div class="header-iso-box">
-            <div class="iso-border">
-               <div class="iso-q">Q</div>
-               <div class="iso-tuv-box">
-                  <div class="iso-tuv">TÜV</div>
-                  <div class="iso-sud">SÜD</div>
-               </div>
-               <div class="iso-std">ISO 9001</div>
-            </div>
+            ${logoSecondaryHtml}
          </div>
       </div>
       <div class="report-title-bar">FULL LEDGER AUDIT REPORT</div>

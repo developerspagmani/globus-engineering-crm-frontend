@@ -128,6 +128,10 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
     .filter(Boolean)
     .join(', ');
 
+  const showLogo = docSettings.showLogo !== false;
+  const logoUrl = (docSettings.logo && docSettings.logo.length > 10) ? docSettings.logo : company?.logo;
+  const logoSecondaryUrl = (docSettings.logoSecondary && docSettings.logoSecondary.length > 10) ? docSettings.logoSecondary : company?.logoSecondary;
+
   return (
     <div className="lt-wrap">
 
@@ -135,7 +139,25 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
       <table className="lt-header-table">
         <tbody>
           <tr>
-            <td className="lt-hdr-left"></td>
+            <td className="lt-hdr-left">
+              <div className="logo-container">
+                {logoUrl && showLogo ? (
+                   <img
+                      src={logoUrl}
+                      alt="Logo"
+                      className="logo-img"
+                   />
+                ) : showLogo ? (
+                   <svg viewBox="0 0 100 100" className="header-svg">
+                     <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" strokeWidth="2" />
+                     <circle cx="50" cy="50" r="28" fill="none" stroke="#000" strokeWidth="2" />
+                     <circle cx="50" cy="50" r="22" fill="none" stroke="#000" strokeWidth="1.2" />
+                     <path d="M50 20 L50 10 M50 80 L50 90 M20 50 L10 50 M80 50 L90 50" stroke="#000" strokeWidth="2" />
+                     <text x="50" y="62" fontSize="32" fontWeight="900" textAnchor="middle" fill="#000" fontFamily="Arial, sans-serif">S</text>
+                   </svg>
+                ) : null}
+              </div>
+            </td>
             <td className="lt-hdr-center">
               <div className="lt-co-name">{companyName}</div>
               <div className="lt-co-addr">{companyAddress}</div>
@@ -144,7 +166,26 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
               {partyAddrParts && <div className="lt-party-addr">{partyAddrParts}</div>}
               <div className="lt-date-range">{dateRangeLabel()}</div>
             </td>
-            <td className="lt-hdr-right"></td>
+            <td className="lt-hdr-right">
+              <div className="logo-container right-logo">
+                {logoSecondaryUrl && showLogo ? (
+                   <img
+                      src={logoSecondaryUrl}
+                      alt="Secondary Logo"
+                      className="logo-img"
+                   />
+                ) : showLogo ? (
+                   <div className="iso-border">
+                      <div className="iso-q">Q</div>
+                      <div className="iso-tuv-box">
+                         <div className="iso-tuv">TÜV</div>
+                         <div className="iso-sud">SÜD</div>
+                      </div>
+                      <div className="iso-std">ISO 9001</div>
+                   </div>
+                ) : null}
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -248,6 +289,60 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
         .lt-hdr-left  { width: 15%; vertical-align: top; padding: 6px 8px; }
         .lt-hdr-center { width: 70%; text-align: center; padding: 6px 4px; vertical-align: top; }
         .lt-hdr-right  { width: 15%; text-align: right; vertical-align: top; padding: 6px 8px; font-size: 8.5pt; }
+
+        .logo-container {
+          width: 75px;
+          height: 75px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .right-logo {
+          justify-content: flex-end;
+          float: right;
+        }
+        .logo-img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+        .header-svg {
+          width: 100%;
+          height: 100%;
+        }
+        .iso-border {
+          width: 60px;
+          border: 1.5pt solid #000;
+          text-align: center;
+        }
+        .iso-q {
+          font-size: 8pt;
+          font-weight: 900;
+          border-bottom: 1pt solid #000;
+          background: #f0f0f0;
+          padding: 1px 0;
+          line-height: 1;
+        }
+        .iso-tuv-box {
+          padding: 2px 0;
+        }
+        .iso-tuv {
+          font-size: 14pt;
+          font-weight: 900;
+          line-height: 1;
+        }
+        .iso-sud {
+          font-size: 9pt;
+          font-weight: 900;
+          line-height: 1;
+        }
+        .iso-std {
+          font-size: 7pt;
+          font-weight: 900;
+          border-top: 1pt solid #000;
+          padding: 1px 0;
+          line-height: 1;
+        }
 
         .lt-co-name    { font-size: 12pt; font-weight: bold; }
         .lt-co-addr    { font-size: 8.5pt; margin-top: 1px; }

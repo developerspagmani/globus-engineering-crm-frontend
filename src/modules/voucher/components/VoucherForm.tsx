@@ -248,7 +248,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 id: resolvedInv ? String(resolvedInv.id) : (it.id || it.invoiceNo || it.invoice_no),
                 invoiceNo: it.invoiceNo || it.invoice_no || resolvedInv?.invoiceNumber || '',
                 invoiceDate: it.invoiceDate || it.invoice_date || (resolvedInv as any)?.invoice_date || (resolvedInv as any)?.date || '',
-                amount: Number(it.amount || 0),
+                amount: Number(it.amount || 0) || (resolvedInv ? resolvedInv.grandTotal : 0),
                 adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
                 adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
               };
@@ -280,7 +280,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             });
             
             if (amount === 0 && inv) {
-              amount = inv.grandTotal - (inv.paidAmount || 0);
+              const pending = inv.grandTotal - (inv.paidAmount || 0);
+              amount = pending > 0 ? pending : inv.grandTotal;
             }
             
             results.push({ 
@@ -290,6 +291,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               adjustmentType: adjType,
               adjustmentValue: adjValue
             });
+          }
+          
+          if (results.length === 1 && results[0].amount === 0 && initialData.amount > 0) {
+            results[0].amount = initialData.amount + (initialData.tdsAmount || 0) + (initialData.othersAmount || 0);
           }
           
           if (results.length === 0 && initialData.amount > 0 && initialData.referenceNo) {
