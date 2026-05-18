@@ -286,12 +286,11 @@ export default function LedgerDetailPage() {
                  </div>
                  <div className="col-md-4 border-start text-end">
                     <div className="px-3">
-                        <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Current Balance Status</span>
-                        <h2 className={`fw-900 mb-0 text-nowrap ${closingBalance >= 0 ? 'text-success' : 'text-danger'}`} style={{ fontSize: '2.5rem' }}>
-                            ₹ {Math.abs(closingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                            <small className="ms-2 fs-6 opacity-50">{closingBalance >= 0 ? (isVendor ? 'CR' : 'DR') : (isVendor ? 'DR' : 'CR')}</small>
-                        </h2>
-                        <span className="small fw-bold opacity-75">{closingBalance >= 0 ? (isVendor ? 'Payable Amount' : 'Receivable Amount') : (isVendor ? 'Adv Paid' : 'Excess Paid')}</span>
+                         <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Current Balance Status</span>
+                         <h2 className={`fw-900 mb-0 text-nowrap ${closingBalance >= 0 ? 'text-success' : 'text-danger'}`} style={{ fontSize: '2.5rem' }}>
+                             ₹ {Math.abs(closingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                         </h2>
+                         <span className="small fw-bold opacity-75">{closingBalance >= 0 ? (isVendor ? 'Payable Amount' : 'Receivable Amount') : (isVendor ? 'Adv Paid' : 'Excess Paid')}</span>
                     </div>
                  </div>
               </div>
@@ -305,7 +304,7 @@ export default function LedgerDetailPage() {
                     <div className="card-body p-4">
                         <div className="d-flex align-items-center justify-content-between">
                             <div>
-                                <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Debits (DR)</span>
+                                <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Debits</span>
                                 <h4 className="fw-900 text-danger mb-0 text-nowrap">₹ {totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
                             </div>
                             <div className="bg-danger-subtle p-3 rounded-4"><i className="bi bi-dash-circle text-danger fs-4"></i></div>
@@ -318,7 +317,7 @@ export default function LedgerDetailPage() {
                     <div className="card-body p-4">
                         <div className="d-flex align-items-center justify-content-between">
                             <div>
-                                <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Credits (CR)</span>
+                                <span className="text-muted x-small fw-800 text-capitalize tracking-wider mb-1 d-block">Total Credits</span>
                                 <h4 className="fw-900 text-success mb-0 text-nowrap">₹ {totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h4>
                             </div>
                             <div className="bg-success-subtle p-3 rounded-4"><i className="bi bi-plus-circle text-success fs-4"></i></div>
@@ -407,15 +406,14 @@ export default function LedgerDetailPage() {
                                       );
                                     })()}
                                 </td>
-                                <td className={`py-3 text-end fw-bold text-nowrap ${e.debitValue > 0 ? 'text-danger' : 'text-light opacity-25'}`}>
-                                    {e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '0.00'}
+                                <td className={`py-3 text-end fw-bold text-nowrap ${e.debitValue > 0 ? 'text-danger' : 'text-muted opacity-50'}`}>
+                                    {e.debitValue > 0 ? e.debitValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}
                                 </td>
-                                <td className={`py-3 text-end fw-bold text-nowrap ${e.creditValue > 0 ? 'text-success' : 'text-light opacity-25'}`}>
-                                    {e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '0.00'}
+                                <td className={`py-3 text-end fw-bold text-nowrap ${e.creditValue > 0 ? 'text-success' : 'text-muted opacity-50'}`}>
+                                    {e.creditValue > 0 ? e.creditValue.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}
                                 </td>
                                 <td className="pe-5 py-3 text-end fw-900 border-start bg-light bg-opacity-25 text-nowrap" style={{ fontSize: '10.5pt' }}>
                                     ₹ {Math.abs(e.runningBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                    <span className="ms-1 x-small opacity-50">{e.runningBalance >= 0 ? (isVendor ? 'Cr' : 'Dr') : (isVendor ? 'Dr' : 'Cr')}</span>
                                 </td>
                             </tr>
                         ))}

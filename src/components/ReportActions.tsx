@@ -121,7 +121,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
     
     if (isIndustrial) {
       printWindow.document.write(`
-        body { font-family: 'Times New Roman', Times, serif; padding: 20px; color: black; }
+        body { font-family: 'Roboto', 'Arial', sans-serif; padding: 20px; color: black; }
         .audit-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .co-name { font-size: 18pt; font-weight: bold; }
         .co-addr { font-size: 10pt; margin-bottom: 5px; }

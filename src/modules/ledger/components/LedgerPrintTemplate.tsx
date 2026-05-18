@@ -274,7 +274,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
         .lt-wrap {
           background: #fff;
           width: 100%;
-          font-family: 'Times New Roman', Times, serif;
+          font-family: 'Roboto', 'Arial', sans-serif;
           font-size: 9.5pt;
           color: #000;
         }
@@ -391,7 +391,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
         }
         .lt-table td.num {
           text-align: right;
-          font-family: 'Courier New', monospace;
+          font-family: 'Roboto', 'Arial', sans-serif;
           font-size: 8.5pt;
         }
 
@@ -420,7 +420,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
           border-bottom: 2pt double #000;
           font-weight: bold;
           padding: 3px 6px;
-          font-family: 'Courier New', monospace;
+          font-family: 'Roboto', 'Arial', sans-serif;
           font-size: 8.5pt;
         }
 

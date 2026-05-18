@@ -133,9 +133,7 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
           <tr className="footer-net">
             <td colSpan={4} className="text-end fw-bold">NET DIFFERENCE</td>
             <td colSpan={2} className="text-end fw-bold">
-              {totalDebit > totalCredit 
-                ? `₹ ${fmt(totalDebit - totalCredit)} (DR)` 
-                : `₹ ${fmt(totalCredit - totalDebit)} (CR)`}
+              ₹ {fmt(Math.abs(totalDebit - totalCredit))}
             </td>
           </tr>
         </tfoot>
@@ -143,17 +141,10 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
 
       <style jsx>{`
         .audit-wrap {
-          padding: 20mm 15mm;
-          background: white;
-          color: black;
-          font-family: 'Times New Roman', Times, serif;
-          font-size: 10pt;
-        }
-        .audit-wrap {
           padding: 15mm 10mm;
           background: white;
           color: black;
-          font-family: 'Times New Roman', Times, serif;
+          font-family: 'Roboto', 'Arial', sans-serif;
           font-size: 10pt;
         }
         .industrial-header {

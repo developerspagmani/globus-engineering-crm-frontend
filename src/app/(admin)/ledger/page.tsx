@@ -299,14 +299,12 @@ export default function LedgerPage() {
         <td class="right">${e.type==='debit' ? fmt(Number(e.amount)) : ''}</td>
         <td class="right">${e.type==='credit' ? fmt(Number(e.amount)) : ''}</td>
       </tr>`).join('');
-    const net = totalDebit > totalCredit
-      ? `₹ ${fmt(totalDebit - totalCredit)} (DR)`
-      : `₹ ${fmt(totalCredit - totalDebit)} (CR)`;
+    const net = `₹ ${fmt(Math.abs(totalDebit - totalCredit))}`;
     const today = new Date().toLocaleDateString('en-GB');
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ledger Audit</title>
     <style>
       *{box-sizing:border-box;margin:0;padding:0;}
-      body{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;background:#fff;padding:15mm 10mm;}
+      body{font-family:'Roboto', 'Arial', sans-serif;font-size:10pt;color:#000;background:#fff;padding:15mm 10mm;}
       
       .industrial-header {
         display: flex;
