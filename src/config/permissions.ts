@@ -33,7 +33,16 @@ export const navigationConfig: NavItem[] = [
       { name: 'Invoice Status', icon: 'bi-graph-up', path: '/invoices/status', moduleId: 'mod_invoice' },
     ]
   },
-  { name: 'Ledger', icon: 'bi-journal-check', path: '/ledger', moduleId: 'mod_ledger' },
+  { 
+    name: 'Ledger', 
+    icon: 'bi-journal-check', 
+    path: '#', 
+    moduleId: 'mod_ledger',
+    children: [
+      { name: 'Customer', icon: 'bi-people', path: '/ledger', moduleId: 'mod_ledger' },
+      { name: 'Company', icon: 'bi-building-check', path: '/ledger/audit', moduleId: 'mod_ledger' },
+    ]
+  },
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
   
   { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },

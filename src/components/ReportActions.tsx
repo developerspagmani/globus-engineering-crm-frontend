@@ -354,10 +354,10 @@ const ReportActions: React.FC<ReportActionsProps> = ({
        {/* Presets - Only show if date setters are available */}
        {setFromDate && setToDate && (
          <div className="d-flex gap-1 me-2 bg-white p-1 rounded-pill border shadow-sm px-2">
-             <button onClick={() => handlePresetClick('week')} className={getBtnClass('week')} style={{ fontSize: '0.75rem' }}>L7D</button>
-             <button onClick={() => handlePresetClick('month')} className={getBtnClass('month')} style={{ fontSize: '0.75rem' }}>LM</button>
-             <button onClick={() => handlePresetClick('thisMonth')} className={getBtnClass('thisMonth')} style={{ fontSize: '0.75rem' }}>TM</button>
-             <button onClick={() => handlePresetClick('year')} className={getBtnClass('year')} style={{ fontSize: '0.75rem' }}>FY</button>
+             <button onClick={() => handlePresetClick('week')} className={getBtnClass('week')} style={{ fontSize: '0.75rem' }}>Last 7 Days</button>
+             <button onClick={() => handlePresetClick('month')} className={getBtnClass('month')} style={{ fontSize: '0.75rem' }}>Last Month</button>
+             <button onClick={() => handlePresetClick('thisMonth')} className={getBtnClass('thisMonth')} style={{ fontSize: '0.75rem' }}>This Month</button>
+             <button onClick={() => handlePresetClick('year')} className={getBtnClass('year')} style={{ fontSize: '0.75rem' }}>Financial Year</button>
          </div>
        )}
 

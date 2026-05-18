@@ -17,7 +17,7 @@ const PageModeIndicator: React.FC<PageModeIndicatorProps> = ({ mode, editUrl, vi
   const getIcon = () => {
     switch (mode) {
       case 'create': return 'bi-plus-circle-fill';
-      case 'edit': return 'bi-pencil-square';
+      case 'edit': return 'bi-pencil-fill';
       case 'view': return 'bi-eye-fill';
       default: return 'bi-info-circle-fill';
     }
@@ -25,10 +25,10 @@ const PageModeIndicator: React.FC<PageModeIndicatorProps> = ({ mode, editUrl, vi
 
   const getColor = () => {
     switch (mode) {
-      case 'create': return '#3b82f6'; // Blue
+      case 'create': return '#f59e0b'; // Amber
       case 'edit': return '#f59e0b';   // Amber
-      case 'view': return '#10b981';   // Emerald
-      default: return '#6b7280';
+      case 'view': return '#f59e0b';   // Amber
+      default: return '#f59e0b';
     }
   };
 
@@ -41,14 +41,14 @@ const PageModeIndicator: React.FC<PageModeIndicatorProps> = ({ mode, editUrl, vi
           <i className={`bi ${getIcon()} me-2`}></i>
           <span className="mode-text">{mode === 'create' ? 'NEW RECORD' : `${mode.toUpperCase()} MODE`}</span>
         </div>
-        
+
         {mode === 'view' && editUrl && (
           <Link href={editUrl} className="mode-action highlight-edit">
             <i className="bi bi-pencil-fill me-1"></i>
             <span>SWITCH TO EDIT</span>
           </Link>
         )}
-        
+
         {mode === 'edit' && viewUrl && (
           <Link href={viewUrl} className="mode-action highlight-view">
             <i className="bi bi-eye-fill me-1"></i>
@@ -97,6 +97,11 @@ const PageModeIndicator: React.FC<PageModeIndicatorProps> = ({ mode, editUrl, vi
           font-weight: 900;
           color: #fff !important;
           text-transform: uppercase;
+        }
+
+        .action-text {
+          border-bottom: 1.5px solid currentColor;
+          padding-bottom: 1px;
         }
 
         .highlight-edit {

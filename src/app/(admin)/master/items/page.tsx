@@ -216,10 +216,10 @@ export default function ItemDetailsPage() {
                   { label: view === 'add' ? (editingId ? 'Item Profile' : 'New Item') : 'Item Hub', active: true }
                 ]} 
               />
-              <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+              <h2 className="fw-900 tracking-tight text-dark mb-2 mt-2">
                 {view === 'add' ? (editingId ? (isViewOnly ? 'Item Profile' : 'Edit Item') : 'Add Item') : 'Item Hub'}
               </h2>
-              <p className="text-muted small mb-0">
+              <p className="text-muted small mb-0 mt-2">
                 {view === 'add' ? 'Manage detailed specifications and pricing for this industrial component.' : 'Manage your complete catalog of parts, tools, and industrial materials.'}
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function ItemDetailsPage() {
 
         <div className="p-0">
           {view === 'add' ? (
-            <div style={{ maxWidth: '600px' }}>
+            <div className="mt-3" style={{ maxWidth: '600px', marginLeft: '44px' }}>
               <div className="card border-0 shadow-sm rounded-3">
               <div className="card-body p-4">
                 <form onSubmit={handleSubmit}>

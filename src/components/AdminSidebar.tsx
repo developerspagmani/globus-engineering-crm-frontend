@@ -20,6 +20,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
 
   // State for expanded menus
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => {
     setMounted(true);
@@ -31,33 +32,88 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     );
   };
 
-  const filteredItems = navigationConfig.filter(item =>
-    hasPermission(item, user, company?.activeModules)
-  );
+  const filteredItems = React.useMemo(() => {
+    return navigationConfig.filter(item =>
+      hasPermission(item, user, company?.activeModules)
+    );
+  }, [user, company?.activeModules]);
+
+  const searchedItems = React.useMemo(() => {
+    if (!searchQuery.trim()) return filteredItems;
+    
+    const lowerQuery = searchQuery.toLowerCase();
+    
+    return filteredItems.map(item => {
+      const parentMatches = item.name.toLowerCase().includes(lowerQuery);
+      const matchingChildren = item.children?.filter(child => 
+        child.name.toLowerCase().includes(lowerQuery)
+      ) || [];
+      
+      if (parentMatches || matchingChildren.length > 0) {
+        return {
+          ...item,
+          children: parentMatches ? item.children : matchingChildren
+        };
+      }
+      return null;
+    }).filter(Boolean) as typeof filteredItems;
+  }, [filteredItems, searchQuery]);
 
   if (!mounted) return <div className="sidebar bg-white shadow-sm h-100" style={{ width: collapsed ? '80px' : '260px' }}></div>;
 
   return (
     <div className={`sidebar bg-white shadow-sm h-100 d-flex flex-column ${collapsed ? 'collapsed' : ''}`} style={{ zIndex: 1000 }}>
       {/* Brand Header */}
-      <div className={`d-flex align-items-center mb-2 ${collapsed ? 'justify-content-center py-4' : 'p-4 gap-3'}`}>
-        <div className="bg-gradient p-2 rounded-4 shadow-accent d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', minWidth: '40px', background: 'var(--primary-gradient)' }}>
-          <i className="bi bi-cpu text-white fs-5"></i>
+      <div className={`d-flex align-items-center justify-content-center mb-2 ${collapsed ? 'py-4' : 'p-4 gap-3'}`}>
+        <div className="d-flex align-items-center justify-content-center rounded-3 shadow-sm bg-white" style={{ width: '45px', height: '45px', minWidth: '45px', overflow: 'hidden' }}>
+          <img src="/logo.jpg" alt="Globus Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.15)' }} />
         </div>
         {!collapsed && (
-          <div className="overflow-hidden">
-            <h6 className="fw-800 mb-0 text-truncate text-dark tracking-tight" style={{ fontSize: '1rem' }}>GLOBUS</h6>
-            <p className="x-small mb-0 text-truncate text-uppercase fw-700 tracking-widest opacity-80" style={{ fontSize: '0.65rem', color: 'var(--accent-color)' }}>Engineering</p>
+          <div className="d-flex flex-column justify-content-center text-start">
+            <h6 className="fw-900 mb-0 text-dark tracking-tight" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>GLOBUS</h6>
+            <p className="mb-0 text-uppercase fw-bold" style={{ fontSize: '0.7rem', color: '#ea580c', letterSpacing: '1px' }}>Engineering</p>
           </div>
         )}
       </div>
 
+      {/* Search Bar */}
+      {!collapsed && (
+        <div className="px-3 mb-3">
+          <div className="search-group w-100" style={{ maxWidth: '100%' }}>
+            <span className="input-group-text">
+              <i className="bi bi-search"></i>
+            </span>
+            <input 
+              type="text" 
+              className="form-control search-bar shadow-none" 
+              placeholder="Search menu..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <span 
+                className="position-absolute d-flex align-items-center justify-content-center text-muted" 
+                style={{ right: '15px', top: '0', bottom: '0', cursor: 'pointer', zIndex: 10 }}
+                onClick={() => setSearchQuery('')}
+              >
+                <i className="bi bi-x-circle-fill"></i>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Navigation Links */}
       <div className="flex-grow-1 sidebar-nav overflow-y-auto px-2">
         <nav className="nav flex-column gap-1">
-          {filteredItems.map((item) => {
+          {searchedItems.length === 0 && searchQuery && (
+            <div className="text-center p-3 text-muted small fw-bold">
+              No matches found
+            </div>
+          )}
+          {searchedItems.map((item) => {
             const hasChildren = item.children && item.children.length > 0;
-            const isExpanded = expandedItems.includes(item.name);
+            const isExpanded = !!searchQuery || expandedItems.includes(item.name);
             
             // Precise active check for parent
             const isActive = pathname === item.path || 

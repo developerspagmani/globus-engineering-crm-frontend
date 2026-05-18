@@ -179,10 +179,10 @@ export default function ProcessDetailsPage() {
                   { label: view === 'add' ? (editingId ? 'Process Detail' : 'Add Process') : 'Workflow Hub', active: true }
                 ]}
               />
-              <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+              <h2 className="fw-900 tracking-tight text-dark mb-2 mt-2">
                 {view === 'add' ? (editingId ? (isViewOnly ? 'Workflow Detail' : 'Edit Process') : 'Add Process') : 'Workflow Hub'}
               </h2>
-              <p className="text-muted small mb-0">
+              <p className="text-muted small mb-0 mt-2">
                 {view === 'add' ? 'Manage detailed technical steps and stages for industrial production.' : 'Manage your complete catalog of manufacturing and operational processes.'}
               </p>
             </div>
@@ -221,7 +221,7 @@ export default function ProcessDetailsPage() {
 
         <div className="p-0">
           {view === 'add' ? (
-            <div style={{ maxWidth: '600px' }}>
+            <div className="mt-3" style={{ maxWidth: '600px', marginLeft: '44px' }}>
               <div className="card border-0 shadow-sm rounded-3">
                 <div className="card-body p-4">
                   <form onSubmit={handleSubmit}>
