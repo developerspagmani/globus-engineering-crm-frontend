@@ -253,7 +253,7 @@ export default function LedgerPage() {
   // Helper: Build the audit HTML for a print window
   const buildAuditHtml = (entries: LedgerEntry[], companyName: string, companyAddress: string, fromLabel: string, toLabel: string) => {
     const fmt = (n: number) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate()}-${dt.toLocaleString('en-GB',{month:'short'})}-${String(dt.getFullYear()).slice(-2)}`; };
+    const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${String(dt.getDate()).padStart(2, '0')}.${String(dt.getMonth() + 1).padStart(2, '0')}.${dt.getFullYear()}`; };
     const sorted = [...entries].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const totalDebit = entries.reduce((s,e) => s + (e.type==='debit' ? Number(e.amount) : 0), 0);
     const totalCredit = entries.reduce((s,e) => s + (e.type==='credit' ? Number(e.amount) : 0), 0);
@@ -263,7 +263,6 @@ export default function LedgerPage() {
         <td class="cap">${e.partyName||'-'}</td>
         <td>${e.description||'-'}</td>
         <td>${e.vchType||'JOURNAL'}</td>
-        <td>${e.vchNo||'-'}</td>
         <td class="right">${e.type==='debit' ? fmt(Number(e.amount)) : ''}</td>
         <td class="right">${e.type==='credit' ? fmt(Number(e.amount)) : ''}</td>
       </tr>`).join('');
@@ -315,7 +314,6 @@ export default function LedgerPage() {
         border: 1.5pt solid #000;
         border-top: 0;
         padding: 4px 0;
-        margin-bottom: 20px;
       }
 
       .meta-grid{width:100%;margin-bottom:20px;border:1.5pt solid #000;border-top:0;padding:10px;}
@@ -383,11 +381,11 @@ export default function LedgerPage() {
       </div>
     </div>
     <table>
-      <thead><tr><th>Date</th><th>Party Name</th><th>Particulars</th><th>Vch Type</th><th>Vch No</th><th class="right">Debit</th><th class="right">Credit</th></tr></thead>
+      <thead><tr><th>Date</th><th>Party Name</th><th>Particulars</th><th>Vch Type</th><th class="right">Debit</th><th class="right">Credit</th></tr></thead>
       <tbody>${rows}</tbody>
       <tfoot>
-        <tr class="ft-total"><td colspan="5" class="right">TOTAL PERIOD TRANSACTIONS</td><td class="right">${fmt(totalDebit)}</td><td class="right">${fmt(totalCredit)}</td></tr>
-        <tr class="ft-net"><td colspan="5" class="right">NET DIFFERENCE</td><td colspan="2" class="right">${net}</td></tr>
+        <tr class="ft-total"><td colspan="4" class="right">TOTAL PERIOD TRANSACTIONS</td><td class="right">${fmt(totalDebit)}</td><td class="right">${fmt(totalCredit)}</td></tr>
+        <tr class="ft-net"><td colspan="4" class="right">NET DIFFERENCE</td><td colspan="2" class="right">${net}</td></tr>
       </tfoot>
     </table>
     <script>window.onload=()=>{setTimeout(()=>{window.print();},500);}<\/script>
@@ -410,7 +408,7 @@ export default function LedgerPage() {
       const entries: LedgerEntry[] = response.items;
       const companyName = activeCompany?.name?.toUpperCase() || 'GLOBUS ENGINEERING';
       const companyAddress = (activeCompany as any)?.address || 'COIMBATORE';
-      const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate()}-${dt.toLocaleString('en-GB',{month:'short'})}-${String(dt.getFullYear()).slice(-2)}`; };
+      const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${String(dt.getDate()).padStart(2, '0')}.${String(dt.getMonth() + 1).padStart(2, '0')}.${dt.getFullYear()}`; };
       const fromLabel = filters.dateFrom ? fmtDate(filters.dateFrom) : 'Start';
       const toLabel = filters.dateTo ? fmtDate(filters.dateTo) : 'Today';
 

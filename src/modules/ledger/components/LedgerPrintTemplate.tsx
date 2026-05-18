@@ -27,10 +27,10 @@ const fmt = (n: number) =>
 const formatLedgerDate = (dateStr: string) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  const day = d.getDate();
-  const month = d.toLocaleString('en-GB', { month: 'short' });
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}-${month}-${year}`;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
 };
 
 const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
@@ -119,8 +119,8 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
   const gt = Math.max(drWithOp, crWithOp);
 
   const dateRangeLabel = () => {
-    const from = dateFrom ? formatLedgerDate(dateFrom) : '1-Apr-25';
-    const to = dateTo ? formatLedgerDate(dateTo) : '31-Mar-26';
+    const from = dateFrom ? formatLedgerDate(dateFrom) : '01.04.2025';
+    const to = dateTo ? formatLedgerDate(dateTo) : '31.03.2026';
     return `${from} to ${to}`;
   };
 
@@ -156,7 +156,6 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
             <th className="w-date">Date</th>
             <th className="w-part">Particulars</th>
             <th className="w-vtype">Vch Type</th>
-            <th className="w-vno">Vch No.</th>
             <th className="w-amt">Debit</th>
             <th className="w-amt">Credit</th>
           </tr>
@@ -165,12 +164,11 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
 
           {/* ── Opening Balance ── */}
           <tr>
-            <td className="td-date">{dateFrom ? formatLedgerDate(dateFrom) : '1-Apr-25'}</td>
+            <td className="td-date">{dateFrom ? formatLedgerDate(dateFrom) : '01.04.2025'}</td>
             <td>
               <span className="byto">{isDebitOpening ? 'To' : 'By'}</span>
               <strong>Opening Balance</strong>
             </td>
-            <td></td>
             <td></td>
             <td className="num">{isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
             <td className="num">{!isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
@@ -188,7 +186,6 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                   {e.description?.replace(/^Migrated\s+/i, '') || e.vchType || '-'}
                 </td>
                 <td>{e.vchType || ''}</td>
-                <td>{e.vchNo || ''}</td>
                 <td className="num">{e.debitValue > 0 ? fmt(e.debitValue) : ''}</td>
                 <td className="num">{e.creditValue > 0 ? fmt(e.creditValue) : ''}</td>
               </tr>
@@ -201,7 +198,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
         <tfoot>
           {/* ── Subtotals row ── */}
           <tr className="row-subtotal">
-            <td colSpan={4}></td>
+            <td colSpan={3}></td>
             <td className="num">{fmt(drWithOp)}</td>
             <td className="num">{fmt(crWithOp)}</td>
           </tr>
@@ -214,7 +211,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                 <span className="byto">{isDebitClosing ? 'To' : 'By'}</span>
                 <strong>Closing Balance</strong>
               </td>
-              <td colSpan={2}></td>
+              <td></td>
               <td className="num">{isDebitClosing ? fmt(closingBalance) : ''}</td>
               <td className="num">{!isDebitClosing ? fmt(closingBalance) : ''}</td>
             </tr>
@@ -222,7 +219,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
 
           {/* ── Grand Total ── */}
           <tr className="row-grandtotal">
-            <td colSpan={4}></td>
+            <td colSpan={3}></td>
             <td className="num">{fmt(gt)}</td>
             <td className="num">{fmt(gt)}</td>
           </tr>
@@ -288,9 +285,8 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
         }
 
         .w-date  { width: 10%; white-space: nowrap; }
-        .w-part  { width: 40%; }
+        .w-part  { width: 50%; }
         .w-vtype { width: 16%; }
-        .w-vno   { width: 10%; }
         .w-amt   { width: 12%; text-align: right; }
 
         .lt-table td {

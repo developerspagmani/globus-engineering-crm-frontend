@@ -16,10 +16,10 @@ const fmt = (n: number) =>
 const formatLedgerDate = (dateStr: string) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  const day = d.getDate();
-  const month = d.toLocaleString('en-GB', { month: 'short' });
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}-${month}-${year}`;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
 };
 
 const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
@@ -79,7 +79,6 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
             <th>Party Name</th>
             <th>Particulars</th>
             <th>Vch Type</th>
-            <th>Vch No</th>
             <th className="text-end">Debit</th>
             <th className="text-end">Credit</th>
           </tr>
@@ -91,7 +90,6 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
               <td className="text-capitalize">{e.partyName || '-'}</td>
               <td>{e.description || '-'}</td>
               <td>{e.vchType || 'JOURNAL'}</td>
-              <td>{e.vchNo || '-'}</td>
               <td className="text-end">{e.type === 'debit' ? fmt(e.amount) : ''}</td>
               <td className="text-end">{e.type === 'credit' ? fmt(e.amount) : ''}</td>
             </tr>
@@ -99,12 +97,12 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
         </tbody>
         <tfoot>
           <tr className="footer-total">
-            <td colSpan={5} className="text-end fw-bold">TOTAL PERIOD TRANSACTIONS</td>
+            <td colSpan={4} className="text-end fw-bold">TOTAL PERIOD TRANSACTIONS</td>
             <td className="text-end fw-bold">{fmt(totalDebit)}</td>
             <td className="text-end fw-bold">{fmt(totalCredit)}</td>
           </tr>
           <tr className="footer-net">
-            <td colSpan={5} className="text-end fw-bold">NET DIFFERENCE</td>
+            <td colSpan={4} className="text-end fw-bold">NET DIFFERENCE</td>
             <td colSpan={2} className="text-end fw-bold">
               {totalDebit > totalCredit 
                 ? `₹ ${fmt(totalDebit - totalCredit)} (DR)` 
@@ -169,7 +167,6 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
           border: 1.5pt solid #000;
           border-top: 0;
           padding: 4px 0;
-          margin-bottom: 20px;
         }
         
         .audit-table {
