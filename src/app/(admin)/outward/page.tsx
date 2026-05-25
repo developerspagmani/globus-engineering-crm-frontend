@@ -12,7 +12,7 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
@@ -22,6 +22,8 @@ import html2canvas from 'html2canvas';
 export default function OutwardListPage() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const partyTypeFilter = searchParams.get('type') as 'customer' | 'vendor' | null;
   const { items: outwards, filters, pagination, loading } = useSelector((state: RootState) => state.outward);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
@@ -38,9 +40,10 @@ export default function OutwardListPage() {
       company_id: company?.id,
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
-      search: filters.search
+      search: filters.search,
+      partyType: partyTypeFilter || filters.partyType,
     }));
-  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType]);
 
   const totalPages = pagination.totalPages;
   const paginatedOutwards = outwards;
@@ -86,7 +89,9 @@ export default function OutwardListPage() {
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
             <Breadcrumb items={[{ label: 'Outward Logistics', active: true }]} />
-            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Outward Entries</h2>
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+              {partyTypeFilter === 'customer' ? 'Customer Outwards' : partyTypeFilter === 'vendor' ? 'Vendor Outwards' : 'Outward Entries'}
+            </h2>
             <p className="text-muted small mb-0">Manage outgoing finished goods and customer/vendor dispatches.</p>
           </div>
           <div className="d-flex align-items-center gap-2">

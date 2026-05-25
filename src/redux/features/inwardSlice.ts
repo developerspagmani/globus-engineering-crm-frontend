@@ -14,13 +14,15 @@ export const fetchInwards = createAsyncThunk(
     fromDate?: string;
     toDate?: string;
     id?: string;
+    partyType?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, id } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, id, partyType } = params;
       let url = `/inward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
+      if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (id) url += `&id=${id}`;
@@ -236,6 +238,7 @@ interface InwardState {
   filters: {
     search: string;
     status: 'all' | 'pending' | 'completed' | 'cancelled';
+    partyType: 'all' | 'customer' | 'vendor';
     fromDate: string;
     toDate: string;
   };
@@ -259,6 +262,7 @@ const initialState: InwardState = {
   filters: {
     search: '',
     status: 'all',
+    partyType: 'all',
     fromDate: '',
     toDate: '',
   },

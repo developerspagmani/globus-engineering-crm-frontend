@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import Breadcrumb from '@/components/Breadcrumb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -28,6 +29,7 @@ const PaymentReportPage = () => {
   const [activeTab, setActiveTab] = useState<'PAYMENT' | 'PENDING'>('PAYMENT');
   const [ageingFilter, setAgeingFilter] = useState<'all' | '0-30' | '31-60' | '61-90' | '90+'>('all');
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [partyType, setPartyType] = useState<'all' | 'customer' | 'vendor'>('customer');
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -55,7 +57,8 @@ const PaymentReportPage = () => {
         search: searchTerm,
         fromDate: fromDate,
         toDate: toDate,
-        partyId: selectedCustomerId
+        partyId: selectedCustomerId,
+        partyType: partyType
       }));
       (dispatch as any)(fetchPendingPayments({
         company_id: activeCompany.id,
@@ -63,12 +66,13 @@ const PaymentReportPage = () => {
         limit: pPagination.itemsPerPage,
         search: searchTerm,
         fromDate: fromDate,
-        toDate: toDate
+        toDate: toDate,
+        partyType: partyType
       }));
 
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
     }
-  }, [dispatch, activeCompany?.id, vPagination.currentPage, pPagination.currentPage, searchTerm, fromDate, toDate, selectedCustomerId]);
+  }, [dispatch, activeCompany?.id, vPagination.currentPage, pPagination.currentPage, searchTerm, fromDate, toDate, selectedCustomerId, partyType]);
 
 
   const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'PAYMENT' | 'PENDING'} | null>(null);
@@ -109,6 +113,7 @@ const PaymentReportPage = () => {
       if (toDate) url += `&toDate=${toDate}`;
 
       if (selectedCustomerId) url += `&partyId=${selectedCustomerId}`;
+      if (partyType !== 'all') url += `&partyType=${partyType}`;
 
       const response = await api.get(url);
       const allVouchers = response.data.items;
@@ -136,6 +141,7 @@ const PaymentReportPage = () => {
       if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (partyType !== 'all') url += `&partyType=${partyType}`;
 
 
       const response = await api.get(url);
@@ -231,6 +237,7 @@ const PaymentReportPage = () => {
             setToDate(""); 
             setSearchTerm("");
             setSelectedCustomerId("");
+            setPartyType("customer");
             (dispatch as any)(fetchVouchers({ company_id: activeCompany?.id })); 
             (dispatch as any)(fetchPendingPayments({ company_id: activeCompany?.id })); 
           }}>
@@ -272,6 +279,7 @@ const PaymentReportPage = () => {
           setToDate(""); 
           setSearchTerm("");
           setSelectedCustomerId("");
+          setPartyType("customer");
         }}>Payment History</button>
         <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PENDING' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => { 
           setActiveTab('PENDING'); 
@@ -279,14 +287,22 @@ const PaymentReportPage = () => {
           setToDate(""); 
           setSearchTerm("");
           setSelectedCustomerId("");
+          setPartyType("customer");
         }}>Pending Payments (Ageing)</button>
       </div>
 
       <div className="card shadow-sm border-0 mb-4 rounded-4 overflow-hidden">
         <div className="card-body p-3">
-          <div className="filter-bar-row">
-            <div className="filter-item-search" style={{ maxWidth: '260px' }}>
-              <div className="search-group" style={{ width: "260px" }}>
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
+              <PartyTypeToggle
+                partyType={partyType}
+                setPartyType={setPartyType as any}
+              />
+            </div>
+            
+            <div className="filter-item-search flex-grow-1" style={{ maxWidth: '260px' }}>
+              <div className="search-group" style={{ width: "100%" }}>
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
@@ -300,19 +316,6 @@ const PaymentReportPage = () => {
               </div>
             </div>
 
-            <div className="filter-item-select" style={{ minWidth: '220px' }}>
-              <select
-                className="form-select search-bar"
-                value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                style={{ width: "340px" }}
-              >
-                <option value=""> All Customers </option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                ))}
-              </select>
-            </div>
 
             <div className="date-filter-group ms-auto">
               <input type="date" className="text-muted" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />

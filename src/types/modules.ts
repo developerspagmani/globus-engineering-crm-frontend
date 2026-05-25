@@ -23,6 +23,7 @@ export interface Invoice {
   po_date?: string;     
   dcNo?: string;        
   dc_no?: string;       
+  challanNumber?: string;
   dcDate?: string;      
   dc_date?: string;     
   date: string;

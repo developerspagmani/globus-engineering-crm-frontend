@@ -17,6 +17,7 @@ import { checkActionPermission } from '@/config/permissions';
 import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 
 const ChallanPage = () => {
   const dispatch = useDispatch();
@@ -57,9 +58,10 @@ const ChallanPage = () => {
       company_id: activeCompany?.id,
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
-      search: filters.search
+      search: filters.search,
+      partyType: filters.partyType
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType]);
 
   if (!mounted) return <Loader text="Initializing..." />;
 
@@ -134,8 +136,15 @@ const ChallanPage = () => {
 
       <div className="card filter-card">
         <div className="card-body p-3">
-          <div className="filter-bar-row">
-            <div className="filter-item-search">
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
+              <PartyTypeToggle
+                partyType={(filters.partyType as any) || 'customer'}
+                setPartyType={(val) => dispatch(setChallanFilters({ partyType: val }))}
+              />
+            </div>
+            
+            <div className="filter-item-search flex-grow-1">
               <div className="search-group">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
@@ -150,20 +159,7 @@ const ChallanPage = () => {
               </div>
             </div>
 
-            <div className="filter-item-select">
-              <select
-                className="form-select search-bar"
-                value={filters.type}
-                onChange={(e) => dispatch(setChallanFilters({ type: e.target.value as any }))}
-              >
-                <option value="all">All Types</option>
-                <option value="delivery">Delivery</option>
-                <option value="returnable">Returnable</option>
-                <option value="job_work">Job Work</option>
-              </select>
-            </div>
-
-            <div className="filter-item-select">
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
               <select
                 className="form-select search-bar"
                 value={filters.bill_type || 'all'}

@@ -7,6 +7,7 @@ import Loader from '@/components/Loader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PaginationComponent from '@/components/shared/Pagination';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 
 const InvoiceStatus = () => {
   const router = useRouter();
@@ -15,15 +16,13 @@ const InvoiceStatus = () => {
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const [activeTab, setActiveTab] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>('all');
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [partyType, setPartyType] = React.useState<'customer' | 'vendor'>('customer');
 
   React.useEffect(() => {
     if (activeCompany?.id) {
-       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 10000, type: 'WP' }));
-
-
-
+       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 10000, type: 'WP', partyType }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, partyType]);
 
   // Deduplicate logically to prevent visual doubling if database has duplicate records with different IDs
   const uniqueInvoices = React.useMemo(() => {
@@ -130,7 +129,17 @@ const InvoiceStatus = () => {
       <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div className="card-header bg-white border-0 py-3">
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div className="filter-item-search mb-0" style={{ maxWidth: '350px', width: '100%' }}>
+            <div className="d-flex gap-3 align-items-center flex-grow-1" style={{ maxWidth: '550px' }}>
+              <div className="filter-item-select" style={{ minWidth: '150px' }}>
+                <PartyTypeToggle
+                  partyType={partyType}
+                  setPartyType={(type) => {
+                    setPartyType(type);
+                    dispatch(setInvoicePage(1));
+                  }}
+                />
+              </div>
+              <div className="filter-item-search mb-0 flex-grow-1">
               <div className="search-group">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
@@ -146,6 +155,7 @@ const InvoiceStatus = () => {
                   }}
                 />
               </div>
+            </div>
             </div>
             <div className="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-700 text-nowrap">
               {totalItems} Invoices Found

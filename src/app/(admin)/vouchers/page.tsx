@@ -15,6 +15,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import html2canvas from 'html2canvas';
 
 
@@ -36,11 +37,12 @@ const VoucherPage = () => {
         limit: pagination.itemsPerPage,
         search: filters.search,
         type: filters.type,
+        partyType: filters.partyType,
         fromDate: filters.fromDate,
         toDate: filters.toDate
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.partyType, filters.fromDate, filters.toDate]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
@@ -178,8 +180,15 @@ const VoucherPage = () => {
       {/* Filters Card */}
       <div className="card filter-card">
         <div className="card-body p-3">
-          <div className="filter-bar-row">
-            <div className="filter-item-search">
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
+              <PartyTypeToggle
+                partyType={(filters.partyType as any) || 'customer'}
+                setPartyType={(val) => dispatch(setVoucherFilters({ partyType: val }))}
+              />
+            </div>
+            
+            <div className="filter-item-search flex-grow-1">
               <div className="search-group">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>

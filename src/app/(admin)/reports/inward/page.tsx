@@ -11,6 +11,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import html2canvas from 'html2canvas';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import jsPDF from 'jspdf';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
@@ -21,6 +22,7 @@ const InwardReportPage = () => {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
+  const [partyType, setPartyType] = useState<'all' | 'customer' | 'vendor'>('customer');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
@@ -36,17 +38,19 @@ const InwardReportPage = () => {
         page: pagination.currentPage,
         limit: pagination.itemsPerPage,
         search,
+        partyType,
         fromDate,
         toDate
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, fromDate, toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, partyType, fromDate, toDate]);
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
 
     let url = `/inward?page=1&limit=10000&company_id=${activeCompany.id}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (partyType !== 'all') url += `&partyType=${partyType}`;
     if (fromDate) url += `&fromDate=${fromDate}`;
     if (toDate) url += `&toDate=${toDate}`;
 
@@ -138,8 +142,15 @@ const InwardReportPage = () => {
       {/* Filter Card */}
       <div className="card border-0 shadow-sm mb-4 overflow-hidden rounded-4">
         <div className="card-body p-3">
-          <div className="filter-bar-row">
-            <div className="filter-item-search">
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
+              <PartyTypeToggle
+                partyType={partyType}
+                setPartyType={setPartyType as any}
+              />
+            </div>
+
+            <div className="filter-item-search flex-grow-1">
               <div className="search-group">
                 <span className="input-group-text"><i className="bi bi-search"></i></span>
                 <input

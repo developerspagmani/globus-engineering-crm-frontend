@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
 
 import ExportExcel from '@/components/shared/ExportExcel';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
 
@@ -20,6 +21,7 @@ const PendingPaymentPage = () => {
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [partyType, setPartyType] = useState<'all' | 'customer' | 'vendor'>('customer');
   const router = useRouter();
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -30,11 +32,11 @@ const PendingPaymentPage = () => {
   useEffect(() => {
     setMounted(true);
     if (activeCompany?.id) {
-      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000, status: 'pending' }));
+      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000, status: 'pending', partyType }));
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
       (dispatch as any)(fetchInwards({ company_id: activeCompany.id, limit: 1000 }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, partyType]);
 
   if (!mounted) return null;
 
@@ -114,8 +116,15 @@ const PendingPaymentPage = () => {
         {/* Filter Bar */}
         <div className="card filter-card">
           <div className="card-body p-3">
-            <div className="filter-bar-row">
-              <div className="filter-item-search">
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+              <div className="filter-item-select" style={{ minWidth: '150px' }}>
+                 <PartyTypeToggle
+                    partyType={partyType}
+                    setPartyType={setPartyType as any}
+                 />
+              </div>
+
+              <div className="filter-item-search flex-grow-1">
                 <div className="search-group">
                   <span className="input-group-text">
                     <i className="bi bi-search"></i>

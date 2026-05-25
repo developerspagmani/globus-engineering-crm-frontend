@@ -45,14 +45,14 @@ const PageModeIndicator: React.FC<PageModeIndicatorProps> = ({ mode, editUrl, vi
         {mode === 'view' && editUrl && (
           <Link href={editUrl} className="mode-action highlight-edit">
             <i className="bi bi-pencil-fill me-1"></i>
-            <span>SWITCH TO EDIT</span>
+            <span>EDIT</span>
           </Link>
         )}
 
         {mode === 'edit' && viewUrl && (
           <Link href={viewUrl} className="mode-action highlight-view">
             <i className="bi bi-eye-fill me-1"></i>
-            <span>SWITCH TO VIEW</span>
+            <span>VIEW</span>
           </Link>
         )}
       </div>

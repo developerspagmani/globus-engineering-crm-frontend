@@ -13,7 +13,9 @@ import ModuleGuard from '@/components/ModuleGuard';
 import { checkActionPermission } from '@/config/permissions';
 import FullPageStatus from '@/components/FullPageStatus';
 
-export default function ManageVisitsPage() {
+import { Suspense } from 'react';
+
+function ManageVisitsContent() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { items: stores } = useSelector((state: RootState) => state.stores);
@@ -264,5 +266,13 @@ export default function ManageVisitsPage() {
         )}
       </div>
     </ModuleGuard>
+  );
+}
+
+export default function ManageVisitsPage() {
+  return (
+    <Suspense fallback={<div className="p-5 text-center"><div className="spinner-border text-secondary" /></div>}>
+      <ManageVisitsContent />
+    </Suspense>
   );
 }

@@ -9,6 +9,7 @@ import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import api from '@/lib/axios';
 
 const TDSReportPage = () => {
@@ -26,11 +27,12 @@ const TDSReportPage = () => {
         limit: pagination.itemsPerPage,
         search: filters.search,
         type: filters.type,
+        partyType: (filters as any).partyType,
         fromDate: filters.fromDate,
         toDate: filters.toDate
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, (filters as any).partyType, filters.fromDate, filters.toDate]);
 
   if (!mounted) return null;
 
@@ -42,6 +44,7 @@ const TDSReportPage = () => {
     if (filters.fromDate) url += `&fromDate=${filters.fromDate}`;
     if (filters.toDate) url += `&toDate=${filters.toDate}`;
     if (filters.type && filters.type !== 'all') url += `&type=${filters.type}`;
+    if ((filters as any).partyType && (filters as any).partyType !== 'all') url += `&partyType=${(filters as any).partyType}`;
 
     const response = await api.get(url);
     const allVouchers = response.data.items;
@@ -167,48 +170,33 @@ const TDSReportPage = () => {
       {/* Filters Card */}
       <div className="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden">
         <div className="card-body p-3">
-          <div className="row g-3 align-items-center">
-            <div className="col-md-4">
-              <div className="input-group input-group-sm">
-                <span className="input-group-text bg-white border-end-0"><i className="bi bi-search"></i></span>
-                <input 
-                  type="text" 
-                  className="form-control border-start-0 ps-0 shadow-none" 
-                  placeholder="Search by voucher no, party..." 
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
+              <PartyTypeToggle
+                partyType={(filters as any).partyType || 'customer'}
+                setPartyType={(val) => dispatch(setVoucherFilters({ partyType: val }))}
+              />
+            </div>
+            
+            <div className="filter-item-search flex-grow-1" style={{ maxWidth: '400px' }}>
+              <div className="search-group" style={{ width: "100%" }}>
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control border-start-0 ps-0 shadow-none search-bar"
+                  placeholder="Search by voucher no, party..."
                   value={filters.search}
                   onChange={(e) => dispatch(setVoucherFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
-            <div className="col-md-3">
-              <select 
-                className="form-select form-select-sm shadow-none" 
-                value={filters.type}
-                onChange={(e) => dispatch(setVoucherFilters({ type: e.target.value as any }))}
-              >
-                <option value="all">All Types</option>
-                <option value="payment">Payment</option>
-                <option value="receipt">Receipt</option>
-                <option value="journal">Journal</option>
-                <option value="contra">Contra</option>
-              </select>
-            </div>
-            <div className="col-md-5">
-              <div className="d-flex align-items-center gap-2">
-                <input 
-                  type="date" 
-                  className="form-control form-control-sm text-muted" 
-                  value={filters.fromDate}
-                  onChange={(e) => dispatch(setVoucherFilters({ fromDate: e.target.value }))}
-                />
-                <span className="text-muted small fw-bold mx-1">TO</span>
-                <input 
-                  type="date" 
-                  className="form-control form-control-sm text-muted" 
-                  value={filters.toDate}
-                  onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))}
-                />
-              </div>
+
+            <div className="date-filter-group ms-auto">
+              <input type="date" className="text-muted" value={filters.fromDate} onChange={(e) => dispatch(setVoucherFilters({ fromDate: e.target.value }))} />
+              <span className="text-muted small fw-bold mx-1">TO</span>
+              <input type="date" className="text-muted" value={filters.toDate} onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))} />
             </div>
           </div>
         </div>

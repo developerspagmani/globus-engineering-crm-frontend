@@ -9,6 +9,7 @@ export const fetchChallans = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    partyType?: string;
     id?: string;
   }, { rejectWithValue }) => {
     try {
@@ -16,6 +17,7 @@ export const fetchChallans = createAsyncThunk(
       let url = `/challans?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (params.partyType && params.partyType !== 'all') url += `&partyType=${params.partyType}`;
       if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
@@ -177,6 +179,7 @@ interface ChallanState {
     search: string;
     type: 'all' | 'delivery' | 'returnable' | 'job_work';
     bill_type: string;
+    partyType: 'all' | 'customer' | 'vendor';
     status: 'all' | 'draft' | 'dispatched' | 'received' | 'cancelled';
     fromDate: string;
     toDate: string;
@@ -197,6 +200,7 @@ const initialState: ChallanState = {
     search: '',
     type: 'all',
     bill_type: 'all',
+    partyType: 'customer',
     status: 'all',
     fromDate: '',
     toDate: '',

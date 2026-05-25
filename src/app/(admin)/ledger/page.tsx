@@ -18,6 +18,7 @@ import html2canvas from 'html2canvas';
 import LedgerPrintTemplate from '@/modules/ledger/components/LedgerPrintTemplate';
 import LedgerAuditPrintTemplate from '@/modules/ledger/components/LedgerAuditPrintTemplate';
 import { LedgerEntry } from '@/types/modules';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import ExportExcel from '@/components/shared/ExportExcel';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
@@ -30,7 +31,6 @@ export default function LedgerPage() {
   
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
-  const [partyTypeFilter, setPartyTypeFilter] = React.useState<'all' | 'customer' | 'vendor'>('all');
   const [mounted, setMounted] = React.useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditData, setAuditData] = useState<LedgerEntry[]>([]);
@@ -46,13 +46,14 @@ export default function LedgerPage() {
           companyId: activeCompany.id,
           page: pagination.currentPage,
           limit: pagination.itemsPerPage,
-          search: filters.search
+          search: filters.search,
+          partyType: filters.partyType
        }));
        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
        (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
        (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType]);
 
   // DERIVE UNIQUE PARTIES FROM LEDGER ENTRIES + ALL CUSTOMERS/VENDORS
   const uniqueParties = React.useMemo(() => {
@@ -136,16 +137,15 @@ export default function LedgerPage() {
     
     let result = Array.from(partyMap.values());
     
-    // 4. Filter by Party Type
-    if (partyTypeFilter !== 'all') {
-      result = result.filter(p => p.partyType.toLowerCase() === partyTypeFilter.toLowerCase());
+    if (filters.partyType !== 'all') {
+      result = result.filter(p => p.partyType.toLowerCase() === filters.partyType.toLowerCase());
     }
 
     // 5. SORT: Recent First (Parties with transactions show first, others follow)
     result.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
 
     return result;
-  }, [ledgerEntries, customers, vendors, activeCompany?.id, filters.dateFrom, filters.dateTo, partyTypeFilter]);
+  }, [ledgerEntries, customers, vendors, activeCompany?.id, filters.dateFrom, filters.dateTo, filters.partyType]);
 
   const totalItems = uniqueParties.length;
   const itemsPerPage = 10;
@@ -523,8 +523,15 @@ export default function LedgerPage() {
         {/* Filter Row */}
         <div className="card filter-card">
           <div className="card-body p-3">
-            <div className="filter-bar-row">
-              <div className="filter-item-search">
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+              <div className="filter-item-select" style={{ minWidth: '150px' }}>
+                 <PartyTypeToggle
+                    partyType={(filters.partyType as any) || 'customer'}
+                    setPartyType={(val) => dispatch(setLedgerFilters({ partyType: val }))}
+                 />
+              </div>
+
+              <div className="filter-item-search flex-grow-1">
                 <div className="search-group">
                   <span className="input-group-text">
                     <i className="bi bi-search"></i>
@@ -537,18 +544,6 @@ export default function LedgerPage() {
                     onChange={(e) => dispatch(setLedgerFilters({ search: e.target.value }))}
                   />
                 </div>
-              </div>
-
-              <div className="filter-item-select">
-                 <select 
-                    className="form-select search-bar"
-                    value={partyTypeFilter}
-                    onChange={(e) => setPartyTypeFilter(e.target.value as any)}
-                 >
-                    <option value="all">All Parties</option>
-                    <option value="customer">Customers</option>
-                    <option value="vendor">Vendors</option>
-                 </select>
               </div>
               
               <div className="date-filter-group">

@@ -11,14 +11,16 @@ export const fetchPendingPayments = createAsyncThunk(
     search?: string; 
     fromDate?: string; 
     toDate?: string;
+    partyType?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, fromDate, toDate } = params;
+      const { company_id, page = 1, limit = 10, search, fromDate, toDate, partyType } = params;
       let url = `/invoices?page=${page}&limit=${limit}&status=pending`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (partyType) url += `&partyType=${partyType}`;
       
       const response = await api.get(url);
       return {

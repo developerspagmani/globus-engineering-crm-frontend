@@ -11,7 +11,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import { checkActionPermission } from '@/config/permissions';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
@@ -22,6 +22,8 @@ import jsPDF from 'jspdf';
 export default function InwardListPage() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const partyTypeFilter = searchParams.get('type') as 'customer' | 'vendor' | null;
   const { items: inwards, filters, pagination, loading } = useSelector((state: RootState) => state.inward);
   const { company, user } = useSelector((state: RootState) => state.auth);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
@@ -37,9 +39,11 @@ export default function InwardListPage() {
       company_id: company?.id,
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
-      search: filters.search
+      search: filters.search,
+      partyType: partyTypeFilter || filters.partyType,
+      status: filters.status !== 'all' ? filters.status : undefined,
     }));
-  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status]);
 
   const totalPages = pagination.totalPages;
   const paginatedInwards = inwards;
@@ -92,7 +96,9 @@ export default function InwardListPage() {
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
             <Breadcrumb items={[{ label: 'Inward Logistics', active: true }]} />
-            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Inward Entries</h2>
+            <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">
+              {partyTypeFilter === 'customer' ? 'Customer Inwards' : partyTypeFilter === 'vendor' ? 'Vendor Inwards' : 'Inward Entries'}
+            </h2>
             <p className="text-muted small mb-0">Manage incoming materials and vendor gate receipts for industrial operations.</p>
           </div>
           <div className="d-flex align-items-center gap-2">

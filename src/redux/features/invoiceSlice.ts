@@ -21,7 +21,8 @@ const mapInvoice = (inv: any): Invoice => {
     dueDate: inv.due_date || inv.dueDate ? new Date(inv.due_date || inv.dueDate).toISOString().split('T')[0] : '',
     poNo: inv.po_no || inv.poNo || '',
     poDate: inv.po_date || inv.poDate ? new Date(inv.po_date || inv.poDate).toISOString().split('T')[0] : '',
-    dcNo: inv.delivery_no && inv.delivery_no !== 0 ? String(inv.delivery_no).padStart(4, '0') : (inv.dc_no || inv.dcNo || ''),
+    challanNumber: inv.delivery_no && inv.delivery_no !== 0 ? String(inv.delivery_no).padStart(4, '0') : '',
+    dcNo: inv.dc_no || inv.dcNo || '',
     dcDate: inv.dc_date || inv.dcDate ? new Date(inv.dc_date || inv.dcDate).toISOString().split('T')[0] : '',
     grandTotal,
     status: inv.status?.toLowerCase() || 'draft',
@@ -75,10 +76,11 @@ export const fetchInvoices = createAsyncThunk(
     fromDate?: string; 
     toDate?: string;
     type?: string;
+    partyType?: string;
     invoice_nos?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type, invoice_nos } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type, partyType, invoice_nos } = params;
       let url = `/invoices?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -86,6 +88,7 @@ export const fetchInvoices = createAsyncThunk(
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (type && type !== 'all') url += `&type=${type}`;
+      if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
       if (invoice_nos) url += `&invoice_nos=${encodeURIComponent(invoice_nos)}`;
       
       const response = await api.get(url);
@@ -122,6 +125,7 @@ export const createInvoice = createAsyncThunk(
         notes: data.notes,
         poNo: (data as any).poNo,
         poDate: (data as any).poDate,
+        challanNumber: data.challanNumber,
         dcNo: (data as any).dcNo,
         dcDate: (data as any).dcDate,
         address: (data as any).address,
@@ -157,6 +161,7 @@ export const updateInvoice = createAsyncThunk(
         notes: data.notes,
         poNo: data.poNo,
         poDate: data.poDate,
+        challanNumber: data.challanNumber,
         dcNo: data.dcNo,
         dcDate: data.dcDate,
         address: (data as any).address,
@@ -224,6 +229,7 @@ interface InvoiceState {
   filters: {
     search: string;
     status: string;
+    partyType: string;
     fromDate: string;
     toDate: string;
   };
@@ -274,6 +280,7 @@ const initialState: InvoiceState = {
   filters: {
     search: '',
     status: 'all',
+    partyType: 'customer',
     fromDate: '',
     toDate: '',
   },

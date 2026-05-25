@@ -11,12 +11,14 @@ export const fetchOutwards = createAsyncThunk(
     limit?: number; 
     search?: string; 
     id?: string;
+    partyType?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id } = params;
+      const { company_id, page = 1, limit = 10, search, id, partyType } = params;
       let url = `/outward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
       if (id) url += `&id=${id}`;
       
       const response = await api.get(url);
@@ -170,6 +172,7 @@ interface OutwardState {
   filters: {
     search: string;
     status: 'all' | 'pending' | 'completed' | 'cancelled';
+    partyType: 'all' | 'customer' | 'vendor';
     fromDate: string;
     toDate: string;
   };
@@ -188,6 +191,7 @@ const initialState: OutwardState = {
   filters: {
     search: '',
     status: 'all',
+    partyType: 'all',
     fromDate: '',
     toDate: '',
   },

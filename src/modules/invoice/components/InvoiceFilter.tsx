@@ -4,6 +4,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { setInvoiceFilters } from '@/redux/features/invoiceSlice';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 
 const InvoiceFilter: React.FC = () => {
   const dispatch = useDispatch();
@@ -17,9 +18,15 @@ const InvoiceFilter: React.FC = () => {
 
   return (
     <div className="card filter-card">
-      <div className="card-body">
-        <div className="filter-bar-row">
-          <div className="filter-item-search">
+      <div className="card-body p-3">
+        <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+          <div className="filter-item-select" style={{ minWidth: '150px' }}>
+            <PartyTypeToggle
+              partyType={(filters as any).partyType || 'customer'}
+              setPartyType={(type) => dispatch(setInvoiceFilters({ partyType: type }))}
+            />
+          </div>
+          <div className="filter-item-search flex-grow-1">
             <div className="search-group">
               <span className="input-group-text">
                 <i className="bi bi-search"></i>

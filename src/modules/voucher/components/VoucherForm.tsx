@@ -145,7 +145,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           const existingIndex = updated.selectedInvoices.findIndex(item => String(item.id) === String(invoiceIdFromUrl));
 
           if (invoice) {
-            const pendingAmount = invoice.grandTotal - (invoice.paidAmount || 0);
+            const pendingAmount = Number((invoice.grandTotal - (invoice.paidAmount || 0)).toFixed(2));
             const realNo = invoice.invoiceNumber || (invoice as any).invoice_no || String(invoiceIdFromUrl);
 
             // If it doesn't exist, add it
@@ -248,7 +248,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 id: resolvedInv ? String(resolvedInv.id) : (it.id || it.invoiceNo || it.invoice_no),
                 invoiceNo: it.invoiceNo || it.invoice_no || resolvedInv?.invoiceNumber || '',
                 invoiceDate: it.invoiceDate || it.invoice_date || (resolvedInv as any)?.invoice_date || (resolvedInv as any)?.date || '',
-                amount: Number(it.amount || 0) || (resolvedInv ? resolvedInv.grandTotal : 0),
+                amount: Number(Number(it.amount || 0).toFixed(2)) || (resolvedInv ? Number((resolvedInv.grandTotal || 0).toFixed(2)) : 0),
                 adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
                 adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
               };
@@ -281,7 +281,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             
             if (amount === 0 && inv) {
               const pending = inv.grandTotal - (inv.paidAmount || 0);
-              amount = pending > 0 ? pending : inv.grandTotal;
+              amount = Number((pending > 0 ? pending : inv.grandTotal).toFixed(2));
             }
             
             results.push({ 
@@ -359,7 +359,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         newSelected = [...prev.selectedInvoices, { 
           id: String(invoice.id), 
           invoiceNo: invoice.invoiceNumber || invoice.invoice_no || '', 
-          amount: invoice.grandTotal - (invoice.paidAmount || 0),
+          amount: Number((invoice.grandTotal - (invoice.paidAmount || 0)).toFixed(2)),
           adjustmentType: 'TDS',
           adjustmentValue: 0
         }];

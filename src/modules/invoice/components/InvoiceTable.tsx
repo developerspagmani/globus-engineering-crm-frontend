@@ -83,6 +83,7 @@ const InvoiceTable: React.FC = () => {
         (dispatch as any)(fetchInwards({ 
           company_id: activeCompany.id,
           status: 'pending',
+          partyType: (filters as any).partyType,
           limit: 100 // Fetch more for selection
         }));
       }
@@ -107,6 +108,7 @@ const InvoiceTable: React.FC = () => {
         status: filters.status,
         fromDate: filters.fromDate,
         toDate: filters.toDate,
+        partyType: (filters as any).partyType,
         type: typeMap[activeTab] || 'all'
       }));
     }
@@ -207,6 +209,15 @@ const InvoiceTable: React.FC = () => {
                   )}
                   <td className="text-center pe-4">
                     <div className="d-flex justify-content-center gap-1 align-items-center">
+                      {activeTab === 'ADD_INVOICE' && (
+                        <Link
+                          href={`/inward/${item.id}`}
+                          className="btn-action-view mx-1"
+                          title="View Inward"
+                        >
+                          <i className="bi bi-eye-fill"></i>
+                        </Link>
+                      )}
                       <Link
                         href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}` : `/invoices/${item.id}`}
                         className="btn-action-view"

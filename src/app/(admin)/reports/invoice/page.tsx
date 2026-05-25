@@ -11,6 +11,7 @@ import ReportActions from '@/components/ReportActions';
 import Breadcrumb from '@/components/Breadcrumb';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import PaginationComponent from '@/components/shared/Pagination';
 import api from '@/lib/axios';
 
@@ -19,6 +20,7 @@ const InvoiceReportPage = () => {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid'>('all');
+  const [partyType, setPartyType] = useState<'all' | 'customer' | 'vendor'>('customer');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
@@ -36,10 +38,11 @@ const InvoiceReportPage = () => {
         status: statusFilter,
         fromDate: fromDate,
         toDate: toDate,
+        partyType: partyType,
         type: 'INVOICE,BOTH' // Default to only taxable invoices
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate, partyType]);
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
@@ -49,6 +52,7 @@ const InvoiceReportPage = () => {
     if (statusFilter && statusFilter !== 'all') url += `&status=${statusFilter}`;
     if (fromDate) url += `&fromDate=${fromDate}`;
     if (toDate) url += `&toDate=${toDate}`;
+    if (partyType !== 'all') url += `&partyType=${partyType}`;
     
     const response = await api.get(url);
     const allInvoices = response.data.items;
@@ -140,8 +144,15 @@ const InvoiceReportPage = () => {
 
       <div className="card border-0 shadow-sm mb-4 overflow-hidden rounded-4">
         <div className="card-body p-3">
-          <div className="filter-bar-row">
-            <div className="filter-item-search">
+          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
+              <PartyTypeToggle
+                partyType={partyType}
+                setPartyType={setPartyType as any}
+              />
+            </div>
+            
+            <div className="filter-item-search flex-grow-1">
               <div className="search-group">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>

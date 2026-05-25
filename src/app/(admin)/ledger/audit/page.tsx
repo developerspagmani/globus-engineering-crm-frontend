@@ -9,7 +9,9 @@ import Loader from '@/components/Loader';
 import Breadcrumb from '@/components/Breadcrumb';
 import LedgerAuditPrintTemplate from '@/modules/ledger/components/LedgerAuditPrintTemplate';
 
-export default function CompanyAuditPage() {
+import { Suspense } from 'react';
+
+function CompanyAuditContent() {
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: ledgerEntries, loading } = useSelector((state: RootState) => state.ledger);
@@ -113,5 +115,13 @@ export default function CompanyAuditPage() {
         )}
       </div>
     </ModuleGuard>
+  );
+}
+
+export default function CompanyAuditPage() {
+  return (
+    <Suspense fallback={<div className="p-5 text-center"><Loader /></div>}>
+      <CompanyAuditContent />
+    </Suspense>
   );
 }

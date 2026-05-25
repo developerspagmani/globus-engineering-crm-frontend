@@ -40,7 +40,11 @@ export default function AdminLayout({
 
   return (
     <div className="admin-container">
-      {!isSalesMap && <AdminSidebar collapsed={sidebarCollapsed} />}
+      {!isSalesMap && (
+        <React.Suspense fallback={<div className="sidebar" style={{ width: sidebarCollapsed ? '80px' : '260px' }}></div>}>
+          <AdminSidebar collapsed={sidebarCollapsed} />
+        </React.Suspense>
+      )}
       <main className={`main-wrapper ${isSalesMap ? '' : (sidebarCollapsed ? 'expanded' : '')}`} style={isSalesMap ? { marginLeft: 0 } : {}}>
         {!isSalesMap && (
           <React.Suspense fallback={<div className="h-16"></div>}>

@@ -9,9 +9,10 @@ export const fetchLedgerEntries = createAsyncThunk(
     companyId?: string; 
     page?: number; 
     limit?: number; 
-    search?: string; 
+    search?: string;
     dateFrom?: string;
     dateTo?: string;
+    partyType?: string;
   }, { rejectWithValue }) => {
     try {
       const { partyId, companyId, page = 1, limit = 10, search, dateFrom, dateTo } = params;
@@ -21,6 +22,7 @@ export const fetchLedgerEntries = createAsyncThunk(
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (dateFrom) url += `&dateFrom=${dateFrom}`;
       if (dateTo) url += `&dateTo=${dateTo}`;
+      if (params.partyType && params.partyType !== 'all') url += `&partyType=${params.partyType}`;
       
       const response = await api.get(url);
       return {
