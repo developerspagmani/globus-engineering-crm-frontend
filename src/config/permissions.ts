@@ -19,8 +19,26 @@ export const navigationConfig: NavItem[] = [
   { name: 'Item', icon: 'bi-box-seam', path: '/master/items', moduleId: 'mod_items' },
   { name: 'Process', icon: 'bi-gear-wide-connected', path: '/master/processes', moduleId: 'mod_processes' },
   
-  { name: 'Outward', icon: 'bi-box-arrow-up-right', path: '/outward', moduleId: 'mod_outward' },
-  { name: 'Inward', icon: 'bi-box-arrow-in-right', path: '/inward', moduleId: 'mod_inward' },
+  { 
+    name: 'Outward', 
+    icon: 'bi-box-arrow-up-right', 
+    path: '#', 
+    moduleId: 'mod_outward',
+    children: [
+      { name: 'Customer', icon: 'bi-people', path: '/outward?type=customer', moduleId: 'mod_customer' },
+      { name: 'Vendors', icon: 'bi-truck', path: '/outward?type=vendor', moduleId: 'mod_vendor' },
+    ]
+  },
+  { 
+    name: 'Inward', 
+    icon: 'bi-box-arrow-in-right', 
+    path: '#', 
+    moduleId: 'mod_inward',
+    children: [
+      { name: 'Customer', icon: 'bi-people', path: '/inward?type=customer', moduleId: 'mod_customer' },
+      { name: 'Vendors', icon: 'bi-truck', path: '/inward?type=vendor', moduleId: 'mod_vendor' },
+    ]
+  },
   { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
   { name: 'Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
   { 
