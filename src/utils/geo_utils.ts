@@ -36,23 +36,27 @@ const CITY_TO_DISTRICT: Record<string, string> = {
 };
 
 const STATE_MAP: Record<string, string> = {
-    'TN': 'TAMIL NADU',
+    'TN': 'TAMILNADU',
     'KA': 'KARNATAKA',
-    'AP': 'ANDHRA PRADESH',
+    'AP': 'ANDHRAPRADESH',
     'MH': 'MAHARASHTRA',
     'TG': 'TELANGANA',
     'TS': 'TELANGANA',
     'KL': 'KERALA',
     'GJ': 'GUJARAT',
     'RJ': 'RAJASTHAN',
-    'MP': 'MADHYA PRADESH',
-    'UP': 'UTTAR PRADESH',
-    'WB': 'WEST BENGAL',
-    'HP': 'HIMACHAL PRADESH',
-    'AR': 'ARUNACHAL PRADESH',
-    'JK': 'JAMMU AND KASHMIR',
+    'MP': 'MADHYAPRADESH',
+    'UP': 'UTTARPRADESH',
+    'WB': 'WESTBENGAL',
+    'HP': 'HIMACHALPRADESH',
+    'AR': 'ARUNACHALPRADESH',
+    'JK': 'JAMMUANDKASHMIR',
     'HR': 'HARYANA',
-    'PB': 'PUNJAB'
+    'PB': 'PUNJAB',
+    'ANDHRA': 'ANDHRAPRADESH',
+    'TELENGANA': 'TELANGANA',
+    'TAMILNADUSTATE': 'TAMILNADU',
+    'MAHARASTRA': 'MAHARASHTRA'
 };
 
 /**
@@ -60,16 +64,15 @@ const STATE_MAP: Record<string, string> = {
  */
 export const normalizeName = (name: string | null | undefined): string => {
     if (!name) return '';
-    const trimmed = name.trim().toUpperCase();
-    return STATE_MAP[trimmed] || trimmed;
+    const cleaned = name.trim().toUpperCase().replace(/[^A-Z]/g, '');
+    return STATE_MAP[cleaned] || cleaned;
 };
 
 /**
  * Checks if a data region matches a selected map region.
  */
 export const isRegionMatch = (dataState: string | null | undefined, selectedRegion: string | null | undefined): boolean => {
-    if (!selectedRegion) return true;
-    if (!dataState) return false;
+    if (!selectedRegion || !dataState) return false;
     
     const dState = normalizeName(dataState);
     const sRegion = normalizeName(selectedRegion);

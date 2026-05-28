@@ -21,7 +21,7 @@ const SalesMapPage = () => {
     const customers = useSelector((state: RootState) => state.customers.items);
 
     useEffect(() => {
-        (dispatch as any)(fetchCustomers({ company_id: activeCompany?.id }));
+        (dispatch as any)(fetchCustomers({ company_id: activeCompany?.id, limit: 5000 }));
         (dispatch as any)(fetchCompanies());
     }, [dispatch, activeCompany?.id]);
     const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
@@ -30,9 +30,11 @@ const SalesMapPage = () => {
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isPageLoading, setIsPageLoading] = useState(true);
+    const [hasMounted, setHasMounted] = useState(false);
 
     // Initial page load delay for a smooth reveal
     useEffect(() => {
+        setHasMounted(true);
         const timer = setTimeout(() => setIsPageLoading(false), 1200);
         return () => clearTimeout(timer);
     }, []);
@@ -94,10 +96,6 @@ const SalesMapPage = () => {
         };
     }, [filteredCustomers]);
 
-    const [hasMounted, setHasMounted] = useState(false);
-    useEffect(() => {
-        setHasMounted(true);
-    }, []);
 
     const handleRegionSelect = (region: string | null) => {
         setSelectedRegion(region);
@@ -167,23 +165,23 @@ const SalesMapPage = () => {
                             <li className="px-3 py-2 text-capitalize x-small fw-800 text-muted tracking-widest border-bottom mb-2">Select Company Context</li>
                             <li>
                                 <button 
-                                    className={`dropdown-item py-2 d-flex align-items-center gap-2 ${!activeCompany ? 'active fw-700' : ''}`}
-                                    style={!activeCompany ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
+                                    className={`dropdown-item py-2 d-flex align-items-center gap-2 ${hasMounted && !activeCompany ? 'active fw-700' : ''}`}
+                                    style={hasMounted && !activeCompany ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
                                     onClick={() => handleCompanySwitch(null)}
                                 >
-                                    <i className={`bi bi-globe ${!activeCompany ? 'opacity-100' : 'opacity-0'}`}></i>
+                                    <i className={`bi bi-globe ${hasMounted && !activeCompany ? 'opacity-100' : 'opacity-0'}`}></i>
                                     <span>Global System View</span>
                                 </button>
                             </li>
                             {companies.map((comp) => (
                                 <li key={comp.id}>
                                     <button 
-                                        className={`dropdown-item py-2 d-flex align-items-center gap-2 ${activeCompany?.id === comp.id ? 'active fw-700' : ''}`}
-                                        style={activeCompany?.id === comp.id ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
+                                        className={`dropdown-item py-2 d-flex align-items-center gap-2 ${hasMounted && activeCompany?.id === comp.id ? 'active fw-700' : ''}`}
+                                        style={hasMounted && activeCompany?.id === comp.id ? { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-color)' } : {}}
                                         onClick={() => handleCompanySwitch(comp)}
                                     >
-                                        <i className={`bi bi-check-lg ${activeCompany?.id === comp.id ? 'opacity-100' : 'opacity-0'}`}></i>
-                                        {comp.name}
+                                        <i className={`bi bi-check-lg ${hasMounted && activeCompany?.id === comp.id ? 'opacity-100' : 'opacity-0'}`}></i>
+                                        <span>{comp.name}</span>
                                     </button>
                                 </li>
                             ))}
@@ -221,21 +219,21 @@ const SalesMapPage = () => {
             <div className={`container-fluid px-5 py-4 content-fade-in dashboard-viewport mt-3 transition-all duration-700 ${isPageLoading ? 'opacity-0 transform-translate-y' : 'opacity-100'}`}>
                 <div className="row g-5">
                     <div className="col-xl-7">
-                        <div className="card shadow-sm h-100 bg-white rounded-4 border-0 overflow-hidden">
-                            <div className="card-body p-0 d-flex flex-column" style={{ minHeight: '800px', background: '#fcfcfd' }}>
-                                <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white bg-opacity-80">
-                                    <div className="d-flex align-items-center gap-2">
-                                        <i className="bi bi-geo-alt-fill text-primary"></i>
-                                        <span className="fw-black text-capitalize tracking-wider small">Regional Distribution</span>
+                            <div className="card shadow-sm h-100 bg-white rounded-4 border-0 overflow-hidden">
+                                <div className="card-body p-0 d-flex flex-column" style={{ height: 'calc(100vh - 180px)', minHeight: '580px', maxHeight: '750px', background: '#fcfcfd' }}>
+                                    <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white bg-opacity-80">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <i className="bi bi-geo-alt-fill text-primary"></i>
+                                            <span className="fw-black text-capitalize tracking-wider small">Regional Distribution</span>
+                                        </div>
+                                        <div className="badge bg-light text-dark border rounded-pill px-3">
+                                            {viewMode === 'states' ? 'All India View' : `Viewing State: ${selectedRegion}`}
+                                        </div>
                                     </div>
-                                    <div className="badge bg-light text-dark border rounded-pill px-3">
-                                        {viewMode === 'states' ? 'All India View' : `Viewing State: ${selectedRegion}`}
-                                    </div>
-                                </div>
-                                <div 
-                                    className="flex-grow-1 d-flex justify-content-center align-items-center position-relative"
-                                    style={{ height: '800px', width: '100%' }}
-                                >
+                                    <div 
+                                        className="flex-grow-1 d-flex justify-content-center align-items-center position-relative"
+                                        style={{ width: '100%', minHeight: '0', flex: 1 }}
+                                    >
                                     <IndiaMap
                                         onRegionSelect={handleRegionSelect}
                                         selectedRegion={selectedRegion}
@@ -249,7 +247,7 @@ const SalesMapPage = () => {
                         </div>
                     </div>
 
-                    <div className="col-xl-5 d-flex flex-column gap-4">
+                    <div className="col-xl-5 d-flex flex-column gap-4" style={{ height: 'calc(100vh - 180px)', minHeight: '580px', maxHeight: '750px' }}>
                         {/* Selected Region Client Insights */}
                         {selectedRegion && (
                             <div className="card shadow-sm border-0 rounded-4 overflow-hidden animate-fade-in" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)' }}>
@@ -279,20 +277,7 @@ const SalesMapPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="bg-white rounded-4 shadow-sm border border-light p-3">
-                                        <div className="smaller text-muted fw-bold text-capitalize tracking-wider mb-3 px-1">Enrolled Clients</div>
-                                        <div className="d-flex flex-wrap gap-2">
-                                            {filteredCustomers.length > 0 ? (
-                                                filteredCustomers.map((c, i) => (
-                                                    <span key={i} className="badge bg-light text-dark border fw-bold px-3 py-2 rounded-pill">
-                                                        {c.name}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <div className="py-2 px-1 text-muted smaller italic">No direct accounts in this specific zone</div>
-                                            )}
-                                        </div>
-                                    </div>
+
                                 </div>
                             </div>
                         )}
@@ -301,6 +286,14 @@ const SalesMapPage = () => {
                             <CustomerTable
                                 customers={filteredCustomers}
                                 selectedRegion={selectedRegion}
+                                searchQuery={searchQuery}
+                                onSearchChange={setSearchQuery}
+                                onLocate={(customer) => {
+                                    if (customer.state) {
+                                        setSelectedRegion(customer.state);
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }
+                                }}
                             />
                         </div>
                     </div>

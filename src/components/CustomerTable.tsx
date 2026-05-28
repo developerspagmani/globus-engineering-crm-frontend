@@ -11,9 +11,18 @@ import PaginationComponent from '@/components/shared/Pagination';
 interface CustomerTableProps {
   customers: Customer[];
   selectedRegion: string | null;
+  searchQuery?: string;
+  onSearchChange?: (val: string) => void;
+  onLocate?: (customer: Customer) => void;
 }
 
-const CustomerTable: React.FC<CustomerTableProps> = ({ customers, selectedRegion }) => {
+const CustomerTable: React.FC<CustomerTableProps> = ({ 
+  customers, 
+  selectedRegion, 
+  searchQuery, 
+  onSearchChange,
+  onLocate 
+}) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -26,7 +35,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ customers, selectedRegion
 
   return (
     <div className="h-100 d-flex flex-column">
-      <div className="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+      <div className="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <h5 className="fw-800 text-dark mb-0">
             {selectedRegion ? `${selectedRegion} Accounts` : 'Regional Accounts'}
@@ -35,6 +44,19 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ customers, selectedRegion
             {customers.length} ENROLLED CLIENTS
           </p>
         </div>
+        {/* {onSearchChange && (
+          <div className="position-relative" style={{ width: '200px' }}>
+            <i className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted small"></i>
+            <input
+              type="text"
+              className="form-control form-control-sm ps-5 bg-light border-0 rounded-3 text-dark small"
+              placeholder="Search in region..."
+              value={searchQuery || ''}
+              onChange={(e) => onSearchChange(e.target.value)}
+              style={{ paddingLeft: '2.2rem', fontSize: '0.8rem' }}
+            />
+          </div>
+        )} */}
       </div>
       
       <div className="table-responsive flex-grow-1 p-1">
@@ -49,7 +71,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ customers, selectedRegion
           </thead>
           <tbody>
             {paginatedItems.map((customer, index) => (
-              <tr key={customer.id} className="border-bottom">
+              <tr key={customer.id} className="border-bottom text-dark">
                 <td className="px-4 py-3 text-muted small">
                   {(currentPage - 1) * itemsPerPage + index + 1}
                 </td>
@@ -63,6 +85,16 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ customers, selectedRegion
                 </td>
                 <td className="px-4 py-3 text-end">
                   <div className="d-flex justify-content-end gap-1">
+                    {/* {onLocate && customer.state && (
+                      <button 
+                        onClick={() => onLocate(customer)} 
+                        className="btn btn-sm btn-light border-0 rounded-circle text-primary" 
+                        title="Locate on Map"
+                        style={{ width: '28px', height: '28px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <i className="bi bi-geo-alt-fill" style={{ fontSize: '0.85rem' }}></i>
+                      </button>
+                    )} */}
                     <Link href={`/customers/${customer.id}`} className="btn-action-view" title="View Detail">
                       <i className="bi bi-eye-fill"></i>
                     </Link>

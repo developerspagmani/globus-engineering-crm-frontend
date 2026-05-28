@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import * as d3 from 'd3';
 import { feature } from 'topojson-client';
-import { isDistrictMatch } from '@/utils/geo_utils';
+import { isDistrictMatch, isRegionMatch } from '@/utils/geo_utils';
 
 interface IndiaMapProps {
     onDistrictSelect?: (district: any) => void;
@@ -149,8 +149,8 @@ function IndiaMap({
         if (!geoData || !geoData.states || !geoData.districts) return [];
         return viewMode === 'states' ? geoData.states.features :
             geoData.districts.features.filter((f: any) => {
-                const sName = (f.properties?.st_nm || f.properties?.NAME_1 || f.properties?.stname || '').toUpperCase();
-                return sName === (selectedState || '').toUpperCase();
+                const sName = (f.properties?.st_nm || f.properties?.NAME_1 || f.properties?.stname || '');
+                return isRegionMatch(sName, selectedState);
             });
     }, [geoData, viewMode, selectedState]);
 
@@ -171,13 +171,31 @@ function IndiaMap({
     }, [viewMode, onViewModeChange]);
 
     useEffect(() => {
-        if (selectedRegion && selectedRegion !== selectedState) {
-            const s = geoData?.states?.features.find((f: any) => {
+        if (selectedRegion && !isRegionMatch(selectedRegion, selectedState)) {
+            // 1. Try to find a state match
+            let s = geoData?.states?.features.find((f: any) => {
                 const name = f.properties?.st_nm || f.properties?.NAME_1 || f.properties?.stname || '';
-                return name.toUpperCase() === selectedRegion.toUpperCase();
+                return isRegionMatch(name, selectedRegion);
             });
+
+            // 2. If no state match, try to find a district match and use its parent state
+            if (!s && geoData?.districts?.features) {
+                const d = geoData.districts.features.find((f: any) => {
+                    const name = f.properties?.district || f.properties?.NAME_2 || f.properties?.dtname || '';
+                    return isDistrictMatch(name, selectedRegion);
+                });
+                if (d) {
+                    const sName = d.properties?.st_nm || d.properties?.NAME_1 || d.properties?.stname || '';
+                    s = geoData.states.features.find((f: any) => {
+                        const name = f.properties?.st_nm || f.properties?.NAME_1 || f.properties?.stname || '';
+                        return isRegionMatch(name, sName);
+                    });
+                }
+            }
+
             if (s) {
-                setSelectedState(selectedRegion);
+                const officialName = s.properties?.st_nm || s.properties?.NAME_1 || s.properties?.stname || selectedRegion;
+                setSelectedState(officialName);
                 setViewMode('districts');
             }
         } else if (!selectedRegion && selectedState) {
@@ -245,8 +263,7 @@ function IndiaMap({
         const districtsG = mainG.select(".districts-layer");
         const labelsG = mainG.select(".labels-layer");
 
-        const currentTransform = viewMode === 'states' ? d3.zoomIdentity : d3.zoomTransform(svg.node() as Element);
-        mainG.attr("transform", currentTransform.toString());
+        // Remove manual static transform assignments to allow D3 zoom behavior to control it cleanly.
 
 
         const zoomToFeature = (feature: any) => {
@@ -270,13 +287,13 @@ function IndiaMap({
             .attr("d", pathGenerator as any)
             .attr("fill", (d: any) => {
                 const name = d.properties?.st_nm || d.properties?.NAME_1 || d.properties?.stname || '';
-                if (name.toUpperCase() === selectedState?.toUpperCase()) return "#f59e0b"; // Vibrant Amber
-                if (activeStates.some(as => as.toUpperCase() === name.toUpperCase())) return "#f59e0b"; // Vibrant Amber
-                return stateColors(name);
+                if (isRegionMatch(name, selectedState)) return "#ea580c"; // Bold Rust-Orange for selected state
+                if (activeStates.some(as => isRegionMatch(as, name))) return "#f97316"; // Vibrant Orange for active states
+                return "#cbd5e1"; // Cool Slate Grey for inactive states
             })
             .style("fill-opacity", (d: any) => {
                 const name = d.properties?.st_nm || d.properties?.NAME_1 || d.properties?.stname || '';
-                const isActive = name.toUpperCase() === selectedState?.toUpperCase() || activeStates.some(as => as.toUpperCase() === name.toUpperCase());
+                const isActive = isRegionMatch(name, selectedState) || activeStates.some(as => isRegionMatch(as, name));
                 return isActive ? 1 : 0.8; 
             })
             .attr("stroke", "#ffffff") 
@@ -327,7 +344,7 @@ function IndiaMap({
             .style("pointer-events", "none")
             .style("opacity", (d: any) => {
                 const name = d.properties?.st_nm || d.properties?.NAME_1 || d.properties?.stname || '';
-                const isActive = activeStates.some(as => as.toUpperCase() === name.toUpperCase()) || isManufacturing(name);
+                const isActive = activeStates.some(as => isRegionMatch(as, name)) || isManufacturing(name);
                 return isActive ? 1 : 0.6;
             })
             .text((d: any) => {
@@ -337,12 +354,12 @@ function IndiaMap({
 
         // Render Districts
         const dFeatures = (viewMode === 'districts' || searchTerm) ? geoData.districts.features.filter((f: any) => {
-            const sName = (f.properties?.st_nm || f.properties?.NAME_1 || f.properties?.stname || '').toUpperCase();
+            const sName = (f.properties?.st_nm || f.properties?.NAME_1 || f.properties?.stname || '');
             if (searchTerm) {
                 const dName = (f.properties?.district || f.properties?.NAME_2 || f.properties?.dtname || '').toLowerCase();
                 return dName.includes(searchTerm.toLowerCase());
             }
-            return sName === (selectedState || '').toUpperCase();
+            return isRegionMatch(sName, selectedState);
         }) : [];
 
         districtsG.selectAll("path")
@@ -411,11 +428,20 @@ function IndiaMap({
         if (viewMode === 'districts' && selectedState && selectedState !== lastZoomedStateRef.current) {
             const f = geoData.states.features.find((f: any) => {
                 const name = f.properties?.st_nm || f.properties?.NAME_1 || f.properties?.stname || '';
-                return name.toUpperCase() === selectedState.toUpperCase();
+                return isRegionMatch(name, selectedState);
             });
-            if (f) { lastZoomedStateRef.current = selectedState; zoomToFeature(f); }
-        } else if (viewMode === 'states') {
+            if (f) { 
+                lastZoomedStateRef.current = selectedState; 
+                zoomToFeature(f); 
+            }
+        } else if (viewMode === 'states' && lastZoomedStateRef.current !== null) {
             lastZoomedStateRef.current = null;
+            if (zoomRef.current && svgRef.current) {
+                d3.select(svgRef.current).transition()
+                    .duration(750)
+                    .ease(d3.easeCubicInOut)
+                    .call(zoomRef.current.transform as any, d3.zoomIdentity);
+            }
         }
 
     }, [geoData, dimensions, activeDistricts, activeStates, activeDistrict, viewMode, selectedState, searchTerm]);
@@ -521,18 +547,18 @@ function IndiaMap({
                 <button onClick={handleZoomOut} className="btn btn-sm btn-dark p-1 border-0 rounded-circle w-8 h-8 d-flex align-items-center justify-content-center"><i className="bi bi-zoom-out"></i></button>
                 <button onClick={handleResetZoom} className="btn btn-sm btn-dark p-1 border-0 rounded-circle w-8 h-8 d-flex align-items-center justify-content-center"><i className="bi bi-arrow-counterclockwise"></i></button>
             </div>
-            <div className="position-absolute bottom-0 start-0 m-4 d-flex flex-column gap-2 pointer-events-none p-3 bg-white bg-opacity-90 rounded-4 border shadow-sm backdrop-blur-md">
-                <div className="d-flex align-items-center gap-2">
-                    <div className="rounded-circle shadow-sm" style={{ width: 10, height: 10, background: '#f59e0b' }}></div>
-                    <span className="smaller text-dark fw-bold text-uppercase tracking-wider">Active State</span>
+            <div className="position-absolute bottom-0 start-0 m-2 d-flex flex-column gap-1.5 pointer-events-none p-2 bg-white bg-opacity-90 rounded-3 border shadow-sm backdrop-blur-md" style={{ zIndex: 10,gap:"5px" }}>
+                <div className="d-flex align-items-center gap-1">
+                    <div className="rounded-circle shadow-sm flex-shrink-0" style={{ width: 9, height: 9, background: '#f97316',}}></div>
+                    <span className="text-dark fw-bold text-uppercase tracking-wider" style={{ fontSize: '9px', letterSpacing: '0.04em' }}>Active State</span>
                 </div>
-                <div className="d-flex align-items-center gap-2">
-                    <div className="rounded-circle shadow-sm" style={{ width: 10, height: 10, background: '#10b981' }}></div>
-                    <span className="smaller text-dark fw-bold text-uppercase tracking-wider">Business active Center</span>
+                <div className="d-flex align-items-center gap-1">
+                    <div className="rounded-circle shadow-sm flex-shrink-0" style={{ width: 8, height: 8, background: '#10b981' }}></div>
+                    <span className="text-dark fw-bold text-uppercase tracking-wider" style={{ fontSize: '9px', letterSpacing: '0.04em' }}>Active District</span>
                 </div>
-                <div className="d-flex align-items-center gap-2 border-top pt-2 opacity-75">
-                    <div className="rounded-circle" style={{ width: 10, height: 10, background: '#cbd5e1' }}></div>
-                    <span className="smaller text-dark fw-medium text-uppercase tracking-wider">Region View</span>
+                <div className="d-flex align-items-center gap-1 border-top pt-1.5 opacity-75">
+                    <div className="rounded-circle flex-shrink-0" style={{ width: 8, height: 8, background: '#cbd5e1' }}></div>
+                    <span className="text-dark fw-medium text-uppercase tracking-wider" style={{ fontSize: '9px', letterSpacing: '0.04em' }}>Region View</span>
                 </div>
             </div>
 

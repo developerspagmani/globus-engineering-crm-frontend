@@ -86,6 +86,7 @@ export const navigationConfig: NavItem[] = [
 
   { name: 'Companies', icon: 'bi-building', path: '/admin/companies', moduleId: 'super_admin' },
   { name: 'Data Migration', icon: 'bi-database-fill-up', path: '/migration', moduleId: 'super_admin' },
+  { name: 'Sales Map', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'default' },
   { name: 'Settings', icon: 'bi-gear', path: '/settings', moduleId: 'default' },
 ];
 
