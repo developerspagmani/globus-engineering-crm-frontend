@@ -15,29 +15,12 @@ export interface NavItem {
  */
 export const navigationConfig: NavItem[] = [
   { name: 'Dashboard', icon: 'bi-grid-1x2', path: '/dashboard', moduleId: 'default' },
+  { name: 'Customer', icon: 'bi-people', path: '/customers', moduleId: 'mod_customer' },
   { name: 'Item', icon: 'bi-box-seam', path: '/master/items', moduleId: 'mod_items' },
   { name: 'Process', icon: 'bi-gear-wide-connected', path: '/master/processes', moduleId: 'mod_processes' },
   
-  { 
-    name: 'Outward', 
-    icon: 'bi-box-arrow-up-right', 
-    path: '#', 
-    moduleId: 'mod_outward',
-    children: [
-      { name: 'Customer', icon: 'bi-people', path: '/outward?type=customer', moduleId: 'mod_customer' },
-      { name: 'Vendors', icon: 'bi-truck', path: '/outward?type=vendor', moduleId: 'mod_vendor' },
-    ]
-  },
-  { 
-    name: 'Inward', 
-    icon: 'bi-box-arrow-in-right', 
-    path: '#', 
-    moduleId: 'mod_inward',
-    children: [
-      { name: 'Customer', icon: 'bi-people', path: '/inward?type=customer', moduleId: 'mod_customer' },
-      { name: 'Vendors', icon: 'bi-truck', path: '/inward?type=vendor', moduleId: 'mod_vendor' },
-    ]
-  },
+  { name: 'Outward', icon: 'bi-box-arrow-up-right', path: '/outward', moduleId: 'mod_outward' },
+  { name: 'Inward', icon: 'bi-box-arrow-in-right', path: '/inward', moduleId: 'mod_inward' },
   { name: 'Challan', icon: 'bi-file-earmark-check', path: '/challan', moduleId: 'mod_challan' },
   { name: 'Vouchers', icon: 'bi-receipt', path: '/vouchers', moduleId: 'mod_voucher' },
   { 
@@ -63,6 +46,7 @@ export const navigationConfig: NavItem[] = [
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
   
   { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
+  { name: 'Vendors', icon: 'bi-truck', path: '/vendors', moduleId: 'mod_vendor' },
   { name: 'Employee Management', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
   { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
   { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
