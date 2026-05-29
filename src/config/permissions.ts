@@ -15,6 +15,7 @@ export interface NavItem {
  */
 export const navigationConfig: NavItem[] = [
   { name: 'Dashboard', icon: 'bi-grid-1x2', path: '/dashboard', moduleId: 'default' },
+  { name: 'Customer', icon: 'bi-people', path: '/customers', moduleId: 'mod_customer' },
   { name: 'Item', icon: 'bi-box-seam', path: '/master/items', moduleId: 'mod_items' },
   { name: 'Process', icon: 'bi-gear-wide-connected', path: '/master/processes', moduleId: 'mod_processes' },
   
@@ -63,6 +64,7 @@ export const navigationConfig: NavItem[] = [
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
   
   { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },
+  { name: 'Vendors', icon: 'bi-truck', path: '/vendors', moduleId: 'mod_vendor' },
   { name: 'Employee Management', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
   { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
   { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
