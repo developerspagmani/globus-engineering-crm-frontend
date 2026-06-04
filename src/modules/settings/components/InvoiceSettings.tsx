@@ -228,8 +228,16 @@ const InvoiceSettings: React.FC = () => {
                     <input type="text" className="form-control" placeholder="e.g. INV" name="prefix" value={formData.prefix} onChange={handleInputChange} />
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label small text-muted text-uppercase fw-bold">Next Number</label>
+                    <label className="form-label small text-muted text-uppercase fw-bold">Next Invoice Number</label>
                     <input type="number" className="form-control" name="nextNumber" value={formData.nextNumber} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={handleInputChange} />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Delivery Challan Prefix</label>
+                    <input type="text" className="form-control" placeholder="e.g. DC" name="challanPrefix" value={formData.challanPrefix || ''} onChange={handleInputChange} />
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Delivery Challan Next Number</label>
+                    <input type="number" className="form-control" name="nextChallanNumber" value={formData.nextChallanNumber || ''} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={handleInputChange} />
                   </div>
                 </div>
               </div>

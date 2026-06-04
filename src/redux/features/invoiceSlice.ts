@@ -253,6 +253,8 @@ interface InvoiceState {
     footerText: string;
     prefix: string;
     nextNumber: number;
+    challanPrefix?: string;
+    nextChallanNumber?: number;
     showLogo: boolean;
     accentColor: string;
     nextInvoice: string | null;
@@ -304,11 +306,14 @@ const initialState: InvoiceState = {
     footerText: 'Thank you for your business!',
     prefix: 'INV',
     nextNumber: 1,
+    challanPrefix: 'DC',
+    nextChallanNumber: 1,
     showLogo: true,
     accentColor: '#ea580c',
     nextInvoice: null,
     nextChallan: null,
     showDeclaration: false,
+
     vatTin: '',
     cstNo: '',
     panNo: '',
