@@ -503,7 +503,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
             <div className="p-meta">
                <div className="p-meta-row">
                   <div className="p-meta-col">
-                     <span>{isWOP ? 'Delivery Challan No' : 'Invoice No'}</span>
+                     <span>{isWOP ? 'Invoice WOP No' : 'Invoice No'}</span>
                      <span className="p-meta-colon">:</span>
                      <span className="p-meta-val">{isWOP ? (invoice.challanNumber ? (invoice.challanNumber.includes(settings.challanPrefix || 'DC') || invoice.challanNumber.includes('DC') ? invoice.challanNumber : `${settings.challanPrefix || 'DC'}-${invoice.challanNumber}`) : 'N/A') : invoice.invoiceNumber}</span>
                   </div>
@@ -547,7 +547,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                </div>
             </div>
 
-            <div className="tax-invoice-label">{isWOP ? 'Delivery Challan' : 'Tax Invoice'}</div>
+            <div className="tax-invoice-label">{isWOP ? 'Invoice WOP' : 'Tax Invoice'}</div>
 
             {/* Address Row - Always on every page */}
             <div className="p-address">

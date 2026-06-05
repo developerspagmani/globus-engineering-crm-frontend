@@ -172,10 +172,12 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
           ...prev,
           outwardId: value,
           outwardNo: outward.outwardNo,
-          items: outward.items.map((it: any) => ({
+          items: outward.items
+            .filter((it: any) => (it.remainingQty !== undefined ? it.remainingQty : it.quantity) > 0)
+            .map((it: any) => ({
              description: it.description || it.item_name || '',
              process: it.process || (outward as any).processName || '',
-             quantity: it.remainingQty || it.quantity || 0,
+             quantity: it.remainingQty !== undefined ? it.remainingQty : (it.quantity || 0),
              unit: it.unit || 'pcs'
           }))
         }));
