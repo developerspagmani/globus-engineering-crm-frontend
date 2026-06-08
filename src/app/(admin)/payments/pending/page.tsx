@@ -44,8 +44,8 @@ const PendingPaymentPage = () => {
   const pendingInvoices = items.filter(inv => {
     const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
     const isPending = inv.status?.toLowerCase() !== 'paid' &&
-                      inv.status?.toLowerCase() !== 'cancelled' &&
-                      balance > 0;
+      inv.status?.toLowerCase() !== 'cancelled' &&
+      balance > 0;
     if (!isPending) return false;
 
     const matchesSearch =
@@ -57,8 +57,26 @@ const PendingPaymentPage = () => {
     return matchesSearch && matchesCustomer;
   });
 
-  const totalPages = Math.ceil(pendingInvoices.length / pagination.itemsPerPage);
-  const paginatedItems = pendingInvoices.slice(
+  const groupedInvoices = pendingInvoices.reduce((acc, inv) => {
+    const key = inv.customerId || 'unknown';
+    if (!acc[key]) {
+      acc[key] = {
+        customerId: key,
+        customerName: inv.customerName || 'Unknown Customer',
+        invoices: [],
+        totalPending: 0,
+        firstInvoice: inv
+      };
+    }
+    acc[key].invoices.push(inv);
+    acc[key].totalPending += (inv.grandTotal || 0) - (inv.paidAmount || 0);
+    return acc;
+  }, {} as Record<string, { customerId: string, customerName: string, invoices: any[], totalPending: number, firstInvoice: any }>);
+
+  const customerGroups = Object.values(groupedInvoices);
+
+  const totalPages = Math.ceil(customerGroups.length / pagination.itemsPerPage);
+  const paginatedGroups = customerGroups.slice(
     (pagination.currentPage - 1) * pagination.itemsPerPage,
     pagination.currentPage * pagination.itemsPerPage
   );
@@ -116,12 +134,12 @@ const PendingPaymentPage = () => {
         {/* Filter Bar */}
         <div className="card filter-card">
           <div className="card-body p-3">
-          <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
               <div className="filter-item-select" style={{ minWidth: '150px' }}>
-                 <PartyTypeToggle
-                    partyType={partyType}
-                    setPartyType={setPartyType as any}
-                 />
+                <PartyTypeToggle
+                  partyType={partyType}
+                  setPartyType={setPartyType as any}
+                />
               </div>
 
               <div className="filter-item-search flex-grow-1">
@@ -178,22 +196,49 @@ const PendingPaymentPage = () => {
                     </tr>
                   </thead>
                   <tbody className="border-top-0">
-                    {paginatedItems.map((inv, index) => {
-                      const overdueDays = calculateOverdueDays(inv.dueDate);
+                    {paginatedGroups.map((group, index) => {
+                      const maxOverdueDays = Math.max(0, ...group.invoices.map(inv => calculateOverdueDays(inv.dueDate)));
+                      
+                      const latestInvoice = group.invoices.reduce((latest, current) => {
+                        const latestDate = latest.date ? new Date(latest.date).getTime() : 0;
+                        const currentDate = current.date ? new Date(current.date).getTime() : 0;
+                        return currentDate > latestDate ? current : latest;
+                      }, group.invoices[0]);
+
                       return (
-                        <tr key={inv.id} className="border-bottom border-light">
+                        <tr
+                          key={group.customerId}
+                          className="border-bottom border-light"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => router.push(getVoucherUrl(group.firstInvoice))}
+                        >
                           <td className="text-muted small px-4">
                             {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
                           </td>
-                          <td className="text-dark fw-bold text-uppercase" style={{ fontSize: '0.85rem' }}>{inv.customerName}</td>
-                          <td className="text-muted small">{inv.poNo || '-'}</td>
-                          <td className="text-muted small">{inv.dcNo || '-'}</td>
-                          <td className="text-dark fw-bold small"><Link href={`/invoices/${inv.id}`} className="text-primary fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{inv.invoiceNumber}</Link></td>
-                          <td className="text-muted small">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
-                          <td className="text-dark fw-bold small">₹ {(inv.grandTotal - (inv.paidAmount || 0)).toLocaleString()}</td>
+                          <td className="text-dark fw-bold text-uppercase" style={{ fontSize: '0.85rem' }}>
+                            <div className="d-flex flex-column align-items-start gap-1">
+                              <span style={{ lineHeight: '1.4' }}>{group.customerName}</span>
+                              {group.invoices.length > 1 && (
+                                <span className="badge bg-secondary rounded-pill" style={{ fontSize: '0.7rem' }}>{group.invoices.length} Invoices</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="text-muted small">{latestInvoice.poNo || '-'}</td>
+                          <td className="text-muted small">{latestInvoice.dcNo || '-'}</td>
+                          <td className="text-dark fw-bold small">
+                            <Link
+                              href={`/invoices/${latestInvoice.id}`}
+                              className="text-primary fw-bold text-decoration-none hover-underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {latestInvoice.invoiceNumber}
+                            </Link>
+                          </td>
+                          <td className="text-muted small">{latestInvoice.date ? new Date(latestInvoice.date).toLocaleDateString() : 'N/A'}</td>
+                          <td className="text-dark fw-bold small">₹ {group.totalPending.toLocaleString()}</td>
                           <td className="text-center">
-                            {overdueDays > 0 ? (
-                              <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{overdueDays} Days</span>
+                            {maxOverdueDays > 0 ? (
+                              <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{maxOverdueDays} Days</span>
                             ) : (
                               <span className="badge rounded-pill bg-success-subtle text-success px-3">On Time</span>
                             )}
@@ -201,27 +246,32 @@ const PendingPaymentPage = () => {
                           <td className="text-center px-4 text-nowrap">
                             <div className="d-flex justify-content-center gap-1">
                               <button
-                                className="btn-action-edit"
-                                title="Add Payment"
-                                onClick={() => router.push(getVoucherUrl(inv))}
+                                className="btn border-0 d-flex align-items-center justify-content-center p-0"
+                                title="View Details"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(getVoucherUrl(group.firstInvoice));
+                                }}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#eb5e28', color: '#fff' }}
                               >
-                                <i className="bi bi-wallet2 px-1"></i>
+                                <i className="bi bi-eye"></i>
                               </button>
 
                               <div className="dropdown">
                                 <button
                                   className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
                                   type="button"
-                                  id={`actions-${inv.id}`}
+                                  id={`actions-${latestInvoice.id}`}
                                   data-bs-toggle="dropdown"
                                   aria-expanded="false"
+                                  onClick={(e) => e.stopPropagation()}
                                   style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                                 >
                                   <i className="bi bi-three-dots-vertical fs-5"></i>
                                 </button>
-                                <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${inv.id}`}>
+                                <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${latestInvoice.id}`}>
                                   <li>
-                                    <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintPending(inv)}>
+                                    <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintPending(latestInvoice)}>
                                       <i className="bi bi-printer text-primary"></i>
                                       <span className="small fw-semibold">Quick Print</span>
                                     </button>
@@ -233,7 +283,7 @@ const PendingPaymentPage = () => {
                         </tr>
                       );
                     })}
-                    {pendingInvoices.length === 0 && (
+                    {customerGroups.length === 0 && (
                       <tr>
                         <td colSpan={9} className="text-center py-5 text-muted">
                           <h6 className="fw-normal">No pending payments found</h6>
@@ -246,7 +296,7 @@ const PendingPaymentPage = () => {
             </div>
             {totalPages > 1 && (
               <div className="p-3 border-top bg-light d-flex justify-content-between align-items-center px-4">
-                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pendingInvoices.length)} of {pendingInvoices.length} entries</span>
+                <span className="text-muted small">Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, customerGroups.length)} of {customerGroups.length} entries</span>
                 <PaginationComponent
                   currentPage={pagination.currentPage}
                   totalPages={totalPages}

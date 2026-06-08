@@ -13,8 +13,10 @@ import PaginationComponent from '@/components/shared/Pagination';
 
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { useRouter } from 'next/navigation';
 
 const CustomerTable: React.FC = () => {
+  const router = useRouter();
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.customers);
@@ -104,21 +106,21 @@ const CustomerTable: React.FC = () => {
               ) : (
                 <>
                   {paginatedItems.map((customer, index) => (
-                    <tr key={customer.id}>
+                    <tr key={customer.id} onClick={() => router.push(`/customers/${customer.id}`)} style={{ cursor: 'pointer' }} className="table-row-hover">
                       <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                      <td className="fw-bold text-dark text-nowrap"><Link href={`/customers/${customer.id}`} className="text-primary fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{customer.name || '-'}</Link></td>
+                      <td className="fw-bold text-dark text-nowrap"><Link href={`/customers/${customer.id}`} className="text-primary fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{customer.name || '-'}</Link></td>
                       <td className="text-muted small">{customer.email || customer.emailId1 || '-'}</td>
                       <td className="text-muted small">{customer.phone || customer.phoneNumber1 || '-'}</td>
                       <td><span className="badge bg-light text-dark border-0 shadow-sm fw-semibold p-2">{customer.gst || '-'}</span></td>
                       <td className="text-muted small">{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center gap-1">
-                          <Link href={`/customers/${customer.id}`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
+                          <Link href={`/customers/${customer.id}`} className="btn-action-view" title="View Detail" onClick={(e) => e.stopPropagation()}><i className="bi bi-eye-fill"></i></Link>
                           {checkActionPermission(user, 'mod_customer', 'edit') && (
-                            <Link href={`/customers/${customer.id}?edit=true`} className="btn-action-edit" title="Edit Customer"><i className="bi bi-pencil-fill"></i></Link>
+                            <Link href={`/customers/${customer.id}?edit=true`} className="btn-action-edit" title="Edit Customer" onClick={(e) => e.stopPropagation()}><i className="bi bi-pencil-fill"></i></Link>
                           )}
                           <div className="dropdown">
-                            <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${customer.id}`} data-bs-toggle="dropdown" aria-expanded="false" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
+                            <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${customer.id}`} data-bs-toggle="dropdown" aria-expanded="false" onClick={(e) => e.stopPropagation()} style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
                               <i className="bi bi-three-dots-vertical fs-5"></i>
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${customer.id}`}>

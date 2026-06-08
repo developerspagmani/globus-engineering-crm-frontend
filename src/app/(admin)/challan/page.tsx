@@ -216,10 +216,10 @@ const ChallanPage = () => {
                 ) : (
                   <>
                     {paginatedItems.map((challan, index) => (
-                      <tr key={challan.id}>
+                      <tr key={challan.id} onClick={() => router.push(`/challan/${challan.id}/edit`)} style={{ cursor: 'pointer' }} className="table-row-hover">
                         <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                         <td className="text-nowrap fw-bold text-dark">
-                          <Link href={`/challan/${challan.id}/edit`} className="text-dark fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{challan.challanNo}</Link>
+                          <Link href={`/challan/${challan.id}/edit`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{challan.challanNo}</Link>
                           <div className="d-flex align-items-center gap-1">
                             <span className="text-muted x-small fw-normal text-capitalize">{challan.type.replace('_', ' ')}</span>
                             {challan.bill_type && (
@@ -245,11 +245,11 @@ const ChallanPage = () => {
                         </td>
                         <td className="text-center px-4 text-nowrap">
                           <div className="d-flex justify-content-center gap-1">
-                            <Link href={`/challan/${challan.id}/edit`} className="btn-action-view" title="View Profile">
+                            <Link href={`/challan/${challan.id}/edit`} className="btn-action-view" title="View Profile" onClick={(e) => e.stopPropagation()}>
                               <i className="bi bi-eye-fill"></i>
                             </Link>
                             {checkActionPermission(user, 'mod_challan', 'edit') && (
-                              <Link href={`/challan/${challan.id}/edit?edit=true`} className="btn-action-edit" title="Edit Record">
+                              <Link href={`/challan/${challan.id}/edit?edit=true`} className="btn-action-edit" title="Edit Record" onClick={(e) => e.stopPropagation()}>
                                 <i className="bi bi-pencil-fill"></i>
                               </Link>
                             )}
@@ -261,6 +261,7 @@ const ChallanPage = () => {
                                 id={`actions-${challan.id}`}
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
+                                onClick={(e) => e.stopPropagation()}
                                 style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                               >
                                 <i className="bi bi-three-dots-vertical fs-5"></i>

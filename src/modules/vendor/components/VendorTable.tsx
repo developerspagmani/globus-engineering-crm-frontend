@@ -11,9 +11,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
 import ConfirmationModal from '@/components/ConfirmationModal';
-
+import { useRouter } from 'next/navigation';
 
 const VendorTable: React.FC = () => {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading } = useSelector((state: RootState) => state.vendors);
@@ -113,9 +114,9 @@ const VendorTable: React.FC = () => {
               ) : (
                 <>
                   {paginatedItems.map((vendor, index) => (
-                    <tr key={vendor.id} className="border-bottom border-light">
+                    <tr key={vendor.id} onClick={() => router.push(`/vendors/${vendor.id}/edit`)} style={{ cursor: 'pointer' }} className="border-bottom border-light table-row-hover">
                       <td className="px-4 small text-muted">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                      <td className="text-dark fw-bold"><Link href={`/vendors/${vendor.id}/edit`} className="text-dark fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{vendor.name || '-'}</Link></td>
+                      <td className="text-dark fw-bold"><Link href={`/vendors/${vendor.id}/edit`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{vendor.name || '-'}</Link></td>
                       <td className="text-muted small">{vendor.email || vendor.emailId1 || '-'}</td>
                       <td className="text-muted small">{vendor.phone || vendor.phoneNumber1 || '-'}</td>
                       <td className="text-muted small">
@@ -124,13 +125,13 @@ const VendorTable: React.FC = () => {
                       
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
-                          <Link href={`/vendors/${vendor.id}/edit`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
+                          <Link href={`/vendors/${vendor.id}/edit`} className="btn-action-view" title="View Detail" onClick={(e) => e.stopPropagation()}><i className="bi bi-eye-fill"></i></Link>
                           {checkActionPermission(user, 'mod_vendor', 'edit') && (
-                            <Link href={`/vendors/${vendor.id}/edit?edit=true`} className="btn-action-edit" title="Edit Vendor"><i className="bi bi-pencil-fill"></i></Link>
+                            <Link href={`/vendors/${vendor.id}/edit?edit=true`} className="btn-action-edit" title="Edit Vendor" onClick={(e) => e.stopPropagation()}><i className="bi bi-pencil-fill"></i></Link>
                           )}
                           
                           <div className="dropdown">
-                            <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${vendor.id}`} data-bs-toggle="dropdown" aria-expanded="false" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
+                            <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" type="button" id={`actions-${vendor.id}`} data-bs-toggle="dropdown" aria-expanded="false" onClick={(e) => e.stopPropagation()} style={{ width: '32px', height: '32px', borderRadius: '8px' }}>
                               <i className="bi bi-three-dots-vertical fs-5"></i>
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${vendor.id}`}>

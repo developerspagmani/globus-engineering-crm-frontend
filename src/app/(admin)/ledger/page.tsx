@@ -618,11 +618,11 @@ export default function LedgerPage() {
                   </tr>
                 ) : (
                   paginatedItems.map((party, index) => (
-                    <tr key={party.id || `party-${index}`}>
+                    <tr key={party.id || `party-${index}`} onClick={() => router.push(`/ledger/${party.id}`)} style={{ cursor: 'pointer' }} className="table-row-hover">
                       <td className="text-muted small text-center">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                       <td>
                         <div className="d-flex flex-column">
-                           <Link href={`/ledger/${party.id}`} className="fw-bold text-dark text-capitalize text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{party.name}</Link>
+                           <Link href={`/ledger/${party.id}`} className="fw-bold text-dark text-capitalize text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{party.name}</Link>
                         </div>
                       </td>
                       <td className="text-muted small">{party.street1 || '-'}</td>
@@ -630,7 +630,7 @@ export default function LedgerPage() {
                       <td className="text-muted small">{party.state || '-'}</td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
-                          <Link href={`/ledger/${party.id}`} className="btn-action-view" title="View Detail">
+                          <Link href={`/ledger/${party.id}`} className="btn-action-view" title="View Detail" onClick={(e) => e.stopPropagation()}>
                             <i className="bi bi-eye-fill"></i>
                           </Link>
                           
@@ -641,6 +641,7 @@ export default function LedgerPage() {
                               id={`actions-${party.id}`} 
                               data-bs-toggle="dropdown" 
                               aria-expanded="false"
+                              onClick={(e) => e.stopPropagation()}
                               style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                             >
                               <i className="bi bi-three-dots-vertical fs-5"></i>

@@ -192,13 +192,17 @@ const InvoiceTable: React.FC = () => {
           </thead>
           <tbody>
             {(activeTab === 'ADD_INVOICE' ? inwardLoading : invoiceLoading) ? <tr><td colSpan={6}><Loader text="Loading..." /></td></tr> : (
-              paginatedItems.map((item, index) => (
-                <tr key={`${activeTab}-${item.id}`} className="border-bottom text-uppercase">
+              paginatedItems.map((item, index) => {
+                const rowUrl = activeTab === 'ADD_INVOICE' 
+                  ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}` 
+                  : `/invoices/${item.id}`;
+                return (
+                <tr key={`${activeTab}-${item.id}`} className="border-bottom text-uppercase table-row-hover" style={{ cursor: 'pointer' }} onClick={() => router.push(rowUrl)}>
                   <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                   <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
                   <td className="text-muted small">
                     {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? (item.dcNo || item.challanNo || item.dc_no || '-') : (
-                      <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{item.invoiceNumber}</Link>
+                      <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{item.invoiceNumber}</Link>
                     )}
                   </td>
                   <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
@@ -214,6 +218,7 @@ const InvoiceTable: React.FC = () => {
                           href={`/inward/${item.id}`}
                           className="btn-action-view mx-1"
                           title="View Inward"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <i className="bi bi-eye-fill"></i>
                         </Link>
@@ -222,6 +227,7 @@ const InvoiceTable: React.FC = () => {
                         href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}` : `/invoices/${item.id}`}
                         className="btn-action-view"
                         title={activeTab === 'ADD_INVOICE' ? "Create Invoice" : "View Invoice"}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <i className={activeTab === 'ADD_INVOICE' ? "bi bi-plus-lg" : "bi bi-eye-fill"}></i>
                       </Link>
@@ -231,6 +237,7 @@ const InvoiceTable: React.FC = () => {
                           href={`/invoices/${item.id}/edit`}
                           className="btn-action-edit mx-1"
                           title="Edit Invoice"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <i className="bi bi-pencil-fill"></i>
                         </Link>
@@ -240,6 +247,7 @@ const InvoiceTable: React.FC = () => {
                         <button
                           className="btn btn-sm btn-outline-secondary border-0 text-muted p-0"
                           data-bs-toggle="dropdown"
+                          onClick={(e) => e.stopPropagation()}
                           style={{ width: '32px', height: '32px' }}
                         >
                           <i className="bi bi-three-dots-vertical fs-5"></i>
@@ -285,8 +293,9 @@ const InvoiceTable: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                </tr>
-              ))
+                  </tr>
+                );
+              })
             )}
             {paginatedItems.length === 0 && <tr><td colSpan={6} className="text-center py-5 text-muted small">No records found.</td></tr>}
           </tbody>

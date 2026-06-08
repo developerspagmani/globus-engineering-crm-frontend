@@ -35,7 +35,7 @@ export default function VendorListPage() {
             <ExportExcel 
               data={items} 
               fileName="Vendor_List" 
-              headers={{ name: 'Vendor Name', phone: 'Phone', email: 'Email', city: 'City', status: 'Status' }}
+              headers={{ name: 'Vendor Name', phone: 'Phone', email: 'Email', gst: 'GSTN', city: 'City', status: 'Status' }}
               buttonText="Export List"
             />
             {checkActionPermission(user, 'mod_vendor', 'create') && (

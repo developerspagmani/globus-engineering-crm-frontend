@@ -264,10 +264,10 @@ const VoucherPage = () => {
                 ) : (
                   <>
                     {paginatedItems.map((voucher, index) => (
-                      <tr key={voucher.id}>
+                      <tr key={voucher.id} onClick={() => router.push(`/vouchers/${voucher.id}`)} style={{ cursor: 'pointer' }} className="table-row-hover">
                         <td className="px-4 text-nowrap text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                         <td className="text-nowrap fw-bold text-dark">
-                          <Link href={`/vouchers/${voucher.id}`} className="text-dark fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{voucher.voucherNo}</Link>
+                          <Link href={`/vouchers/${voucher.id}`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{voucher.voucherNo}</Link>
                           <div className={`x-small text-capitalize fw-normal ${getTypeColor(voucher.type)}`}>
                             {voucher.type}
                           </div>
@@ -298,10 +298,10 @@ const VoucherPage = () => {
                           <div className="d-flex justify-content-center gap-1">
                             {mounted && checkActionPermission(user, 'mod_voucher', 'edit') && (
                               <>
-                                <Link href={`/vouchers/${voucher.id}`} className="btn-action-view" title="View Detail">
+                                <Link href={`/vouchers/${voucher.id}`} className="btn-action-view" title="View Detail" onClick={(e) => e.stopPropagation()}>
                                   <i className="bi bi-eye-fill"></i>
                                 </Link>
-                                <Link href={`/vouchers/${voucher.id}?edit=true`} className="btn-action-edit" title="Edit Voucher">
+                                <Link href={`/vouchers/${voucher.id}?edit=true`} className="btn-action-edit" title="Edit Voucher" onClick={(e) => e.stopPropagation()}>
                                   <i className="bi bi-pencil-fill"></i>
                                 </Link>
                               </>
@@ -314,6 +314,7 @@ const VoucherPage = () => {
                                 id={`actions-${voucher.id}`} 
                                 data-bs-toggle="dropdown" 
                                 aria-expanded="false"
+                                onClick={(e) => e.stopPropagation()}
                                 style={{ width: '32px', height: '32px', borderRadius: '8px' }}
                               >
                                 <i className="bi bi-three-dots-vertical fs-5"></i>
