@@ -115,15 +115,17 @@ export default function LedgerPage() {
         const vendorRef = !customerRef ? vendors.find(v => String(v.id).toLowerCase() === entryPartyId) : null;
         const partyRef = customerRef || vendorRef;
         
-        // Even if metadata is missing, we show the name from the ledger entry
+        // Skip deleted customers/parties
+        if (!partyRef) return;
+
         partyMap.set(entryPartyId, {
           id: entry.partyId,
-          name: entry.partyName || partyRef?.name || 'Unknown',
-          street1: partyRef?.street1 || 'Address not specified',
-          street2: partyRef?.street2 || '',
-          city: partyRef?.city || '-',
-          state: partyRef?.state || '-',
-          partyType: customerRef ? 'customer' : (vendorRef ? 'vendor' : ((entry as any).partyType || (entry as any).party_type || 'customer')),
+          name: entry.partyName || partyRef.name || 'Unknown',
+          street1: partyRef.street1 || 'Address not specified',
+          street2: partyRef.street2 || '',
+          city: partyRef.city || '-',
+          state: partyRef.state || '-',
+          partyType: customerRef ? 'customer' : 'vendor',
           lastUpdated: entryDate
         });
       } else {

@@ -102,7 +102,7 @@ const initialState: LedgerState = {
   error: null,
   filters: {
     search: '',
-    partyType: 'all',
+    partyType: 'customer',
     type: 'all',
     dateFrom: '',
     dateTo: '',

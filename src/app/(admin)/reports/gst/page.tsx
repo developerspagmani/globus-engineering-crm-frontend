@@ -39,7 +39,7 @@ const GstReportPage = () => {
         fromDate: fromDate,
         toDate: toDate,
         partyType: partyType,
-        type: 'INVOICE,BOTH' // Only taxable invoices for GST
+        type: 'all' // Show all invoices to match live counts
       })); 
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id })); 
     }
@@ -48,7 +48,7 @@ const GstReportPage = () => {
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
     
-    let url = `/invoices?page=1&limit=10000&company_id=${activeCompany.id}&type=INVOICE,BOTH`;
+    let url = `/invoices?page=1&limit=10000&company_id=${activeCompany.id}&type=all`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (statusFilter && statusFilter !== 'all') url += `&status=${statusFilter}`;
     if (fromDate) url += `&fromDate=${fromDate}`;

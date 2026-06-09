@@ -45,7 +45,7 @@ const PendingPaymentPage = () => {
     const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
     const isPending = inv.status?.toLowerCase() !== 'paid' &&
       inv.status?.toLowerCase() !== 'cancelled' &&
-      balance > 0;
+      (balance > 0 || inv.status?.toLowerCase() === 'billed');
     if (!isPending) return false;
 
     const matchesSearch =
