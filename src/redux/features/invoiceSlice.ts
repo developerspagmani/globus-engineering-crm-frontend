@@ -3,6 +3,13 @@ import { Invoice } from '@/types/modules';
 import api from '@/lib/axios';
 
 const mapInvoice = (inv: any): Invoice => {
+  const cleanStr = (val: any): string => {
+    if (val === null || val === undefined) return '';
+    const str = String(val).trim();
+    if (str.toLowerCase() === 'null') return '';
+    return str;
+  };
+
   const items = Array.isArray(inv.items_json)
     ? inv.items_json
     : JSON.parse(inv.items_json || '[]');
@@ -10,12 +17,31 @@ const mapInvoice = (inv: any): Invoice => {
   const grandTotal = parseFloat(String(inv.grandTotal || inv.grand_total || '0').replace(/[^\d.]/g, '')) || 0;
   const subTotal = parseFloat(String(inv.subTotal || inv.total || '0').replace(/[^\d.]/g, '')) || 0;
 
+  const customerName = cleanStr(inv.customer_name) || cleanStr(inv.customerName) || cleanStr(inv.customer?.customer_name) || 'N/A';
+
+  let address = cleanStr(inv.address);
+  if (!address && inv.customer) {
+    const parts = [
+      cleanStr(inv.customer.street1),
+      cleanStr(inv.customer.street2),
+      cleanStr(inv.customer.city),
+      cleanStr(inv.customer.state)
+    ].filter(Boolean);
+    if (inv.customer.pin_code && String(inv.customer.pin_code).toLowerCase() !== 'null') {
+      parts.push(String(inv.customer.pin_code));
+    }
+    address = parts.join(', ');
+  }
+
+  const gstin = cleanStr(inv.gstin) || cleanStr(inv.customer?.gst) || '';
+  const state = cleanStr(inv.state) || cleanStr(inv.customer?.state) || '';
+
   return {
     id: inv.id.toString(),
     invoiceNumber: inv.invoice_no && inv.invoice_no !== 0 ? String(inv.invoice_no).padStart(4, '0') : (inv.invoiceNumber || `INV-${inv.id}`),
     customerId: inv.customer_id?.toString() || inv.customerId?.toString() || '',
-    customerName: inv.customer_name || inv.customerName || 'N/A',
-    address: inv.address || '',
+    customerName,
+    address,
     company_id: inv.company_id?.toString() || inv.companyId?.toString() || '',
     date: inv.invoice_date || inv.date ? new Date(inv.invoice_date || inv.date).toISOString().split('T')[0] : '',
     dueDate: inv.due_date || inv.dueDate ? new Date(inv.due_date || inv.dueDate).toISOString().split('T')[0] : '',
@@ -26,18 +52,23 @@ const mapInvoice = (inv: any): Invoice => {
     dcDate: inv.dc_date || inv.dcDate ? new Date(inv.dc_date || inv.dcDate).toISOString().split('T')[0] : '',
     grandTotal,
     status: inv.status?.toLowerCase() || 'draft',
-    items: items.map((it: any) => ({
-      id: it.id || Math.random().toString(36).substr(2, 9),
-      description: it.description || '',
-      process: it.process || '',
-      quantity: parseFloat(String(it.quantity || '0').replace(/[^\d.]/g, '')) || 0,
-      wopQty: parseFloat(String(it.wopQty || it.wop_qty || '0').replace(/[^\d.]/g, '')) || 0,
-      hsnCode: it.hsnCode || it.hsn_code || '',
-      unitPrice: parseFloat(String(it.unitPrice || it.unit_price || it.price || '0').replace(/[^\d.]/g, '')) || 0,
-      amount: parseFloat(String(it.amount || '0').replace(/[^\d.]/g, '')) || 0,
-      tax: parseFloat(String(it.tax || '0').replace(/[^\d.]/g, '')) || 0,
-      total: parseFloat(String(it.total || '0').replace(/[^\d.]/g, '')) || 0
-    })),
+    items: items.map((it: any) => {
+      const quantity = parseFloat(String(it.quantity || it.qty || '0').replace(/[^\d.]/g, '')) || 0;
+      const unitPrice = parseFloat(String(it.unitPrice || it.unit_price || it.price || '0').replace(/[^\d.]/g, '')) || 0;
+      const amount = parseFloat(String(it.amount || it.item_total || it.total || (quantity * unitPrice) || '0').replace(/[^\d.]/g, '')) || 0;
+      return {
+        id: it.id || Math.random().toString(36).substr(2, 9),
+        description: it.description || '',
+        process: it.process || '',
+        quantity,
+        wopQty: parseFloat(String(it.wopQty || it.wop_qty || '0').replace(/[^\d.]/g, '')) || 0,
+        hsnCode: it.hsnCode || it.hsn_code || '',
+        unitPrice,
+        amount,
+        tax: parseFloat(String(it.tax || '0').replace(/[^\d.]/g, '')) || 0,
+        total: parseFloat(String(it.total || '0').replace(/[^\d.]/g, '')) || 0
+      };
+    }),
     subTotal,
     taxTotal: grandTotal - subTotal,
     discount: parseFloat(String(inv.discount || '0').replace(/[^\d.]/g, '')) || 0,
@@ -53,8 +84,8 @@ const mapInvoice = (inv: any): Invoice => {
     inwardId: inv.inward_id?.toString() || inv.inwardId?.toString(),
     createdAt: inv.app_created_at || inv.created_at || inv.createdAt,
     notes: inv.notes || '',
-    gstin: inv.gstin || '',
-    state: inv.state || '',
+    gstin,
+    state,
     paidAmount: parseFloat(String(inv.paid_amount || inv.paidAmount || '0').replace(/[^\d.]/g, '')) || 0,
     otherCharges: parseFloat(String(inv.other_charges || inv.otherCharges || '0').replace(/[^\d.]/g, '')) || 0,
     taxRate: parseFloat(String(inv.tax_rate || inv.taxRate || '12').replace(/[^\d.]/g, '')) || 0,
