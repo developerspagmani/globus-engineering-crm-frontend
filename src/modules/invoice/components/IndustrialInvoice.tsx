@@ -13,6 +13,7 @@ import { numberToWords } from '@/utils/numberToWords';
 interface IndustrialInvoiceProps {
    invoice: Invoice;
    company?: Company | null;
+   typeParam?: string | null;
    settings: {
       showLogo: boolean;
       logo: string | null;
@@ -31,11 +32,11 @@ interface IndustrialInvoiceProps {
       gstNo?: string;
       stateDetails?: string;
       declarationText?: string;
+      challanPrefix?: string;
    };
 }
 
-const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company, settings }) => {
-   const typeParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('type') : null;
+const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company, settings, typeParam }) => {
    
    let displayItems = [...invoice.items];
    let displayInvoice = { ...invoice };
@@ -61,11 +62,12 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          };
          isWOP = false;
       } else if (typeParam === 'WOP') {
-         displayItems = invoice.items.map(it => ({
+         displayItems = invoice.items.map((it, idx) => ({
             ...it,
             quantity: Number(it.wopQty || 0),
             amount: 0,
-            unitPrice: 0
+            unitPrice: 0,
+            originalIndex: idx + 1
          })).filter(it => it.quantity > 0);
          
          displayInvoice = {
@@ -77,6 +79,10 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          };
          isWOP = true;
       }
+   } else if (!isWOP) {
+      // Default case for Tax Invoices (or BOTH without explicit typeParam)
+      // Hide items that have 0 quantity on the Tax Invoice view
+      displayItems = displayItems.filter(it => Number(it.quantity || 0) > 0);
    }
 
    const totalInWords = numberToWords(displayInvoice.grandTotal);
@@ -505,7 +511,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   <div className="p-meta-col">
                      <span>{isWOP ? 'Invoice WOP No' : 'Invoice No'}</span>
                      <span className="p-meta-colon">:</span>
-                     <span className="p-meta-val">{isWOP ? (invoice.challanNumber ? (invoice.challanNumber.includes(settings.challanPrefix || 'DC') || invoice.challanNumber.includes('DC') ? invoice.challanNumber : `${settings.challanPrefix || 'DC'}-${invoice.challanNumber}`) : 'N/A') : invoice.invoiceNumber}</span>
+                     <span className="p-meta-val">{isWOP ? (invoice.challanNumber || 'N/A') : invoice.invoiceNumber}</span>
                   </div>
                   <div className="p-meta-col">
                      <span>DC No</span>
@@ -600,7 +606,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                   <tbody>
                      {items.map((item: any, idx: number) => (
                         <tr key={idx} style={isWOP ? { height: '14px' } : {}}>
-                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{startSno + idx}</td>
+                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{item.originalIndex ? item.originalIndex : (startSno + idx)}</td>
                            <td style={{ fontWeight: 'bold', ...(isWOP && { height: '14px', padding: '1px 6px' }) }}>{item.description}</td>
                            <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{item.hsnCode || '998898'}</td>
                            {!isWOP && <td style={{ textAlign: 'center' }}>{taxRate}%</td>}

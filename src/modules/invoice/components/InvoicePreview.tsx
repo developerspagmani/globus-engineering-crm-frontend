@@ -125,7 +125,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
 
       <div ref={invoiceRef} className="print-area">
         <div className="print-wrapper">
-          <IndustrialInvoice invoice={invoice} company={company} settings={settings} />
+          <IndustrialInvoice invoice={invoice} company={company} settings={settings} typeParam={searchParams.get('type')} />
         </div>
       </div>
 

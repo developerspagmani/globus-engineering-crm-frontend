@@ -181,7 +181,7 @@ const InvoiceTable: React.FC = () => {
               <th className="fw-semibold px-4 py-3">Sno</th>
               <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Customer' : 'Customer Name'}</th>
               <th className="fw-semibold px-4 py-3">
-                {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? 'Dc No' : 'Invoice No'}
+                {activeTab === 'ADD_INVOICE' ? 'Dc No' : (activeTab === 'WOP_LIST' ? 'Invoice WOP No' : 'Invoice No')}
               </th>
               <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'}</th>
               {activeTab !== 'WOP_LIST' && (
@@ -201,9 +201,9 @@ const InvoiceTable: React.FC = () => {
                   <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
                   <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
                   <td className="text-muted small">
-                    {activeTab === 'ADD_INVOICE' || activeTab === 'WOP_LIST' ? (item.dcNo || item.challanNo || item.dc_no || '-') : (
+                    {activeTab === 'ADD_INVOICE' ? (item.dcNo || item.dc_no || '-') : (activeTab === 'WOP_LIST' ? (item.challanNumber || '-') : (
                       <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{item.invoiceNumber}</Link>
-                    )}
+                    ))}
                   </td>
                   <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                   {activeTab !== 'WOP_LIST' && (
@@ -263,12 +263,12 @@ const InvoiceTable: React.FC = () => {
                               <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
                             </button>
                           </li>
-                           {item.type === 'BOTH' && (
+                          {item.type === 'BOTH' && (
                             <>
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-primary"
-                                  onClick={() => router.push(`/invoices/${item.id}?print=true&type=WP`)}
+                                  onClick={() => window.open(`/invoices/${item.id}?print=true&type=WP`, '_blank')}
                                 >
                                   <i className="bi bi-printer-fill"></i> WP Print
                                 </button>
@@ -276,9 +276,9 @@ const InvoiceTable: React.FC = () => {
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-danger"
-                                  onClick={() => router.push(`/invoices/${item.id}?print=true&type=WOP`)}
+                                  onClick={() => window.open(`/invoices/${item.id}?print=true&type=WOP`, '_blank')}
                                 >
-                                  <i className="bi bi-file-earmark-text-fill"></i> WOP Print
+                                  <i className="bi bi-printer-fill"></i> WOP Print
                                 </button>
                               </li>
                             </>

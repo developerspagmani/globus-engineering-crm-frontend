@@ -47,9 +47,9 @@ export default function InvoiceDetailPage() {
             Invoice with ID: {id} not found.
           </div>
         ) : (
-          <>
+          <React.Suspense fallback={<div>Loading preview...</div>}>
             <InvoicePreview invoice={invoice} company={company} />
-          </>
+          </React.Suspense>
         )}
       </div>
     </ModuleGuard>
