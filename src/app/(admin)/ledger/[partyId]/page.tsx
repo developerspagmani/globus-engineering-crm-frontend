@@ -368,10 +368,10 @@ export default function LedgerDetailPage() {
                                         e.vchType === 'OUTWARD' ? 'bg-purple-subtle text-purple border-purple-subtle' :
                                         'bg-light text-dark border-secondary-subtle'
                                     }`}>
-                                        {e.vchType || 'JOURNAL'}
+                                        {e.vchType === 'INVOICE' ? 'SALES' : e.vchType === 'RECEIPT' ? 'RECEIPT' : e.vchType || 'JOURNAL'}
                                     </span>
                                 </td>
-                                <td className="py-3 small fw-bold text-muted">{e.vchNo || '-'}</td>
+                                <td className="py-3 small fw-bold text-muted">{e.vchNo?.replace(/^REC-/i, '') || '-'}</td>
                                 <td className="py-3 text-center">
                                     {(() => {
                                       // DYNAMIC STATUS CHECK
@@ -444,6 +444,8 @@ export default function LedgerDetailPage() {
                 company={activeCompany} 
                 dateFrom={dateFrom} 
                 dateTo={dateTo} 
+                openingBalance={openingBalance}
+                isDebitOpening={isDebitOpening}
             />
         </div>
 

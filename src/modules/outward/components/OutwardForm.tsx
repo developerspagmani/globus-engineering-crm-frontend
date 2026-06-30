@@ -45,7 +45,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
 
   const [formData, setFormData] = useState<Omit<OutwardEntry, 'id' | 'createdAt'>>({
-    outwardNo: initialData?.outwardNo || `CH-${Math.floor(1000 + Math.random() * 9000)}`,
+    outwardNo: initialData?.outwardNo || '',
     partyType: initialData?.partyType || 'customer',
     customerId: initialData?.customerId || '',
     customerName: initialData?.customerName || '',
@@ -476,7 +476,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                     });
                   } else {
                     setFormData({
-                      outwardNo: `CH-${Math.floor(1000 + Math.random() * 9000)}`,
+                      outwardNo: '',
                       partyType: 'customer',
                       customerId: '', customerName: '',
                       vendorId: '', vendorName: '',

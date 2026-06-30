@@ -120,12 +120,12 @@ const InvoiceTable: React.FC = () => {
     
     if (user?.role !== 'super_admin' && activeCompany && itemCompId !== activeCompId) return false;
     
-    // Check both status and remaining items balance
-    const isPending = String(item.status || '').toLowerCase() === 'pending';
+    // We only want inwards that actually have something remaining to bill
     const hasRemaining = (item.totalRemaining ?? 1) > 0;
+    // Also check if there's any billing balance left specifically, if the backend provides it
+    const hasBillingBalance = item.items ? item.items.some((i: any) => (i.billingBalance ?? i.remainingQty ?? 1) > 0) : true;
     
-    if (!isPending && !hasRemaining) return false;
-
+    if (!hasRemaining || !hasBillingBalance) return false;
     const search = String(filters.search || '').toLowerCase();
     const custName = String(item.customerName || item.vendorName || '').toLowerCase();
     const dcNo = String(item.dcNo || item.challanNo || '').toLowerCase();

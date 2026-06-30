@@ -244,40 +244,30 @@ const PendingPaymentPage = () => {
                             )}
                           </td>
                           <td className="text-center px-4 text-nowrap">
-                            <div className="d-flex justify-content-center gap-1">
+                            <div className="d-flex justify-content-center gap-2">
                               <button
-                                className="btn border-0 d-flex align-items-center justify-content-center p-0"
-                                title="View Details"
+                                className="btn border-0 d-flex align-items-center justify-content-center p-0 shadow-sm"
+                                title="Create Payment Voucher"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   router.push(getVoucherUrl(group.firstInvoice));
                                 }}
-                                style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#eb5e28', color: '#fff' }}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#0ea5e9', color: '#fff' }}
                               >
-                                <i className="bi bi-eye"></i>
+                                <i className="bi bi-pencil-fill fs-6"></i>
                               </button>
 
-                              <div className="dropdown">
-                                <button
-                                  className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center"
-                                  type="button"
-                                  id={`actions-${latestInvoice.id}`}
-                                  data-bs-toggle="dropdown"
-                                  aria-expanded="false"
-                                  onClick={(e) => e.stopPropagation()}
-                                  style={{ width: '32px', height: '32px', borderRadius: '8px' }}
-                                >
-                                  <i className="bi bi-three-dots-vertical fs-5"></i>
-                                </button>
-                                <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${latestInvoice.id}`}>
-                                  <li>
-                                    <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintPending(latestInvoice)}>
-                                      <i className="bi bi-printer text-primary"></i>
-                                      <span className="small fw-semibold">Quick Print</span>
-                                    </button>
-                                  </li>
-                                </ul>
-                              </div>
+                              <button
+                                className="btn border-0 d-flex align-items-center justify-content-center p-0 shadow-sm"
+                                title="Print Invoice"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePrintPending(latestInvoice);
+                                }}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#10b981', color: '#fff' }}
+                              >
+                                <i className="bi bi-printer-fill fs-6"></i>
+                              </button>
                             </div>
                           </td>
                         </tr>

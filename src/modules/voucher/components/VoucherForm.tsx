@@ -403,7 +403,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       const calculatedOthers = formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0);
 
       const voucherPayload: any = {
-        voucherNo: (mode === 'edit' && initialData?.voucherNo) ? initialData.voucherNo : `VCH-${Date.now().toString().slice(-6)}`,
+        voucherNo: (mode === 'edit' && initialData?.voucherNo) ? initialData.voucherNo : '',
         date: formData.date,
         type: formData.type,
         partyId: formData.partyId,

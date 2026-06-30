@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { createInward, updateInward } from '@/redux/features/inwardSlice';
 import { addLedgerEntry } from '@/redux/features/ledgerSlice';
-import { fetchItems, fetchProcesses } from '@/redux/features/masterSlice';
+import { fetchItems, fetchProcesses, createItemThunk } from '@/redux/features/masterSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { InwardEntry, OutwardEntry } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
@@ -34,6 +34,14 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
 
   const [pendingOutwards, setPendingOutwards] = useState<any[]>([]);
   const [outwardLoading, setOutwardLoading] = useState(false);
+
+  // --- Inline Item Creation State ---
+  const [showCreateItemModal, setShowCreateItemModal] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCode, setNewItemCode] = useState('');
+  const [targetItemIndex, setTargetItemIndex] = useState<number | null>(null);
+  const [isCreatingItem, setIsCreatingItem] = useState(false);
+  // ----------------------------------
 
   const [formData, setFormData] = useState<Omit<InwardEntry, 'id' | 'createdAt'> & { partyType: 'customer' | 'vendor', outwardId?: string, outwardNo?: string }>({
     inwardNo: '',
@@ -84,7 +92,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         setFormData(prev => ({ 
           ...prev, 
           company_id: activeCompany.id,
-          inwardNo: `INW-${Math.floor(1000 + Math.random() * 9000)}`
+          inwardNo: ''
         }));
       } else {
         setFormData(prev => ({ ...prev, company_id: activeCompany.id }));
@@ -422,6 +430,11 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                       ]}
                       value={item.description || ''}
                       onChange={(val) => handleItemChange(index, 'description', val)}
+                      onCreateNew={(term) => {
+                        setNewItemName(term);
+                        setTargetItemIndex(index);
+                        setShowCreateItemModal(true);
+                      }}
                       placeholder="Select Item"
                       disabled={mode === 'view'}
                     />
@@ -532,6 +545,78 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
         )}
 
       </div>
+
+      {showCreateItemModal && (
+         <>
+           <div className="modal-backdrop fade show" style={{ zIndex: 9998, backgroundColor: 'rgba(0,0,0,0.6)' }}></div>
+           <div className="modal fade show d-block" tabIndex={-1} style={{ zIndex: 9999 }} onClick={() => setShowCreateItemModal(false)}>
+             <div className="modal-dialog modal-dialog-centered modal-lg" onClick={e => e.stopPropagation()}>
+               <div className="modal-content bg-white rounded-4 border-0 shadow-lg p-4">
+                 <div className="modal-header border-bottom-0 px-4 pt-4 pb-2">
+                   <h3 className="modal-title fw-bold text-dark d-flex align-items-center gap-3">
+                     <i className="bi bi-box-seam text-primary fs-2"></i> Create New Item
+                   </h3>
+                   <button type="button" className="btn-close shadow-none fs-5" onClick={() => setShowCreateItemModal(false)}></button>
+                 </div>
+                 <div className="modal-body px-4 py-4">
+                   <div className="mb-5">
+                     <label className="form-label text-muted fw-bold small mb-2 text-uppercase letter-spacing-1">Item Name <span className="text-danger">*</span></label>
+                     <input 
+                       type="text" 
+                       className="form-control form-control-lg shadow-none fs-5 bg-light border-0 py-3 px-4 rounded-3" 
+                       value={newItemName} 
+                       onChange={(e) => setNewItemName(e.target.value)}
+                       placeholder="E.g. Titanium Gear"
+                     />
+                   </div>
+                   <div className="mb-2">
+                     <label className="form-label text-muted fw-bold small mb-2 text-uppercase letter-spacing-1">Item Code <span className="fw-normal text-lowercase">(Optional)</span></label>
+                     <input 
+                       type="text" 
+                       className="form-control form-control-lg shadow-none fs-5 bg-light border-0 py-3 px-4 rounded-3" 
+                       value={newItemCode} 
+                       onChange={(e) => setNewItemCode(e.target.value)}
+                       placeholder="E.g. TG-001"
+                     />
+                   </div>
+                 </div>
+                 <div className="modal-footer border-top-0 px-4 pb-4 pt-3 gap-3 d-flex justify-content-end">
+                   <button type="button" className="btn btn-light btn-lg rounded-3 px-5 py-3 fw-bold text-muted border-0" onClick={() => setShowCreateItemModal(false)}>Cancel</button>
+                   <button 
+                     type="button" 
+                     className="btn btn-primary btn-lg rounded-3 px-5 py-3 fw-bold shadow-sm" 
+                     disabled={isCreatingItem || !newItemName.trim()}
+                     onClick={async () => {
+                        try {
+                           setIsCreatingItem(true);
+                           const payload = {
+                             itemName: newItemName.trim(),
+                             itemCode: newItemCode.trim(),
+                             company_id: activeCompany?.id || formData.company_id
+                           };
+                           const res = await (dispatch as any)(createItemThunk(payload)).unwrap();
+                           
+                           if (targetItemIndex !== null) {
+                              handleItemChange(targetItemIndex, 'description', res.itemName || payload.itemName);
+                           }
+                           setShowCreateItemModal(false);
+                           setNewItemCode('');
+                        } catch (err: any) {
+                           alert(err.message || 'Failed to create item');
+                        } finally {
+                           setIsCreatingItem(false);
+                        }
+                     }}
+                   >
+                     {isCreatingItem ? 'Saving...' : 'Save Item'}
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </>
+      )}
+
       <style jsx>{`
           .form-label {
             font-size: 0.75rem;

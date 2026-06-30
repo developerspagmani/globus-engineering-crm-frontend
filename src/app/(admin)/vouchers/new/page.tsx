@@ -34,7 +34,7 @@ const NewVoucherPageContent = () => {
     description: targetInvoice ? `Payment for Invoice #${targetInvoice.invoiceNumber}` : '',
     type: (isVendorPayment ? 'payment' : 'receipt') as 'payment' | 'receipt',
     date: new Date().toISOString().split('T')[0],
-    voucherNo: `VCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    voucherNo: '',
     paymentMode: 'bank' as const,
     status: 'draft' as const,
     company_id: targetInvoice?.company_id || '',

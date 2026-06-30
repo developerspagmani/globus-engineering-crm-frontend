@@ -181,10 +181,36 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             otherCharges: initialData.otherCharges || (initialData as any).other_charges || 0,
             taxRate: initialData.taxRate || (initialData as any).tax_rate || 12,
             discount: initialData.discount || 0,
+            inwardId: initialData.inwardId || (initialData as any).inward_id || undefined,
+            items: initialData.items || []
          };
          setFormData(mappedData);
+
+         // Fetch specific invoice to populate maxQty for validation in edit mode
+         if (mode === 'edit' && mappedData.inwardId && mappedData.id) {
+             api.get(`/invoices?invoiceNos=${mappedData.id}`)
+             .then(res => {
+                 const data = res.data;
+                 if (data.items && data.items.length > 0) {
+                     const fetchedInvoice = data.items[0];
+                     if (fetchedInvoice.items) {
+                         setFormData((prev: any) => {
+                             const updatedItems = prev.items.map((item: any) => {
+                                 const matched = fetchedInvoice.items.find((fi: any) => 
+                                     String(fi.description || fi.item_name || '').toLowerCase().trim() === 
+                                     String(item.description || item.item_name || '').toLowerCase().trim()
+                                 );
+                                 return matched && matched.maxQty !== undefined ? { ...item, maxQty: matched.maxQty } : item;
+                             });
+                             return { ...prev, items: updatedItems };
+                         });
+                     }
+                 }
+             })
+             .catch(err => console.error('Failed to fetch maxQty', err));
+         }
       }
-   }, [initialData]);
+   }, [initialData, mode]);
 
    const populateFromInward = (inward: any) => {
       const partyId = inward.customerId || inward.customer_id || inward.vendorId || (inward as any).vendor_id;
@@ -226,32 +252,35 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                gstin: (inward as any).gstin || party?.gst || (party as any)?.gstin || prev.gstin,
                state: (inward as any).state || party?.state || prev.state,
                inwardId: inward.id,
-               items: (inward.items || []).map((item: any, idx: number) => {
-                  const pf = findPrice(
-                     prev.company_id,
-                     inward.customerId || inward.customer_id || prev.customerId,
-                     item.item_name || item.description || '',
-                     item.process || ''
-                  ) as any;
+               items: (inward.items || [])
+                  .map((item: any, idx: number) => {
+                     const pf = findPrice(
+                        prev.company_id,
+                        inward.customerId || inward.customer_id || prev.customerId,
+                        item.item_name || item.description || '',
+                        item.process || ''
+                     ) as any;
 
-                  const unitPrice = pf ? pf.price : 0;
-                  const qty = item.vendorWorkBalance ?? item.billingBalance ?? item.remainingQty ?? item.quantity ?? 0;
-                  const amount = qty * unitPrice;
-                  const tax = amount * (prev.taxRate / 100);
+                     const unitPrice = pf ? pf.price : 0;
+                     const qty = item.vendorWorkBalance ?? item.billingBalance ?? item.remainingQty ?? item.quantity ?? 0;
+                     const amount = qty * unitPrice;
+                     const tax = amount * (prev.taxRate / 100);
 
-                  return {
-                     id: idx.toString(),
-                     description: item.item_name || item.description || '',
-                     process: item.process || '',
-                     quantity: qty,
-                     wopQty: 0,
-                     unitPrice: unitPrice,
-                     priceFixingId: pf ? pf.id : undefined,
-                     amount: amount,
-                     tax: tax,
-                     total: amount + tax
-                  };
-               })
+                     return {
+                        id: idx.toString(),
+                        description: item.item_name || item.description || '',
+                        process: item.process || '',
+                        quantity: qty,
+                        wopQty: 0,
+                        maxQty: qty,
+                        unitPrice: unitPrice,
+                        priceFixingId: pf ? pf.id : undefined,
+                        amount: amount,
+                        tax: tax,
+                        total: amount + tax
+                     };
+                  })
+                  .filter((item: any) => item.quantity > 0)
             };
          } catch (err) {
             return prev;
@@ -474,8 +503,25 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       try {
          setLoading(true);
 
+         // Validation Check for maxQty
+         if (formData.inwardId) {
+            for (const item of formData.items) {
+               const sum = (Number(item.quantity) || 0) + (Number(item.wopQty) || 0);
+               if (item.maxQty !== undefined && sum > item.maxQty) {
+                  setModal({
+                     isOpen: true,
+                     type: 'error',
+                     title: 'Quantity Exceeded',
+                     message: `WP and WOP quantity for item "${item.description}" (${sum}) exceeds the maximum available balance (${item.maxQty}).`
+                  });
+                  setLoading(false);
+                  return;
+               }
+            }
+         }
+
          // Clean items to remove internal UI fields (like priceFixingId) before sending to backend
-         const cleanedItems = formData.items.map(({ priceFixingId, ...rest }: any) => rest);
+         const cleanedItems = formData.items.map(({ priceFixingId, maxQty, ...rest }: any) => rest);
          const submissionData = { ...formData, items: cleanedItems };
 
          if (mode === 'create') {
@@ -662,7 +708,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       <>
          <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div className="card-body p-4 p-lg-5">
-               <form onSubmit={handleSubmit}>
+               <form onSubmit={handleSubmit} onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+                     e.preventDefault();
+                  }
+               }}>
                   <div className="d-flex align-items-center justify-content-between mb-5 pb-2 gap-4 flex-wrap">
                      <div className="d-flex align-items-center">
                         <BackButton
@@ -985,8 +1035,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <tr className="text-muted border-bottom small text-uppercase">
                               <th className="py-3">Item</th>
                               <th className="py-3">Process</th>
-                              <th className="py-3" style={{ width: '80px' }}>Qty</th>
-                              {formData.billType === 'Both' && <th className="py-3" style={{ width: '100px' }}>Wop-Qty</th>}
+                              {formData.inwardId && <th className="py-3 text-center" style={{ width: '90px' }}>Total Qty</th>}
+                              <th className="py-3 text-center" style={{ width: '80px' }}>
+                                 {formData.billType === 'Without Process' ? 'WOP Qty' : 'WP Qty'}
+                              </th>
+                              {formData.billType === 'Both' && <th className="py-3 text-center" style={{ width: '100px' }}>WOP Qty</th>}
                               {formData.billType !== 'Without Process' && (
                                  <>
                                     <th className="py-3" style={{ width: '120px' }}>Price</th>
@@ -1025,12 +1078,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                         placeholder="Select Process"
                                      />
                                   </td>
+                                  {formData.inwardId && (
+                                     <td className="py-3 text-center text-muted fw-bold">
+                                        {item.maxQty ?? '-'}
+                                     </td>
+                                  )}
                                   <td className="py-3">
-                                     <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
+                                     <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px', margin: '0 auto' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
                                   </td>
                                   {formData.billType === 'Both' && (
                                      <td className="py-3">
-                                        <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '85px' }} value={item.wopQty} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'wopQty', e.target.value)} />
+                                        <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '85px', margin: '0 auto' }} value={item.wopQty} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'wopQty', e.target.value)} />
                                      </td>
                                   )}
                                   {formData.billType !== 'Without Process' && (

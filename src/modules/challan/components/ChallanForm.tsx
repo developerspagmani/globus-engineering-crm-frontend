@@ -41,7 +41,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
   }, [activeCompany?.id, dispatch, customers.length, vendors.length, masterItems.length]);
 
   const [formData, setFormData] = useState<Omit<Challan, 'id' | 'createdAt'>>({
-    challanNo: `DC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    challanNo: '',
     partyId: '',
     partyName: '',
     partyType: 'customer',
@@ -439,7 +439,7 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
             {mode !== 'view' ? (
               <>
                 <button type="button" className="btn px-5 py-2 rounded-pill fw-bold text-white" style={{ backgroundColor: '#475569', border: 'none' }} onClick={() => setFormData({
-                  challanNo: `DC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                  challanNo: '',
                   partyId: '', partyName: '', partyType: 'customer',
                   company_id: activeCompany?.id || '',
                   date: new Date().toISOString().split('T')[0],

@@ -19,6 +19,8 @@ interface LedgerPrintTemplateProps {
   company: Company | null;
   dateFrom?: string;
   dateTo?: string;
+  openingBalance?: number;
+  isDebitOpening?: boolean;
 }
 
 const fmt = (n: number) =>
@@ -39,6 +41,8 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
   company,
   dateFrom,
   dateTo,
+  openingBalance: propOpeningBalance,
+  isDebitOpening: propIsDebitOpening,
 }) => {
   const { settings } = useSelector((state: RootState) => state.invoices);
   const isVendor = party?.partyType?.toLowerCase() === 'vendor';
@@ -59,9 +63,12 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
     totalDebit,
     totalCredit,
   } = useMemo(() => {
-    // Opening balance = sum of ALL entries BEFORE dateFrom
-    let opBalance = 0;
-    if (dateFrom) {
+    // Opening balance logic
+    let opBalance = propOpeningBalance ?? 0;
+    let isDebitOp = propIsDebitOpening ?? false;
+
+    // Only fallback to manual calculation if not provided by parent
+    if (propOpeningBalance === undefined && dateFrom) {
       entries
         .filter(e => new Date(e.date) < new Date(dateFrom))
         .forEach(e => {
@@ -69,6 +76,9 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
           if (isVendor) opBalance += e.type === 'credit' ? amt : -amt;
           else opBalance += e.type === 'debit' ? amt : -amt;
         });
+      
+      isDebitOp = opBalance >= 0;
+      opBalance = Math.abs(opBalance);
     }
 
     // Period entries sorted ASC (oldest first — tally style)
@@ -96,8 +106,8 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
 
     return {
       processedEntries: mapped,
-      openingBalance: Math.abs(opBalance),
-      isDebitOpening: opBalance >= 0,
+      openingBalance: opBalance,
+      isDebitOpening: isDebitOp,
       totalDebit: drSum,
       totalCredit: crSum,
     };
@@ -197,6 +207,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
             <th className="w-date">Date</th>
             <th className="w-part">Particulars</th>
             <th className="w-vtype">Vch Type</th>
+            <th className="w-vno">Vch No</th>
             <th className="w-amt">Debit</th>
             <th className="w-amt">Credit</th>
           </tr>
@@ -210,6 +221,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
               <span className="byto">{isDebitOpening ? 'To' : 'By'}</span>
               <strong>Opening Balance</strong>
             </td>
+            <td></td>
             <td></td>
             <td className="num">{isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
             <td className="num">{!isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
@@ -226,7 +238,8 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                   <span className="byto">{prefix}</span>
                   {e.description?.replace(/^Migrated\s+/i, '') || e.vchType || '-'}
                 </td>
-                <td>{e.vchType || ''}</td>
+                <td>{e.vchType === 'INVOICE' ? 'Sales' : e.vchType === 'RECEIPT' ? 'Receipt' : e.vchType || ''}</td>
+                <td>{e.vchNo?.replace(/^REC-/i, '') || '-'}</td>
                 <td className="num">{e.debitValue > 0 ? fmt(e.debitValue) : ''}</td>
                 <td className="num">{e.creditValue > 0 ? fmt(e.creditValue) : ''}</td>
               </tr>
@@ -237,32 +250,21 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
 
         </tbody>
         <tfoot>
-          {/* ── Subtotals row ── */}
-          <tr className="row-subtotal">
-            <td colSpan={3}></td>
-            <td className="num">{fmt(drWithOp)}</td>
-            <td className="num">{fmt(crWithOp)}</td>
+          {/* ── Tally Style Footer ── */}
+          <tr className="tally-footer-row" style={{ borderTop: '1px solid #ccc' }}>
+            <td colSpan={4} style={{ textAlign: 'right' }}>Opening Balance :</td>
+            <td className="num">{isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
+            <td className="num">{!isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
           </tr>
-
-          {/* ── Closing Balance row ── */}
-          {closingBalance > 0 && (
-            <tr className="row-closinglabel">
-              <td></td>
-              <td>
-                <span className="byto">{isDebitClosing ? 'To' : 'By'}</span>
-                <strong>Closing Balance</strong>
-              </td>
-              <td></td>
-              <td className="num">{isDebitClosing ? fmt(closingBalance) : ''}</td>
-              <td className="num">{!isDebitClosing ? fmt(closingBalance) : ''}</td>
-            </tr>
-          )}
-
-          {/* ── Grand Total ── */}
-          <tr className="row-grandtotal">
-            <td colSpan={3}></td>
-            <td className="num">{fmt(gt)}</td>
-            <td className="num">{fmt(gt)}</td>
+          <tr className="tally-footer-row">
+            <td colSpan={4} style={{ textAlign: 'right' }}>Current Total :</td>
+            <td className="num">{totalDebit > 0 ? fmt(totalDebit) : ''}</td>
+            <td className="num">{totalCredit > 0 ? fmt(totalCredit) : ''}</td>
+          </tr>
+          <tr className="tally-footer-row">
+            <td colSpan={4} style={{ textAlign: 'right' }}>Closing Balance :</td>
+            <td className="num">{drWithOp > crWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
+            <td className="num">{crWithOp > drWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
           </tr>
         </tfoot>
       </table>
@@ -380,8 +382,9 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
         }
 
         .w-date  { width: 10%; white-space: nowrap; }
-        .w-part  { width: 50%; }
-        .w-vtype { width: 16%; }
+        .w-part  { width: 40%; }
+        .w-vtype { width: 12%; }
+        .w-vno   { width: 14%; }
         .w-amt   { width: 12%; text-align: right; }
 
         .lt-table td {
@@ -401,25 +404,11 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
           font-style: normal;
         }
 
-        /* Subtotal row */
-        .row-subtotal td {
-          border-top: 1pt solid #000;
-          padding-top: 3px;
-          padding-bottom: 2px;
-        }
-
-        /* Closing label row - visible, italic */
-        .row-closinglabel td {
-          font-style: italic;
-          padding-bottom: 2px;
-        }
-
-        /* Grand total row */
-        .row-grandtotal td {
-          border-top: 1pt solid #000;
-          border-bottom: 2pt double #000;
+        /* Tally Style Footer rows */
+        .tally-footer-row td {
+          padding-top: 4px;
+          padding-bottom: 4px;
           font-weight: bold;
-          padding: 3px 6px;
           font-family: 'Roboto', 'Arial', sans-serif;
           font-size: 8.5pt;
         }
@@ -427,7 +416,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
         /* Keep totals together — no page break inside tfoot */
         @media print {
           tfoot { display: table-row-group; }
-          .row-subtotal, .row-closinglabel, .row-grandtotal {
+          .tally-footer-row {
             page-break-inside: avoid;
             page-break-before: avoid;
           }

@@ -15,6 +15,7 @@ interface SearchableSelectProps {
   className?: string;
   disabled?: boolean;
   required?: boolean;
+  onCreateNew?: (searchTerm: string) => void;
 }
 
 const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -24,7 +25,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   placeholder = "Select Option",
   className = "",
   disabled = false,
-  required = false
+  required = false,
+  onCreateNew
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -118,17 +120,34 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     whiteSpace: 'normal',
                     display: 'block',
                     lineHeight: '1.4',
-                    textTransform: 'none' // Avoid global capitalize if unwanted here
+                    textTransform: 'none'
                   }}
                 >
                   {option.label}
                 </button>
               ))
             ) : (
-              <div className="text-center py-4 text-muted small">
-                 <i className="bi bi-inbox fs-4 d-block mb-1 opacity-50"></i>
-                 No results found
-              </div>
+              !onCreateNew && (
+                <div className="text-center py-4 text-muted small">
+                   <i className="bi bi-inbox fs-4 d-block mb-1 opacity-50"></i>
+                   No results found
+                </div>
+              )
+            )}
+            
+            {onCreateNew && searchTerm.trim() !== "" && !uniqueOptions.some(o => String(o.label).toLowerCase() === searchTerm.toLowerCase().trim()) && (
+               <button
+                  type="button"
+                  className="dropdown-item rounded-2 py-2 px-3 mt-2 w-100 border-0 text-primary fw-bold"
+                  style={{ backgroundColor: '#e0f2fe', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  onClick={() => {
+                     onCreateNew(searchTerm);
+                     setIsOpen(false);
+                     setSearchTerm("");
+                  }}
+               >
+                  <i className="bi bi-plus-circle-fill"></i> Add &quot;{searchTerm}&quot;
+               </button>
             )}
           </div>
         </div>
