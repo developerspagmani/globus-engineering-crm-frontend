@@ -25,6 +25,7 @@ const BackButton: React.FC<BackButtonProps> = ({ onClick, href, className = "", 
 
   const buttonContent = (
     <button
+      type="button"
       onClick={href ? undefined : handleBack}
       className={`back-btn-standard ${className}`}
       title={title}

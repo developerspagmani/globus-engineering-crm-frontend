@@ -359,7 +359,25 @@ export default function LedgerDetailPage() {
                             <tr key={e.id} className="ledger-row border-bottom border-light-subtle">
                                 <td className="ps-5 py-3 small fw-bold text-muted">{new Date(e.date).toLocaleDateString()}</td>
                                 <td className="py-3">
-                                    <div className="fw-800 text-dark small text-capitalize" style={{ letterSpacing: '0.01em' }}>{e.description}</div>
+                                    <div className="fw-800 text-dark small text-capitalize" style={{ letterSpacing: '0.01em' }}>
+                                      {(() => {
+                                        if (e.vchType === 'INVOICE') return 'GST Sales';
+                                        if (e.vchType === 'RECEIPT' || e.vchType === 'PAYMENT') {
+                                          const desc = e.description || '';
+                                          const modeMatch = desc.match(/\|\s*([A-Z0-9]+)/i);
+                                          if (modeMatch) {
+                                            const mode = modeMatch[1].trim().toUpperCase();
+                                            const modeLabels: Record<string, string> = {
+                                              CASH: 'Cash', NEFT: 'NEFT Transfer', RTGS: 'RTGS Transfer',
+                                              CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online Transfer', BANK: 'Bank Transfer',
+                                            };
+                                            return modeLabels[mode] || mode;
+                                          }
+                                          return desc.replace(/^Migrated\s+/i, '') || 'Receipt';
+                                        }
+                                        return e.description || '-';
+                                      })()}
+                                    </div>
                                 </td>
                                 <td className="py-3">
                                     <span className={`badge border py-2 px-3 fw-800 x-small text-capitalize tracking-wider rounded-pill shadow-none ${

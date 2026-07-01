@@ -610,7 +610,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                            <td style={{ fontWeight: 'bold', ...(isWOP && { height: '14px', padding: '1px 6px' }) }}>{item.description}</td>
                            <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{item.hsnCode || '998898'}</td>
                            {!isWOP && <td style={{ textAlign: 'center' }}>{taxRate}%</td>}
-                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{item.quantity}</td>
+                           <td style={{ textAlign: 'center', ...(isWOP && { height: '14px', padding: '1px 4px' }) }}>{isWOP ? item.wopQty : item.quantity}</td>
                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.unitPrice.toFixed(2)}</td>}
                            {!isWOP && <td style={{ textAlign: 'right' }}>{item.amount.toFixed(2)}</td>}
                         </tr>
@@ -633,7 +633,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                         <>
                            <tr className="total-row">
                               <td colSpan={isWOP ? 3 : 4} style={{ textAlign: 'right' }}>{isWOP ? 'Total Quantity' : 'Total (Taxable Value)'}</td>
-                              <td style={{ textAlign: 'center' }}>{invoice.items.reduce((sum: number, item: any) => sum + item.quantity, 0)}</td>
+                              <td style={{ textAlign: 'center' }}>{invoice.items.reduce((sum: number, item: any) => sum + (isWOP ? Number(item.wopQty || 0) : Number(item.quantity || 0)), 0)}</td>
                               {!isWOP && <td>&nbsp;</td>}
                               {!isWOP && <td style={{ textAlign: 'right' }}>{invoice.subTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
                            </tr>

@@ -547,7 +547,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                                <th style={{ width: '60px' }}>WOP Qty</th>
                              </>
                            ) : (
-                             <th style={{ width: '80px' }}>{ (data.bill_type || data.billType) === 'Without Process' ? 'WOP Qty' : 'Quantity'}</th>
+                             <th style={{ width: '80px' }}>{ String(data.bill_type || data.billType || '').toLowerCase().includes('without') ? 'WOP Qty' : 'Quantity'}</th>
                            )}
                            <th style={{ width: '60px' }}>Unit</th>
                         </tr>
@@ -565,7 +565,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                                   <td style={{ textAlign: 'center' }}>{item.wopQty || item.wop_qty || 0}</td>
                                 </>
                               ) : (
-                                <td style={{ textAlign: 'center' }}>{(data.bill_type || data.billType) === 'Without Process' ? (item.wopQty || item.wop_qty || 0) : item.quantity}</td>
+                                <td style={{ textAlign: 'center' }}>{String(data.bill_type || data.billType || '').toLowerCase().includes('without') ? (item.wopQty || item.wop_qty || 0) : item.quantity}</td>
                               )}
                               <td style={{ textAlign: 'center' }}>{item.unit || 'pcs'}</td>
                            </tr>
@@ -597,7 +597,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                                   </>
                                ) : (
                                   <td style={{ textAlign: 'center', fontSize: '11px' }}>
-                                     {items.reduce((sum: number, it: any) => sum + Number((data.bill_type || data.billType) === 'Without Process' ? (it.wopQty || it.wop_qty || 0) : (it.quantity || 0)), 0)}
+                                     {items.reduce((sum: number, it: any) => sum + Number(String(data.bill_type || data.billType || '').toLowerCase().includes('without') ? (it.wopQty || it.wop_qty || 0) : (it.quantity || 0)), 0)}
                                   </td>
                                )}
                                <td style={{ textAlign: 'center', fontSize: '11px' }}>{items[0]?.unit || 'pcs'}</td>

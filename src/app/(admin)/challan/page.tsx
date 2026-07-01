@@ -268,13 +268,13 @@ const ChallanPage = () => {
                               </button>
                               <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${challan.id}`}>
                                 <li>
-                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintChallanRecord(challan)}>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={(e) => { e.stopPropagation(); handlePrintChallanRecord(challan); }}>
                                     <i className="bi bi-printer text-primary"></i>
                                     <span className="small fw-semibold">Quick Print</span>
                                   </button>
                                 </li>
                                 <li>
-                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFChallanRecord(challan)}>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={(e) => { e.stopPropagation(); handleExportPDFChallanRecord(challan); }}>
                                     <i className="bi bi-file-earmark-pdf text-danger"></i>
                                     <span className="small fw-semibold">Export PDF</span>
                                   </button>
@@ -286,7 +286,7 @@ const ChallanPage = () => {
                                       <button
                                         className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
                                         type="button"
-                                        onClick={() => handleDeleteParams(challan.id)}
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteParams(challan.id); }}
                                       >
                                         <i className="bi bi-trash3"></i>
                                         <span className="small fw-semibold">Remove Record</span>

@@ -236,7 +236,32 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                 <td className="td-date">{formatLedgerDate(e.date)}</td>
                 <td>
                   <span className="byto">{prefix}</span>
-                  {e.description?.replace(/^Migrated\s+/i, '') || e.vchType || '-'}
+                  {(() => {
+                    if (e.vchType === 'INVOICE') {
+                      return 'GST Sales';
+                    }
+                    if (e.vchType === 'RECEIPT' || e.vchType === 'PAYMENT') {
+                      // Extract payment mode from description (e.g. "RECEIPT - VCH-001 | NEFT")
+                      const desc = e.description || '';
+                      const modeMatch = desc.match(/\|\s*([A-Z0-9]+)/i);
+                      if (modeMatch) {
+                        const mode = modeMatch[1].trim().toUpperCase();
+                        // Map short codes to full labels
+                        const modeLabels: Record<string, string> = {
+                          CASH: 'Cash',
+                          NEFT: 'NEFT Transfer',
+                          RTGS: 'RTGS Transfer',
+                          CHEQUE: 'Cheque',
+                          UPI: 'UPI',
+                          ONLINE: 'Online Transfer',
+                          BANK: 'Bank Transfer',
+                        };
+                        return modeLabels[mode] || mode;
+                      }
+                      return e.description?.replace(/^Migrated\s+/i, '') || 'Receipt';
+                    }
+                    return e.description?.replace(/^Migrated\s+/i, '') || e.vchType || '-';
+                  })()}
                 </td>
                 <td>{e.vchType === 'INVOICE' ? 'Sales' : e.vchType === 'RECEIPT' ? 'Receipt' : e.vchType || ''}</td>
                 <td>{e.vchNo?.replace(/^REC-/i, '') || '-'}</td>

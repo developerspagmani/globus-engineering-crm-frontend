@@ -263,15 +263,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
                      const unitPrice = pf ? pf.price : 0;
                      const qty = item.vendorWorkBalance ?? item.billingBalance ?? item.remainingQty ?? item.quantity ?? 0;
-                     const amount = qty * unitPrice;
+                     const isWop = prev.billType === 'Without Process' || String(prev.billType).toLowerCase().includes('without');
+                     const amount = isWop ? 0 : qty * unitPrice;
                      const tax = amount * (prev.taxRate / 100);
 
                      return {
                         id: idx.toString(),
                         description: item.item_name || item.description || '',
                         process: item.process || '',
-                        quantity: qty,
-                        wopQty: 0,
+                        quantity: isWop ? 0 : qty,
+                        wopQty: isWop ? qty : 0,
                         maxQty: qty,
                         unitPrice: unitPrice,
                         priceFixingId: pf ? pf.id : undefined,
@@ -280,7 +281,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                         total: amount + tax
                      };
                   })
-                  .filter((item: any) => item.quantity > 0)
+                  .filter((item: any) => item.quantity > 0 || item.wopQty > 0)
             };
          } catch (err) {
             return prev;
@@ -349,13 +350,28 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    // Recalculate items when billType or taxRate changes
    useEffect(() => {
       if (formData.items.length > 0) {
+         const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
          const updatedItems = formData.items.map((item: any) => {
-            const taxableQty = (item.quantity || 0);
+            const taxableQty = isWop ? 0 : (item.quantity || 0);
             
             const amount = taxableQty * (item.unitPrice || 0);
             const tax = amount * (formData.taxRate / 100);
+
+            let newQty = Number(item.quantity) || 0;
+            let newWop = Number(item.wopQty) || 0;
+            
+            if (isWop) {
+               newWop = newQty + newWop;
+               newQty = 0;
+            } else if (formData.billType === 'With Process' || String(formData.billType).toLowerCase() === 'with_process') {
+               newQty = newQty + newWop;
+               newWop = 0;
+            }
+
             return {
                ...item,
+               quantity: newQty,
+               wopQty: newWop,
                amount,
                tax,
                total: amount + tax
@@ -473,6 +489,27 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       const newItems = [...formData.items];
       const item = { ...newItems[index], [field]: value };
 
+      if (field === 'quantity' || field === 'wopQty') {
+         if (item.maxQty !== undefined) {
+            let numericVal = value === '' ? 0 : Number(value);
+            const otherField = field === 'quantity' ? 'wopQty' : 'quantity';
+            let otherVal = Number(item[otherField]) || 0;
+            
+            if (numericVal > item.maxQty) {
+               item[field] = item.maxQty;
+               item[otherField] = 0;
+               setModal({
+                  isOpen: true,
+                  type: 'error',
+                  title: 'Quantity Exceeded',
+                  message: `You cannot enter a quantity greater than the Total Qty (${item.maxQty}). The value has been automatically adjusted.`
+               });
+            } else if (numericVal + otherVal > item.maxQty) {
+               item[otherField] = item.maxQty - numericVal;
+            }
+         }
+      }
+
       if (field === 'description' || field === 'process' || field === 'customerId') {
          const desc = field === 'description' ? value : item.description;
          const proc = field === 'process' ? value : item.process;
@@ -482,7 +519,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       }
 
       if (field === 'quantity' || field === 'wopQty' || field === 'unitPrice' || field === 'description' || field === 'process') {
-         const taxableQty = (item.quantity || 0);
+         const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
+         const taxableQty = isWop ? 0 : (item.quantity || 0);
             
          item.amount = taxableQty * (item.unitPrice || 0);
          item.tax = item.amount * (formData.taxRate / 100);
@@ -495,7 +533,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    const [isDirty, setIsDirty] = useState(false);
 
-   const handleSubmit = async (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
       e.preventDefault();
       if (loading) return;
       
@@ -521,7 +559,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          }
 
          // Clean items to remove internal UI fields (like priceFixingId) before sending to backend
-         const cleanedItems = formData.items.map(({ priceFixingId, maxQty, ...rest }: any) => rest);
+         const cleanedItems = formData.items.map(({ priceFixingId, maxQty, ...rest }: any) => {
+            const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
+            const isWp = formData.billType === 'With Process' || String(formData.billType).toLowerCase() === 'with_process' || formData.billType === 'INVOICE';
+            
+            if (isWop) {
+               rest.quantity = 0;
+            } else if (isWp) {
+               rest.wopQty = 0;
+            }
+            return rest;
+         });
          const submissionData = { ...formData, items: cleanedItems };
 
          if (mode === 'create') {
@@ -708,7 +756,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       <>
          <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
             <div className="card-body p-4 p-lg-5">
-               <form onSubmit={handleSubmit} onKeyDown={(e) => {
+               <form onSubmit={(e) => e.preventDefault()} onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
                      e.preventDefault();
                   }
@@ -1084,7 +1132,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                      </td>
                                   )}
                                   <td className="py-3">
-                                     <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px', margin: '0 auto' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
+                                     {formData.billType === 'Without Process' ? (
+                                        <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px', margin: '0 auto' }} value={item.wopQty} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'wopQty', e.target.value)} />
+                                     ) : (
+                                        <input type="number" className="form-control bg-transparent p-1 text-center" style={{ width: '60px', margin: '0 auto' }} value={item.quantity} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'quantity', e.target.value)} />
+                                     )}
                                   </td>
                                   {formData.billType === 'Both' && (
                                      <td className="py-3">
@@ -1253,7 +1305,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
                   <div className="d-flex justify-content-center gap-3 mt-5">
                      <button
-                        type="submit"
+                        type="button"
+                        onClick={handleSubmit}
                         className="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2"
                         disabled={loading || !formData.invoiceNumber}
                         style={{ minWidth: '150px' }}

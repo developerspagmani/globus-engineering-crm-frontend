@@ -202,13 +202,15 @@ const InvoiceTable: React.FC = () => {
                   <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
                   <td className="text-muted small">
                     {activeTab === 'ADD_INVOICE' ? (item.dcNo || item.dc_no || '-') : (activeTab === 'WOP_LIST' ? (item.challanNumber || '-') : (
-                      <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>{item.invoiceNumber}</Link>
+                      <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>
+                        {(item.billType === 'Without Process' || item.billType === 'without_process') ? (item.challanNumber || item.dc_no || '-') : item.invoiceNumber}
+                      </Link>
                     ))}
                   </td>
                   <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                   {activeTab !== 'WOP_LIST' && (
                     <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>
-                      {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : `₹${item.grandTotal.toLocaleString()}`}
+                      {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : ((item.billType === 'Without Process' || item.billType === 'without_process') ? '-' : `₹${item.grandTotal.toLocaleString()}`)}
                     </td>
                   )}
                   <td className="text-center pe-4">
@@ -254,12 +256,12 @@ const InvoiceTable: React.FC = () => {
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
                           <li>
-                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handlePrintRecord(item)}>
+                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item); }}>
                               <i className="bi bi-printer text-primary"></i> Quick Print
                             </button>
                           </li>
                           <li>
-                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={() => handleExportPDFRecord(item)}>
+                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handleExportPDFRecord(item); }}>
                               <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
                             </button>
                           </li>
@@ -268,7 +270,7 @@ const InvoiceTable: React.FC = () => {
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-primary"
-                                  onClick={() => window.open(`/invoices/${item.id}?print=true&type=WP`, '_blank')}
+                                  onClick={(e) => { e.stopPropagation(); window.open(`/invoices/${item.id}?print=true&type=WP`, '_blank'); }}
                                 >
                                   <i className="bi bi-printer-fill"></i> WP Print
                                 </button>
@@ -276,17 +278,17 @@ const InvoiceTable: React.FC = () => {
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-danger"
-                                  onClick={() => window.open(`/invoices/${item.id}?print=true&type=WOP`, '_blank')}
+                                  onClick={(e) => { e.stopPropagation(); window.open(`/invoices/${item.id}?print=true&type=WOP`, '_blank'); }}
                                 >
                                   <i className="bi bi-printer-fill"></i> WOP Print
                                 </button>
                               </li>
                             </>
                           )}
-                          {checkActionPermission(user, 'mod_invoice', 'delete') && (
+                          {activeTab !== 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'delete') && (
                             <>
                               <li><hr className="dropdown-divider opacity-50" /></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={() => handleDeleteParams(item.id, activeTab === 'ADD_INVOICE' ? 'inward' : 'invoice')}><i className="bi bi-trash3"></i> Remove Record</button></li>
+                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={(e) => { e.stopPropagation(); handleDeleteParams(item.id, 'invoice'); }}><i className="bi bi-trash3"></i> Remove Record</button></li>
                             </>
                           )}
                         </ul>
