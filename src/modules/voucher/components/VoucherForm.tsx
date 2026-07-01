@@ -711,7 +711,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     // This ensures rows don't disappear when unchecked (since original invoices are now PAID)
     if (mode === 'edit' && (isSelected || isOriginalVoucherInvoice(inv))) return true;
 
-    const isNotPaid = inv.status?.toLowerCase() !== 'paid' && inv.status?.toLowerCase() !== 'completed';
+    // "Without Process" records are Delivery Challans, not payable invoices
+    const isWOP = inv.billType === 'Without Process' || inv.billType === 'without_process' || inv.bill_type === 'Without Process' || inv.bill_type === 'without_process';
+    if (isWOP) return false;
+
+    const pendingAmount = Number(inv.grandTotal || 0) - Number(inv.paidAmount || 0);
+    const isNotPaid = inv.status?.toLowerCase() !== 'paid' && inv.status?.toLowerCase() !== 'completed' && pendingAmount > 0;
     
     // Smart Filtering: If voucher is linked to a specific inward, show ONLY that context
     const vchInwardId = String((initialData as any)?.inwardId || (initialData as any)?.inward_id || '');
@@ -869,7 +874,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               <tbody className="border-0">
                 {invoicesLoading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-5">
+                    <td colSpan={6} className="text-center py-5">
                       <div className="spinner-border text-primary spinner-border-sm me-2" role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
@@ -960,7 +965,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                          {selectedData && (expandedRows.has(invoiceId) || mode === 'view') && (
                            <tr className="bg-light-subtle border-bottom border-light">
                              <td colSpan={1} className="py-0"></td>
-                             <td colSpan={4} className="py-2">
+                             <td colSpan={5} className="py-2">
                                <div className="d-flex align-items-center justify-content-start gap-4 py-1 border-start border-orange border-3" style={{ marginLeft: '60px', paddingLeft: '90px' }}>
                                  <div className="d-flex flex-column text-start">
                                    <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Type</span>
@@ -1007,7 +1012,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     })}
                     {formData.partyType === 'customer' && formData.customerId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">
+                        <td colSpan={6} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
                             ? "All invoices for this customer are fully paid" 
                             : "No invoices found for this customer"}
@@ -1016,19 +1021,21 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     )}
                     {formData.partyType === 'vendor' && formData.vendorId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">
-                          No outstanding invoices found for this vendor
+                        <td colSpan={6} className="text-center py-5 text-muted small">
+                          {allInvoices.some(inv => String((inv as any).vendorId || (inv as any).vendor_id) === String(formData.vendorId)) 
+                            ? "All inward bills for this vendor are fully paid" 
+                            : "No outstanding invoices found for this vendor"}
                         </td>
                       </tr>
                     )}
                     {formData.partyType === 'customer' && !formData.customerId && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
+                        <td colSpan={6} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
                       </tr>
                     )}
                     {formData.partyType === 'vendor' && !formData.vendorId && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a vendor to view invoices</td>
+                        <td colSpan={6} className="text-center py-5 text-muted small">Please select a vendor to view invoices</td>
                       </tr>
                     )}
                   </>

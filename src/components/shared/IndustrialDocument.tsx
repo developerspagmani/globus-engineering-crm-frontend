@@ -12,7 +12,7 @@ import { numberToWords } from '@/utils/numberToWords';
 
 interface IndustrialDocumentProps {
    data: any;
-   type: 'outward' | 'inward' | 'challan' | 'voucher';
+   type: 'outward' | 'inward' | 'challan' | 'voucher' | 'statement';
    company?: Company | null;
    settings?: any;
 }
@@ -67,6 +67,7 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
          case 'inward': return 'INWARD ENTRY / GRN';
          case 'challan': return data.type === 'delivery' ? 'DELIVERY CHALLAN' : 'CHALLAN';
          case 'voucher': return `${(data.type || 'payment').toUpperCase()} VOUCHER`;
+         case 'statement': return 'STATEMENT OF ACCOUNT';
          default: return 'DOCUMENT';
       }
    };
@@ -367,70 +368,89 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
             {/* Meta Grid */}
             <div className="p-meta">
                <div className="p-meta-row">
-                  <div className="p-meta-col">
-                     <span>{type.toUpperCase()} NO</span>
-                     <span>:</span>
-                     <span className="p-meta-val">{data.outwardNo || data.inwardNo || data.challanNo || data.voucherNo}</span>
-                  </div>
-                  <div className="p-meta-col">
-                     <span>DATE</span>
-                     <span>:</span>
-                     <span className="p-meta-val">{data.date ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</span>
-                  </div>
-                  {type === 'outward' && (
-                     <div className="p-meta-col">
-                        <span>INVOICE REF</span>
-                        <span>:</span>
-                        <span className="p-meta-val">{data.invoiceReference || '-'}</span>
-                     </div>
-                  )}
-                  {type === 'inward' && (
-                     <div className="p-meta-col">
-                        <span>PO REF</span>
-                        <span>:</span>
-                        <span className="p-meta-val">{data.poReference || '-'}</span>
-                     </div>
-                  )}
-                  {type === 'challan' && (
-                     <div className="p-meta-col">
-                        <span>TYPE</span>
-                        <span>:</span>
-                        <span className="p-meta-val">{(data.type || 'delivery').toUpperCase()}</span>
-                     </div>
-                  )}
-                  {type === 'voucher' && (
-                     <div className="p-meta-col">
-                        <span>MODE</span>
-                        <span>:</span>
-                        <span className="p-meta-val">{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-').toUpperCase()}</span>
-                     </div>
-                  )}
-               </div>
-               <div className="p-meta-row">
-                  <div className="p-meta-col">
-                     <span>VEHICLE NO</span>
-                     <span>:</span>
-                     <span className="p-meta-val">{data.vehicleNo || '-'}</span>
-                  </div>
-                  <div className="p-meta-col">
-                     <span>STATE</span>
-                     <span>:</span>
-                     <span className="p-meta-val">TamilNadu-33</span>
-                  </div>
-                  {type === 'voucher' ? (
-                     <div className="p-meta-col">
-                        <span>REF NO</span>
-                        <span>:</span>
-                        <span className="p-meta-val">{data.referenceNo || '-'}</span>
-                     </div>
+                  {type === 'statement' ? (
+                     <>
+                        <div className="p-meta-col">
+                           <span>STATEMENT DATE</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}</span>
+                        </div>
+                        <div className="p-meta-col">
+                           <span>CUSTOMER REF</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.partyName || '-'}</span>
+                        </div>
+                     </>
                   ) : (
-                     <div className="p-meta-col">
-                        <span>{type === 'inward' ? 'DC NO' : 'CHALLAN NO'}</span>
-                        <span>:</span>
-                        <span className="p-meta-val">{data.dcNo || data.challanNo || '-'}</span>
-                     </div>
+                     <>
+                        <div className="p-meta-col">
+                           <span>{type.toUpperCase()} NO</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.outwardNo || data.inwardNo || data.challanNo || data.voucherNo}</span>
+                        </div>
+                        <div className="p-meta-col">
+                           <span>DATE</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.date ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</span>
+                        </div>
+                        {type === 'outward' && (
+                           <div className="p-meta-col">
+                              <span>INVOICE REF</span>
+                              <span>:</span>
+                              <span className="p-meta-val">{data.invoiceReference || '-'}</span>
+                           </div>
+                        )}
+                        {type === 'inward' && (
+                           <div className="p-meta-col">
+                              <span>PO REF</span>
+                              <span>:</span>
+                              <span className="p-meta-val">{data.poReference || '-'}</span>
+                           </div>
+                        )}
+                        {type === 'challan' && (
+                           <div className="p-meta-col">
+                              <span>TYPE</span>
+                              <span>:</span>
+                              <span className="p-meta-val">{(data.type || 'delivery').toUpperCase()}</span>
+                           </div>
+                        )}
+                        {type === 'voucher' && (
+                           <div className="p-meta-col">
+                              <span>MODE</span>
+                              <span>:</span>
+                              <span className="p-meta-val">{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-').toUpperCase()}</span>
+                           </div>
+                        )}
+                     </>
                   )}
                </div>
+               {type !== 'statement' && (
+                  <div className="p-meta-row">
+                     <div className="p-meta-col">
+                        <span>VEHICLE NO</span>
+                        <span>:</span>
+                        <span className="p-meta-val">{data.vehicleNo || '-'}</span>
+                     </div>
+                     <div className="p-meta-col">
+                        <span>STATE</span>
+                        <span>:</span>
+                        <span className="p-meta-val">TamilNadu-33</span>
+                     </div>
+                     {type === 'voucher' ? (
+                        <div className="p-meta-col">
+                           <span>REF NO</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.referenceNo || '-'}</span>
+                        </div>
+                     ) : (
+                        <div className="p-meta-col">
+                           <span>{type === 'inward' ? 'DC NO' : 'CHALLAN NO'}</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.dcNo || data.challanNo || '-'}</span>
+                        </div>
+                     )}
+                  </div>
+               )}
             </div>
 
             <div className="tax-invoice-label">{title}</div>
@@ -530,6 +550,54 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                               {Number(data.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                            </td>
                         </tr>
+                     </tbody>
+                  </table>
+               ) : type === 'statement' ? (
+                  // ── STATEMENT: List of Invoices ──────────────────────────────────────────
+                  <table className="p-table">
+                     <thead>
+                        <tr>
+                           <th style={{ width: '40px' }}>S.No</th>
+                           <th style={{ width: '100px' }}>Date</th>
+                           <th style={{ textAlign: 'left', paddingLeft: '8px' }}>Invoice No</th>
+                           <th style={{ width: '150px', textAlign: 'left', paddingLeft: '8px' }}>PO No</th>
+                           <th style={{ width: '150px', textAlign: 'right', paddingRight: '8px' }}>Amount (₹)</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        {items.map((item: any, idx: number) => {
+                           const invTotal = Number(item.grandTotal || 0);
+                           const paidAmt = Number(item.paidAmount || 0);
+                           const bal = invTotal - paidAmt;
+                           return (
+                              <tr key={idx}>
+                                 <td style={{ textAlign: 'center' }}>{startSno + idx}</td>
+                                 <td style={{ textAlign: 'center' }}>{item.date ? new Date(item.date).toLocaleDateString('en-GB') : '-'}</td>
+                                 <td style={{ fontWeight: 'bold', paddingLeft: '8px' }}>{item.invoiceNumber || item.invoice_no}</td>
+                                 <td style={{ paddingLeft: '8px' }}>{item.poNo || '-'}</td>
+                                 <td style={{ textAlign: 'right', paddingRight: '8px', fontWeight: 'bold' }}>{bal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                              </tr>
+                           );
+                        })}
+                        {[...Array(fillerCount)].map((_, i) => (
+                           <tr key={`filler-${i}`}>
+                              <td style={{ textAlign: 'center' }}>&nbsp;</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                              <td>&nbsp;</td>
+                           </tr>
+                        ))}
+                        {isLastPage && (
+                           <tr style={{ fontWeight: '900', background: '#f0f0f0', borderTop: '1.5pt solid #000' }}>
+                              <td colSpan={4} style={{ textAlign: 'right', paddingRight: '16px', fontSize: '11px' }}>
+                                 TOTAL AMOUNT
+                              </td>
+                              <td style={{ textAlign: 'right', paddingRight: '8px', fontSize: '11px', fontFamily: 'Courier New, monospace' }}>
+                                 {Number(data.totalPending || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </td>
+                           </tr>
+                        )}
                      </tbody>
                   </table>
                ) : (

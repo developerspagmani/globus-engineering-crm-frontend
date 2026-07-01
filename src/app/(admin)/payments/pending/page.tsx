@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { fetchInvoices, setInvoicePage } from '@/redux/features/invoiceSlice';
+
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
 import ModuleGuard from '@/components/ModuleGuard';
@@ -13,6 +14,7 @@ import Loader from '@/components/Loader';
 
 import ExportExcel from '@/components/shared/ExportExcel';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
+import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
 
@@ -22,6 +24,7 @@ const PendingPaymentPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [partyType, setPartyType] = useState<'all' | 'customer' | 'vendor'>('customer');
+  const [printGroup, setPrintGroup] = useState<any>(null);
   const router = useRouter();
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -46,7 +49,9 @@ const PendingPaymentPage = () => {
     const isPending = inv.status?.toLowerCase() !== 'paid' &&
       inv.status?.toLowerCase() !== 'cancelled' &&
       (balance > 0 || inv.status?.toLowerCase() === 'billed');
-    if (!isPending) return false;
+    const isWOP = inv.billType === 'Without Process' || inv.billType === 'without_process' || inv.bill_type === 'Without Process' || inv.bill_type === 'without_process';
+    
+    if (!isPending || isWOP) return false;
 
     const matchesSearch =
       (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
@@ -90,9 +95,9 @@ const PendingPaymentPage = () => {
     return diffDays > 0 ? diffDays : 0;
   };
 
-  // Open the invoice's own print page — exactly the same format as invoice print
-  const handlePrintPending = (inv: any) => {
-    router.push(`/invoices/${inv.id}?print=true`);
+  const handlePrintPending = (group: any) => {
+    setPrintGroup(group);
+    setTimeout(() => window.print(), 300);
   };
 
   // Build the correct voucher creation URL — vendor invoices need partyType=vendor
@@ -107,7 +112,7 @@ const PendingPaymentPage = () => {
 
   return (
     <ModuleGuard moduleId="mod_invoice">
-      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
+      <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4 no-print">
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
             <Breadcrumb items={[{ label: 'Outstanding Collections', active: true }]} />
@@ -243,7 +248,7 @@ const PendingPaymentPage = () => {
                               <span className="badge rounded-pill bg-success-subtle text-success px-3">On Time</span>
                             )}
                           </td>
-                          <td className="text-center px-4 text-nowrap">
+                          <td className="text-center px-4 text-nowrap" onClick={(e) => e.stopPropagation()}>
                             <div className="d-flex justify-content-center gap-2">
                               <button
                                 className="btn border-0 d-flex align-items-center justify-content-center p-0 shadow-sm"
@@ -259,10 +264,10 @@ const PendingPaymentPage = () => {
 
                               <button
                                 className="btn border-0 d-flex align-items-center justify-content-center p-0 shadow-sm"
-                                title="Print Invoice"
+                                title="Print Statement"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handlePrintPending(latestInvoice);
+                                  handlePrintPending(group);
                                 }}
                                 style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#10b981', color: '#fff' }}
                               >
@@ -298,6 +303,25 @@ const PendingPaymentPage = () => {
         </div>
       </div>
 
+      {/* Print Statement Area */}
+      {printGroup && (
+        <div className="print-area d-none">
+          <IndustrialDocument
+            type="statement"
+            company={activeCompany}
+            data={{
+              partyName: printGroup.customerName,
+              partyType: partyType === 'vendor' ? 'vendor' : 'customer',
+              customerId: printGroup.customerId,
+              vendorId: printGroup.customerId,
+              date: new Date().toISOString(),
+              totalPending: printGroup.totalPending,
+              items: printGroup.invoices,
+            }}
+          />
+        </div>
+      )}
+
       <style jsx>{`
         .fw-900 { font-weight: 900; }
         .tracking-tight { letter-spacing: -0.025em; }
@@ -305,6 +329,17 @@ const PendingPaymentPage = () => {
         .table-responsive {
           min-height: 400px;
           padding-bottom: 80px;
+        }
+        
+        @media print {
+          .no-print { display: none !important; }
+          .print-area { display: block !important; }
+          .d-none { display: block !important; }
+          body, html { 
+            background: white !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+          }
         }
       `}</style>
     </ModuleGuard>

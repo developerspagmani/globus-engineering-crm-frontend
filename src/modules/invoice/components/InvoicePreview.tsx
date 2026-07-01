@@ -23,6 +23,7 @@ interface InvoicePreviewProps {
 const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideControls = false }) => {
   const dispatch = useDispatch();
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const printFiredRef = useRef(false);
   const { settings } = useSelector((state: RootState) => state.invoices);
   const searchParams = useSearchParams();
   const isReadOnly = searchParams.get('readonly') === 'true';
@@ -49,7 +50,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   };
 
   React.useEffect(() => {
-    if (searchParams.get('print') === 'true') {
+    if (searchParams.get('print') === 'true' && !printFiredRef.current) {
+      printFiredRef.current = true;
       setTimeout(() => { window.print(); }, 500);
     }
     if (searchParams.get('download') === 'true') {

@@ -270,7 +270,7 @@ const InvoiceTable: React.FC = () => {
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-primary"
-                                  onClick={(e) => { e.stopPropagation(); window.open(`/invoices/${item.id}?print=true&type=WP`, '_blank'); }}
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&type=WP`); }}
                                 >
                                   <i className="bi bi-printer-fill"></i> WP Print
                                 </button>
@@ -278,7 +278,7 @@ const InvoiceTable: React.FC = () => {
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-danger"
-                                  onClick={(e) => { e.stopPropagation(); window.open(`/invoices/${item.id}?print=true&type=WOP`, '_blank'); }}
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&type=WOP`); }}
                                 >
                                   <i className="bi bi-printer-fill"></i> WOP Print
                                 </button>
