@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { createInward, updateInward } from '@/redux/features/inwardSlice';
 import { addLedgerEntry } from '@/redux/features/ledgerSlice';
-import { fetchItems, fetchProcesses, createItemThunk } from '@/redux/features/masterSlice';
+import { fetchItems, fetchProcesses, createItemThunk, createProcessThunk } from '@/redux/features/masterSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { InwardEntry, OutwardEntry } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
@@ -20,9 +20,10 @@ import PageModeIndicator from '@/components/PageModeIndicator';
 interface InwardFormProps {
   initialData?: InwardEntry;
   mode: 'create' | 'edit' | 'view';
+  initialPartyType?: 'customer' | 'vendor' | null;
 }
 
-const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
+const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialPartyType }) => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
@@ -43,9 +44,16 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
   const [isCreatingItem, setIsCreatingItem] = useState(false);
   // ----------------------------------
 
+  // --- Inline Process Creation State ---
+  const [showCreateProcessModal, setShowCreateProcessModal] = useState(false);
+  const [newProcessName, setNewProcessName] = useState('');
+  const [targetProcessIndex, setTargetProcessIndex] = useState<number | null>(null);
+  const [isCreatingProcess, setIsCreatingProcess] = useState(false);
+  // -------------------------------------
+
   const [formData, setFormData] = useState<Omit<InwardEntry, 'id' | 'createdAt'> & { partyType: 'customer' | 'vendor', outwardId?: string, outwardNo?: string }>({
     inwardNo: '',
-    partyType: initialData?.customerId ? 'customer' : (initialData?.vendorId ? 'vendor' : 'customer'),
+    partyType: initialPartyType || (initialData?.customerId ? 'customer' : (initialData?.vendorId ? 'vendor' : 'customer')),
     customerId: '',
     customerName: '',
     address: '',
@@ -312,19 +320,21 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
             </div>
   
             <div className="row g-4 mb-5 align-items-center">
-              <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Party Type</label>
-                <div className="flex-grow-1 d-flex gap-4">
-                  <div className="form-check">
-                    <input className="form-check-input" type="radio" name="partyType" id="partyCustomer" value="customer" checked={formData.partyType === 'customer'} onChange={handleChange} disabled={mode === 'view'} />
-                    <label className="form-check-label small fw-bold text-muted" htmlFor="partyCustomer">CUSTOMER</label>
-                  </div>
-                  <div className="form-check">
-                    <input className="form-check-input" type="radio" name="partyType" id="partyVendor" value="vendor" checked={formData.partyType === 'vendor'} onChange={handleChange} disabled={mode === 'view'} />
-                    <label className="form-check-label small fw-bold text-muted" htmlFor="partyVendor">VENDOR (JOB WORK)</label>
+              {mode === 'create' && !initialPartyType && (
+                <div className="col-md-6 d-flex">
+                  <label className="form-label mb-0 align-self-center text-muted col-3">Party Type</label>
+                  <div className="flex-grow-1 d-flex gap-4">
+                    <div className="form-check">
+                      <input className="form-check-input" type="radio" name="partyType" id="partyCustomer" value="customer" checked={formData.partyType === 'customer'} onChange={handleChange} />
+                      <label className="form-check-label small fw-bold text-muted" htmlFor="partyCustomer">CUSTOMER</label>
+                    </div>
+                    <div className="form-check">
+                      <input className="form-check-input" type="radio" name="partyType" id="partyVendor" value="vendor" checked={formData.partyType === 'vendor'} onChange={handleChange} />
+                      <label className="form-check-label small fw-bold text-muted" htmlFor="partyVendor">VENDOR (JOB WORK)</label>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               <div className="col-md-6 d-flex">
                 <label className="form-label mb-0 align-self-center text-muted col-3">Date <span className="text-danger">*</span></label>
 
@@ -449,6 +459,11 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                       ]}
                       value={item.process || ''}
                       onChange={(val) => handleItemChange(index, 'process', val)}
+                      onCreateNew={(term) => {
+                        setNewProcessName(term);
+                        setTargetProcessIndex(index);
+                        setShowCreateProcessModal(true);
+                      }}
                       placeholder="Select Process"
                       disabled={mode === 'view'}
                     />
@@ -609,6 +624,65 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode }) => {
                      }}
                    >
                      {isCreatingItem ? 'Saving...' : 'Save Item'}
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </>
+      )}
+
+      {showCreateProcessModal && (
+         <>
+           <div className="modal-backdrop fade show" style={{ zIndex: 9998, backgroundColor: 'rgba(0,0,0,0.6)' }}></div>
+           <div className="modal fade show d-block" tabIndex={-1} style={{ zIndex: 9999 }} onClick={() => setShowCreateProcessModal(false)}>
+             <div className="modal-dialog modal-dialog-centered modal-lg" onClick={e => e.stopPropagation()}>
+               <div className="modal-content bg-white rounded-4 border-0 shadow-lg p-4">
+                 <div className="modal-header border-bottom-0 px-4 pt-4 pb-2">
+                   <h3 className="modal-title fw-bold text-dark d-flex align-items-center gap-3">
+                     <i className="bi bi-gear-fill text-primary fs-2"></i> Create New Process
+                   </h3>
+                   <button type="button" className="btn-close shadow-none fs-5" onClick={() => setShowCreateProcessModal(false)}></button>
+                 </div>
+                 <div className="modal-body px-4 py-4">
+                   <div className="mb-2">
+                     <label className="form-label text-muted fw-bold small mb-2 text-uppercase letter-spacing-1">Process Name <span className="text-danger">*</span></label>
+                     <input 
+                       type="text" 
+                       className="form-control form-control-lg shadow-none fs-5 bg-light border-0 py-3 px-4 rounded-3" 
+                       value={newProcessName} 
+                       onChange={(e) => setNewProcessName(e.target.value)}
+                       placeholder="E.g. Powder Coating"
+                     />
+                   </div>
+                 </div>
+                 <div className="modal-footer border-top-0 px-4 pb-4 pt-3 gap-3 d-flex justify-content-end">
+                   <button type="button" className="btn btn-light btn-lg rounded-3 px-5 py-3 fw-bold text-muted border-0" onClick={() => setShowCreateProcessModal(false)}>Cancel</button>
+                   <button 
+                     type="button" 
+                     className="btn btn-primary btn-lg rounded-3 px-5 py-3 fw-bold shadow-sm" 
+                     disabled={isCreatingProcess || !newProcessName.trim()}
+                     onClick={async () => {
+                        try {
+                           setIsCreatingProcess(true);
+                           const payload = {
+                             processName: newProcessName.trim(),
+                             company_id: activeCompany?.id || formData.company_id
+                           };
+                           const res = await (dispatch as any)(createProcessThunk(payload)).unwrap();
+                           
+                           if (targetProcessIndex !== null) {
+                              handleItemChange(targetProcessIndex, 'process', res.processName || payload.processName);
+                           }
+                           setShowCreateProcessModal(false);
+                        } catch (err: any) {
+                           alert(err.message || 'Failed to create process');
+                        } finally {
+                           setIsCreatingProcess(false);
+                        }
+                     }}
+                   >
+                     {isCreatingProcess ? 'Saving...' : 'Save Process'}
                    </button>
                  </div>
                </div>

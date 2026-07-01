@@ -2296,3 +2296,29 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+/* Fix native date input calendar icon position to far-right corner */
+input[type="date"] {
+  position: relative;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* Globally right-align all numeric inputs to keep decimal points lined up */
+input[type="number"] {
+  text-align: right;
+}
+
+/* Branded, consistent focus rings for form elements */
+.form-control:focus, 
+.form-select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft) !important;
+}

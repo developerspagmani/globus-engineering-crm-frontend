@@ -1090,7 +1090,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               {formData.billType === 'Both' && <th className="py-3 text-center" style={{ width: '100px' }}>WOP Qty</th>}
                               {formData.billType !== 'Without Process' && (
                                  <>
-                                    <th className="py-3" style={{ width: '120px' }}>Price</th>
+                                    <th className="py-3 text-end" style={{ width: '120px' }}>Price</th>
                                     <th className="py-3 text-end" style={{ width: '150px' }}>Amount</th>
                                  </>
                               )}

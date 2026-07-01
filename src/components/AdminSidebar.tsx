@@ -119,10 +119,26 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
             const searchString = searchParams.toString() ? `?${searchParams.toString()}` : '';
             const fullPath = `${pathname}${searchString}`;
             
-            // Precise active check for parent
+            // Helper to check if a navigation path is active
+            const checkActive = (navPath: string) => {
+              if (fullPath === navPath || pathname === navPath) return true;
+              try {
+                if (navPath !== '#') {
+                  const navUrl = new URL(navPath, 'http://localhost');
+                  // Base path check (e.g. /inward/new starts with /inward)
+                  if (pathname === navUrl.pathname || pathname.startsWith(navUrl.pathname + '/')) {
+                    const navType = navUrl.searchParams.get('type');
+                    const currentType = searchParams.get('type');
+                    if (navType && navType === currentType) return true;
+                  }
+                }
+              } catch (e) {}
+              return false;
+            };
+
             const isActive = pathname === item.path || 
                            (pathname.startsWith(item.path + '/') && !filteredItems.some(other => other.path !== item.path && pathname.startsWith(other.path) && other.path.length > item.path.length)) ||
-                           (hasChildren && item.children?.some(c => pathname === c.path || fullPath === c.path || pathname.startsWith(c.path + '/')));
+                           (hasChildren && item.children?.some(c => checkActive(c.path)));
 
             if (hasChildren) {
               return (
@@ -143,14 +159,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                   {isExpanded && !collapsed && (
                     <div className="ms-4 my-1 d-flex flex-column gap-1 border-start ps-2">
                       {item.children?.map(child => {
-                        const isChildActive = fullPath === child.path || pathname === child.path || (
-                          pathname.startsWith(child.path + '/') && 
-                          !item.children?.some(sibling => 
-                            sibling.path !== child.path && 
-                            pathname.startsWith(sibling.path) && 
-                            sibling.path.length > child.path.length
-                          )
-                        );
+                        const isChildActive = checkActive(child.path);
                         
                         return (
                           <Link

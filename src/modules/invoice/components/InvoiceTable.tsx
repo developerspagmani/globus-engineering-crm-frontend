@@ -185,7 +185,7 @@ const InvoiceTable: React.FC = () => {
               </th>
               <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'}</th>
               {activeTab !== 'WOP_LIST' && (
-                <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
+                <th className={`fw-semibold px-4 py-3 ${activeTab === 'ADD_INVOICE' ? '' : 'text-end'}`}>{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
               )}
               <th className="text-center fw-semibold px-4 py-3 pe-4">Action</th>
             </tr>
@@ -209,8 +209,8 @@ const InvoiceTable: React.FC = () => {
                   </td>
                   <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                   {activeTab !== 'WOP_LIST' && (
-                    <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small"}>
-                      {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : ((item.billType === 'Without Process' || item.billType === 'without_process') ? '-' : `₹${item.grandTotal.toLocaleString()}`)}
+                    <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small text-end"}>
+                      {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : ((item.billType === 'Without Process' || item.billType === 'without_process') ? '-' : `₹${item.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`)}
                     </td>
                   )}
                   <td className="text-center pe-4">

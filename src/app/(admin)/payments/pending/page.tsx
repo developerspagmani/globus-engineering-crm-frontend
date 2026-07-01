@@ -195,7 +195,7 @@ const PendingPaymentPage = () => {
                       <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Dc No</th>
                       <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Invoice No</th>
                       <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Invoice Date</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Pending Amount</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-end px-3">Pending Amount</th>
                       <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-danger text-center">Over Due</th>
                       <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-center px-4">Action</th>
                     </tr>
@@ -240,7 +240,7 @@ const PendingPaymentPage = () => {
                             </Link>
                           </td>
                           <td className="text-muted small">{latestInvoice.date ? new Date(latestInvoice.date).toLocaleDateString() : 'N/A'}</td>
-                          <td className="text-dark fw-bold small">₹ {group.totalPending.toLocaleString()}</td>
+                          <td className="text-dark fw-bold small text-end px-3">₹ {group.totalPending.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                           <td className="text-center">
                             {maxOverdueDays > 0 ? (
                               <span className="badge rounded-pill bg-danger-subtle text-danger px-3">{maxOverdueDays} Days</span>

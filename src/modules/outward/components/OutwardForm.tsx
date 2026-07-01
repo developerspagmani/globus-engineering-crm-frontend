@@ -19,9 +19,10 @@ import PageModeIndicator from '@/components/PageModeIndicator';
 interface OutwardFormProps {
   initialData?: OutwardEntry;
   mode: 'create' | 'edit' | 'view';
+  initialPartyType?: 'customer' | 'vendor' | null;
 }
 
-const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
+const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPartyType }) => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { items: customers } = useSelector((state: RootState) => state.customers);
@@ -46,7 +47,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
 
   const [formData, setFormData] = useState<Omit<OutwardEntry, 'id' | 'createdAt'>>({
     outwardNo: initialData?.outwardNo || '',
-    partyType: initialData?.partyType || 'customer',
+    partyType: initialPartyType || initialData?.partyType || 'customer',
     customerId: initialData?.customerId || '',
     customerName: initialData?.customerName || '',
     vendorId: initialData?.vendorId || '',
@@ -253,26 +254,30 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
             <div className="bg-white p-4 rounded-4 shadow-sm mb-4">
               <div className="row g-4">
                  <div className="col-md-6 border-end">
-                    <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted x-small fw-bold">CHALLAN NO</label>
-                       <div className="col-8">
-                           <input type="text" className="form-control fw-bold px-3 py-2" name="outwardNo" value={formData.outwardNo} onChange={handleChange} disabled={mode === 'view'} />
+                    {mode !== 'create' && (
+                       <div className="row mb-3 align-items-center">
+                          <label className="col-4 text-muted x-small fw-bold">CHALLAN NO</label>
+                          <div className="col-8">
+                              <input type="text" className="form-control fw-bold px-3 py-2" name="outwardNo" value={formData.outwardNo} onChange={handleChange} disabled />
+                          </div>
                        </div>
-                    </div>
-                    
-                    <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted x-small fw-bold">PARTY TYPE</label>
-                       <div className="col-8 d-flex gap-3">
-                          <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
-                             <input type="radio" name="partyType" value="customer" checked={formData.partyType === 'customer'} onChange={handleChange} disabled={mode === 'view'} />
-                             <span className="x-small fw-bold">Customer</span>
-                          </label>
-                          <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
-                             <input type="radio" name="partyType" value="vendor" checked={formData.partyType === 'vendor'} onChange={handleChange} disabled={mode === 'view'} />
-                             <span className="x-small fw-bold">Vendor</span>
-                          </label>
+                    )}
+
+                    {mode === 'create' && !initialPartyType && (
+                       <div className="row mb-3 align-items-center">
+                          <label className="col-4 text-muted x-small fw-bold">PARTY TYPE</label>
+                          <div className="col-8 d-flex gap-3">
+                             <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                                <input type="radio" name="partyType" value="customer" checked={formData.partyType === 'customer'} onChange={handleChange} />
+                                <span className="x-small fw-bold">Customer</span>
+                             </label>
+                             <label className="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                                <input type="radio" name="partyType" value="vendor" checked={formData.partyType === 'vendor'} onChange={handleChange} />
+                                <span className="x-small fw-bold">Vendor</span>
+                             </label>
+                          </div>
                        </div>
-                    </div>
+                    )}
 
                     {formData.partyType === 'customer' ? (
                       <div className="row mb-3 align-items-center">
@@ -318,7 +323,6 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                       </>
                     )}
 
-                    {/* NEW SMART INWARD SELECTOR */}
                     <div className="row mb-3 align-items-center">
                        <label className={`col-4 small fw-bold text-muted`}>
                           {formData.partyType === 'vendor' ? 'LINK CUST. INWARD *' : 'INWARD REF *'}
@@ -352,15 +356,16 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode }) => {
                        </div>
                     </div>
 
-                 </div>
-
-                 <div className="col-md-6 px-lg-5">
                     <div className="row mb-3 align-items-center">
                        <label className="col-4 text-muted x-small fw-bold">DISPATCH DATE</label>
                        <div className="col-8">
                            <input type="date" className="form-control" name="date" value={formData.date} onChange={handleChange} disabled={mode === 'view'} />
                        </div>
                     </div>
+
+                 </div>
+
+                 <div className="col-md-6 px-lg-5">
                     <div className="row mb-3 align-items-center">
                        <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
                        <div className="col-8">

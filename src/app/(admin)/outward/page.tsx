@@ -102,7 +102,7 @@ export default function OutwardListPage() {
               buttonText="Export List"
             />
             {mounted && checkActionPermission(user, 'mod_outward', 'create') && (
-              <Link href="/outward/new" className="btn btn-primary btn-page-action px-4">
+              <Link href={`/outward/new${partyTypeFilter ? `?type=${partyTypeFilter}` : ''}`} className="btn btn-primary btn-page-action px-4">
                 <i className="bi bi-box-arrow-right"></i>
                 <span>Add Outward</span>
               </Link>

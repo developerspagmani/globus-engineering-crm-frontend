@@ -109,7 +109,7 @@ export default function InwardListPage() {
               buttonText="Export List"
             />
             {mounted && checkActionPermission(user, 'mod_inward', 'create') && (
-              <Link href="/inward/new" className="btn btn-primary btn-page-action px-4">
+              <Link href={`/inward/new${partyTypeFilter ? `?type=${partyTypeFilter}` : ''}`} className="btn btn-primary btn-page-action px-4">
                 <i className="bi bi-box-arrow-in-right"></i>
                 <span>Add Inward</span>
               </Link>
