@@ -114,7 +114,7 @@ function CompanyAuditContent() {
           companyId: activeCompany.id,
           dateFrom,
           dateTo,
-          limit: 10000 // Fetch a large amount for the full audit
+          limit: 100000 // Fetch a large amount for the full audit
        }));
     }
   }, [dispatch, activeCompany?.id, dateFrom, dateTo]);
