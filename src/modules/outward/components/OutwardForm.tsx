@@ -151,13 +151,18 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
           ...prev,
           inwardId: value,
           inwardNo: selectedInward.inwardNo,
-          items: selectedInward.items.filter((i: any) => 
-            prev.partyType === 'vendor' 
-              ? (i.vendorWorkBalance || 0) > 0 
-              : (i.dispatchBalance || 0) > 0
-          ).map((i: any) => ({
+          items: selectedInward.items.filter((i: any) => {
+            if (prev.partyType === 'vendor') {
+              return (i.vendorWorkBalance || 0) > 0;
+            } else {
+              const dispatchable = Math.max(0, (i.invoicedQty || 0) - (i.dispatchedQty || 0));
+              return dispatchable > 0;
+            }
+          }).map((i: any) => ({
             description: i.description || i.item_name,
-            quantity: prev.partyType === 'vendor' ? (i.vendorWorkBalance || 0) : (i.dispatchBalance || 0),
+            quantity: prev.partyType === 'vendor' 
+              ? (i.vendorWorkBalance || 0) 
+              : Math.max(0, (i.invoicedQty || 0) - (i.dispatchedQty || 0)),
             unit: i.unit || 'pcs'
           }))
         }));
@@ -334,13 +339,13 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                                   .filter(i => {
                                     const relevantBal = formData.partyType === 'vendor'
                                       ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
-                                      : i.items.reduce((sum: number, it: any) => sum + (it.dispatchBalance || 0), 0);
+                                      : i.items.reduce((sum: number, it: any) => sum + Math.max(0, (it.invoicedQty || 0) - (it.dispatchedQty || 0)), 0);
                                     return relevantBal > 0;
                                   })
                                   .map(i => {
                                     const relevantBal = formData.partyType === 'vendor'
                                       ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
-                                      : i.items.reduce((sum: number, it: any) => sum + (it.dispatchBalance || 0), 0);
+                                      : i.items.reduce((sum: number, it: any) => sum + Math.max(0, (it.invoicedQty || 0) - (it.dispatchedQty || 0)), 0);
                                     
                                     return { 
                                       value: i.id, 
