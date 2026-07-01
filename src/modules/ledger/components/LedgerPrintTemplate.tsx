@@ -44,7 +44,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
   openingBalance: propOpeningBalance,
   isDebitOpening: propIsDebitOpening,
 }) => {
-  const { settings } = useSelector((state: RootState) => state.invoices);
+  const { settings, items: allInvoices } = useSelector((state: RootState) => state.invoices);
   const isVendor = party?.partyType?.toLowerCase() === 'vendor';
 
   const docSettings = settings || company?.invoiceSettings || {};
@@ -241,24 +241,41 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                       return 'GST Sales';
                     }
                     if (e.vchType === 'RECEIPT' || e.vchType === 'PAYMENT') {
-                      // Extract payment mode from description (e.g. "RECEIPT - VCH-001 | NEFT")
                       const desc = e.description || '';
-                      const modeMatch = desc.match(/\|\s*([A-Z0-9]+)/i);
-                      if (modeMatch) {
-                        const mode = modeMatch[1].trim().toUpperCase();
-                        // Map short codes to full labels
-                        const modeLabels: Record<string, string> = {
-                          CASH: 'Cash',
-                          NEFT: 'NEFT Transfer',
-                          RTGS: 'RTGS Transfer',
-                          CHEQUE: 'Cheque',
-                          UPI: 'UPI',
-                          ONLINE: 'Online Transfer',
-                          BANK: 'Bank Transfer',
-                        };
-                        return modeLabels[mode] || mode;
+                      
+                      // 1. Check if it matches a legacy migrated invoice receipt
+                      const invMatch = desc.match(/(?:Receipt for Inv:|Migrated Receipt for Inv:)\s*(\d+)/i);
+                      if (invMatch) {
+                        const invNo = invMatch[1].trim();
+                        const invoice = allInvoices.find(inv => String(inv.invoiceNumber || (inv as any).invoice_no || '') === invNo);
+                        if (invoice && ((invoice as any).chequeNo || (invoice as any).cheque_no)) {
+                          return (invoice as any).chequeNo || (invoice as any).cheque_no;
+                        }
                       }
-                      return e.description?.replace(/^Migrated\s+/i, '') || 'Receipt';
+
+                      // 2. Format payment modes cleanly
+                      let cleanDesc = desc.replace(/^(RECEIPT|PAYMENT)\s*-\s*/i, '');
+                      
+                      if (cleanDesc.includes('|')) {
+                        const parts = cleanDesc.split('|').map((p: string) => p.trim());
+                        const mode = parts[1].toUpperCase();
+                        const modeLabels: Record<string, string> = {
+                          CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
+                          CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
+                        };
+                        return `${modeLabels[mode] || mode} (${parts[0]})`;
+                      }
+                      
+                      const uppercaseDesc = cleanDesc.toUpperCase();
+                      const rawModeLabels: Record<string, string> = {
+                        CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
+                        CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
+                      };
+                      if (rawModeLabels[uppercaseDesc]) {
+                        return rawModeLabels[uppercaseDesc];
+                      }
+
+                      return cleanDesc.replace(/^Migrated\s+/i, '') || 'Receipt';
                     }
                     return e.description?.replace(/^Migrated\s+/i, '') || e.vchType || '-';
                   })()}

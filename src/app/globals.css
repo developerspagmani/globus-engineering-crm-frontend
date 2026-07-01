@@ -1119,6 +1119,12 @@ input[type="password"],
 
 }
 
+.table-responsive:has(.dropdown-menu.show) {
+
+  overflow: visible !important;
+
+}
+
 
 
 .table-responsive::-webkit-scrollbar {

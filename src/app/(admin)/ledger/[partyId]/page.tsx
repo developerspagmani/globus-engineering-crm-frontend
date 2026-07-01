@@ -29,6 +29,71 @@ export default function LedgerDetailPage() {
   const itemsPerPageUI = 20;
   const FETCH_LIMIT = 5000;
 
+  const [selectedYear, setSelectedYear] = useState<string>('');
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('ALL');
+
+
+
+  const applyYearQuarter = (year: string, quarter: string) => {
+    if (!year) return;
+
+    let startMonth = 0; // 0-indexed
+    let endMonth = 11;
+    let startDay = 1;
+    let endDay = 31;
+    
+    const cy = parseInt(year);
+    const startYear = cy;
+    const endYear = cy;
+    
+    if (quarter === 'Q1') {
+      startMonth = 0;
+      endMonth = 2;
+      endDay = 31;
+    } else if (quarter === 'Q2') {
+      startMonth = 3;
+      endMonth = 5;
+      endDay = 30;
+    } else if (quarter === 'Q3') {
+      startMonth = 6;
+      endMonth = 8;
+      endDay = 30;
+    } else if (quarter === 'Q4') {
+      startMonth = 9;
+      endMonth = 11;
+      endDay = 31;
+    } else {
+      startMonth = 0;
+      endMonth = 11;
+      endDay = 31;
+    }
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const fromStr = `${startYear}-${pad(startMonth + 1)}-${pad(startDay)}`;
+    const toStr = `${endYear}-${pad(endMonth + 1)}-${pad(endDay)}`;
+
+    setDateFrom(fromStr);
+    setDateTo(toStr);
+    setCurrentPage(1);
+  };
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    if (!year) {
+      setDateFrom('');
+      setDateTo('');
+      setSelectedQuarter('ALL');
+      setCurrentPage(1);
+    } else {
+      applyYearQuarter(year, selectedQuarter);
+    }
+  };
+
+  const handleQuarterChange = (quarter: string) => {
+    setSelectedQuarter(quarter);
+    applyYearQuarter(selectedYear, quarter);
+  };
+
   const partyId = params.partyId as string;
   const reportContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -37,6 +102,28 @@ export default function LedgerDetailPage() {
   const { items: customers, loading: isCustomerLoading, error: customerError } = useSelector((state: RootState) => state.customers);
   const { items: vendors, loading: isVendorLoading, error: vendorError } = useSelector((state: RootState) => state.vendors);
   const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
+
+  const yearsOptions = useMemo(() => {
+    const years = new Set<number>();
+    
+    // Add current year and some standard surrounding years
+    const currentYear = new Date().getFullYear();
+    years.add(currentYear);
+    years.add(currentYear - 1);
+    years.add(currentYear - 2);
+    years.add(currentYear - 3);
+    years.add(currentYear - 4);
+    
+    // Collect all actual years from ledger entries data
+    allEntries.forEach(e => {
+      if (e.date) {
+        const y = new Date(e.date).getFullYear();
+        if (y > 2000) years.add(y);
+      }
+    });
+
+    return Array.from(years).sort((a, b) => b - a);
+  }, [allEntries]);
 
   // 1. Identify Party
   const party = useMemo(() => {
@@ -275,14 +362,40 @@ export default function LedgerDetailPage() {
                     <p className="text-muted small mb-0">{party?.street1 || 'No address specified'}</p>
                  </div>
                  <div className="col-md-3 border-start">
-                    <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Statement Period</span>
-                    <div className="d-flex flex-column gap-1">
-                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print mb-1" value={dateFrom} onChange={e => {setDateFrom(e.target.value); setCurrentPage(1);}} />
-                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print" value={dateTo} onChange={e => {setDateTo(e.target.value); setCurrentPage(1);}} />
+                     <span className="text-muted x-small fw-800 text-capitalize tracking-wider d-block mb-2">Statement Period</span>
+                     <div className="d-flex flex-column gap-1">
+                        <div className="d-flex gap-1 mb-1 hide-print">
+                            <select 
+                                className="form-select form-select-sm border-0 bg-light shadow-none text-muted py-1"
+                                style={{ fontSize: '0.75rem', height: '30px' }}
+                                value={selectedYear}
+                                onChange={e => handleYearChange(e.target.value)}
+                            >
+                                <option value="">Custom Year</option>
+                                {yearsOptions.map(yr => (
+                                    <option key={yr} value={String(yr)}>{yr}</option>
+                                ))}
+                            </select>
+                            <select 
+                                className="form-select form-select-sm border-0 bg-light shadow-none text-muted py-1"
+                                style={{ fontSize: '0.75rem', height: '30px' }}
+                                value={selectedQuarter}
+                                onChange={e => handleQuarterChange(e.target.value)}
+                                disabled={!selectedYear}
+                            >
+                                <option value="ALL">All</option>
+                                <option value="Q1">Q1</option>
+                                <option value="Q2">Q2</option>
+                                <option value="Q3">Q3</option>
+                                <option value="Q4">Q4</option>
+                            </select>
+                        </div>
+                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print mb-1" value={dateFrom} onChange={e => {setDateFrom(e.target.value); setSelectedYear(""); setSelectedQuarter("ALL"); setCurrentPage(1);}} />
+                        <input type="date" className="form-control form-control-sm border-0 bg-light hide-print" value={dateTo} onChange={e => {setDateTo(e.target.value); setSelectedYear(""); setSelectedQuarter("ALL"); setCurrentPage(1);}} />
                         <span className="small fw-bold text-dark show-print-only">
                             {dateFrom || 'Start'} to {dateTo || 'Today'}
                         </span>
-                    </div>
+                     </div>
                  </div>
                  <div className="col-md-4 border-start text-end">
                     <div className="px-3">
@@ -364,16 +477,40 @@ export default function LedgerDetailPage() {
                                         if (e.vchType === 'INVOICE') return 'GST Sales';
                                         if (e.vchType === 'RECEIPT' || e.vchType === 'PAYMENT') {
                                           const desc = e.description || '';
-                                          const modeMatch = desc.match(/\|\s*([A-Z0-9]+)/i);
-                                          if (modeMatch) {
-                                            const mode = modeMatch[1].trim().toUpperCase();
-                                            const modeLabels: Record<string, string> = {
-                                              CASH: 'Cash', NEFT: 'NEFT Transfer', RTGS: 'RTGS Transfer',
-                                              CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online Transfer', BANK: 'Bank Transfer',
-                                            };
-                                            return modeLabels[mode] || mode;
+                                          
+                                          // 1. Check if it matches a legacy migrated invoice receipt
+                                          const invMatch = desc.match(/(?:Receipt for Inv:|Migrated Receipt for Inv:)\s*(\d+)/i);
+                                          if (invMatch) {
+                                            const invNo = invMatch[1].trim();
+                                            const invoice = allInvoices.find(inv => String(inv.invoiceNumber || (inv as any).invoice_no || '') === invNo);
+                                             if (invoice && ((invoice as any).chequeNo || (invoice as any).cheque_no)) {
+                                               return (invoice as any).chequeNo || (invoice as any).cheque_no;
+                                             }
                                           }
-                                          return desc.replace(/^Migrated\s+/i, '') || 'Receipt';
+
+                                          // 2. Format payment modes cleanly
+                                          let cleanDesc = desc.replace(/^(RECEIPT|PAYMENT)\s*-\s*/i, '');
+                                          
+                                          if (cleanDesc.includes('|')) {
+                                            const parts = cleanDesc.split('|').map((p: string) => p.trim());
+                                            const mode = parts[1].toUpperCase();
+                                            const modeLabels: Record<string, string> = {
+                                              CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
+                                              CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
+                                            };
+                                            return `${modeLabels[mode] || mode} (${parts[0]})`;
+                                          }
+                                          
+                                          const uppercaseDesc = cleanDesc.toUpperCase();
+                                          const rawModeLabels: Record<string, string> = {
+                                            CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
+                                            CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
+                                          };
+                                          if (rawModeLabels[uppercaseDesc]) {
+                                            return rawModeLabels[uppercaseDesc];
+                                          }
+
+                                          return cleanDesc.replace(/^Migrated\s+/i, '') || 'Receipt';
                                         }
                                         return e.description || '-';
                                       })()}

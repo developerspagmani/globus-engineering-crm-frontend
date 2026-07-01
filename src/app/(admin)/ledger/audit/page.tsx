@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchLedgerEntries } from '@/redux/features/ledgerSlice';
@@ -20,6 +20,89 @@ function CompanyAuditContent() {
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
 
+  const [selectedYear, setSelectedYear] = useState<string>('');
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('ALL');
+
+  const yearsOptions = useMemo(() => {
+    const years = new Set<number>();
+    
+    // Add current year and some standard surrounding years
+    const currentYear = new Date().getFullYear();
+    years.add(currentYear);
+    years.add(currentYear - 1);
+    years.add(currentYear - 2);
+    years.add(currentYear - 3);
+    years.add(currentYear - 4);
+    
+    // Collect all actual years from ledger entries data
+    ledgerEntries.forEach(e => {
+      if (e.date) {
+        const y = new Date(e.date).getFullYear();
+        if (y > 2000) years.add(y);
+      }
+    });
+
+    return Array.from(years).sort((a, b) => b - a);
+  }, [ledgerEntries]);
+
+  const applyYearQuarter = (year: string, quarter: string) => {
+    if (!year) return;
+
+    let startMonth = 0; // 0-indexed
+    let endMonth = 11;
+    let startDay = 1;
+    let endDay = 31;
+    
+    const cy = parseInt(year);
+    const startYear = cy;
+    const endYear = cy;
+    
+    if (quarter === 'Q1') {
+      startMonth = 0;
+      endMonth = 2;
+      endDay = 31;
+    } else if (quarter === 'Q2') {
+      startMonth = 3;
+      endMonth = 5;
+      endDay = 30;
+    } else if (quarter === 'Q3') {
+      startMonth = 6;
+      endMonth = 8;
+      endDay = 30;
+    } else if (quarter === 'Q4') {
+      startMonth = 9;
+      endMonth = 11;
+      endDay = 31;
+    } else {
+      startMonth = 0;
+      endMonth = 11;
+      endDay = 31;
+    }
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const fromStr = `${startYear}-${pad(startMonth + 1)}-${pad(startDay)}`;
+    const toStr = `${endYear}-${pad(endMonth + 1)}-${pad(endDay)}`;
+
+    setDateFrom(fromStr);
+    setDateTo(toStr);
+  };
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    if (!year) {
+      setDateFrom('');
+      setDateTo('');
+      setSelectedQuarter('ALL');
+    } else {
+      applyYearQuarter(year, selectedQuarter);
+    }
+  };
+
+  const handleQuarterChange = (quarter: string) => {
+    setSelectedQuarter(quarter);
+    applyYearQuarter(selectedYear, quarter);
+  };
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -29,10 +112,12 @@ function CompanyAuditContent() {
     if (activeCompany?.id) {
        (dispatch as any)(fetchLedgerEntries({ 
           companyId: activeCompany.id,
+          dateFrom,
+          dateTo,
           limit: 10000 // Fetch a large amount for the full audit
        }));
     }
-  }, [dispatch, activeCompany?.id]);
+  }, [dispatch, activeCompany?.id, dateFrom, dateTo]);
 
   if (!mounted) return null;
 
@@ -71,12 +156,39 @@ function CompanyAuditContent() {
             </h5>
 
             <div className="d-flex align-items-center gap-3">
+              <div className="d-flex align-items-center gap-2 hide-print">
+                <select 
+                  className="form-select form-select-sm border shadow-sm text-muted py-2 px-3 rounded-3"
+                  style={{ minWidth: '140px', fontSize: '0.85rem' }}
+                  value={selectedYear}
+                  onChange={e => handleYearChange(e.target.value)}
+                >
+                  <option value="">Custom Year</option>
+                  {yearsOptions.map(yr => (
+                      <option key={yr} value={String(yr)}>{yr}</option>
+                  ))}
+                </select>
+                <select 
+                  className="form-select form-select-sm border shadow-sm text-muted py-2 px-3 rounded-3"
+                  style={{ minWidth: '100px', fontSize: '0.85rem' }}
+                  value={selectedQuarter}
+                  onChange={e => handleQuarterChange(e.target.value)}
+                  disabled={!selectedYear}
+                >
+                  <option value="ALL">All</option>
+                  <option value="Q1">Q1</option>
+                  <option value="Q2">Q2</option>
+                  <option value="Q3">Q3</option>
+                  <option value="Q4">Q4</option>
+                </select>
+              </div>
+
               <div className="date-filter-group bg-light rounded-3 p-1">
                 <input 
                   type="date" 
                   className="form-control border-0 bg-transparent shadow-none" 
                   value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
+                  onChange={(e) => {setDateFrom(e.target.value); setSelectedYear(""); setSelectedQuarter("ALL");}}
                   title="Start Date"
                 />
                 <span className="text-muted fw-bold px-1">to</span>
@@ -84,7 +196,7 @@ function CompanyAuditContent() {
                   type="date" 
                   className="form-control border-0 bg-transparent shadow-none" 
                   value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
+                  onChange={(e) => {setDateTo(e.target.value); setSelectedYear(""); setSelectedQuarter("ALL");}}
                   title="End Date"
                 />
               </div>
