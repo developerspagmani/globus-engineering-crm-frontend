@@ -421,3 +421,22 @@ export interface AuditLog {
   company_id: string;
   created_at: string;
 }
+
+export interface PurchaseBill {
+  id: string;
+  receivedDate: string;
+  companyName: string;
+  gstTin?: string;
+  dcNo?: string;
+  invoiceNo: string;
+  sac?: string;
+  qty: number;
+  amount: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  roundOff: number;
+  grandTotal: number;
+  company_id: string;
+  vendorId?: string;
+}

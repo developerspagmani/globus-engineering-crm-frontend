@@ -153,6 +153,13 @@ export const availableModules: ModuleData[] = [
     description: 'Log and track activity history for field store visits.',
     status: 'active',
     icon: 'bi-clipboard-check'
+  },
+  {
+    id: 'mod_purchase_billing',
+    name: 'Purchase Billing',
+    description: 'Track and manage vendor purchase invoices and GST entries.',
+    status: 'active',
+    icon: 'bi-journal-medical'
   }
 ];
 

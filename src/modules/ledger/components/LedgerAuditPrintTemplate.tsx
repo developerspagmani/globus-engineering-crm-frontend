@@ -10,6 +10,7 @@ interface LedgerAuditPrintTemplateProps {
   company: Company | null;
   dateFrom?: string;
   dateTo?: string;
+  openingBalance?: number;
   hideHeaderOnScreen?: boolean;
 }
 
@@ -30,6 +31,7 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
   company,
   dateFrom,
   dateTo,
+  openingBalance = 0,
   hideHeaderOnScreen = false,
 }) => {
   const { settings, items: allInvoices } = useSelector((state: RootState) => state.invoices);
@@ -53,6 +55,13 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
 
   const totalDebit = entries.reduce((sum, e) => sum + (e.type === 'debit' ? e.amount : 0), 0);
   const totalCredit = entries.reduce((sum, e) => sum + (e.type === 'credit' ? e.amount : 0), 0);
+
+  const isDebitOpening = openingBalance >= 0;
+  const absOpeningBalance = Math.abs(openingBalance);
+
+  const drWithOp = totalDebit + (isDebitOpening ? absOpeningBalance : 0);
+  const crWithOp = totalCredit + (!isDebitOpening ? absOpeningBalance : 0);
+  const closingBalance = Math.abs(drWithOp - crWithOp);
 
   return (
     <div className="audit-wrap">
@@ -113,51 +122,49 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
           </tr>
         </thead>
         <tbody>
+          {/* Opening Balance Row */}
+          <tr>
+            <td>{dateFrom ? formatLedgerDate(dateFrom) : (sortedEntries[0]?.date ? formatLedgerDate(sortedEntries[0].date) : '')}</td>
+            <td className="fw-bold">Opening Balance</td>
+            <td>-</td>
+            <td>-</td>
+            <td className="text-end">{isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
+            <td className="text-end">{!isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
+          </tr>
           {sortedEntries.map((e, idx) => (
             <tr key={idx}>
               <td>{formatLedgerDate(e.date)}</td>
               <td className="text-capitalize">{e.partyName || '-'}</td>
                <td>
                  {(() => {
-                   if (e.vchType === 'RECEIPT' || e.vchType === 'PAYMENT') {
-                     const desc = e.description || '';
-                     
-                     // 1. Check if it matches a legacy migrated invoice receipt
-                     const invMatch = desc.match(/(?:Receipt for Inv:|Migrated Receipt for Inv:)\s*(\d+)/i);
-                     if (invMatch) {
-                       const invNo = invMatch[1].trim();
-                       const invoice = allInvoices.find(inv => String(inv.invoiceNumber || (inv as any).invoice_no || '') === invNo);
-                       if (invoice && ((invoice as any).chequeNo || (invoice as any).cheque_no)) {
-                         return (invoice as any).chequeNo || (invoice as any).cheque_no;
-                       }
-                     }
+                    const upperType = (e.vchType || '').toUpperCase();
+                    const desc = e.description || '';
+                    
+                    if (upperType === 'INVOICE' || desc.toLowerCase().includes('sales invoice:')) {
+                      return 'GST Sales';
+                    }
+                    
+                    if (upperType === 'RECEIPT' || upperType === 'PAYMENT') {
+                      const invMatch = desc.match(/(?:Receipt for Inv:|Migrated Receipt for Inv:)\s*(\d+)/i);
+                      if (invMatch) {
+                        return `Receipt for Inv: ${invMatch[1]}`;
+                      }
 
-                     // 2. Format payment modes cleanly
-                     let cleanDesc = desc.replace(/^(RECEIPT|PAYMENT)\s*-\s*/i, '');
-                     
-                     if (cleanDesc.includes('|')) {
-                       const parts = cleanDesc.split('|').map((p: string) => p.trim());
-                       const mode = parts[1].toUpperCase();
-                       const modeLabels: Record<string, string> = {
-                         CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
-                         CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
-                       };
-                       return `${modeLabels[mode] || mode} (${parts[0]})`;
-                     }
-                     
-                     const uppercaseDesc = cleanDesc.toUpperCase();
-                     const rawModeLabels: Record<string, string> = {
-                       CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
-                       CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
-                     };
-                     if (rawModeLabels[uppercaseDesc]) {
-                       return rawModeLabels[uppercaseDesc];
-                     }
+                      const noMatch = desc.match(/No\.?\s*(\w+)/i);
+                      if (noMatch) {
+                        return `CHEQUE (No. ${noMatch[1]})`;
+                      }
 
-                     return cleanDesc.replace(/^Migrated\s+/i, '') || 'Receipt';
-                   }
-                   return e.description || '-';
-                 })()}
+                      const sixDigitMatch = desc.match(/\b(\d{6})\b/);
+                      if (sixDigitMatch) {
+                        return `CHEQUE (No. ${sixDigitMatch[1]})`;
+                      }
+
+                      return upperType === 'RECEIPT' ? 'Receipt' : 'Payment';
+                    }
+                    
+                    return desc || '-';
+                  })()}
                </td>
               <td>{e.vchType || 'JOURNAL'}</td>
               <td className="text-end">{e.type === 'debit' ? fmt(e.amount) : ''}</td>
@@ -166,16 +173,20 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
           ))}
         </tbody>
         <tfoot>
-          <tr className="footer-total">
-            <td colSpan={4} className="text-end fw-bold">TOTAL PERIOD TRANSACTIONS</td>
-            <td className="text-end fw-bold">{fmt(totalDebit)}</td>
-            <td className="text-end fw-bold">{fmt(totalCredit)}</td>
+          <tr className="footer-total" style={{ borderTop: '1.5pt solid #000' }}>
+            <td colSpan={4} className="text-end fw-bold">Opening Balance :</td>
+            <td className="text-end fw-bold">{isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
+            <td className="text-end fw-bold">{!isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
           </tr>
-          <tr className="footer-net">
-            <td colSpan={4} className="text-end fw-bold">NET DIFFERENCE</td>
-            <td colSpan={2} className="text-end fw-bold">
-              ₹ {fmt(Math.abs(totalDebit - totalCredit))}
-            </td>
+          <tr className="footer-total">
+            <td colSpan={4} className="text-end fw-bold">Current Total :</td>
+            <td className="text-end fw-bold">{totalDebit > 0 ? fmt(totalDebit) : ''}</td>
+            <td className="text-end fw-bold">{totalCredit > 0 ? fmt(totalCredit) : ''}</td>
+          </tr>
+          <tr className="footer-total">
+            <td colSpan={4} className="text-end fw-bold">Closing Balance :</td>
+            <td className="text-end fw-bold">{drWithOp > crWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
+            <td className="text-end fw-bold">{crWithOp > drWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
           </tr>
         </tfoot>
       </table>

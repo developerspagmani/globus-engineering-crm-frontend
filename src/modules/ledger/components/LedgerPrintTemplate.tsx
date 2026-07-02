@@ -237,47 +237,33 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                 <td>
                   <span className="byto">{prefix}</span>
                   {(() => {
-                    if (e.vchType === 'INVOICE') {
+                    const upperType = (e.vchType || '').toUpperCase();
+                    const desc = e.description || '';
+                    
+                    if (upperType === 'INVOICE' || desc.toLowerCase().includes('sales invoice:')) {
                       return 'GST Sales';
                     }
-                    if (e.vchType === 'RECEIPT' || e.vchType === 'PAYMENT') {
-                      const desc = e.description || '';
-                      
-                      // 1. Check if it matches a legacy migrated invoice receipt
+                    
+                    if (upperType === 'RECEIPT' || upperType === 'PAYMENT') {
                       const invMatch = desc.match(/(?:Receipt for Inv:|Migrated Receipt for Inv:)\s*(\d+)/i);
                       if (invMatch) {
-                        const invNo = invMatch[1].trim();
-                        const invoice = allInvoices.find(inv => String(inv.invoiceNumber || (inv as any).invoice_no || '') === invNo);
-                        if (invoice && ((invoice as any).chequeNo || (invoice as any).cheque_no)) {
-                          return (invoice as any).chequeNo || (invoice as any).cheque_no;
-                        }
+                        return `Receipt for Inv: ${invMatch[1]}`;
                       }
 
-                      // 2. Format payment modes cleanly
-                      let cleanDesc = desc.replace(/^(RECEIPT|PAYMENT)\s*-\s*/i, '');
-                      
-                      if (cleanDesc.includes('|')) {
-                        const parts = cleanDesc.split('|').map((p: string) => p.trim());
-                        const mode = parts[1].toUpperCase();
-                        const modeLabels: Record<string, string> = {
-                          CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
-                          CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
-                        };
-                        return `${modeLabels[mode] || mode} (${parts[0]})`;
-                      }
-                      
-                      const uppercaseDesc = cleanDesc.toUpperCase();
-                      const rawModeLabels: Record<string, string> = {
-                        CASH: 'Cash', NEFT: 'NEFT', RTGS: 'RTGS',
-                        CHEQUE: 'Cheque', UPI: 'UPI', ONLINE: 'Online', BANK: 'Bank',
-                      };
-                      if (rawModeLabels[uppercaseDesc]) {
-                        return rawModeLabels[uppercaseDesc];
+                      const noMatch = desc.match(/No\.?\s*(\w+)/i);
+                      if (noMatch) {
+                        return `CHEQUE (No. ${noMatch[1]})`;
                       }
 
-                      return cleanDesc.replace(/^Migrated\s+/i, '') || 'Receipt';
+                      const sixDigitMatch = desc.match(/\b(\d{6})\b/);
+                      if (sixDigitMatch) {
+                        return `CHEQUE (No. ${sixDigitMatch[1]})`;
+                      }
+
+                      return upperType === 'RECEIPT' ? 'Receipt' : 'Payment';
                     }
-                    return e.description?.replace(/^Migrated\s+/i, '') || e.vchType || '-';
+                    
+                    return desc?.replace(/^Migrated\s+/i, '') || e.vchType || '-';
                   })()}
                 </td>
                 <td>{e.vchType === 'INVOICE' ? 'Sales' : e.vchType === 'RECEIPT' ? 'Receipt' : e.vchType || ''}</td>

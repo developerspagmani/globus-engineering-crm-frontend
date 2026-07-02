@@ -61,6 +61,12 @@ export const navigationConfig: NavItem[] = [
       { name: 'Customer', icon: 'bi-people', path: '/ledger', moduleId: 'mod_ledger' },
     ]
   },
+  { 
+    name: 'Purchase Billing', 
+    icon: 'bi-journal-medical', 
+    path: '/purchase-billing', 
+    moduleId: 'mod_purchase_billing' 
+  },
   { name: 'Pending Payment', icon: 'bi-clock-history', path: '/payments/pending', moduleId: 'mod_pending_payment' },
   
   { name: 'Price Fixing', icon: 'bi-tags', path: '/master/price-fixing', moduleId: 'mod_price_fixing' },

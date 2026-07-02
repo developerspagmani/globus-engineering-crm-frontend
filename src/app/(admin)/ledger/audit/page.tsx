@@ -14,7 +14,7 @@ import { Suspense } from 'react';
 function CompanyAuditContent() {
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: ledgerEntries, loading } = useSelector((state: RootState) => state.ledger);
+  const { items: ledgerEntries, loading, openingBalance } = useSelector((state: RootState) => state.ledger);
   
   const [mounted, setMounted] = useState(false);
   const [dateFrom, setDateFrom] = useState<string>('');
@@ -221,6 +221,7 @@ function CompanyAuditContent() {
               company={activeCompany} 
               dateFrom={dateFrom} 
               dateTo={dateTo} 
+              openingBalance={openingBalance}
               hideHeaderOnScreen={true}
             />
           </div>

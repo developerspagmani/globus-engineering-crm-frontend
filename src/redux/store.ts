@@ -18,6 +18,7 @@ import companyReducer from './features/companySlice';
 import storeReducer from './features/storeSlice';
 import masterReducer from './features/masterSlice';
 import dashboardReducer from './features/dashboardSlice';
+import purchaseReducer from './features/purchaseSlice';
 
 const appReducer = combineReducers({
   modules: moduleReducer,
@@ -39,6 +40,7 @@ const appReducer = combineReducers({
   master: masterReducer,
   dashboard: dashboardReducer,
   stores: storeReducer,
+  purchaseBills: purchaseReducer,
 });
 
 const rootReducer = (state: any, action: AnyAction) => {
