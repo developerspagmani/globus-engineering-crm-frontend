@@ -11,13 +11,23 @@ export const fetchChallans = createAsyncThunk(
     search?: string; 
     partyType?: string;
     id?: string;
+    status?: string;
+    type?: string;
+    bill_type?: string;
+    fromDate?: string;
+    toDate?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id } = params;
+      const { company_id, page = 1, limit = 10, search, id, status, type, bill_type, fromDate, toDate } = params;
       let url = `/challans?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (params.partyType && params.partyType !== 'all') url += `&partyType=${params.partyType}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (type && type !== 'all') url += `&type=${type}`;
+      if (bill_type && bill_type !== 'all') url += `&bill_type=${encodeURIComponent(bill_type)}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
       if (id) url += `&id=${id}`;
       
       const response = await api.get(url);

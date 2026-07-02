@@ -42,8 +42,10 @@ export default function InwardListPage() {
       search: filters.search,
       partyType: partyTypeFilter || filters.partyType,
       status: filters.status !== 'all' ? filters.status : undefined,
+      fromDate: filters.fromDate,
+      toDate: filters.toDate
     }));
-  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status]);
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate]);
 
   const totalPages = pagination.totalPages;
   const paginatedInwards = inwards;

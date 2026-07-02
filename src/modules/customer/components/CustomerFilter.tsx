@@ -71,21 +71,6 @@ const CustomerFilter: React.FC = () => {
             </select>
           </div>
 
-          <div className="filter-item-select">
-            <select
-              className="form-select search-bar"
-              name="industry"
-              value={filters.industry}
-              onChange={handleChange}
-            >
-              <option value="all">Industries</option>
-              <option value="Automotive">Automotive</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Construction">Construction</option>
-              <option value="Machinery">Machinery</option>
-            </select>
-          </div>
-
           <div className="date-filter-group">
             <input 
               type="date" 

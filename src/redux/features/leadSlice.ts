@@ -9,12 +9,18 @@ export const fetchLeads = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    status?: string;
+    fromDate?: string;
+    toDate?: string;
   }, { rejectWithValue }) => {
     try {
-      const { companyId, page = 1, limit = 10, search } = params;
+      const { companyId, page = 1, limit = 10, search, status, fromDate, toDate } = params;
       let url = `/leads?page=${page}&limit=${limit}`;
       if (companyId) url += `&companyId=${companyId}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
       
       const response = await api.get(url);
       return {

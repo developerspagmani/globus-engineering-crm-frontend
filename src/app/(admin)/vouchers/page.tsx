@@ -38,11 +38,12 @@ const VoucherPage = () => {
         search: filters.search,
         type: filters.type,
         partyType: filters.partyType,
+        status: filters.status,
         fromDate: filters.fromDate,
         toDate: filters.toDate
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.partyType, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.partyType, filters.status, filters.fromDate, filters.toDate]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
@@ -214,6 +215,19 @@ const VoucherPage = () => {
                 <option value="receipt">Receipt</option>
                 <option value="journal">Journal</option>
                 <option value="contra">Contra</option>
+              </select>
+            </div>
+
+            <div className="filter-item-select">
+              <select 
+                className="form-select search-bar" 
+                value={filters.status}
+                onChange={(e) => dispatch(setVoucherFilters({ status: e.target.value as any }))}
+              >
+                <option value="all">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="posted">Posted</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 

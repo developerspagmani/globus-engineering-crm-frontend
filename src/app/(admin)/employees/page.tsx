@@ -152,21 +152,6 @@ const EmployeesPage = () => {
               </div>
             </div>
             
-            <div className="filter-item-select">
-              <select 
-                className="form-select search-bar" 
-                value={filters.department}
-                onChange={(e) => dispatch(setEmployeeFilters({ department: e.target.value as any }))}
-              >
-                <option value="all">Departments</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Production">Production</option>
-                <option value="Logistics">Logistics</option>
-                <option value="Sales">Sales</option>
-                <option value="HR">HR</option>
-              </select>
-            </div>
-
             <div className="date-filter-group">
               <input 
                 type="date" 

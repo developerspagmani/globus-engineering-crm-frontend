@@ -9,12 +9,20 @@ export const fetchVendors = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    status?: string;
+    category?: string;
+    fromDate?: string;
+    toDate?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search } = params;
+      const { company_id, page = 1, limit = 10, search, status, category, fromDate, toDate } = params;
       let url = `/vendors?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (category && category !== 'all') url += `&category=${encodeURIComponent(category)}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
       
       const response = await api.get(url);
       return {

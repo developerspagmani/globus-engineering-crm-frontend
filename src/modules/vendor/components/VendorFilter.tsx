@@ -48,21 +48,6 @@ const VendorFilter: React.FC = () => {
               </select>
             </div>
 
-            <div className="filter-item-select">
-              <select
-                className="form-select search-bar"
-                name="category"
-                value={filters.category}
-                onChange={handleChange}
-              >
-                <option value="all">Categories</option>
-                <option value="Raw Materials">Raw Materials</option>
-                <option value="Logistics">Logistics</option>
-                <option value="Machinery">Machinery</option>
-                <option value="Electrical">Electrical</option>
-              </select>
-            </div>
-
             <div className="date-filter-group">
               <input 
                 type="date" 

@@ -26,9 +26,12 @@ const VendorTable: React.FC = () => {
       company_id: activeCompany?.id,
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
-      search: filters.search
+      search: filters.search,
+      status: filters.status,
+      fromDate: filters.fromDate,
+      toDate: filters.toDate
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate]);
  
   const totalPages = pagination.totalPages;
   const paginatedItems = items;

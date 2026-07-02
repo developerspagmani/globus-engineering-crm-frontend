@@ -10,13 +10,21 @@ export const fetchCustomers = createAsyncThunk(
     limit?: number; 
     search?: string; 
     id?: string;
+    status?: string;
+    industry?: string;
+    fromDate?: string;
+    toDate?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id } = params;
+      const { company_id, page = 1, limit = 10, search, id, status, industry, fromDate, toDate } = params;
       let url = `/customers?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (id) url += `&id=${id}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (industry && industry !== 'all') url += `&industry=${encodeURIComponent(industry)}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
       
       const response = await api.get(url);
       return {

@@ -12,13 +12,19 @@ export const fetchOutwards = createAsyncThunk(
     search?: string; 
     id?: string;
     partyType?: string;
+    status?: string;
+    fromDate?: string;
+    toDate?: string;
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id, partyType } = params;
+      const { company_id, page = 1, limit = 10, search, id, partyType, status, fromDate, toDate } = params;
       let url = `/outward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (fromDate) url += `&fromDate=${fromDate}`;
+      if (toDate) url += `&toDate=${toDate}`;
       if (id) url += `&id=${id}`;
       
       const response = await api.get(url);

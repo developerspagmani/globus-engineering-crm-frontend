@@ -59,9 +59,13 @@ const ChallanPage = () => {
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
       search: filters.search,
-      partyType: filters.partyType
+      partyType: filters.partyType,
+      status: filters.status,
+      bill_type: filters.bill_type,
+      fromDate: filters.fromDate,
+      toDate: filters.toDate
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType, filters.status, filters.bill_type, filters.fromDate, filters.toDate]);
 
   if (!mounted) return <Loader text="Initializing..." />;
 
@@ -169,6 +173,20 @@ const ChallanPage = () => {
                 <option value="With Process">With Process (WP)</option>
                 <option value="Without Process">Without Process (WOP)</option>
                 <option value="Both">Both (WP + WOP)</option>
+              </select>
+            </div>
+
+            <div className="filter-item-select" style={{ minWidth: '150px' }}>
+              <select
+                className="form-select search-bar"
+                value={filters.status || 'all'}
+                onChange={(e) => dispatch(setChallanFilters({ status: e.target.value as any }))}
+              >
+                <option value="all">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="dispatched">Dispatched</option>
+                <option value="received">Received</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 
