@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { setVoucherFilters, setVoucherPage, fetchVouchers, deleteVoucher } from '@/redux/features/voucherSlice';
+import { setVoucherFilters, setVoucherPage, fetchVouchers, deleteVoucher, resetVoucherState } from '@/redux/features/voucherSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
@@ -28,8 +28,14 @@ const VoucherPage = () => {
   const [mounted, setMounted] = useState(false);
 
 
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
+    return () => {
+      dispatch(resetVoucherState());
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     if (activeCompany?.id) {
       (dispatch as any)(fetchVouchers({
         company_id: activeCompany.id,
@@ -213,8 +219,6 @@ const VoucherPage = () => {
                 <option value="all">All Types</option>
                 <option value="payment">Payment</option>
                 <option value="receipt">Receipt</option>
-                <option value="journal">Journal</option>
-                <option value="contra">Contra</option>
               </select>
             </div>
 
@@ -225,7 +229,6 @@ const VoucherPage = () => {
                 onChange={(e) => dispatch(setVoucherFilters({ status: e.target.value as any }))}
               >
                 <option value="all">All Status</option>
-                <option value="draft">Draft</option>
                 <option value="posted">Posted</option>
                 <option value="cancelled">Cancelled</option>
               </select>

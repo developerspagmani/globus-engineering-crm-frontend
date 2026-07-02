@@ -130,6 +130,8 @@ const ledgerSlice = createSlice({
       state.items = [];
       state.loading = false;
       state.error = null;
+      state.filters = initialState.filters;
+      state.pagination.currentPage = 1;
     }
   },
   extraReducers: (builder) => {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchOutwards, deleteOutward, setOutwardFilters, setOutwardPage } from '@/redux/features/outwardSlice';
+import { fetchOutwards, deleteOutward, setOutwardFilters, setOutwardPage, resetOutwardState } from '@/redux/features/outwardSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -33,7 +33,10 @@ export default function OutwardListPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    return () => {
+      dispatch(resetOutwardState());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     (dispatch as any)(fetchOutwards({
@@ -130,15 +133,6 @@ export default function OutwardListPage() {
                     onChange={(e) => dispatch(setOutwardFilters({ search: e.target.value }))}
                   />
                 </div>
-              </div>
-              <div className="filter-item-select">
-                <select className="form-select search-bar"
-                  value={filters.status}
-                  onChange={(e) => dispatch(setOutwardFilters({ status: e.target.value as any }))}>
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                </select>
               </div>
               <div className="date-filter-group">
                 <input

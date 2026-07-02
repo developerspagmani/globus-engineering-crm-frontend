@@ -215,6 +215,10 @@ const voucherSlice = createSlice({
     setVoucherPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    resetVoucherState: (state) => {
+      state.filters = initialState.filters;
+      state.pagination.currentPage = 1;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -287,7 +291,8 @@ const voucherSlice = createSlice({
 
 export const {
   setVoucherFilters,
-  setVoucherPage
+  setVoucherPage,
+  resetVoucherState
 } = voucherSlice.actions;
 
 export default voucherSlice.reducer;

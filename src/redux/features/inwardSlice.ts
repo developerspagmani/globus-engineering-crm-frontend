@@ -290,6 +290,10 @@ const inwardSlice = createSlice({
     setInwardPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    resetInwardState: (state) => {
+      state.filters = initialState.filters;
+      state.pagination.currentPage = 1;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -337,5 +341,5 @@ const inwardSlice = createSlice({
   }
 });
 
-export const { setInwardFilters, setInwardPage } = inwardSlice.actions;
+export const { setInwardFilters, setInwardPage, resetInwardState } = inwardSlice.actions;
 export default inwardSlice.reducer;

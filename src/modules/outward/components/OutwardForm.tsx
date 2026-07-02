@@ -513,7 +513,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                 </button>
               </>
             ) : (
-              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push('/outward')}>BACK</button>
+              <button type="button" className="btn btn-secondary px-5 py-2 rounded-pill fw-bold shadow-sm" onClick={() => router.push(`/outward?type=${formData.partyType}`)}>BACK</button>
             )}
           </div>
         </form>
@@ -543,7 +543,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
           message={modal.message}
           onClose={() => {
             setModal(prev => ({ ...prev, isOpen: false }));
-            if (modal.type === 'success') router.push('/outward');
+            if (modal.type === 'success') router.push(`/outward?type=${formData.partyType}`);
           }}
         />
       )}

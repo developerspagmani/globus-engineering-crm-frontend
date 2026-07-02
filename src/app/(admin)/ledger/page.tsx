@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters, setLedgerPage } from '@/redux/features/ledgerSlice';
+import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters, setLedgerPage, resetLedgerState } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
@@ -38,7 +38,10 @@ export default function LedgerPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    return () => {
+      dispatch(resetLedgerState());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (activeCompany?.id) {

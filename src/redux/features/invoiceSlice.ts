@@ -377,6 +377,10 @@ const invoiceSlice = createSlice({
     initializeInvoiceSettings: (state, action: PayloadAction<Partial<InvoiceState['settings']>>) => {
       state.settings = { ...state.settings, ...action.payload };
     },
+    resetInvoiceState: (state) => {
+      state.filters = initialState.filters;
+      state.pagination.currentPage = 1;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -433,7 +437,8 @@ export const {
   setInvoiceFilters,
   setInvoicePage,
   updateInvoiceSettings,
-  initializeInvoiceSettings
+  initializeInvoiceSettings,
+  resetInvoiceState
 } = invoiceSlice.actions;
 
 export const addInvoice = createInvoice;

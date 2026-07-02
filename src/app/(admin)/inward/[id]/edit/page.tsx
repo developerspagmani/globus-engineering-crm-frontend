@@ -43,7 +43,7 @@ export default function EditInwardPage() {
         ) : (
           <>
             <div className="d-flex align-items-center mb-5 pb-2 border-bottom">
-              <Link href="/inward" className="back-btn-standard" title="Back to Inward List">
+              <Link href={`/inward${inward?.partyType ? `?type=${inward.partyType}` : ''}`} className="back-btn-standard" title="Back to Inward List">
                 <i className="bi bi-arrow-left fs-4"></i>
               </Link>
               <div>

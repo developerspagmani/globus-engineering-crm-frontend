@@ -183,7 +183,6 @@ const ChallanPage = () => {
                 onChange={(e) => dispatch(setChallanFilters({ status: e.target.value as any }))}
               >
                 <option value="all">All Status</option>
-                <option value="draft">Draft</option>
                 <option value="dispatched">Dispatched</option>
                 <option value="received">Received</option>
                 <option value="cancelled">Cancelled</option>

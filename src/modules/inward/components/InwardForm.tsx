@@ -538,7 +538,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
                 </>
               )}
               {mode === 'view' && (
-                <button type="button" className="btn btn-secondary px-4 rounded-1" onClick={() => router.push('/inward')}>BACK</button>
+                 <button type="button" className="btn btn-secondary px-4 rounded-1" onClick={() => router.push(`/inward?type=${formData.partyType}`)}>BACK</button>
               )}
             </div>
           </form>
@@ -554,7 +554,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
             onSecondaryAction={modal.onSecondary}
             onClose={() => {
               setModal(prev => ({ ...prev, isOpen: false }));
-              if (modal.type === 'success') router.push('/inward');
+              if (modal.type === 'success') router.push(`/inward?type=${formData.partyType}`);
             }}
           />
         )}

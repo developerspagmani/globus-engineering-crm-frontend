@@ -220,6 +220,10 @@ const outwardSlice = createSlice({
     setOutwardPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    resetOutwardState: (state) => {
+      state.filters = initialState.filters;
+      state.pagination.currentPage = 1;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -264,5 +268,5 @@ const outwardSlice = createSlice({
   }
 });
 
-export const { setOutwardFilters, setOutwardPage } = outwardSlice.actions;
+export const { setOutwardFilters, setOutwardPage, resetOutwardState } = outwardSlice.actions;
 export default outwardSlice.reducer;

@@ -8,7 +8,7 @@ import ModuleGuard from '@/components/ModuleGuard';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { checkActionPermission } from '@/config/permissions';
-import { setInvoiceFilters } from '@/redux/features/invoiceSlice';
+import { setInvoiceFilters, resetInvoiceState } from '@/redux/features/invoiceSlice';
 import ExportExcel from '@/components/shared/ExportExcel';
 
 import Breadcrumb from '@/components/Breadcrumb';
@@ -21,7 +21,10 @@ export default function InvoiceHistoryPage() {
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    return () => {
+      dispatch(resetInvoiceState());
+    };
+  }, [dispatch]);
 
   if (!mounted) return null;
 

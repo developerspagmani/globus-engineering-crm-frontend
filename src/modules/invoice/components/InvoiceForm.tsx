@@ -1230,7 +1230,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                           <div className="d-flex align-items-center gap-4">
                                              <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) CGST</h6>
                                              <div className="d-flex align-items-center gap-1">
-                                                <span className="small fw-bold">{taxRate / 2}%</span>
+                                                <span className="small fw-bold">{taxRate / 2}</span>
                                              </div>
                                           </div>
                                           <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
@@ -1242,7 +1242,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                           <div className="d-flex align-items-center gap-4">
                                              <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) SGST</h6>
                                              <div className="d-flex align-items-center gap-1">
-                                                <span className="small fw-bold">{taxRate / 2}%</span>
+                                                <span className="small fw-bold">{taxRate / 2}</span>
                                              </div>
                                           </div>
                                           <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">

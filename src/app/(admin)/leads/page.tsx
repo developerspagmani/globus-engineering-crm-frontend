@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
-import { setLeadFilters, deleteLead, fetchLeads, setLeadPage } from '@/redux/features/leadSlice';
+import { setLeadFilters, deleteLead, fetchLeads, setLeadPage, resetLeadState } from '@/redux/features/leadSlice';
 import { createCustomer } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import StatusModal from '@/components/StatusModal';
@@ -41,6 +41,12 @@ const LeadsPage = () => {
 
   useEffect(() => {
     setMounted(true);
+    return () => {
+      dispatch(resetLeadState());
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     (dispatch as any)(fetchLeads({
       companyId: activeCompany?.id,
       page: pagination.currentPage,

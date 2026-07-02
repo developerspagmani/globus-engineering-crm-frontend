@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInwards, deleteInward, setInwardFilters, setInwardPage } from '@/redux/features/inwardSlice';
+import { fetchInwards, deleteInward, setInwardFilters, setInwardPage, resetInwardState } from '@/redux/features/inwardSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -32,7 +32,10 @@ export default function InwardListPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    return () => {
+      dispatch(resetInwardState());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     (dispatch as any)(fetchInwards({

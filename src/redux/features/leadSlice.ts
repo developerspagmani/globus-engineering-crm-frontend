@@ -123,6 +123,10 @@ const leadSlice = createSlice({
     setLeadPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    resetLeadState: (state) => {
+      state.filters = initialState.filters;
+      state.pagination.currentPage = 1;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -156,7 +160,7 @@ const leadSlice = createSlice({
   }
 });
 
-export const { setLeadFilters, setLeadPage } = leadSlice.actions;
+export const { setLeadFilters, setLeadPage, resetLeadState } = leadSlice.actions;
 
 export const addLead = createLeadSync;
 export const updateLead = updateLeadSync;
