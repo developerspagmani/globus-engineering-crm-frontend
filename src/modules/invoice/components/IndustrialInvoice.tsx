@@ -85,7 +85,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
       displayItems = displayItems.filter(it => Number(it.quantity || 0) > 0);
    }
 
-   const totalInWords = numberToWords(displayInvoice.grandTotal);
+   const totalInWords = numberToWords(Math.round(displayInvoice.grandTotal));
 
    // PAGINATION CAPACITIES (Strictly calibrated for FULL header on ALL pages)
    const GLOBAL_PAGE_CAPACITY = 18;     // Full header/meta/address + 18 items as requested
@@ -666,7 +666,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                            {!isWOP && (
                               <tr className="total-row" style={{ height: '30px' }}>
                                  <td colSpan={6} style={{ textAlign: 'right', fontSize: '13px' }}>GRAND TOTAL</td>
-                                 <td style={{ textAlign: 'right', fontSize: '13px' }}>{invoice.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                 <td style={{ textAlign: 'right', fontSize: '13px' }}>{Math.round(invoice.grandTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                               </tr>
                            )}
                         </>

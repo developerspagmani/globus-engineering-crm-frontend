@@ -335,7 +335,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       const subTotal = formData.items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
       const taxableAmount = subTotal - (formData.discount || 0) + (formData.otherCharges || 0);
       const taxTotal = (taxableAmount * (formData.taxRate || 0)) / 100;
-      const grandTotal = taxableAmount + taxTotal;
+      const grandTotal = Math.round(taxableAmount + taxTotal);
 
       if (formData.subTotal !== subTotal || formData.taxTotal !== taxTotal || formData.grandTotal !== grandTotal) {
          setFormData((prev: any) => ({
@@ -1296,7 +1296,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               <h4 className="fw-bold mb-0 text-dark text-uppercase small" style={{ letterSpacing: '1px' }}>Grand Total</h4>
                               <div className="d-flex align-items-center gap-2 text-danger fw-bold fs-2">
                                  <span>₹</span>
-                                 <span className="text-nowrap">{formData.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                 <span className="text-nowrap">{formData.grandTotal?.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
                               </div>
                            </div>
                         </div>
