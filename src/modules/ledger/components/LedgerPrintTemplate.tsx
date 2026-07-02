@@ -223,8 +223,8 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
             </td>
             <td></td>
             <td></td>
-            <td className="num">{isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
-            <td className="num">{!isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
+            <td className="num">{isDebitOpening ? fmt(openingBalance) : ''}</td>
+            <td className="num">{!isDebitOpening ? fmt(openingBalance) : ''}</td>
           </tr>
 
           {/* ── Period Entries ── */}
@@ -281,8 +281,8 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
           {/* ── Tally Style Footer ── */}
           <tr className="tally-footer-row" style={{ borderTop: '1px solid #ccc' }}>
             <td colSpan={4} style={{ textAlign: 'right' }}>Opening Balance :</td>
-            <td className="num">{isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
-            <td className="num">{!isDebitOpening && openingBalance > 0 ? fmt(openingBalance) : ''}</td>
+            <td className="num">{isDebitOpening ? fmt(openingBalance) : ''}</td>
+            <td className="num">{!isDebitOpening ? fmt(openingBalance) : ''}</td>
           </tr>
           <tr className="tally-footer-row">
             <td colSpan={4} style={{ textAlign: 'right' }}>Current Total :</td>
@@ -291,8 +291,16 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
           </tr>
           <tr className="tally-footer-row">
             <td colSpan={4} style={{ textAlign: 'right' }}>Closing Balance :</td>
-            <td className="num">{drWithOp > crWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
-            <td className="num">{crWithOp > drWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
+            <td className="num">
+              {closingBalance > 0 
+                ? (drWithOp > crWithOp ? fmt(closingBalance) : '') 
+                : (isVendor ? '' : fmt(0))}
+            </td>
+            <td className="num">
+              {closingBalance > 0 
+                ? (crWithOp > drWithOp ? fmt(closingBalance) : '') 
+                : (isVendor ? fmt(0) : '')}
+            </td>
           </tr>
         </tfoot>
       </table>

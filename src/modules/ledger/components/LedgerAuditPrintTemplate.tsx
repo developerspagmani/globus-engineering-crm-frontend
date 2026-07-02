@@ -128,8 +128,8 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
             <td className="fw-bold">Opening Balance</td>
             <td>-</td>
             <td>-</td>
-            <td className="text-end">{isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
-            <td className="text-end">{!isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
+            <td className="text-end">{isDebitOpening ? fmt(absOpeningBalance) : ''}</td>
+            <td className="text-end">{!isDebitOpening ? fmt(absOpeningBalance) : ''}</td>
           </tr>
           {sortedEntries.map((e, idx) => (
             <tr key={idx}>
@@ -175,8 +175,8 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
         <tfoot>
           <tr className="footer-total" style={{ borderTop: '1.5pt solid #000' }}>
             <td colSpan={4} className="text-end fw-bold">Opening Balance :</td>
-            <td className="text-end fw-bold">{isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
-            <td className="text-end fw-bold">{!isDebitOpening && absOpeningBalance > 0 ? fmt(absOpeningBalance) : ''}</td>
+            <td className="text-end fw-bold">{isDebitOpening ? fmt(absOpeningBalance) : ''}</td>
+            <td className="text-end fw-bold">{!isDebitOpening ? fmt(absOpeningBalance) : ''}</td>
           </tr>
           <tr className="footer-total">
             <td colSpan={4} className="text-end fw-bold">Current Total :</td>
@@ -185,8 +185,16 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
           </tr>
           <tr className="footer-total">
             <td colSpan={4} className="text-end fw-bold">Closing Balance :</td>
-            <td className="text-end fw-bold">{drWithOp > crWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
-            <td className="text-end fw-bold">{crWithOp > drWithOp && closingBalance > 0 ? fmt(closingBalance) : ''}</td>
+            <td className="text-end fw-bold">
+              {closingBalance > 0 
+                ? (drWithOp > crWithOp ? fmt(closingBalance) : '') 
+                : (isDebitOpening ? fmt(0) : '')}
+            </td>
+            <td className="text-end fw-bold">
+              {closingBalance > 0 
+                ? (crWithOp > drWithOp ? fmt(closingBalance) : '') 
+                : (isDebitOpening ? '' : fmt(0))}
+            </td>
           </tr>
         </tfoot>
       </table>
