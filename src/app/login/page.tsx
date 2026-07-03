@@ -186,11 +186,6 @@ function LoginForm({
               )}
             </button>
             
-            <div className="text-center mt-4">
-              <p className="x-small text-muted mb-0 fw-600">
-                Don't have an account? <Link href="/signup" className="text-primary text-decoration-none fw-800">Create an account</Link>
-              </p>
-            </div>
           </div>
         </form>
       </div>
@@ -258,6 +253,12 @@ function LoginContent() {
             </div>
           </div>
         )}
+
+        <div className="row justify-content-center mb-5">
+          <div className="col-12 text-center">
+            <img src="/IMG-20260422-WA0023.jpg" alt="Globus Engineering Tools" style={{ maxHeight: '120px', objectFit: 'contain' }} />
+          </div>
+        </div>
 
         <div className="row justify-content-center g-4">
           <div className="col-12 col-lg-5">

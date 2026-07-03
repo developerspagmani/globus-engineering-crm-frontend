@@ -965,7 +965,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                          {selectedData && (expandedRows.has(invoiceId) || mode === 'view') && (
                            <tr className="bg-light-subtle border-bottom border-light">
                              <td colSpan={1} className="py-0"></td>
-                             <td colSpan={5} className="py-2">
+                             <td colSpan={4} className="py-2">
                                <div className="d-flex align-items-center justify-content-start gap-4 py-1 border-start border-orange border-3" style={{ marginLeft: '60px', paddingLeft: '90px' }}>
                                  <div className="d-flex flex-column text-start">
                                    <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Type</span>
@@ -1012,7 +1012,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     })}
                     {formData.partyType === 'customer' && formData.customerId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
-                        <td colSpan={6} className="text-center py-5 text-muted small">
+                        <td colSpan={5} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
                             ? "All invoices for this customer are fully paid" 
                             : "No invoices found for this customer"}
@@ -1021,7 +1021,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     )}
                     {formData.partyType === 'vendor' && formData.vendorId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
-                        <td colSpan={6} className="text-center py-5 text-muted small">
+                        <td colSpan={5} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String((inv as any).vendorId || (inv as any).vendor_id) === String(formData.vendorId)) 
                             ? "All inward bills for this vendor are fully paid" 
                             : "No outstanding invoices found for this vendor"}
@@ -1030,12 +1030,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     )}
                     {formData.partyType === 'customer' && !formData.customerId && (
                       <tr>
-                        <td colSpan={6} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
+                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
                       </tr>
                     )}
                     {formData.partyType === 'vendor' && !formData.vendorId && (
                       <tr>
-                        <td colSpan={6} className="text-center py-5 text-muted small">Please select a vendor to view invoices</td>
+                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a vendor to view invoices</td>
                       </tr>
                     )}
                   </>
@@ -1043,23 +1043,23 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               </tbody>
               <tfoot className="border-0">
                 <tr>
-                  <td colSpan={3}></td>
-                  <td className="text-end py-2 text-muted small fw-semibold">Gross Total:</td>
-                  <td className="fw-bold text-end py-2 text-dark" style={{ minWidth: '150px' }}>
+                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td className="text-end py-2 text-muted small fw-semibold border-bottom border-secondary-subtle">Gross Total:</td>
+                  <td className="fw-bold text-end py-2 text-dark border-bottom border-secondary-subtle" style={{ minWidth: '150px' }}>
                     ₹ {totalInvoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3}></td>
-                  <td className="text-end py-2 text-muted small fw-semibold">Total Adjustments:</td>
-                  <td className="fw-bold text-end py-2 text-muted">
+                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td className="text-end py-2 text-muted small fw-semibold border-bottom border-secondary-subtle">Total Adjustments:</td>
+                  <td className="fw-bold text-end py-2 text-muted border-bottom border-secondary-subtle">
                     (-) ₹ {totalAdjustmentAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3}></td>
-                  <td className="text-end py-3 fs-6 fw-bold text-secondary border-top border-secondary-subtle">Net Payable:</td>
-                  <td className="fw-bold text-end py-3 fs-5 text-dark border-top border-secondary-subtle">
+                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td className="text-end py-3 fs-6 fw-bold text-secondary border-bottom border-secondary-subtle">Net Payable:</td>
+                  <td className="fw-bold text-end py-3 fs-5 text-dark border-bottom border-secondary-subtle">
                     ₹ {netPayableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
