@@ -42,20 +42,6 @@ const InvoiceFilter: React.FC = () => {
             </div>
           </div>
 
-          <div className="filter-item-select">
-            <select
-              className="form-select search-bar"
-              name="status"
-              value={filters.status}
-              onChange={handleChange}
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-
           <div className="date-filter-group">
             <input 
               type="date" 
