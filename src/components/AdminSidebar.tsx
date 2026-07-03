@@ -67,12 +67,20 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       {/* Brand Header */}
       <div className={`d-flex align-items-center justify-content-center mb-2 ${collapsed ? 'py-4' : 'p-4 gap-3'}`}>
         <div className="d-flex align-items-center justify-content-center rounded-3 shadow-sm bg-white" style={{ width: '45px', height: '45px', minWidth: '45px', overflow: 'hidden' }}>
-          <img src="/logo.jpg" alt="Globus Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.15)' }} />
+          {company?.logo ? (
+            <img src={company.logo} alt="Company Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          ) : (
+            <img src="/logo.jpg" alt="Default Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.15)' }} />
+          )}
         </div>
         {!collapsed && (
           <div className="d-flex flex-column justify-content-center text-start">
-            <h6 className="fw-900 mb-0 text-dark tracking-tight" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>GLOBUS</h6>
-            <p className="mb-0 text-uppercase fw-bold" style={{ fontSize: '0.7rem', color: '#ea580c', letterSpacing: '1px' }}>Engineering</p>
+            <h6 className="fw-900 mb-0 text-dark tracking-tight" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>
+              {company?.name?.toLowerCase().includes('pricol') ? 'PRICOL' : (company?.name?.toUpperCase() || 'GLOBUS')}
+            </h6>
+            <p className="mb-0 text-uppercase fw-bold" style={{ fontSize: '0.7rem', color: '#ea580c', letterSpacing: '1px' }}>
+              {company?.name?.toLowerCase().includes('pricol') ? '' : 'Engineering'}
+            </p>
           </div>
         )}
       </div>

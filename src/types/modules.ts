@@ -439,4 +439,5 @@ export interface PurchaseBill {
   grandTotal: number;
   company_id: string;
   vendorId?: string;
+  customerId?: string;
 }

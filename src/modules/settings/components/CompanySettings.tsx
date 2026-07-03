@@ -13,6 +13,7 @@ const CompanySettings: React.FC = () => {
     name: activeCompany?.name || '',
     slug: activeCompany?.slug || '',
     plan: activeCompany?.plan || 'Free',
+    logo: activeCompany?.logo || '',
   });
 
   const [saving, setSaving] = useState(false);
@@ -27,6 +28,7 @@ const CompanySettings: React.FC = () => {
       ...activeCompany,
       name: formData.name,
       slug: formData.slug,
+      logo: formData.logo,
     }));
 
     setSaving(false);
@@ -63,6 +65,37 @@ const CompanySettings: React.FC = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="row g-4">
+            <div className="col-12">
+              <label className="form-label small text-muted text-uppercase fw-bold">Company Logo</label>
+              <div className="d-flex align-items-center gap-3">
+                <div className="bg-light rounded-3 overflow-hidden d-flex align-items-center justify-content-center border" style={{ width: '80px', height: '80px' }}>
+                  {formData.logo ? (
+                    <img src={formData.logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <i className="bi bi-image text-muted fs-3"></i>
+                  )}
+                </div>
+                <div>
+                  <input 
+                    type="file" 
+                    className="form-control form-control-sm mb-1 shadow-none" 
+                    accept="image/*" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setFormData({ ...formData, logo: reader.result as string });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }} 
+                  />
+                  <span className="text-muted" style={{ fontSize: '0.75rem' }}>Upload a company logo (Square recommended).</span>
+                </div>
+              </div>
+            </div>
+
             <div className="col-md-6">
               <label className="form-label small text-muted text-uppercase fw-bold">Company Name</label>
               <input 

@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/redux/store';
 import { createPurchaseBill, updatePurchaseBill } from '@/redux/features/purchaseSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
 import { PurchaseBill } from '@/types/modules';
 
 interface PurchaseFormProps {
@@ -17,6 +18,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
   const dispatch = useDispatch<AppDispatch>();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
+  const { items: customers } = useSelector((state: RootState) => state.customers);
 
   const [formData, setFormData] = useState({
     receivedDate: '',
@@ -29,9 +31,10 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
     amount: '',
     cgst: '',
     sgst: '',
-    igst: '',
-    roundOff: '',
-    vendorId: ''
+    igst: 0,
+    roundOff: 0,
+    vendorId: '',
+    customerId: ''
   });
 
   const [errorMsg, setErrorMsg] = useState('');
@@ -40,6 +43,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
   useEffect(() => {
     if (activeCompany?.id) {
       dispatch(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      dispatch(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany?.id]);
 
@@ -56,9 +60,10 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
         amount: initialData.amount?.toString() || '0',
         cgst: initialData.cgst?.toString() || '0',
         sgst: initialData.sgst?.toString() || '0',
-        igst: initialData.igst?.toString() || '0',
-        roundOff: initialData.roundOff?.toString() || '0',
-        vendorId: initialData.vendorId || ''
+        igst: initialData.igst || 0,
+        roundOff: initialData.roundOff || 0,
+        vendorId: initialData.vendorId || '',
+        customerId: initialData.customerId || ''
       });
     } else {
       setFormData({
@@ -72,9 +77,10 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
         amount: '',
         cgst: '',
         sgst: '',
-        igst: '',
-        roundOff: '',
-        vendorId: ''
+        igst: 0,
+        roundOff: 0,
+        vendorId: '',
+        customerId: ''
       });
     }
     setErrorMsg('');
@@ -91,40 +97,58 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
     }));
   };
 
-  // Handle vendor selection
-  const handleVendorSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value;
-    if (!selectedId) {
-      setFormData(prev => ({
-        ...prev,
+  // Handle vendor/customer selection
+  const handlePartySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    
+    if (!value) {
+      setFormData(prev => ({ 
+        ...prev, 
         vendorId: '',
+        customerId: '',
         companyName: '',
         gstTin: ''
       }));
       return;
     }
 
-    const selectedVendor = vendors.find(v => String(v.id) === selectedId);
-    if (selectedVendor) {
-      setFormData(prev => ({
-        ...prev,
-        vendorId: selectedId,
-        companyName: selectedVendor.name || '',
-        gstTin: selectedVendor.gst || ''
-      }));
+    const [type, id] = value.split('_');
+
+    if (type === 'vendor') {
+      const selectedVendor = vendors.find(v => String(v.id) === id);
+      if (selectedVendor) {
+        setFormData(prev => ({
+          ...prev,
+          vendorId: id,
+          customerId: '',
+          companyName: selectedVendor.name || '',
+          gstTin: selectedVendor.gst || ''
+        }));
+      }
+    } else if (type === 'customer') {
+      const selectedCustomer = customers.find(c => String(c.id) === id);
+      if (selectedCustomer) {
+        setFormData(prev => ({
+          ...prev,
+          vendorId: '',
+          customerId: id,
+          companyName: selectedCustomer.name || '',
+          gstTin: selectedCustomer.gst || ''
+        }));
+      }
     }
   };
 
   // Auto-calculated Grand Total
-  const qtyNum = parseFloat(formData.qty) || 0;
-  const amountNum = parseFloat(formData.amount) || 0;
-  const cgstNum = parseFloat(formData.cgst) || 0;
-  const sgstNum = parseFloat(formData.sgst) || 0;
-  const igstNum = parseFloat(formData.igst) || 0;
-  const roundOffNum = parseFloat(formData.roundOff) || 0;
+  const qtyNum = Number(formData.qty) || 0;
+  const amountNum = Number(formData.amount) || 0;
+  const cgstNum = Number(formData.cgst) || 0;
+  const sgstNum = Number(formData.sgst) || 0;
+  const igstNum = Number(formData.igst) || 0;
+  const roundOffNum = Number(formData.roundOff) || 0;
   const grandTotal = amountNum + cgstNum + sgstNum + igstNum + roundOffNum;
 
-  // Real-time CGST/SGST calculator helper (e.g. 9% each if IGST is 0 and CGST/SGST not filled)
+  // Real-time CGST/SGST calculator helper
   const applyGstRate = (ratePercent: number) => {
     const halfRate = ratePercent / 2;
     const computedCgst = (amountNum * halfRate) / 100;
@@ -133,7 +157,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
       ...prev,
       cgst: computedCgst.toFixed(2),
       sgst: computedSgst.toFixed(2),
-      igst: '0'
+      igst: 0
     }));
   };
 
@@ -143,7 +167,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
       ...prev,
       cgst: '0',
       sgst: '0',
-      igst: computedIgst.toFixed(2)
+      igst: computedIgst
     }));
   };
 
@@ -171,6 +195,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
       igst: igstNum,
       roundOff: roundOffNum,
       vendorId: formData.vendorId || undefined,
+      customerId: formData.customerId || undefined,
       company_id: activeCompany?.id
     };
 
@@ -222,18 +247,25 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                   />
                 </div>
 
-                {/* Vendor Select / Manual Switch */}
+                {/* Party Select */}
                 <div className="col-md-6">
-                  <label className="form-label text-muted small fw-bold text-uppercase">Link Vendor (Optional)</label>
+                  <label className="form-label text-muted small fw-bold text-uppercase">Link Party (Optional)</label>
                   <select
                     className="form-select rounded-3 border-light-subtle shadow-none py-2"
-                    value={formData.vendorId}
-                    onChange={handleVendorSelect}
+                    value={formData.vendorId ? `vendor_${formData.vendorId}` : (formData.customerId ? `customer_${formData.customerId}` : '')}
+                    onChange={handlePartySelect}
                   >
-                    <option value="">-- Add Manually / Select Vendor --</option>
-                    {vendors.map(v => (
-                      <option key={v.id} value={v.id}>{v.name} {v.gst ? `(${v.gst})` : ''}</option>
-                    ))}
+                    <option value="">-- Add Manually / Select Party --</option>
+                    <optgroup label="Vendors">
+                      {vendors.map(v => (
+                        <option key={`vendor_${v.id}`} value={`vendor_${v.id}`}>{v.name}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Customers">
+                      {customers.map(c => (
+                        <option key={`customer_${c.id}`} value={`customer_${c.id}`}>{c.name}</option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
 
