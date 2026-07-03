@@ -23,7 +23,7 @@ const InvoiceFilter: React.FC = () => {
   return (
     <div className="card filter-card">
       <div className="card-body p-3">
-        <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+        <div className="d-flex flex-nowrap gap-2 align-items-center overflow-x-auto pb-1">
           <div className="filter-item-select" style={{ minWidth: '150px' }}>
             <PartyTypeToggle
               partyType={(filters as any).partyType || 'customer'}

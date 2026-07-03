@@ -14,6 +14,7 @@ import SearchableSelect from '@/components/shared/SearchableSelect';
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import { fetchOutwards } from '@/redux/features/outwardSlice';
 import PageModeIndicator from '@/components/PageModeIndicator';
+import api from '@/lib/axios';
 
 
 
@@ -50,6 +51,8 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
   const [targetProcessIndex, setTargetProcessIndex] = useState<number | null>(null);
   const [isCreatingProcess, setIsCreatingProcess] = useState(false);
   // -------------------------------------
+
+  const [isDcNoEditable, setIsDcNoEditable] = useState(false);
 
   const [formData, setFormData] = useState<Omit<InwardEntry, 'id' | 'createdAt'> & { partyType: 'customer' | 'vendor', outwardId?: string, outwardNo?: string }>({
     inwardNo: '',
@@ -96,12 +99,21 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
 
   useEffect(() => {
     if (activeCompany?.id) {
-      if (mode === 'create' && !formData.inwardNo) {
+      if (mode === 'create') {
         setFormData(prev => ({ 
           ...prev, 
           company_id: activeCompany.id,
           inwardNo: ''
         }));
+        
+        // Auto-generate DC No for new inwards
+        api.get(`/inward/sequence-dc?companyId=${activeCompany.id}`)
+          .then(res => {
+            if (res.data?.dcNo) {
+              setFormData(prev => ({ ...prev, dcNo: res.data.dcNo }));
+            }
+          })
+          .catch(err => console.error('Failed to auto-generate DC No', err));
       } else {
         setFormData(prev => ({ ...prev, company_id: activeCompany.id }));
       }
@@ -379,9 +391,25 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
                 <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="poDate" value={formData.poDate} onChange={handleChange} disabled={mode === 'view'} />
               </div>
   
-              <div className="col-md-6 d-flex">
+              <div className="col-md-6 d-flex position-relative">
                 <label className="form-label mb-0 align-self-center text-muted col-3">Dc No</label>
-                <input type="text" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dcNo" value={formData.dcNo} onChange={handleChange} placeholder="Dc No" disabled={mode === 'view'} />
+                <input 
+                  type="text" 
+                  className="form-control border-bottom rounded-0 px-2 shadow-none pe-5" 
+                  name="dcNo" 
+                  value={formData.dcNo} 
+                  onChange={handleChange} 
+                  placeholder="Dc No" 
+                  disabled={mode === 'view' || !isDcNoEditable} 
+                />
+                {mode !== 'view' && (
+                  <i 
+                    className="bi bi-pencil-fill text-secondary position-absolute" 
+                    style={{ right: '25px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
+                    onClick={() => setIsDcNoEditable(true)}
+                    title="Edit DC No"
+                  ></i>
+                )}
               </div>
 
               <div className="col-md-6 d-flex">
