@@ -1227,32 +1227,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                  return (
                                     <>
                                        <div className="d-flex align-items-center justify-content-between mb-3 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
-                                          <div className="d-flex align-items-center gap-4">
-                                             <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) CGST</h6>
-                                             <div className="d-flex align-items-center gap-1">
-                                                <span className="small fw-bold">{taxRate / 2}</span>
-                                             </div>
-                                          </div>
-                                          <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
-                                             <span>₹</span>
-                                             <span>{(taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                          </div>
-                                       </div>
-                                       <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
-                                          <div className="d-flex align-items-center gap-4">
-                                             <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) SGST</h6>
-                                             <div className="d-flex align-items-center gap-1">
-                                                <span className="small fw-bold">{taxRate / 2}</span>
-                                             </div>
-                                          </div>
-                                          <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
-                                             <span>₹</span>
-                                             <span>{(taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                          </div>
-                                       </div>
-                                       <div className="d-flex align-items-center justify-content-between mb-4">
                                           <h6 className="text-muted fw-bold small text-uppercase mb-0">GST Percentage</h6>
-                                          <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '80px' }}>
+                                          <div className="d-flex align-items-center gap-1" style={{ width: '80px' }}>
                                              <input
                                                 type="number"
                                                 className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
@@ -1264,6 +1240,30 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                              <span className="small fw-bold">%</span>
                                           </div>
                                        </div>
+                                       <div className="d-flex align-items-center justify-content-between mb-3 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                                          <div className="d-flex align-items-center gap-4">
+                                             <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) CGST</h6>
+                                             <div className="d-flex align-items-center gap-1">
+                                                <span className="small fw-bold text-muted">{taxRate / 2}%</span>
+                                             </div>
+                                          </div>
+                                          <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
+                                             <span>₹</span>
+                                             <span>{(taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                          </div>
+                                       </div>
+                                       <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                                          <div className="d-flex align-items-center gap-4">
+                                             <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) SGST</h6>
+                                             <div className="d-flex align-items-center gap-1">
+                                                <span className="small fw-bold text-muted">{taxRate / 2}%</span>
+                                             </div>
+                                          </div>
+                                          <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
+                                             <span>₹</span>
+                                             <span>{(taxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                          </div>
+                                       </div>
                                     </>
                                  );
                               } else {
@@ -1271,7 +1271,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
                                        <div className="d-flex align-items-center gap-4">
                                           <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) IGST</h6>
-                                          <div className="d-flex align-items-center gap-1 border-bottom pb-1" style={{ width: '80px' }}>
+                                          <div className="d-flex align-items-center gap-1" style={{ width: '80px' }}>
                                              <input
                                                 type="number"
                                                 className="form-control bg-light text-center fw-bold p-1 no-spinner w-100"
