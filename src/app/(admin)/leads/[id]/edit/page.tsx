@@ -14,7 +14,7 @@ export default function EditLeadPage() {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isEdit, setIsEdit] = useState(searchParams.get('edit') === 'true');
+  const isEdit = searchParams.get('edit') === 'true';
 
   const { user } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.leads);
@@ -56,7 +56,7 @@ export default function EditLeadPage() {
         {!isEdit && checkActionPermission(user, 'mod_lead', 'edit') && (
           <button 
             className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
-            onClick={() => setIsEdit(true)}
+            onClick={() => router.push(`/leads/${id}/edit?edit=true`)}
           >
             <i className="bi bi-pencil-square"></i>
             <span>Edit Prospect</span>

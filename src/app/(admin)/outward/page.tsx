@@ -174,7 +174,7 @@ export default function OutwardListPage() {
                   {paginatedOutwards.map((item, index) => (
                     <tr key={item.id} className="border-bottom border-light">
                       <td className="px-4 text-muted fw-bold">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                      <td className="fw-900 fs-6"><Link href={`/outward/${item.id}/edit`} className="text-primary fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{item.outwardNo || 'N/A'}</Link></td>
+                       <td className="fw-900 fs-6"><Link href={`/outward/${item.id}`} className="text-primary fw-bold text-decoration-none hover-underline" style={{ cursor: 'pointer' }}>{item.outwardNo || 'N/A'}</Link></td>
                       <td>
                         <div className="fw-900 text-dark fs-6 mb-0">{item.customerName || item.vendorName}</div>
                         <div className="x-small text-muted text-capitalize">{item.processName || (item.items?.[0]?.description) || '-'}</div>
@@ -194,9 +194,9 @@ export default function OutwardListPage() {
                       </td>
                       <td className="text-center px-4">
                         <div className="d-flex justify-content-center align-items-center gap-1">
-                          <Link href={`/outward/${item.id}/edit`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
+                          <Link href={`/outward/${item.id}`} className="btn-action-view" title="View Detail"><i className="bi bi-eye-fill"></i></Link>
                           {mounted && checkActionPermission(user, 'mod_outward', 'edit') && (
-                            <Link href={`/outward/${item.id}/edit?edit=true`} className="btn-action-edit" title="Edit Outward"><i className="bi bi-pencil-fill"></i></Link>
+                            <Link href={`/outward/${item.id}?edit=true`} className="btn-action-edit" title="Edit Outward"><i className="bi bi-pencil-fill"></i></Link>
                           )}
                           <div className="dropdown">
                             <button className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" style={{ width: '32px', height: '32px', borderRadius: '8px' }}>

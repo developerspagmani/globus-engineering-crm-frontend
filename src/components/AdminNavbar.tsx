@@ -45,7 +45,7 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
       viewUrl = `/${module}/${id}`;
     } else if (id) {
       mode = 'view';
-      editUrl = `/${module}/${id}${module === 'vouchers' || module === 'invoices' ? '/edit' : '?edit=true'}`;
+      editUrl = `/${module}/${id}${module === 'invoices' ? '/edit' : '?edit=true'}`;
     } else if (pathname.includes('/new-entry')) {
       mode = 'create';
     } else {

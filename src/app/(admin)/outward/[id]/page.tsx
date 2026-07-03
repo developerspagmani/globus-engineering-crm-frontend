@@ -10,6 +10,7 @@ import Loader from '@/components/Loader';
 import { fetchOutwards } from '@/redux/features/outwardSlice';
 import Link from 'next/link';
 import PageModeIndicator from '@/components/PageModeIndicator';
+import { checkActionPermission } from '@/config/permissions';
 
 export default function OutwardDetailPage() {
   const { id } = useParams();
@@ -17,7 +18,7 @@ export default function OutwardDetailPage() {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const isEdit = searchParams.get('edit') === 'true';
-  const { company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const [mounted, setMounted] = React.useState(false);
 
   const { items, loading } = useSelector((state: RootState) => state.outward);
@@ -72,6 +73,15 @@ export default function OutwardDetailPage() {
               <i className="bi bi-printer"></i>
               <span>Print Outward</span>
             </Link>
+            {!isEdit && checkActionPermission(user, 'mod_outward', 'edit') && (
+              <button 
+                onClick={() => router.push(`/outward/${id}?edit=true`)}
+                className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
+              >
+                <i className="bi bi-pencil-square"></i>
+                <span>Edit Outward</span>
+              </button>
+            )}
           </div>
         </div>
 

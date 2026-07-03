@@ -233,7 +233,7 @@ const InwardReportPage = () => {
                         </td>
                         <td className="text-center px-4">
                           <div className="d-flex justify-content-center align-items-center gap-1">
-                            <Link href={`/inward/${item.id}/edit?readonly=true`} className="btn-action-view" title="View Detail">
+                            <Link href={`/inward/${item.id}?readonly=true`} className="btn-action-view" title="View Detail">
                               <i className="bi bi-eye-fill"></i>
                             </Link>
                             <div className="dropdown">

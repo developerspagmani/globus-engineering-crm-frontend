@@ -16,7 +16,7 @@ export default function EditCustomerPage() {
   const id = params.id as string;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isEdit, setIsEdit] = React.useState(searchParams.get('edit') === 'true');
+  const isEdit = searchParams.get('edit') === 'true';
 
   const dispatch = useDispatch<AppDispatch>();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -70,7 +70,7 @@ export default function EditCustomerPage() {
               {!isEdit && checkActionPermission(user, 'mod_customer', 'edit') && (
                 <button 
                   className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent fw-bold rounded-pill"
-                  onClick={() => setIsEdit(true)}
+                  onClick={() => router.push(`/customers/${id}?edit=true`)}
                 >
                   <i className="bi bi-person-gear"></i>
                   <span>Edit Customer</span>

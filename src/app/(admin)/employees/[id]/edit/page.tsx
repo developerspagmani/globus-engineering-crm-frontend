@@ -13,7 +13,7 @@ const EditEmployeePage = () => {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isEdit, setIsEdit] = useState(searchParams.get('edit') === 'true');
+  const isEdit = searchParams.get('edit') === 'true';
 
   const { items } = useSelector((state: RootState) => state.employee);
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -65,7 +65,7 @@ const EditEmployeePage = () => {
         {!isEdit && checkActionPermission(user, 'mod_employee', 'edit') && (
           <button 
             className="btn btn-primary ms-auto d-flex align-items-center gap-2 px-4 shadow-accent"
-            onClick={() => setIsEdit(true)}
+            onClick={() => router.push(`/employees/${id}/edit?edit=true`)}
           >
             <i className="bi bi-person-gear"></i>
             <span>Edit Profile</span>
