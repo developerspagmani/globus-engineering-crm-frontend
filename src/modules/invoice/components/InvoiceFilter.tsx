@@ -5,10 +5,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { setInvoiceFilters } from '@/redux/features/invoiceSlice';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
+import { useSearchParams } from 'next/navigation';
 
 const InvoiceFilter: React.FC = () => {
   const dispatch = useDispatch();
   const { filters } = useSelector((state: RootState) => state.invoices);
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'ADD_INVOICE';
+  const isInvoiceSelectionTab = activeTab === 'ADD_INVOICE';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -41,6 +45,22 @@ const InvoiceFilter: React.FC = () => {
               />
             </div>
           </div>
+
+          {!isInvoiceSelectionTab && (
+            <div className="filter-item-select">
+              <select
+                className="form-select search-bar"
+                name="status"
+                value={filters.status}
+                onChange={handleChange}
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          )}
 
           <div className="date-filter-group">
             <input 
