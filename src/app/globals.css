@@ -83,7 +83,7 @@ body {
 
   color: var(--text-main);
 
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 
   font-size: 0.9rem;
 
@@ -1577,7 +1577,7 @@ input[type="password"],
 
   overflow: hidden;
 
-  font-family: inherit;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 
   z-index: 1;
 
@@ -2326,5 +2326,8 @@ input[type="number"] {
 .form-control:focus, 
 .form-select:focus {
   border-color: var(--accent-color) !important;
-  box-shadow: 0 0 0 3px var(--accent-soft) !important;
+}
+
+*, *::before, *::after, html, body { 
+  font-family: var(--font-inter), 'Inter', sans-serif; 
 }

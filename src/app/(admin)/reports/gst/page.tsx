@@ -114,7 +114,7 @@ const GstReportPage = () => {
     const p = window.open('', '', 'height=600,width=800'); if (!p) return;
     const taxable = item.subTotal || (item.grandTotal - (item.taxTotal || 0));
     p.document.write('<html><head><title>Audit Record - Globus</title>');
-    p.document.write('<style>body{font-family: Arial; padding: 20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:12px; text-align:left;} th{background:#f8f9fa;}</style></head><body>');
+    p.document.write('<style>body{font-family: var(--font-inter), Inter, sans-serif; padding: 20px;} table{width:100%; border-collapse:collapse; margin-top:20px;} th,td{border:1px solid #ddd; padding:12px; text-align:left;} th{background:#f8f9fa;}</style></head><body>');
     p.document.write(`<h2>GLOBUS ENGINEERING - Audit Record</h2>`);
     p.document.write(`<p><b>Invoice No:</b> ${item.invoiceNumber} | <b>Date:</b> ${item.date}</p>`);
     p.document.write(`<table><tr><th>Audit Detail</th><th>Value</th></tr>`);

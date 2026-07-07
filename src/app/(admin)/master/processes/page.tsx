@@ -109,7 +109,7 @@ export default function ProcessDetailsPage() {
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Process Details</title>');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
+    printWindow.document.write('<style>body { font-family: var(--font-inter), Inter, sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<div class="header text-center">');
     printWindow.document.write('<h1 style="margin: 0; color: #ea580c;">Globus Engineering CRM</h1>');

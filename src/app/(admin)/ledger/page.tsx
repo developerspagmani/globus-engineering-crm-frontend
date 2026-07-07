@@ -175,7 +175,7 @@ export default function LedgerPage() {
     if (!printWindow) return;
 
     printWindow.document.write('<html><head><title>Ledger Export</title>');
-    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: "Roboto", sans-serif; font-size: 10px;} th, td {border: 1px solid #ddd; padding: 8px; text-align: left;} th {background-color: #f2f2f2;} h2 {text-align: center; color: #333;}</style>');
+    printWindow.document.write('<style>table {width:100%; border-collapse: collapse; font-family: var(--font-inter), Inter, sans-serif"Roboto", sans-serif; font-size: 10px;} th, td {border: 1px solid #ddd; padding: 8px; text-align: left;} th {background-color: #f2f2f2;} h2 {text-align: center; color: #333;}</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write('<h2>Globus Engineering CRM - Ledger Report</h2>');
     printWindow.document.write('<p style="text-align: center; font-size: 10px;">Total Parties: ' + uniqueParties.length + '</p>');
@@ -273,7 +273,7 @@ export default function LedgerPage() {
              <circle cx="50" cy="50" r="28" fill="none" stroke="#000" stroke-width="2" />
              <circle cx="50" cy="50" r="22" fill="none" stroke="#000" stroke-width="1.2" />
              <path d="M50 20 L50 10 M50 80 L50 90 M20 50 L10 50 M80 50 L90 50" stroke="#000" stroke-width="2" />
-             <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Arial, sans-serif">S</text>
+             <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Inter, sans-serif">S</text>
            </svg>`
         : '';
 

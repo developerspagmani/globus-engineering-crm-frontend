@@ -204,7 +204,7 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
           padding: 15mm 10mm;
           background: white;
           color: black;
-          font-family: 'Roboto', 'Arial', sans-serif;
+          font-family: var(--font-inter), Inter, sans-serif;
           font-size: 10pt;
         }
         .industrial-header {

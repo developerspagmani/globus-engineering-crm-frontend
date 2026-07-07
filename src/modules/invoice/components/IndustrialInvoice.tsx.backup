@@ -318,7 +318,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
           padding: 10px;
           background: #f0f0f0;
           color: black;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-inter), Inter, sans-serif;
           display: flex;
           justify-content: flex-start;
           min-height: 100vh;
@@ -426,7 +426,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
             margin: 0 !important;
             background: #f0f0f0 !important;
             color: black !important;
-            font-family: Arial, Helvetica, sans-serif !important;
+            font-family: var(--font-inter), Inter, sans-serif !important;
             display: flex !important;
             justify-content: flex-start !important;
             min-height: 100vh !important;

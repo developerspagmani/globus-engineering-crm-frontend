@@ -144,7 +144,7 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
           background: white;
           position: relative;
           color: black;
-          font-family: 'Arial', sans-serif;
+          font-family: var(--font-inter), Inter, sans-serif;
           box-sizing: border-box;
           border: none;
           margin: 0 auto;

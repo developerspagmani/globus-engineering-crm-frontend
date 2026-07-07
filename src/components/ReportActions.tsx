@@ -121,7 +121,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
     
     if (isIndustrial) {
       printWindow.document.write(`
-        body { font-family: 'Roboto', 'Arial', sans-serif; padding: 20px; color: black; }
+        body { font-family: var(--font-inter), Inter, sans-serif; padding: 20px; color: black; }
         .audit-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .co-name { font-size: 18pt; font-weight: bold; }
         .co-addr { font-size: 10pt; margin-bottom: 5px; }
@@ -134,7 +134,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
         .fw-bold { font-weight: bold; }
       `);
     } else {
-      printWindow.document.write('body { font-family: sans-serif; padding: 20px; }');
+      printWindow.document.write('body { font-family: var(--font-inter), Inter, sans-serif; padding: 20px; }');
       printWindow.document.write('table {width:100%; border-collapse: collapse; font-size: 10px;}');
       printWindow.document.write('th, td {border: 1px solid #ddd; padding: 6px; text-align: left; text-transform: uppercase;}');
       printWindow.document.write('th {background-color: #f2f2f2; color: #333; font-weight: bold;}');
@@ -152,7 +152,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
               <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
                 <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#000" stroke-width="2" />
                 <circle cx="50" cy="50" r="28" fill="none" stroke="#000" stroke-width="2" />
-                <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Arial, sans-serif">S</text>
+                <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Inter, sans-serif">S</text>
               </svg>
            </div>
            <div style="text-align: center; flex: 1; padding: 0 20px;">

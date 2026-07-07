@@ -616,7 +616,7 @@ export default function LedgerDetailPage() {
             .ledger-row:hover { background-color: #f7f9fc; }
             .show-print-only { display: none; }
             
-            .ledger-print-table { border-collapse: collapse; font-family: 'Arial', sans-serif; font-size: 9pt; }
+            .ledger-print-table { border-collapse: collapse; font-family: var(--font-inter), Inter, sans-serif; font-size: 9pt; }
             .ledger-print-table th { font-weight: bold; border-color: #000 !important; }
             .ledger-print-table td { padding: 4px; vertical-align: top; }
 

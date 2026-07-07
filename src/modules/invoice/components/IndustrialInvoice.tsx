@@ -160,7 +160,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
           background: white;
           position: relative;
           color: black;
-          font-family: 'Arial', sans-serif;
+          font-family: var(--font-inter), Inter, sans-serif;
           box-sizing: border-box;
           border: none;
           margin: 0 auto;
