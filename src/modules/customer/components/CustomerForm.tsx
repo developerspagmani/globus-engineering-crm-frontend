@@ -136,7 +136,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         finalData.company_id = sessionCompanyId;
       }
 
-      if (mode === 'create' && user?.role === 'sales_agent') {
+      // If a sales agent creates a customer, auto-assign it to them
+      if (mode === 'create' && (user?.role === 'sales_agent' || user?.role === 'sales')) {
         finalData.agentId = user.id;
       }
 

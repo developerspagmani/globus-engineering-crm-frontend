@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { Lead } from '@/types/modules';
 import { addLead, updateLead } from '@/redux/features/leadSlice';
+import { fetchUsers } from '@/redux/features/companyUserSlice';
 import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
 
@@ -17,8 +18,25 @@ interface LeadFormProps {
 
 const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const { items: companyUsers } = useSelector((state: RootState) => state.companyUsers);
   const dispatch = useDispatch();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (user?.company_id && (!companyUsers || companyUsers.length === 0)) {
+      (dispatch as any)(fetchUsers(user.company_id));
+    }
+  }, [dispatch, user?.company_id, companyUsers]);
+
+  const agentOptions = companyUsers
+    .filter((u: any) => u.role === 'sales_agent' || u.role === 'sales')
+    .map((u: any) => ({ value: u.id, label: u.name }));
+  
+  if (user && user.role !== 'sales_agent' && user.role !== 'sales' && !agentOptions.find((o: any) => o.value === user.id)) {
+      agentOptions.push({ value: user.id, label: `${user.name} (You)` });
+  }
 
   const [formData, setFormData] = useState<Omit<Lead, 'id' | 'createdAt'>>({
     name: '',
@@ -105,6 +123,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
     }
   };
 
+  if (!isMounted) return null;
 
   return (
     <div className="card shadow-sm border-0 animate-fade-in">
@@ -219,7 +238,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           </div>
 
           <div className="row g-4 mb-4">
-            <div className="col-md-12">
+            <div className="col-md-6">
               <label className="form-label small fw-800 text-uppercase tracking-wider">Geographic Area / Cluster <span className="text-danger">*</span></label>
 
               <input 
@@ -244,6 +263,19 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
                 onChange={handleChange} 
                 required
                 disabled={mode === 'view'}
+              />
+            </div>
+          </div>
+
+          <div className="row g-4 mb-4">
+            <div className="col-md-6">
+              <label className="form-label small fw-800 text-uppercase tracking-wider">Sales Person <span className="text-danger">*</span></label>
+              <SearchableSelect
+                options={agentOptions}
+                value={formData.agentId}
+                onChange={(val) => handleChange({ target: { name: 'agentId', value: val } } as any)}
+                placeholder="Select Sales Agent"
+                disabled={mode === 'view' || user?.role === 'sales_agent'}
               />
             </div>
           </div>

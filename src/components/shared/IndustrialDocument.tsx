@@ -91,6 +91,7 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
             enrichedData.gstin = enrichedData.gstin || cust.gst;
             enrichedData.phone = enrichedData.phone || cust.phone;
             enrichedData.state = enrichedData.state || cust.state;
+            enrichedData.stateCode = enrichedData.stateCode || cust.stateCode || (cust as any).state_code;
          }
       }
       if (partyType === 'vendor' || !enrichedData.address) {
@@ -100,6 +101,7 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
             enrichedData.gstin = enrichedData.gstin || vend.gst;
             enrichedData.phone = enrichedData.phone || vend.phone;
             enrichedData.state = enrichedData.state || vend.state;
+            enrichedData.stateCode = enrichedData.stateCode || vend.stateCode || (vend as any).state_code;
          }
       }
    }
@@ -442,7 +444,9 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                      <div className="p-meta-col">
                         <span>STATE</span>
                         <span>:</span>
-                        <span className="p-meta-val">TamilNadu-33</span>
+                        <span className="p-meta-val">
+                           {data.state ? `${data.state}${data.stateCode ? `-${data.stateCode}` : ''}` : 'TamilNadu-33'}
+                        </span>
                      </div>
                      {type === 'voucher' ? (
                         <div className="p-meta-col">

@@ -97,6 +97,7 @@ const CompanyUserTable: React.FC = () => {
       case 'super_admin': return <span className="badge bg-dark bg-gradient text-white rounded-pill px-3 py-1 fw-800 x-small shadow-sm">SUPER ADMIN</span>;
       case 'company_admin': return <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 fw-700 x-small">ADMIN</span>;
       case 'manager': return <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 fw-700 x-small">MANAGER</span>;
+      case 'sales':
       case 'sales_agent': return <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-700 x-small">SALES</span>;
       case 'staff': return <span className="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-1 fw-700 x-small">STAFF</span>;
       default: return <span className="badge bg-secondary bg-opacity-10 text-muted rounded-pill px-3 py-1 fw-700 x-small">{role.toUpperCase()}</span>;

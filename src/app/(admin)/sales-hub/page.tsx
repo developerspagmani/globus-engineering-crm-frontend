@@ -40,17 +40,17 @@ const SalesHubPage = () => {
   // Data Isolation Logic
   const myDeals = deals.filter(d => {
     if (activeCompany && d.company_id !== activeCompany.id) return false;
-    if (user?.role === 'sales_agent' && d.agentId !== user.id) return false;
+    if ((user?.role === 'sales_agent' || user?.role === 'sales') && d.agentId !== user.id) return false;
     return true;
   });
 
   const myLeads = allLeads.filter(l => {
     if (activeCompany && l.company_id !== activeCompany.id) return false;
-    if (user?.role === 'sales_agent' && l.agentId !== user.id) return false;
+    if ((user?.role === 'sales_agent' || user?.role === 'sales') && l.agentId !== user.id) return false;
     return true;
   });
 
-  const isAgent = user?.role === 'sales_agent';
+  const isAgent = user?.role === 'sales_agent' || user?.role === 'sales';
 
   const handleSealDeal = (deal: Deal) => {
     setSealModal({ isOpen: true, deal });
