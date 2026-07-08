@@ -107,6 +107,8 @@ export interface OutwardEntry {
   invoiceReference: string;
   challanNo: string;
   vehicleNo: string;
+  coatingName?: string;
+  purpose?: string;
   driverName?: string;
   notes?: string;
   company_id: string;

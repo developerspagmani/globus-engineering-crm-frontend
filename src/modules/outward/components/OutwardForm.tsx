@@ -56,6 +56,8 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
     invoiceReference: initialData?.invoiceReference || '',
     challanNo: initialData?.challanNo || '',
     vehicleNo: initialData?.vehicleNo || '',
+    coatingName: initialData?.coatingName || '',
+    purpose: initialData?.purpose || '',
     driverName: initialData?.driverName || '',
     notes: initialData?.notes || '',
     company_id: initialData?.company_id || activeCompany?.id || '',
@@ -89,6 +91,8 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
         invoiceReference: initialData.invoiceReference || '',
         challanNo: initialData.challanNo || '',
         vehicleNo: initialData.vehicleNo || '',
+        coatingName: initialData.coatingName || '',
+        purpose: initialData.purpose || '',
         driverName: initialData.driverName || '',
         notes: initialData.notes || '',
         company_id: initialData.company_id,
@@ -210,10 +214,12 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
         vendor_id: formData.vendorId,
         inward_id: formData.inwardId,
         inward_no: formData.inwardNo,
-        invoice_reference: formData.invoiceReference,
-        challan_no: formData.challanNo,
-        vehicle_no: formData.vehicleNo,
-        driver_name: formData.driverName,
+        invoiceReference: formData.invoiceReference,
+        challanNo: formData.challanNo,
+        vehicleNo: formData.vehicleNo,
+        coatingName: formData.coatingName,
+        purpose: formData.purpose,
+        driverName: formData.driverName,
         notes: formData.notes,
         process_name: formData.processName
       };
@@ -371,12 +377,29 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                  </div>
 
                  <div className="col-md-6 px-lg-5">
-                    <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
-                       <div className="col-8">
-                           <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
-                       </div>
-                    </div>
+                    {formData.partyType === 'vendor' ? (
+                      <>
+                        <div className="row mb-3 align-items-center">
+                           <label className="col-4 text-muted x-small fw-bold">COATING NAME</label>
+                           <div className="col-8">
+                               <input type="text" className="form-control" name="coatingName" value={formData.coatingName || ''} onChange={handleChange} placeholder="Required" disabled={mode === 'view'} />
+                           </div>
+                        </div>
+                        <div className="row mb-3 align-items-center">
+                           <label className="col-4 text-muted x-small fw-bold">PURPOSE</label>
+                           <div className="col-8">
+                               <input type="text" className="form-control" name="purpose" value={formData.purpose || ''} onChange={handleChange} placeholder="Required" disabled={mode === 'view'} />
+                           </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="row mb-3 align-items-center">
+                         <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
+                         <div className="col-8">
+                             <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
+                         </div>
+                      </div>
+                    )}
                     <div className="row mb-3 align-items-center">
                        <label className="col-4 text-muted x-small fw-bold">DRIVER NAME</label>
                        <div className="col-8">
@@ -474,6 +497,8 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                       invoiceReference: initialData.invoiceReference || '',
                       challanNo: initialData.challanNo || '',
                       vehicleNo: initialData.vehicleNo || '',
+                      coatingName: initialData.coatingName || '',
+                      purpose: initialData.purpose || '',
                       driverName: initialData.driverName || '',
                       notes: initialData.notes || '',
                       company_id: initialData.company_id,
@@ -489,9 +514,8 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                       outwardNo: '',
                       partyType: 'customer',
                       customerId: '', customerName: '',
-                      vendorId: '', vendorName: '',
-                      processName: '', invoiceReference: '',
-                      challanNo: '', vehicleNo: '', driverName: '', notes: '',
+                      vendorId: '', vendorName: '', processName: '', invoiceReference: '',
+                      challanNo: '', vehicleNo: '', coatingName: '', purpose: '', driverName: '', notes: '',
                       company_id: activeCompany?.id || '',
                       inwardId: '', inwardNo: '',
                       date: new Date().toISOString().split('T')[0],

@@ -426,11 +426,19 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                </div>
                {type !== 'statement' && (
                   <div className="p-meta-row">
-                     <div className="p-meta-col">
-                        <span>VEHICLE NO</span>
-                        <span>:</span>
-                        <span className="p-meta-val">{data.vehicleNo || '-'}</span>
-                     </div>
+                     {type === 'outward' && data.partyType === 'vendor' ? (
+                        <div className="p-meta-col">
+                           <span>COATING NAME</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.coatingName || '-'}</span>
+                        </div>
+                     ) : (
+                        <div className="p-meta-col">
+                           <span>VEHICLE NO</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.vehicleNo || '-'}</span>
+                        </div>
+                     )}
                      <div className="p-meta-col">
                         <span>STATE</span>
                         <span>:</span>
@@ -675,6 +683,12 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   </table>
                )}
             </div>
+
+            {type === 'outward' && data.partyType === 'vendor' && data.purpose && isLastPage && (
+               <div style={{ padding: '10px 15px', borderLeft: '1.5pt solid #000', borderRight: '1.5pt solid #000', borderBottom: '1.5pt solid #000', fontSize: '15px', fontWeight: 'bold' }}>
+                  PURPOSE: <span style={{ marginLeft: '10px' }}>{data.purpose}</span>
+               </div>
+            )}
 
             {/* Footer */}
             {isLastPage && (
