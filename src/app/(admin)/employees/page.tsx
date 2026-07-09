@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { Employee } from '@/types/modules';
-import { setEmployeeFilters, setEmployeePage, deleteEmployee, fetchEmployees } from '@/redux/features/employeeSlice';
+import { setEmployeeFilters, setEmployeePage, deleteEmployee, fetchEmployees, setEmployeeSorting } from '@/redux/features/employeeSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
@@ -14,13 +14,14 @@ import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 
 const EmployeesPage = () => {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.employee);
+  const { items, filters, pagination, loading, sorting } = useSelector((state: RootState) => state.employee);
   const [deleteModal, setDeleteModal] = React.useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
 
@@ -31,12 +32,19 @@ const EmployeesPage = () => {
           company_id: activeCompany.id,
           page: pagination.currentPage,
           limit: pagination.itemsPerPage,
-          search: filters.search
+          search: filters.search,
+          sortBy: sorting.sortBy,
+          sortOrder: sorting.sortOrder
        }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, sorting.sortBy, sorting.sortOrder]);
 
   if (!mounted) return null;
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setEmployeeSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   // Filter logic
   const totalPages = pagination.totalPages;
@@ -178,12 +186,12 @@ const EmployeesPage = () => {
               <thead>
                 <tr className="bg-light">
                   <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Employee Details</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Dept & Role</th>
+                  <SortableHeader field="ename" label="Employee Details" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="department" label="Dept & Role" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
                   <th className="py-3 border-0 small fw-bold text-muted">Contact</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-end">Salary</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Joining Date</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-center">Status</th>
+                  <SortableHeader field="salary" label="Salary" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-end" />
+                  <SortableHeader field="joining_date" label="Joining Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="app_status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-center" />
                   <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
                 </tr>
               </thead>

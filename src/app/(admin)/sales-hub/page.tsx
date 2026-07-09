@@ -14,6 +14,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import { checkActionPermission } from '@/config/permissions';
 
 import ExportExcel from '@/components/shared/ExportExcel';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 const SalesHubPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -30,6 +31,9 @@ const SalesHubPage = () => {
   });
 
   const [sealModal, setSealModal] = useState<{ isOpen: boolean; deal: Deal | null }>({ isOpen: false, deal: null });
+
+  const [sortBy, setSortBy] = useState<string>('expectedClosingDate');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     setMounted(true);
@@ -104,6 +108,31 @@ const SalesHubPage = () => {
       case 'lost': return <span className="badge bg-danger-soft text-danger rounded-pill px-3 py-1 fw-700 x-small">LOST</span>;
     }
   };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedDeals = [...myDeals].sort((a, b) => {
+    let aVal: any = a[sortBy as keyof Deal];
+    let bVal: any = b[sortBy as keyof Deal];
+
+    if (sortBy === 'prospect') {
+      const prospectA = allLeads.find(l => l.id === a.leadId)?.company || '';
+      const prospectB = allLeads.find(l => l.id === b.leadId)?.company || '';
+      aVal = prospectA;
+      bVal = prospectB;
+    }
+
+    if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
     <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
@@ -183,15 +212,15 @@ const SalesHubPage = () => {
               <table className="table mb-0 align-middle">
                 <thead className="bg-light bg-opacity-50">
                   <tr>
-                    <th className="px-4 py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Deal Title</th>
-                    <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Prospect</th>
-                    <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Value</th>
-                    <th className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0">Status</th>
+                    <SortableHeader field="title" label="Deal Title" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} className="px-4 py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0" />
+                    <SortableHeader field="prospect" label="Prospect" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0" />
+                    <SortableHeader field="value" label="Value" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0" />
+                    <SortableHeader field="status" label="Status" currentSortBy={sortBy} currentSortOrder={sortOrder} onSort={handleSort} className="py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0" />
                     <th className="px-4 py-3 x-small fw-800 text-muted text-capitalize tracking-widest border-bottom-0 text-end">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {myDeals.map(deal => {
+                  {sortedDeals.map(deal => {
                     const prospect = allLeads.find(l => l.id === deal.leadId);
                     return (
                       <tr key={deal.id} className="border-bottom">

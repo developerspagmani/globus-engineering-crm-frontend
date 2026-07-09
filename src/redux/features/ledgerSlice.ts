@@ -13,9 +13,11 @@ export const fetchLedgerEntries = createAsyncThunk(
     dateFrom?: string;
     dateTo?: string;
     partyType?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { partyId, companyId, page = 1, limit = 10, search, dateFrom, dateTo } = params;
+      const { partyId, companyId, page = 1, limit = 10, search, dateFrom, dateTo, sortBy, sortOrder } = params;
       let url = `/ledger?page=${page}&limit=${limit}`;
       if (partyId) url += `&partyId=${partyId}`;
       if (companyId) url += `&companyId=${companyId}`;
@@ -23,6 +25,8 @@ export const fetchLedgerEntries = createAsyncThunk(
       if (dateFrom) url += `&dateFrom=${dateFrom}`;
       if (dateTo) url += `&dateTo=${dateTo}`;
       if (params.partyType && params.partyType !== 'all') url += `&partyType=${params.partyType}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -93,6 +97,10 @@ interface LedgerState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: LedgerState = {
@@ -113,6 +121,10 @@ const initialState: LedgerState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'date',
+    sortOrder: 'desc',
+  }
 };
 
 const ledgerSlice = createSlice({
@@ -125,6 +137,11 @@ const ledgerSlice = createSlice({
     },
     setLedgerPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setLedgerSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.sortBy = action.payload.sortBy;
+      state.sorting.sortOrder = action.payload.sortOrder;
+      state.pagination.currentPage = 1;
     },
     resetLedgerState: (state) => {
       state.items = [];
@@ -161,5 +178,5 @@ const ledgerSlice = createSlice({
   }
 });
 
-export const { setLedgerFilters, setLedgerPage, resetLedgerState } = ledgerSlice.actions;
+export const { setLedgerFilters, setLedgerPage, setLedgerSorting, resetLedgerState } = ledgerSlice.actions;
 export default ledgerSlice.reducer;

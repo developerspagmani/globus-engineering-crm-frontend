@@ -391,25 +391,30 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
                 <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="poDate" value={formData.poDate} onChange={handleChange} disabled={mode === 'view'} />
               </div>
   
-              <div className="col-md-6 d-flex position-relative">
+              <div className="col-md-6 d-flex">
                 <label className="form-label mb-0 align-self-center text-muted col-3">Dc No</label>
-                <input 
-                  type="text" 
-                  className="form-control border-bottom rounded-0 px-2 shadow-none pe-5" 
-                  name="dcNo" 
-                  value={formData.dcNo} 
-                  onChange={handleChange} 
-                  placeholder="Dc No" 
-                  disabled={mode === 'view' || !isDcNoEditable} 
-                />
-                {mode !== 'view' && (
-                  <i 
-                    className="bi bi-pencil-fill text-secondary position-absolute" 
-                    style={{ right: '25px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer' }}
-                    onClick={() => setIsDcNoEditable(true)}
-                    title="Edit DC No"
-                  ></i>
-                )}
+                <div className="flex-grow-1 position-relative">
+                  <input 
+                    type="text" 
+                    className={`form-control border-bottom rounded-0 px-2 shadow-none ${!isDcNoEditable && mode !== 'view' ? 'bg-light text-muted' : ''}`} 
+                    style={{ paddingRight: !isDcNoEditable && mode !== 'view' ? '65px' : '10px' }}
+                    name="dcNo" 
+                    value={formData.dcNo} 
+                    onChange={handleChange} 
+                    placeholder="Dc No" 
+                    readOnly={mode === 'view' || !isDcNoEditable} 
+                  />
+                  {mode !== 'view' && !isDcNoEditable && (
+                    <span 
+                      className="badge bg-secondary bg-opacity-75 position-absolute d-flex align-items-center" 
+                      style={{ right: '8px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', letterSpacing: '0.5px' }}
+                      onClick={() => setIsDcNoEditable(true)}
+                      title="Click to override auto-generated DC No"
+                    >
+                      <i className="bi bi-pencil-square me-1"></i> EDIT
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="col-md-6 d-flex">

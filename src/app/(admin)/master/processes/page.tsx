@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk, setProcessPage, setProcessSearch } from '@/redux/features/masterSlice';
+import { fetchProcesses, createProcessThunk, updateProcessThunk, deleteProcessThunk, setProcessPage, setProcessSearch, setProcessSorting } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -12,6 +12,7 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 import FullPageStatus from '@/components/FullPageStatus';
 
 
@@ -19,7 +20,7 @@ import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function ProcessDetailsPage() {
   const dispatch = useDispatch();
-  const { processes, pagination, loading, filters } = useSelector((state: RootState) => state.master);
+  const { processes, pagination, loading, filters, sorting } = useSelector((state: RootState) => state.master);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
@@ -39,11 +40,18 @@ export default function ProcessDetailsPage() {
       company_id: company?.id,
       page: pagination.processPage,
       limit: pagination.itemsPerPage,
-      search: filters.processSearch
+      search: filters.processSearch,
+      sortBy: sorting.processSortBy,
+      sortOrder: sorting.processSortOrder
     }));
-  }, [dispatch, company?.id, pagination.processPage, pagination.itemsPerPage, filters.processSearch]);
+  }, [dispatch, company?.id, pagination.processPage, pagination.itemsPerPage, filters.processSearch, sorting.processSortBy, sorting.processSortOrder]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.processSortBy === field && sorting.processSortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setProcessSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -314,7 +322,7 @@ export default function ProcessDetailsPage() {
                       <thead className="bg-light">
                         <tr>
                           <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '80px' }}>Sno</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold">Process Name</th>
+                          <SortableHeader field="process_name" label="Process Name" currentSortBy={sorting.processSortBy} currentSortOrder={sorting.processSortOrder} onSort={handleSort} className="px-4 py-3 text-capitalize small fw-bold" />
                           <th className="px-4 py-3 text-capitalize small fw-bold text-end" style={{ width: '180px' }}>Actions</th>
                         </tr>
                       </thead>

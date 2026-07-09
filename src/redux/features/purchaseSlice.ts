@@ -11,14 +11,18 @@ export const fetchPurchaseBills = createAsyncThunk(
     search?: string; 
     fromDate?: string;
     toDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, fromDate, toDate } = params;
+      const { company_id, page = 1, limit = 10, search, fromDate, toDate, sortBy, sortOrder } = params;
       let url = `/purchase-bills?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -82,6 +86,10 @@ interface PurchaseState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: PurchaseState = {
@@ -99,6 +107,10 @@ const initialState: PurchaseState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'received_date',
+    sortOrder: 'desc',
+  },
 };
 
 const purchaseSlice = createSlice({
@@ -111,6 +123,11 @@ const purchaseSlice = createSlice({
     setPurchaseFilters(state, action: PayloadAction<Partial<PurchaseState['filters']>>) {
       state.filters = { ...state.filters, ...action.payload };
       state.pagination.currentPage = 1; // Reset page on filter change
+    },
+    setPurchaseSorting(state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) {
+      state.sorting.sortBy = action.payload.sortBy;
+      state.sorting.sortOrder = action.payload.sortOrder;
+      state.pagination.currentPage = 1;
     },
     resetPurchaseState(state) {
       state.items = [];
@@ -192,5 +209,5 @@ const purchaseSlice = createSlice({
   },
 });
 
-export const { setPurchasePage, setPurchaseFilters, resetPurchaseState } = purchaseSlice.actions;
+export const { setPurchasePage, setPurchaseFilters, setPurchaseSorting, resetPurchaseState } = purchaseSlice.actions;
 export default purchaseSlice.reducer;

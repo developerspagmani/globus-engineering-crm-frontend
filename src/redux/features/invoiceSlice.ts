@@ -108,10 +108,13 @@ export const fetchInvoices = createAsyncThunk(
     toDate?: string;
     type?: string;
     partyType?: string;
+    customerId?: string;
     invoice_nos?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type, partyType, invoice_nos } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type, partyType, customerId, invoice_nos, sortBy, sortOrder } = params;
       let url = `/invoices?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -120,7 +123,10 @@ export const fetchInvoices = createAsyncThunk(
       if (toDate) url += `&toDate=${toDate}`;
       if (type && type !== 'all') url += `&type=${type}`;
       if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
+      if (customerId) url += `&customer_id=${customerId}`;
       if (invoice_nos) url += `&invoice_nos=${encodeURIComponent(invoice_nos)}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -277,6 +283,10 @@ interface InvoiceState {
     totalTax: number;
     totalOutstanding: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
   settings: {
     logo: string | null;
     logoSecondary: string | null;
@@ -330,6 +340,10 @@ const initialState: InvoiceState = {
     totalTax: 0,
     totalOutstanding: 0,
   },
+  sorting: {
+    sortBy: 'invoice_date',
+    sortOrder: 'desc',
+  },
   settings: {
     logo: null,
     logoSecondary: null,
@@ -371,6 +385,10 @@ const invoiceSlice = createSlice({
     setInvoicePage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    setInvoiceSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting = action.payload;
+      state.pagination.currentPage = 1;
+    },
     updateInvoiceSettings: (state, action: PayloadAction<Partial<InvoiceState['settings']>>) => {
       state.settings = { ...state.settings, ...action.payload };
     },
@@ -380,6 +398,7 @@ const invoiceSlice = createSlice({
     resetInvoiceState: (state) => {
       state.filters = initialState.filters;
       state.pagination.currentPage = 1;
+      state.sorting = initialState.sorting;
     },
   },
   extraReducers: (builder) => {
@@ -436,6 +455,7 @@ const invoiceSlice = createSlice({
 export const {
   setInvoiceFilters,
   setInvoicePage,
+  setInvoiceSorting,
   updateInvoiceSettings,
   initializeInvoiceSettings,
   resetInvoiceState

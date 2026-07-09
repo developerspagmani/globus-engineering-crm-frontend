@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchPriceFixings, createPriceFixingThunk, updatePriceFixingThunk, deletePriceFixingThunk, fetchItems, fetchProcesses, setPriceFixingPage } from '@/redux/features/masterSlice';
+import { fetchPriceFixings, createPriceFixingThunk, updatePriceFixingThunk, deletePriceFixingThunk, fetchItems, fetchProcesses, setPriceFixingPage, setPriceFixingSorting } from '@/redux/features/masterSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
@@ -13,13 +13,14 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 
 import ExportExcel from '@/components/shared/ExportExcel';
 
 export default function PriceFixingPage() {
   const dispatch = useDispatch();
-  const { priceFixings, items, processes, pagination, loading: masterLoading } = useSelector((state: RootState) => state.master);
+  const { priceFixings, items, processes, pagination, loading: masterLoading, sorting } = useSelector((state: RootState) => state.master);
   const { items: customers, loading: customersLoading } = useSelector((state: RootState) => state.customers);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
@@ -41,14 +42,24 @@ export default function PriceFixingPage() {
 
   useEffect(() => {
     if (company?.id) {
-      (dispatch as any)(fetchPriceFixings({ company_id: company.id, limit: 1000 }));
+      (dispatch as any)(fetchPriceFixings({ 
+        company_id: company.id, 
+        limit: 1000,
+        sortBy: sorting.priceFixingSortBy,
+        sortOrder: sorting.priceFixingSortOrder
+      }));
       (dispatch as any)(fetchItems({ company_id: company.id, limit: 1000 }));
       (dispatch as any)(fetchProcesses({ company_id: company.id, limit: 1000 }));
       (dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 }));
     }
-  }, [dispatch, company?.id]);
+  }, [dispatch, company?.id, sorting.priceFixingSortBy, sorting.priceFixingSortOrder]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.priceFixingSortBy === field && sorting.priceFixingSortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setPriceFixingSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -390,10 +401,10 @@ export default function PriceFixingPage() {
                       <thead className="bg-light">
                         <tr>
                           <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '60px' }}>Sno</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold">Customer</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold">Item</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold">Process</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold text-end">Price</th>
+                          <SortableHeader field="customer_name" label="Customer" currentSortBy={sorting.priceFixingSortBy} currentSortOrder={sorting.priceFixingSortOrder} onSort={handleSort} className="px-4 py-3 text-capitalize small fw-bold" />
+                          <SortableHeader field="item_name" label="Item" currentSortBy={sorting.priceFixingSortBy} currentSortOrder={sorting.priceFixingSortOrder} onSort={handleSort} className="px-4 py-3 text-capitalize small fw-bold" />
+                          <SortableHeader field="process_name" label="Process" currentSortBy={sorting.priceFixingSortBy} currentSortOrder={sorting.priceFixingSortOrder} onSort={handleSort} className="px-4 py-3 text-capitalize small fw-bold" />
+                          <SortableHeader field="price" label="Price" currentSortBy={sorting.priceFixingSortBy} currentSortOrder={sorting.priceFixingSortOrder} onSort={handleSort} className="px-4 py-3 text-capitalize small fw-bold text-end" />
                           <th className="px-4 py-3 text-capitalize small fw-bold text-end">Actions</th>
                         </tr>
                       </thead>

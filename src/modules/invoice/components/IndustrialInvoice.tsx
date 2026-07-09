@@ -553,7 +553,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                </div>
             </div>
 
-            <div className="tax-invoice-label">{isWOP ? 'Invoice WOP' : 'Tax Invoice'}</div>
+            <div className="tax-invoice-label">{isWOP ? 'Delivery Challan & Without PROCESS' : 'Tax Invoice'}</div>
 
             {/* Address Row - Always on every page */}
             <div className="p-address">

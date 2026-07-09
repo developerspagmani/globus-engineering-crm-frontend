@@ -15,9 +15,11 @@ export const fetchOutwards = createAsyncThunk(
     status?: string;
     fromDate?: string;
     toDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id, partyType, status, fromDate, toDate } = params;
+      const { company_id, page = 1, limit = 10, search, id, partyType, status, fromDate, toDate, sortBy, sortOrder } = params;
       let url = `/outward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -26,6 +28,8 @@ export const fetchOutwards = createAsyncThunk(
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (id) url += `&id=${id}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -196,6 +200,10 @@ interface OutwardState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: OutwardState = {
@@ -215,6 +223,10 @@ const initialState: OutwardState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'date',
+    sortOrder: 'desc',
+  }
 };
 
 const outwardSlice = createSlice({
@@ -228,9 +240,14 @@ const outwardSlice = createSlice({
     setOutwardPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    setOutwardSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting = action.payload;
+      state.pagination.currentPage = 1;
+    },
     resetOutwardState: (state) => {
       state.filters = initialState.filters;
       state.pagination.currentPage = 1;
+      state.sorting = initialState.sorting;
     },
   },
   extraReducers: (builder) => {
@@ -276,5 +293,5 @@ const outwardSlice = createSlice({
   }
 });
 
-export const { setOutwardFilters, setOutwardPage, resetOutwardState } = outwardSlice.actions;
+export const { setOutwardFilters, setOutwardPage, setOutwardSorting, resetOutwardState } = outwardSlice.actions;
 export default outwardSlice.reducer;

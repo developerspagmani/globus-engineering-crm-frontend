@@ -88,12 +88,15 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   useEffect(() => {
     if (activeCompany?.id) {
-      // In edit/view mode, fetch all invoices so we can match by ID or number.
-      // The referenceNo is a complex formatted string, not a simple filter param.
-      (dispatch as any)(fetchInvoices({ 
-        company_id: activeCompany.id, 
-        limit: 1000
-      }));
+      // Only fetch a general list if we don't already have a specific party selected
+      // Also check the URL directly, because on hard-reload formData.partyId might be empty initially
+      const partyIdFromUrl = searchParams.get('customerId') || searchParams.get('vendorId');
+      if (!formData.partyId && !partyIdFromUrl) {
+        (dispatch as any)(fetchInvoices({ 
+          company_id: activeCompany.id, 
+          limit: 1000
+        }));
+      }
 
       // Ensure customers and vendors are fetched
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
@@ -101,6 +104,25 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
       (dispatch as any)(fetchInwards({ company_id: activeCompany.id, limit: 1000 }));
     }
   }, [dispatch, activeCompany]);
+
+  useEffect(() => {
+    if (activeCompany?.id && formData.partyId) {
+      if (formData.partyType === 'customer') {
+        // Fetch specifically all invoices for this customer to bypass the 1000 recent limit
+        (dispatch as any)(fetchInvoices({ 
+          company_id: activeCompany.id, 
+          limit: 5000,
+          customerId: formData.partyId
+        }));
+      } else {
+        // For vendors, we just fetch a general large batch
+        (dispatch as any)(fetchInvoices({ 
+          company_id: activeCompany.id, 
+          limit: 2000
+        }));
+      }
+    }
+  }, [dispatch, activeCompany?.id, formData.partyId, formData.partyType]);
 
   useEffect(() => {
     const customerIdFromUrl = searchParams.get('customerId');
@@ -211,8 +233,10 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     }
   }, [mode, formData.selectedInvoices]);
 
+  const [initializedFromProps, setInitializedFromProps] = useState(false);
+
   useEffect(() => {
-    if (initialData) {
+    if (initialData && !initializedFromProps) {
       // Use String comparison to handle ID type mismatches (14 vs '14')
       const targetId = String(initialData.partyId || (initialData as any).party_id || '');
       const type = (initialData.partyType || (initialData as any).party_type || 'customer') as 'customer' | 'vendor';
@@ -272,12 +296,14 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             let adjType = adjStr.toUpperCase().includes('OTHERS') ? 'Others' : 'TDS';
             
             const normNo = invoiceNo.replace(/^0+/, '');
-            const inv = allInvoices.find(i => {
-              const iNo = String(i.invoiceNumber || (i as any).invoice_no || '').replace(/^0+/, '');
-              return (iNo !== '' && iNo === normNo) || 
-                     String(i.invoiceNumber) === invoiceNo || 
-                     String(i.id) === invoiceNo;
-            });
+            let inv = allInvoices.find(i => String(i.id) === invoiceNo);
+            if (!inv) {
+              inv = allInvoices.find(i => {
+                const iNo = String(i.invoiceNumber || (i as any).invoice_no || '').replace(/^0+/, '');
+                return (iNo !== '' && iNo === normNo) || 
+                       String(i.invoiceNumber) === invoiceNo;
+              });
+            }
             
             if (amount === 0 && inv) {
               const pending = inv.grandTotal - (inv.paidAmount || 0);

@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchVouchers, setVoucherPage } from '@/redux/features/voucherSlice';
-import { fetchPendingPayments, setPendingPaymentPage } from '@/redux/features/pendingPaymentSlice';
+import { fetchVouchers, setVoucherPage, setVoucherSorting } from '@/redux/features/voucherSlice';
+import { fetchPendingPayments, setPendingPaymentPage, setPendingPaymentSorting } from '@/redux/features/pendingPaymentSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,7 @@ import html2canvas from 'html2canvas';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import IndustrialInvoice from '@/modules/invoice/components/IndustrialInvoice';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 
 
@@ -35,8 +36,8 @@ const PaymentReportPage = () => {
   const [toDate, setToDate] = useState("");
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: vouchers, pagination: vPagination, loading: vLoading, aggregates: vAggregates } = useSelector((state: RootState) => state.voucher);
-  const { items: pending, pagination: pPagination, loading: pLoading, aggregates: pAggregates } = useSelector((state: RootState) => state.pendingPayments);
+  const { items: vouchers, pagination: vPagination, loading: vLoading, aggregates: vAggregates, sorting: vSorting } = useSelector((state: RootState) => state.voucher);
+  const { items: pending, pagination: pPagination, loading: pLoading, aggregates: pAggregates, sorting: pSorting } = useSelector((state: RootState) => state.pendingPayments);
   const { items: customers } = useSelector((state: RootState) => state.customers);
   const { settings: invSettings } = useSelector((state: RootState) => state.invoices);
 
@@ -58,7 +59,9 @@ const PaymentReportPage = () => {
         fromDate: fromDate,
         toDate: toDate,
         partyId: selectedCustomerId,
-        partyType: partyType
+        partyType: partyType,
+        sortBy: vSorting.sortBy,
+        sortOrder: vSorting.sortOrder
       }));
       (dispatch as any)(fetchPendingPayments({
         company_id: activeCompany.id,
@@ -67,12 +70,24 @@ const PaymentReportPage = () => {
         search: searchTerm,
         fromDate: fromDate,
         toDate: toDate,
-        partyType: partyType
+        partyType: partyType,
+        sortBy: pSorting.sortBy,
+        sortOrder: pSorting.sortOrder
       }));
 
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
     }
-  }, [dispatch, activeCompany?.id, vPagination.currentPage, pPagination.currentPage, searchTerm, fromDate, toDate, selectedCustomerId, partyType]);
+  }, [dispatch, activeCompany?.id, vPagination.currentPage, pPagination.currentPage, searchTerm, fromDate, toDate, selectedCustomerId, partyType, vSorting.sortBy, vSorting.sortOrder, pSorting.sortBy, pSorting.sortOrder]);
+
+  const handleSort = (field: string) => {
+    if (activeTab === 'PAYMENT') {
+      const newOrder = vSorting.sortBy === field && vSorting.sortOrder === 'asc' ? 'desc' : 'asc';
+      dispatch(setVoucherSorting({ sortBy: field, sortOrder: newOrder }));
+    } else {
+      const newOrder = pSorting.sortBy === field && pSorting.sortOrder === 'asc' ? 'desc' : 'asc';
+      dispatch(setPendingPaymentSorting({ sortBy: field, sortOrder: newOrder }));
+    }
+  };
 
 
   const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'PAYMENT' | 'PENDING'} | null>(null);
@@ -339,11 +354,15 @@ const PaymentReportPage = () => {
                   <thead className="bg-light">
                     <tr className="text-capitalize small fw-bold text-muted">
                       <th className="px-4 py-3 border-0">Sno</th>
-                      <th className="py-3 border-0">Date</th>
-                      <th className="py-3 border-0 text-center">{activeTab === 'PAYMENT' ? 'Ref No' : 'Invoice No'}</th>
-                      <th className="py-3 border-0">Customer Name</th>
-                      <th className="py-3 border-0 text-center">{activeTab === 'PAYMENT' ? 'Mode' : 'Ageing'}</th>
-                      <th className="py-3 border-0 text-end px-4">{activeTab === 'PAYMENT' ? 'Paid Amount' : 'Pending Amount'}</th>
+                      <SortableHeader field="date" label="Date" currentSortBy={activeTab === 'PAYMENT' ? vSorting.sortBy : pSorting.sortBy} currentSortOrder={activeTab === 'PAYMENT' ? vSorting.sortOrder : pSorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                      <SortableHeader field={activeTab === 'PAYMENT' ? 'voucher_no' : 'invoice_number'} label={activeTab === 'PAYMENT' ? 'Ref No' : 'Invoice No'} currentSortBy={activeTab === 'PAYMENT' ? vSorting.sortBy : pSorting.sortBy} currentSortOrder={activeTab === 'PAYMENT' ? vSorting.sortOrder : pSorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-center" />
+                      <SortableHeader field={activeTab === 'PAYMENT' ? 'party_name' : 'customer_name'} label="Customer Name" currentSortBy={activeTab === 'PAYMENT' ? vSorting.sortBy : pSorting.sortBy} currentSortOrder={activeTab === 'PAYMENT' ? vSorting.sortOrder : pSorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                      {activeTab === 'PAYMENT' ? (
+                        <SortableHeader field="payment_mode" label="Mode" currentSortBy={vSorting.sortBy} currentSortOrder={vSorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-center" />
+                      ) : (
+                        <th className="py-3 border-0 text-center">Ageing</th>
+                      )}
+                      <SortableHeader field={activeTab === 'PAYMENT' ? 'amount' : 'grand_total'} label={activeTab === 'PAYMENT' ? 'Paid Amount' : 'Pending Amount'} currentSortBy={activeTab === 'PAYMENT' ? vSorting.sortBy : pSorting.sortBy} currentSortOrder={activeTab === 'PAYMENT' ? vSorting.sortOrder : pSorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end px-4" />
                       <th className="py-3 border-0 text-center" style={{ width: '120px' }}>Action</th>
                     </tr>
                   </thead>

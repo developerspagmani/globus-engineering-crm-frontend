@@ -46,6 +46,14 @@ interface MasterState {
     itemSearch: string;
     processSearch: string;
   };
+  sorting: {
+    itemSortBy: string;
+    itemSortOrder: 'asc' | 'desc';
+    processSortBy: string;
+    processSortOrder: 'asc' | 'desc';
+    priceFixingSortBy: string;
+    priceFixingSortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: MasterState = {
@@ -67,14 +75,24 @@ const initialState: MasterState = {
   filters: {
     itemSearch: '',
     processSearch: '',
+  },
+  sorting: {
+    itemSortBy: 'created_at',
+    itemSortOrder: 'desc',
+    processSortBy: 'process_name',
+    processSortOrder: 'desc',
+    priceFixingSortBy: 'id',
+    priceFixingSortOrder: 'desc'
   }
 };
 
-export const fetchItems = createAsyncThunk('master/fetchItems', async (params: { company_id?: string; page?: number; limit?: number; search?: string }) => {
-  const { company_id, page = 1, limit = 10, search } = params;
+export const fetchItems = createAsyncThunk('master/fetchItems', async (params: { company_id?: string; page?: number; limit?: number; search?: string; sortBy?: string; sortOrder?: 'asc' | 'desc' }) => {
+  const { company_id, page = 1, limit = 10, search, sortBy, sortOrder } = params;
   let url = `/items?page=${page}&limit=${limit}`;
   if (company_id) url += `&companyId=${company_id}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (sortBy) url += `&sortBy=${sortBy}`;
+  if (sortOrder) url += `&sortOrder=${sortOrder}`;
   
   const response = await api.get(url);
   return {
@@ -88,11 +106,13 @@ export const fetchItems = createAsyncThunk('master/fetchItems', async (params: {
   };
 });
 
-export const fetchProcesses = createAsyncThunk('master/fetchProcesses', async (params: { company_id?: string; page?: number; limit?: number; search?: string }) => {
-  const { company_id, page = 1, limit = 10, search } = params;
+export const fetchProcesses = createAsyncThunk('master/fetchProcesses', async (params: { company_id?: string; page?: number; limit?: number; search?: string; sortBy?: string; sortOrder?: 'asc' | 'desc' }) => {
+  const { company_id, page = 1, limit = 10, search, sortBy, sortOrder } = params;
   let url = `/processes?page=${page}&limit=${limit}`;
   if (company_id) url += `&companyId=${company_id}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (sortBy) url += `&sortBy=${sortBy}`;
+  if (sortOrder) url += `&sortOrder=${sortOrder}`;
   
   const response = await api.get(url);
   return {
@@ -105,10 +125,12 @@ export const fetchProcesses = createAsyncThunk('master/fetchProcesses', async (p
   };
 });
 
-export const fetchPriceFixings = createAsyncThunk('master/fetchPriceFixings', async (params: { company_id?: string; page?: number; limit?: number }) => {
-  const { company_id, page = 1, limit = 10 } = params;
+export const fetchPriceFixings = createAsyncThunk('master/fetchPriceFixings', async (params: { company_id?: string; page?: number; limit?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' }) => {
+  const { company_id, page = 1, limit = 10, sortBy, sortOrder } = params;
   let url = `/price-fixings?page=${page}&limit=${limit}`;
   if (company_id) url += `&companyId=${company_id}`;
+  if (sortBy) url += `&sortBy=${sortBy}`;
+  if (sortOrder) url += `&sortOrder=${sortOrder}`;
   
   const response = await api.get(url);
   return {
@@ -240,6 +262,21 @@ const masterSlice = createSlice({
       state.filters.processSearch = action.payload;
       state.pagination.processPage = 1;
     },
+    setItemSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.itemSortBy = action.payload.sortBy;
+      state.sorting.itemSortOrder = action.payload.sortOrder;
+      state.pagination.itemPage = 1;
+    },
+    setProcessSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.processSortBy = action.payload.sortBy;
+      state.sorting.processSortOrder = action.payload.sortOrder;
+      state.pagination.processPage = 1;
+    },
+    setPriceFixingSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.priceFixingSortBy = action.payload.sortBy;
+      state.sorting.priceFixingSortOrder = action.payload.sortOrder;
+      state.pagination.priceFixingPage = 1;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -301,5 +338,5 @@ const masterSlice = createSlice({
   },
 });
 
-export const { setItemPage, setProcessPage, setPriceFixingPage, setItemSearch, setProcessSearch } = masterSlice.actions;
+export const { setItemPage, setProcessPage, setPriceFixingPage, setItemSearch, setProcessSearch, setItemSorting, setProcessSorting, setPriceFixingSorting } = masterSlice.actions;
 export default masterSlice.reducer;

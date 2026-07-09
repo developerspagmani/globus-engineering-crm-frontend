@@ -11,12 +11,12 @@ import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import html2canvas from 'html2canvas';
-import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import jsPDF from 'jspdf';
 import api from '@/lib/axios';
 import { useRouter } from 'next/navigation';
-
-
+import SortableHeader from '@/components/shared/SortableHeader';
+import { setInwardSorting } from '@/redux/features/inwardSlice';
+import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 
 const InwardReportPage = () => {
   const router = useRouter();
@@ -28,7 +28,7 @@ const InwardReportPage = () => {
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   // statusCounts comes from backend — accurate across ALL pages, not just current page
-  const { items, pagination, loading, statusCounts } = useSelector((state: RootState) => state.inward);
+  const { items, pagination, loading, statusCounts, sorting } = useSelector((state: RootState) => state.inward);
 
   useEffect(() => {
     setMounted(true);
@@ -40,10 +40,17 @@ const InwardReportPage = () => {
         search,
         partyType,
         fromDate,
-        toDate
+        toDate,
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, partyType, fromDate, toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, partyType, fromDate, toDate, sorting.sortBy, sorting.sortOrder]);
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setInwardSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
@@ -208,11 +215,11 @@ const InwardReportPage = () => {
                   <thead className="bg-light">
                     <tr className="text-capitalize small fw-bold text-muted">
                       <th className="px-4 py-3 border-0">Sno</th>
-                      <th className="py-3 border-0">Date</th>
-                      <th className="py-3 border-0">Dc No</th>
-                      <th className="py-3 border-0">Customer Name</th>
+                      <SortableHeader field="date" label="Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                      <SortableHeader field="dc_no" label="Dc No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                      <SortableHeader field="customer_name" label="Customer Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
                       <th className="py-3 border-0">Address</th>
-                      <th className="py-3 border-0">Status</th>
+                      <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
                       <th className="py-3 border-0 text-center px-4" style={{ width: '120px' }}>Action</th>
                     </tr>
                   </thead>

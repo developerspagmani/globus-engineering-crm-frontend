@@ -24,12 +24,16 @@ export const fetchEmployees = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search } = params;
+      const { company_id, page = 1, limit = 10, search, sortBy, sortOrder } = params;
       let url = `/employees?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -107,6 +111,10 @@ interface EmployeeState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: EmployeeState = {
@@ -126,6 +134,10 @@ const initialState: EmployeeState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'ename',
+    sortOrder: 'desc',
+  }
 };
 
 const employeeSlice = createSlice({
@@ -138,6 +150,11 @@ const employeeSlice = createSlice({
     },
     setEmployeePage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setEmployeeSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.sortBy = action.payload.sortBy;
+      state.sorting.sortOrder = action.payload.sortOrder;
+      state.pagination.currentPage = 1;
     },
   },
   extraReducers: (builder) => {
@@ -168,7 +185,7 @@ const employeeSlice = createSlice({
   }
 });
 
-export const { setEmployeeFilters, setEmployeePage } = employeeSlice.actions;
+export const { setEmployeeFilters, setEmployeePage, setEmployeeSorting } = employeeSlice.actions;
 export const addEmployee = addEmployeeThunk;
 export const updateEmployee = updateEmployeeThunk;
 export const deleteEmployee = deleteEmployeeThunk;

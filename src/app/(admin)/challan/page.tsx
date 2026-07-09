@@ -8,7 +8,7 @@ import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 
 import { RootState } from '@/redux/store';
-import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan } from '@/redux/features/challanSlice';
+import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan, setChallanSorting } from '@/redux/features/challanSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import html2canvas from 'html2canvas';
@@ -18,12 +18,13 @@ import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 const ChallanPage = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.challan);
+  const { items, filters, pagination, loading, sorting } = useSelector((state: RootState) => state.challan);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = React.useState(false);
 
@@ -63,11 +64,18 @@ const ChallanPage = () => {
       status: filters.status,
       bill_type: filters.bill_type,
       fromDate: filters.fromDate,
-      toDate: filters.toDate
+      toDate: filters.toDate,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType, filters.status, filters.bill_type, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType, filters.status, filters.bill_type, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   if (!mounted) return <Loader text="Initializing..." />;
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setChallanSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   // Filter logic
   const totalPages = pagination.totalPages;
@@ -215,11 +223,11 @@ const ChallanPage = () => {
               <thead>
                 <tr className="bg-light">
                   <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Challan No</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Date</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Party / Client</th>
+                  <SortableHeader field="challan_no" label="Challan No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="date" label="Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="party_name" label="Party / Client" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
                   <th className="py-3 border-0 small fw-bold text-muted">Items</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-center">Status</th>
+                  <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-center" />
                   <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
                 </tr>
               </thead>

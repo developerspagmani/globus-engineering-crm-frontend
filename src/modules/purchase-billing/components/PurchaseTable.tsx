@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/redux/store';
-import { deletePurchaseBill, setPurchasePage } from '@/redux/features/purchaseSlice';
+import { deletePurchaseBill, setPurchasePage, setPurchaseSorting } from '@/redux/features/purchaseSlice';
+import SortableHeader from '@/components/shared/SortableHeader';
 import { PurchaseBill } from '@/types/modules';
 import { checkActionPermission } from '@/config/permissions';
 import Loader from '@/components/Loader';
@@ -17,9 +18,14 @@ interface PurchaseTableProps {
 const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
-  const { items: purchaseBills, pagination, loading } = useSelector((state: RootState) => state.purchaseBills);
+  const { items: purchaseBills, pagination, loading, sorting } = useSelector((state: RootState) => state.purchaseBills);
   
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setPurchaseSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handleDeleteTrigger = (id: string) => {
     setDeleteModal({ isOpen: true, id });
@@ -41,22 +47,22 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit }) => {
         <table className="table align-middle mb-0 table-hover bg-white" style={{ fontSize: '0.875rem' }}>
           <thead className="bg-light text-muted text-uppercase fw-bold small">
             <tr className="border-bottom">
-              <th className="fw-semibold px-3 py-3" style={{ minWidth: '110px' }}>Received Date</th>
+              <SortableHeader field="received_date" label="Received Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '110px' }} />
               {/* This is the empty header column next to Received Date as shown in the screenshot */}
               <th className="fw-semibold px-2 py-3 text-center" style={{ width: '60px' }}></th>
-              <th className="fw-semibold px-3 py-3" style={{ minWidth: '160px' }}>Company Name</th>
-              <th className="fw-semibold px-3 py-3" style={{ minWidth: '130px' }}>GST TIN</th>
-              <th className="fw-semibold px-3 py-3" style={{ minWidth: '100px' }}>D.C No</th>
-              <th className="fw-semibold px-3 py-3" style={{ minWidth: '100px' }}>Invoice No</th>
-              <th className="fw-semibold px-2 py-3 text-center" style={{ minWidth: '70px' }}>SAC</th>
-              <th className="fw-semibold px-2 py-3 text-center" style={{ minWidth: '70px' }}>Qty</th>
-              <th className="fw-semibold px-3 py-3 text-end" style={{ minWidth: '100px' }}>Amount</th>
+              <SortableHeader field="company_name" label="Company Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '160px' }} />
+              <SortableHeader field="gst_tin" label="GST TIN" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '130px' }} />
+              <SortableHeader field="dc_no" label="D.C No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '100px' }} />
+              <SortableHeader field="invoice_no" label="Invoice No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '100px' }} />
+              <SortableHeader field="sac" label="SAC" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-2 py-3 text-center" style={{ minWidth: '70px' }} />
+              <SortableHeader field="qty" label="Qty" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-2 py-3 text-center" style={{ minWidth: '70px' }} />
+              <SortableHeader field="amount" label="Amount" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end" style={{ minWidth: '100px' }} />
               {/* CGST, SGST, IGST, Round Off are styled with red color class */}
-              <th className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }}>CGST</th>
-              <th className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }}>SGST</th>
-              <th className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }}>IGST</th>
-              <th className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }}>Round off</th>
-              <th className="fw-semibold px-3 py-3 text-end text-primary" style={{ minWidth: '110px' }}>Grand Total</th>
+              <SortableHeader field="cgst" label="CGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
+              <SortableHeader field="sgst" label="SGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
+              <SortableHeader field="igst" label="IGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
+              <SortableHeader field="round_off" label="Round off" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
+              <SortableHeader field="grand_total" label="Grand Total" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-primary" style={{ minWidth: '110px' }} />
               <th className="text-center fw-semibold px-3 py-3" style={{ width: '80px' }}>Action</th>
             </tr>
           </thead>

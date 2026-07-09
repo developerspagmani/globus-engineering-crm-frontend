@@ -15,9 +15,11 @@ export const fetchInwards = createAsyncThunk(
     toDate?: string;
     id?: string;
     partyType?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, id, partyType } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, id, partyType, sortBy, sortOrder } = params;
       let url = `/inward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -26,6 +28,8 @@ export const fetchInwards = createAsyncThunk(
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (id) url += `&id=${id}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       const mappedItems = (response.data.items || []).map((c: any) => ({
@@ -253,6 +257,10 @@ interface InwardState {
     pending: number;
     activeParties: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: InwardState = {
@@ -277,6 +285,10 @@ const initialState: InwardState = {
     pending: 0,
     activeParties: 0,
   },
+  sorting: {
+    sortBy: 'date',
+    sortOrder: 'desc',
+  }
 };
 
 const inwardSlice = createSlice({
@@ -290,9 +302,14 @@ const inwardSlice = createSlice({
     setInwardPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    setInwardSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting = action.payload;
+      state.pagination.currentPage = 1;
+    },
     resetInwardState: (state) => {
       state.filters = initialState.filters;
       state.pagination.currentPage = 1;
+      state.sorting = initialState.sorting;
     },
   },
   extraReducers: (builder) => {
@@ -341,5 +358,5 @@ const inwardSlice = createSlice({
   }
 });
 
-export const { setInwardFilters, setInwardPage, resetInwardState } = inwardSlice.actions;
+export const { setInwardFilters, setInwardPage, setInwardSorting, resetInwardState } = inwardSlice.actions;
 export default inwardSlice.reducer;

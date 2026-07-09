@@ -17,6 +17,7 @@ import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 
 const PendingPaymentPage = () => {
@@ -25,6 +26,10 @@ const PendingPaymentPage = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [partyType, setPartyType] = useState<'all' | 'customer' | 'vendor'>('customer');
   const [printGroup, setPrintGroup] = useState<any>(null);
+  
+  const [sortField, setSortField] = useState('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   const router = useRouter();
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
@@ -78,14 +83,6 @@ const PendingPaymentPage = () => {
     return acc;
   }, {} as Record<string, { customerId: string, customerName: string, invoices: any[], totalPending: number, firstInvoice: any }>);
 
-  const customerGroups = Object.values(groupedInvoices);
-
-  const totalPages = Math.ceil(customerGroups.length / pagination.itemsPerPage);
-  const paginatedGroups = customerGroups.slice(
-    (pagination.currentPage - 1) * pagination.itemsPerPage,
-    pagination.currentPage * pagination.itemsPerPage
-  );
-
   const calculateOverdueDays = (dueDate: string) => {
     if (!dueDate) return 0;
     const due = new Date(dueDate);
@@ -94,6 +91,67 @@ const PendingPaymentPage = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
+
+  let customerGroups = Object.values(groupedInvoices);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  customerGroups.sort((a, b) => {
+    let aVal: any = '';
+    let bVal: any = '';
+
+    const latestA = a.invoices.reduce((latest, current) => {
+      const latestDate = latest.date ? new Date(latest.date).getTime() : 0;
+      const currentDate = current.date ? new Date(current.date).getTime() : 0;
+      return currentDate > latestDate ? current : latest;
+    }, a.invoices[0]);
+
+    const latestB = b.invoices.reduce((latest, current) => {
+      const latestDate = latest.date ? new Date(latest.date).getTime() : 0;
+      const currentDate = current.date ? new Date(current.date).getTime() : 0;
+      return currentDate > latestDate ? current : latest;
+    }, b.invoices[0]);
+
+    if (sortField === 'customerName') {
+      aVal = a.customerName;
+      bVal = b.customerName;
+    } else if (sortField === 'poNo') {
+      aVal = latestA.poNo || '';
+      bVal = latestB.poNo || '';
+    } else if (sortField === 'dcNo') {
+      aVal = latestA.dcNo || '';
+      bVal = latestB.dcNo || '';
+    } else if (sortField === 'invoiceNumber') {
+      aVal = latestA.invoiceNumber || '';
+      bVal = latestB.invoiceNumber || '';
+    } else if (sortField === 'date') {
+      aVal = latestA.date ? new Date(latestA.date).getTime() : 0;
+      bVal = latestB.date ? new Date(latestB.date).getTime() : 0;
+    } else if (sortField === 'totalPending') {
+      aVal = a.totalPending;
+      bVal = b.totalPending;
+    } else if (sortField === 'overdue') {
+      aVal = Math.max(0, ...a.invoices.map(inv => calculateOverdueDays(inv.dueDate)));
+      bVal = Math.max(0, ...b.invoices.map(inv => calculateOverdueDays(inv.dueDate)));
+    }
+
+    if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(customerGroups.length / pagination.itemsPerPage);
+  const paginatedGroups = customerGroups.slice(
+    (pagination.currentPage - 1) * pagination.itemsPerPage,
+    pagination.currentPage * pagination.itemsPerPage
+  );
 
   const handlePrintPending = (group: any) => {
     setPrintGroup(group);
@@ -189,15 +247,15 @@ const PendingPaymentPage = () => {
                 <table className="table align-middle mb-0 table-hover">
                   <thead className="table-light">
                     <tr>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 px-4">Sno</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Customer</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Po No</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Dc No</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Invoice No</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3">Invoice Date</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-end px-3">Pending Amount</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-danger text-center">Over Due</th>
-                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-center px-4">Action</th>
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 px-4 border-0">Sno</th>
+                      <SortableHeader field="customerName" label="Customer" currentSortBy={sortField} currentSortOrder={sortOrder} onSort={handleSort} className="fw-bold x-small text-muted tracking-wider py-3 border-0" />
+                      <SortableHeader field="poNo" label="Po No" currentSortBy={sortField} currentSortOrder={sortOrder} onSort={handleSort} className="fw-bold x-small text-muted tracking-wider py-3 border-0" />
+                      <SortableHeader field="dcNo" label="Dc No" currentSortBy={sortField} currentSortOrder={sortOrder} onSort={handleSort} className="fw-bold x-small text-muted tracking-wider py-3 border-0" />
+                      <SortableHeader field="invoiceNumber" label="Invoice No" currentSortBy={sortField} currentSortOrder={sortOrder} onSort={handleSort} className="fw-bold x-small text-muted tracking-wider py-3 border-0" />
+                      <SortableHeader field="date" label="Invoice Date" currentSortBy={sortField} currentSortOrder={sortOrder} onSort={handleSort} className="fw-bold x-small text-muted tracking-wider py-3 border-0" />
+                      <SortableHeader field="totalPending" label="Pending Amount" currentSortBy={sortField} currentSortOrder={sortOrder} onSort={handleSort} className="fw-bold x-small text-muted tracking-wider py-3 border-0 text-end px-3" />
+                      <SortableHeader field="overdue" label="Over Due" currentSortBy={sortField} currentSortOrder={sortOrder} onSort={handleSort} className="fw-bold x-small text-muted tracking-wider py-3 border-0 text-danger text-center" />
+                      <th className="fw-bold x-small text-muted text-uppercase tracking-wider py-3 text-center px-4 border-0">Action</th>
                     </tr>
                   </thead>
                   <tbody className="border-top-0">

@@ -9,12 +9,16 @@ export const fetchStores = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   } = {}, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search } = params;
+      const { company_id, page = 1, limit = 10, search, sortBy, sortOrder } = params;
       let url = `/stores?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -113,6 +117,10 @@ interface StoreState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: StoreState = {
@@ -129,6 +137,10 @@ const initialState: StoreState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+  }
 };
 
 const storeSlice = createSlice({
@@ -141,6 +153,11 @@ const storeSlice = createSlice({
     },
     setStorePage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setStoreSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.sortBy = action.payload.sortBy;
+      state.sorting.sortOrder = action.payload.sortOrder;
+      state.pagination.currentPage = 1;
     },
   },
   extraReducers: (builder) => {
@@ -181,5 +198,5 @@ const storeSlice = createSlice({
   }
 });
 
-export const { setStoreFilters, setStorePage } = storeSlice.actions;
+export const { setStoreFilters, setStorePage, setStoreSorting } = storeSlice.actions;
 export default storeSlice.reducer;

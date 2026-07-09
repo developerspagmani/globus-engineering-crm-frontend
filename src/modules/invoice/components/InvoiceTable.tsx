@@ -7,8 +7,8 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import IndustrialInvoice from './IndustrialInvoice';
-import { deleteInvoice, setInvoicePage, fetchNextNumbers, fetchInvoices } from '@/redux/features/invoiceSlice';
-import { deleteInward, fetchInwards } from '@/redux/features/inwardSlice';
+import { deleteInvoice, setInvoicePage, fetchNextNumbers, fetchInvoices, setInvoiceSorting } from '@/redux/features/invoiceSlice';
+import { deleteInward, fetchInwards, setInwardSorting } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { checkActionPermission } from '@/config/permissions';
@@ -17,6 +17,7 @@ import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 
 const InvoiceTable: React.FC = () => {
@@ -25,8 +26,8 @@ const InvoiceTable: React.FC = () => {
   const pathname = usePathname();
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: invoices, filters, pagination, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
-  const { items: inwards, loading: inwardLoading } = useSelector((state: RootState) => state.inward);
+  const { items: invoices, filters, pagination, sorting: invoiceSorting, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
+  const { items: inwards, sorting: inwardSorting, loading: inwardLoading } = useSelector((state: RootState) => state.inward);
   const initialTab = searchParams.get('tab') as any || 'ADD_INVOICE';
   const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST' | 'ALL_LIST'>(initialTab);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null; type: 'invoice' | 'inward' | null }>({ isOpen: false, id: null, type: null });
@@ -84,12 +85,14 @@ const InvoiceTable: React.FC = () => {
           company_id: activeCompany.id,
           status: 'pending',
           partyType: (filters as any).partyType,
-          limit: 100 // Fetch more for selection
+          limit: 100, // Fetch more for selection
+          sortBy: inwardSorting?.sortBy,
+          sortOrder: inwardSorting?.sortOrder
         }));
       }
       (dispatch as any)(fetchNextNumbers({ companyId: activeCompany.id }));
     }
-  }, [dispatch, activeCompany?.id, activeTab]);
+  }, [dispatch, activeCompany?.id, activeTab, inwardSorting?.sortBy, inwardSorting?.sortOrder]);
 
   React.useEffect(() => {
     if (activeCompany?.id) {
@@ -109,10 +112,12 @@ const InvoiceTable: React.FC = () => {
         fromDate: filters.fromDate,
         toDate: filters.toDate,
         partyType: (filters as any).partyType,
-        type: typeMap[activeTab] || 'all'
+        type: typeMap[activeTab] || 'all',
+        sortBy: invoiceSorting?.sortBy,
+        sortOrder: invoiceSorting?.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters, activeTab]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters, activeTab, invoiceSorting?.sortBy, invoiceSorting?.sortOrder]);
 
   const filteredInwards = inwards.filter(item => {
     const itemCompId = String(item.company_id || (item as any).companyId || '').toLowerCase();
@@ -132,6 +137,16 @@ const InvoiceTable: React.FC = () => {
 
     return custName.includes(search) || dcNo.includes(search);
   });
+
+  const handleSort = (field: string) => {
+    if (activeTab === 'ADD_INVOICE') {
+      const newOrder = inwardSorting?.sortBy === field && inwardSorting?.sortOrder === 'asc' ? 'desc' : 'asc';
+      dispatch(setInwardSorting({ sortBy: field, sortOrder: newOrder }));
+    } else {
+      const newOrder = invoiceSorting?.sortBy === field && invoiceSorting?.sortOrder === 'asc' ? 'desc' : 'asc';
+      dispatch(setInvoiceSorting({ sortBy: field, sortOrder: newOrder }));
+    }
+  };
 
   const displayItems: any[] = activeTab === 'ADD_INVOICE' ? filteredInwards : invoices;
   const totalPages = activeTab === 'ADD_INVOICE' 
@@ -179,13 +194,11 @@ const InvoiceTable: React.FC = () => {
           <thead className="bg-light text-muted small">
             <tr className="border-bottom">
               <th className="fw-semibold px-4 py-3">Sno</th>
-              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Customer' : 'Customer Name'}</th>
-              <th className="fw-semibold px-4 py-3">
-                {activeTab === 'ADD_INVOICE' ? 'Dc No' : (activeTab === 'WOP_LIST' ? 'Invoice WOP No' : 'Invoice No')}
-              </th>
-              <th className="fw-semibold px-4 py-3">{activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'}</th>
+              <SortableHeader field="customer_name" label={activeTab === 'ADD_INVOICE' ? 'Customer' : 'Customer Name'} currentSortBy={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortBy : invoiceSorting?.sortBy} currentSortOrder={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortOrder : invoiceSorting?.sortOrder} onSort={handleSort} className="fw-semibold px-4 py-3 border-0" />
+              <SortableHeader field={activeTab === 'ADD_INVOICE' ? 'dc_no' : (activeTab === 'WOP_LIST' ? 'delivery_no' : 'invoice_no')} label={activeTab === 'ADD_INVOICE' ? 'Dc No' : (activeTab === 'WOP_LIST' ? 'Invoice WOP No' : 'Invoice No')} currentSortBy={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortBy : invoiceSorting?.sortBy} currentSortOrder={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortOrder : invoiceSorting?.sortOrder} onSort={handleSort} className="fw-semibold px-4 py-3 border-0" />
+              <SortableHeader field={activeTab === 'ADD_INVOICE' ? 'date' : 'invoice_date'} label={activeTab === 'ADD_INVOICE' ? 'Inward Date' : 'Invoice Date'} currentSortBy={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortBy : invoiceSorting?.sortBy} currentSortOrder={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortOrder : invoiceSorting?.sortOrder} onSort={handleSort} className="fw-semibold px-4 py-3 border-0" />
               {activeTab !== 'WOP_LIST' && (
-                <th className={`fw-semibold px-4 py-3 ${activeTab === 'ADD_INVOICE' ? '' : 'text-end'}`}>{activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'}</th>
+                <SortableHeader field={activeTab === 'ADD_INVOICE' ? 'po_reference' : 'grand_total'} label={activeTab === 'ADD_INVOICE' ? 'PO Ref' : 'Grand Total'} currentSortBy={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortBy : invoiceSorting?.sortBy} currentSortOrder={activeTab === 'ADD_INVOICE' ? inwardSorting?.sortOrder : invoiceSorting?.sortOrder} onSort={handleSort} className={`fw-semibold px-4 py-3 border-0 ${activeTab === 'ADD_INVOICE' ? '' : 'text-end'}`} />
               )}
               <th className="text-center fw-semibold px-4 py-3 pe-4">Action</th>
             </tr>

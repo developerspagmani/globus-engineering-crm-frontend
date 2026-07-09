@@ -15,7 +15,7 @@ import { checkActionPermission } from '@/config/permissions';
 export default function PurchaseBillingPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: purchaseBills, filters, pagination } = useSelector((state: RootState) => state.purchaseBills);
+  const { items: purchaseBills, filters, pagination, sorting } = useSelector((state: RootState) => state.purchaseBills);
 
   const [mounted, setMounted] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -42,10 +42,12 @@ export default function PurchaseBillingPage() {
         limit: pagination.itemsPerPage,
         search: filters.search,
         fromDate: filters.fromDate,
-        toDate: filters.toDate
+        toDate: filters.toDate,
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters, mounted]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters, sorting.sortBy, sorting.sortOrder, mounted]);
 
   // Update filters in Redux state when user submits local filter inputs
   const handleApplyFilters = (e: React.FormEvent) => {

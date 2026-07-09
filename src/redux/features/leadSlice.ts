@@ -12,15 +12,19 @@ export const fetchLeads = createAsyncThunk(
     status?: string;
     fromDate?: string;
     toDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { companyId, page = 1, limit = 10, search, status, fromDate, toDate } = params;
+      const { companyId, page = 1, limit = 10, search, status, fromDate, toDate, sortBy, sortOrder } = params;
       let url = `/leads?page=${page}&limit=${limit}`;
       if (companyId) url += `&companyId=${companyId}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -91,6 +95,10 @@ interface LeadState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: LeadState = {
@@ -110,6 +118,10 @@ const initialState: LeadState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+  }
 };
 
 const leadSlice = createSlice({
@@ -123,9 +135,14 @@ const leadSlice = createSlice({
     setLeadPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
     },
+    setLeadSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting = action.payload;
+      state.pagination.currentPage = 1;
+    },
     resetLeadState: (state) => {
       state.filters = initialState.filters;
       state.pagination.currentPage = 1;
+      state.sorting = initialState.sorting;
     },
   },
   extraReducers: (builder) => {
@@ -160,7 +177,7 @@ const leadSlice = createSlice({
   }
 });
 
-export const { setLeadFilters, setLeadPage, resetLeadState } = leadSlice.actions;
+export const { setLeadFilters, setLeadPage, setLeadSorting, resetLeadState } = leadSlice.actions;
 
 export const addLead = createLeadSync;
 export const updateLead = updateLeadSync;

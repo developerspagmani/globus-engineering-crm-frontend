@@ -12,15 +12,19 @@ export const fetchPendingPayments = createAsyncThunk(
     fromDate?: string; 
     toDate?: string;
     partyType?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, fromDate, toDate, partyType } = params;
+      const { company_id, page = 1, limit = 10, search, fromDate, toDate, partyType, sortBy, sortOrder } = params;
       let url = `/invoices?page=${page}&limit=${limit}&status=pending`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (partyType) url += `&partyType=${partyType}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -85,6 +89,10 @@ interface PendingPaymentState {
     totalOutstanding: number;
     criticalOverdue: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: PendingPaymentState = {
@@ -106,6 +114,10 @@ const initialState: PendingPaymentState = {
     totalOutstanding: 0,
     criticalOverdue: 0,
   },
+  sorting: {
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+  },
 };
 
 const pendingPaymentSlice = createSlice({
@@ -118,6 +130,9 @@ const pendingPaymentSlice = createSlice({
     },
     setPendingPaymentPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setPendingPaymentSorting: (state, action: PayloadAction<{ sortBy: string; sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting = action.payload;
     },
     refreshPendingPayments: (state, action: PayloadAction<Invoice[]>) => {
       state.items = action.payload.filter(inv => (inv.grandTotal - (inv.paidAmount || 0)) > 0);
@@ -144,5 +159,5 @@ const pendingPaymentSlice = createSlice({
   }
 });
 
-export const { setPendingPaymentFilters, refreshPendingPayments, setPendingPaymentPage } = pendingPaymentSlice.actions;
+export const { setPendingPaymentFilters, refreshPendingPayments, setPendingPaymentPage, setPendingPaymentSorting } = pendingPaymentSlice.actions;
 export default pendingPaymentSlice.reducer;

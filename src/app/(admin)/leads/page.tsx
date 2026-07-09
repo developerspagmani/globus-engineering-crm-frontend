@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
-import { setLeadFilters, deleteLead, fetchLeads, setLeadPage, resetLeadState } from '@/redux/features/leadSlice';
+import { setLeadFilters, deleteLead, fetchLeads, setLeadPage, setLeadSorting, resetLeadState } from '@/redux/features/leadSlice';
 import { createCustomer } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import StatusModal from '@/components/StatusModal';
@@ -14,7 +14,7 @@ import autoTable from 'jspdf-autotable';
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import PaginationComponent from '@/components/shared/Pagination';
-
+import SortableHeader from '@/components/shared/SortableHeader';
 
 import ExportExcel from '@/components/shared/ExportExcel';
 
@@ -22,7 +22,7 @@ const LeadsPage = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.leads);
+  const { items, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.leads);
 
   const [modal, setModal] = useState<{ isOpen: boolean; title: string; message: string }>({
     isOpen: false,
@@ -54,14 +54,21 @@ const LeadsPage = () => {
       search: filters.search,
       status: filters.status,
       fromDate: filters.fromDate,
-      toDate: filters.toDate
+      toDate: filters.toDate,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   if (!mounted) return null;
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setLeadSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handlePromoteParams = (lead: any) => {
     setConfirmModal({ isOpen: true, id: lead.id, type: 'promote', leadData: lead });
@@ -224,10 +231,10 @@ const LeadsPage = () => {
             <table className="table table-hover align-middle mb-0">
           <thead>
             <tr className="bg-light">
-              <th className="px-4 py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Prospect Info</th>
-              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Source</th>
-              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Status</th>
-              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Industry</th>
+              <SortableHeader field="name" label="Prospect Info" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="px-4 py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+              <SortableHeader field="source" label="Source" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+              <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+              <SortableHeader field="industry" label="Industry" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
               <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0 text-center px-4">Action</th>
             </tr>
           </thead>

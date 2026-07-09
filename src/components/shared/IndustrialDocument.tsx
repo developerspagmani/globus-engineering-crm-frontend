@@ -688,9 +688,18 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                )}
             </div>
 
-            {type === 'outward' && data.partyType === 'vendor' && data.purpose && isLastPage && (
-               <div style={{ padding: '10px 15px', borderLeft: '1.5pt solid #000', borderRight: '1.5pt solid #000', borderBottom: '1.5pt solid #000', fontSize: '15px', fontWeight: 'bold' }}>
-                  PURPOSE: <span style={{ marginLeft: '10px' }}>{data.purpose}</span>
+            {type === 'outward' && data.partyType === 'vendor' && (data.purpose || data.coatingName) && isLastPage && (
+               <div style={{ borderTop: '1.5pt solid #000', display: 'flex', flexDirection: 'column' }}>
+                  {data.coatingName && (
+                     <div style={{ padding: '10px 15px', fontSize: '15px', fontWeight: 'bold', borderBottom: data.purpose ? '1pt dashed #ccc' : 'none' }}>
+                        COATING NAME: <span style={{ marginLeft: '10px' }}>{data.coatingName}</span>
+                     </div>
+                  )}
+                  {data.purpose && (
+                     <div style={{ padding: '10px 15px', fontSize: '15px', fontWeight: 'bold' }}>
+                        PURPOSE: <span style={{ marginLeft: '10px' }}>{data.purpose}</span>
+                     </div>
+                  )}
                </div>
             )}
 

@@ -13,9 +13,11 @@ export const fetchVendors = createAsyncThunk(
     category?: string;
     fromDate?: string;
     toDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, category, fromDate, toDate } = params;
+      const { company_id, page = 1, limit = 10, search, status, category, fromDate, toDate, sortBy, sortOrder } = params;
       let url = `/vendors?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -23,6 +25,8 @@ export const fetchVendors = createAsyncThunk(
       if (category && category !== 'all') url += `&category=${encodeURIComponent(category)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -88,6 +92,10 @@ interface VendorState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: VendorState = {
@@ -107,6 +115,10 @@ const initialState: VendorState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'name',
+    sortOrder: 'desc',
+  },
 };
 
 const vendorSlice = createSlice({
@@ -119,6 +131,10 @@ const vendorSlice = createSlice({
     },
     setVendorPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setVendorSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting = action.payload;
+      state.pagination.currentPage = 1;
     },
   },
   extraReducers: (builder) => {
@@ -153,5 +169,5 @@ const vendorSlice = createSlice({
   }
 });
 
-export const { setVendorFilters, setVendorPage } = vendorSlice.actions;
+export const { setVendorFilters, setVendorPage, setVendorSorting } = vendorSlice.actions;
 export default vendorSlice.reducer;

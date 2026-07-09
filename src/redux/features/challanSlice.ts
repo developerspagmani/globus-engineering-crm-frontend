@@ -16,9 +16,11 @@ export const fetchChallans = createAsyncThunk(
     bill_type?: string;
     fromDate?: string;
     toDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id, status, type, bill_type, fromDate, toDate } = params;
+      const { company_id, page = 1, limit = 10, search, id, status, type, bill_type, fromDate, toDate, sortBy, sortOrder } = params;
       let url = `/challans?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -29,6 +31,8 @@ export const fetchChallans = createAsyncThunk(
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (id) url += `&id=${id}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -200,6 +204,10 @@ interface ChallanState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: ChallanState = {
@@ -221,6 +229,10 @@ const initialState: ChallanState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'created_at',
+    sortOrder: 'desc',
+  }
 };
 
 const challanSlice = createSlice({
@@ -233,6 +245,11 @@ const challanSlice = createSlice({
     },
     setChallanPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setChallanSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.sortBy = action.payload.sortBy;
+      state.sorting.sortOrder = action.payload.sortOrder;
+      state.pagination.currentPage = 1;
     },
   },
   extraReducers: (builder) => {
@@ -286,7 +303,8 @@ const challanSlice = createSlice({
 
 export const {
   setChallanFilters,
-  setChallanPage
+  setChallanPage,
+  setChallanSorting
 } = challanSlice.actions;
 
 export default challanSlice.reducer;

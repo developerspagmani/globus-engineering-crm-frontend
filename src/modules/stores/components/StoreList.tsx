@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchStores, deleteStore, setStoreFilters, setStorePage } from '@/redux/features/storeSlice';
+import { fetchStores, deleteStore, setStoreFilters, setStorePage, setStoreSorting } from '@/redux/features/storeSlice';
 import { Store } from '@/types/modules';
 import StoreVisitForm from './StoreVisitForm';
 import { useRouter } from 'next/navigation';
@@ -13,12 +13,13 @@ import PaginationComponent from '@/components/shared/Pagination';
 
 import ExportExcel from '@/components/shared/ExportExcel';
 import Breadcrumb from '@/components/Breadcrumb';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 const StoreList: React.FC = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user: currentUser } = useSelector((state: RootState) => state.auth);
-  const { items: stores, loading, error, filters, pagination } = useSelector((state: RootState) => state.stores);
+  const { items: stores, loading, error, filters, pagination, sorting } = useSelector((state: RootState) => state.stores);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showLogForm, setShowLogForm] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -47,13 +48,20 @@ const StoreList: React.FC = () => {
     }
   };
 
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setStoreSorting({ sortBy: field, sortOrder: newOrder }));
+  };
+
   useEffect(() => {
     (dispatch as any)(fetchStores({
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
-      search: filters.search
+      search: filters.search,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, pagination.currentPage, pagination.itemsPerPage, filters.search]);
+  }, [dispatch, pagination.currentPage, pagination.itemsPerPage, filters.search, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = stores;
@@ -124,10 +132,10 @@ const StoreList: React.FC = () => {
           <thead>
             <tr className="bg-light">
               <th className="ps-4 py-3 border-0 small fw-bold text-muted">Sno</th>
-              <th className="py-3 border-0 small fw-bold text-muted">Shop Name</th>
-              <th className="py-3 border-0 small fw-bold text-muted">Owner</th>
-              <th className="py-3 border-0 small fw-bold text-muted">Phone</th>
-              <th className="py-3 border-0 small fw-bold text-muted">Area / Cluster</th>
+              <SortableHeader field="name" label="Shop Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+              <SortableHeader field="owner_name" label="Owner" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+              <SortableHeader field="phone" label="Phone" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+              <SortableHeader field="area" label="Area / Cluster" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
               <th className="py-3 border-0 small fw-bold text-muted">Last Visit</th>
               <th className="text-end pe-4 py-3 border-0 small fw-bold text-muted">Actions</th>
             </tr>

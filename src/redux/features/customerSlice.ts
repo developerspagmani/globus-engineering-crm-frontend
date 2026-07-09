@@ -14,9 +14,11 @@ export const fetchCustomers = createAsyncThunk(
     industry?: string;
     fromDate?: string;
     toDate?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id, status, industry, fromDate, toDate } = params;
+      const { company_id, page = 1, limit = 10, search, id, status, industry, fromDate, toDate, sortBy, sortOrder } = params;
       let url = `/customers?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -25,6 +27,8 @@ export const fetchCustomers = createAsyncThunk(
       if (industry && industry !== 'all') url += `&industry=${encodeURIComponent(industry)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -90,6 +94,10 @@ interface CustomerState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
 }
 
 const initialState: CustomerState = {
@@ -109,6 +117,10 @@ const initialState: CustomerState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'customer_name',
+    sortOrder: 'desc',
+  },
 };
 
 const customerSlice = createSlice({
@@ -121,6 +133,10 @@ const customerSlice = createSlice({
     },
     setPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting = action.payload;
+      state.pagination.currentPage = 1;
     },
   },
   extraReducers: (builder) => {
@@ -271,7 +287,7 @@ const customerSlice = createSlice({
   }
 });
 
-export const { setFilters, setPage } = customerSlice.actions;
+export const { setFilters, setPage, setSorting } = customerSlice.actions;
 
 export const addCustomer = createCustomer;
 export default customerSlice.reducer;

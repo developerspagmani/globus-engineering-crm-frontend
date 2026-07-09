@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk, setItemPage, setItemSearch } from '@/redux/features/masterSlice';
+import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk, setItemPage, setItemSearch, setItemSorting } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -14,11 +14,12 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 
 export default function ItemDetailsPage() {
   const dispatch = useDispatch();
-  const { items, pagination, loading, filters } = useSelector((state: RootState) => state.master);
+  const { items, pagination, loading, filters, sorting } = useSelector((state: RootState) => state.master);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [view, setView] = useState<'add' | 'list'>('list');
@@ -38,11 +39,18 @@ export default function ItemDetailsPage() {
       company_id: company?.id,
       page: pagination.itemPage,
       limit: pagination.itemsPerPage,
-      search: filters.itemSearch
+      search: filters.itemSearch,
+      sortBy: sorting.itemSortBy,
+      sortOrder: sorting.itemSortOrder
     }));
-  }, [dispatch, company?.id, pagination.itemPage, pagination.itemsPerPage, filters.itemSearch]);
+  }, [dispatch, company?.id, pagination.itemPage, pagination.itemsPerPage, filters.itemSearch, sorting.itemSortBy, sorting.itemSortOrder]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.itemSortBy === field && sorting.itemSortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setItemSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -372,8 +380,8 @@ export default function ItemDetailsPage() {
                       <thead className="bg-light">
                         <tr>
                           <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '80px' }}>Sno</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '150px' }}>Item Code</th>
-                          <th className="px-4 py-3 text-capitalize small fw-bold">Item Name</th>
+                          <SortableHeader field="item_code" label="Item Code" currentSortBy={sorting.itemSortBy} currentSortOrder={sorting.itemSortOrder} onSort={handleSort} className="px-4 py-3 text-capitalize small fw-bold" style={{ width: '150px' }} />
+                          <SortableHeader field="item_name" label="Item Name" currentSortBy={sorting.itemSortBy} currentSortOrder={sorting.itemSortOrder} onSort={handleSort} className="px-4 py-3 text-capitalize small fw-bold" />
                           <th className="px-4 py-3 text-capitalize small fw-bold text-end" style={{ width: '180px' }}>Actions</th>
                         </tr>
                       </thead>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchOutwards, deleteOutward, setOutwardFilters, setOutwardPage, resetOutwardState } from '@/redux/features/outwardSlice';
+import { fetchOutwards, deleteOutward, setOutwardFilters, setOutwardPage, setOutwardSorting, resetOutwardState } from '@/redux/features/outwardSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import html2canvas from 'html2canvas';
 
@@ -24,7 +25,7 @@ export default function OutwardListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyTypeFilter = searchParams.get('type') as 'customer' | 'vendor' | null;
-  const { items: outwards, filters, pagination, loading } = useSelector((state: RootState) => state.outward);
+  const { items: outwards, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.outward);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
@@ -47,15 +48,22 @@ export default function OutwardListPage() {
       partyType: partyTypeFilter || filters.partyType,
       status: filters.status,
       fromDate: filters.fromDate,
-      toDate: filters.toDate
+      toDate: filters.toDate,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate]);
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
   const paginatedOutwards = outwards;
 
   const handleDeleteParams = (id: string) => { setDeleteModal({ isOpen: true, id }); };
   const confirmDelete = () => { if (deleteModal.id) (dispatch as any)(deleteOutward(deleteModal.id)); };
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setOutwardSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const [downloadingItem, setDownloadingItem] = useState<any>(null);
   const downloadRef = React.useRef<HTMLDivElement>(null);
@@ -160,13 +168,13 @@ export default function OutwardListPage() {
                 <thead className="bg-light">
                   <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-4 border-0">SNO</th>
-                    <th className="py-4 border-0">OUTWARD NO</th>
-                    <th className="py-4 border-0">PARTY (CUSTOMER/VENDOR)</th>
-                    <th className="py-4 border-0">TYPE</th>
-                    <th className="py-4 border-0">INVOICE REF</th>
-                    <th className="py-4 border-0">VEHICLE NO</th>
-                    <th className="py-4 border-0">DATE</th>
-                    <th className="py-4 border-0">STATUS</th>
+                    <SortableHeader field="outward_no" label="OUTWARD NO" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="customer_name" label="PARTY (CUSTOMER/VENDOR)" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="party_type" label="TYPE" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="invoice_reference" label="INVOICE REF" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="vehicle_no" label="VEHICLE NO" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="date" label="DATE" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="status" label="STATUS" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
                     <th className="py-4 border-0 text-center px-4" style={{ width: '130px' }}>ACTION</th>
                   </tr>
                 </thead>

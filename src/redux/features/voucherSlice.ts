@@ -16,9 +16,11 @@ export const fetchVouchers = createAsyncThunk(
     partyId?: string;
     partyType?: string;
     id?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, type, status, fromDate, toDate, partyId, id } = params;
+      const { company_id, page = 1, limit = 10, search, type, status, fromDate, toDate, partyId, id, sortBy, sortOrder } = params;
       let url = `/vouchers?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -29,6 +31,8 @@ export const fetchVouchers = createAsyncThunk(
       if (toDate) url += `&toDate=${toDate}`;
       if (partyId) url += `&partyId=${partyId}`;
       if (id) url += `&id=${id}`;
+      if (sortBy) url += `&sortBy=${sortBy}`;
+      if (sortOrder) url += `&sortOrder=${sortOrder}`;
       
       const response = await api.get(url);
       return {
@@ -172,6 +176,10 @@ interface VoucherState {
     totalItems: number;
     totalPages: number;
   };
+  sorting: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+  };
   aggregates: {
     totalCollected: number;
     totalTDS: number;
@@ -197,6 +205,10 @@ const initialState: VoucherState = {
     totalItems: 0,
     totalPages: 0,
   },
+  sorting: {
+    sortBy: 'date',
+    sortOrder: 'desc',
+  },
   aggregates: {
     totalCollected: 0,
     totalTDS: 0,
@@ -214,6 +226,11 @@ const voucherSlice = createSlice({
     },
     setVoucherPage: (state, action: PayloadAction<number>) => {
       state.pagination.currentPage = action.payload;
+    },
+    setVoucherSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
+      state.sorting.sortBy = action.payload.sortBy;
+      state.sorting.sortOrder = action.payload.sortOrder;
+      state.pagination.currentPage = 1;
     },
     resetVoucherState: (state) => {
       state.filters = initialState.filters;
@@ -292,6 +309,7 @@ const voucherSlice = createSlice({
 export const {
   setVoucherFilters,
   setVoucherPage,
+  setVoucherSorting,
   resetVoucherState
 } = voucherSlice.actions;
 

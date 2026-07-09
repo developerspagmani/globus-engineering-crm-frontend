@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/redux/store';
-import { deleteVendor, setVendorPage, fetchVendors } from '@/redux/features/vendorSlice';
+import { deleteVendor, setVendorPage, fetchVendors, setVendorSorting } from '@/redux/features/vendorSlice';
 import Link from 'next/link';
 import { Vendor } from '@/types/modules';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { useRouter } from 'next/navigation';
 
@@ -17,7 +18,7 @@ const VendorTable: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.vendors);
+  const { items, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.vendors);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
@@ -29,15 +30,22 @@ const VendorTable: React.FC = () => {
       search: filters.search,
       status: filters.status,
       fromDate: filters.fromDate,
-      toDate: filters.toDate
+      toDate: filters.toDate,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
  
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
 
   const handleDelete = (id: string) => {
     setDeleteModal({ isOpen: true, id });
+  };
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setVendorSorting({ sortBy: field, sortOrder: newOrder }));
   };
 
   const confirmDelete = () => {
@@ -95,10 +103,10 @@ const VendorTable: React.FC = () => {
             <thead className="bg-light">
               <tr className="text-uppercase small fw-bold text-muted">
                 <th className="px-4 py-3 border-0">Sno</th>
-                <th className="py-3 border-0">Vendor Name</th>
-                <th className="py-3 border-0">Email</th>
-                <th className="py-3 border-0">Phone Number</th>
-                <th className="py-3 border-0">GSTN</th>
+                <SortableHeader field="name" label="Vendor Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                <SortableHeader field="email_" label="Email" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                <SortableHeader field="phone" label="Phone Number" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                <SortableHeader field="gst" label="GSTN" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
                 <th className="py-3 border-0 text-center px-4" style={{ width: '120px' }}>Action</th>
               </tr>
             </thead>

@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { deleteCustomer, setPage, fetchCustomers } from '@/redux/features/customerSlice';
+import { deleteCustomer, setPage, fetchCustomers, setSorting } from '@/redux/features/customerSlice';
 import Link from 'next/link';
 import { Customer } from '@/types/modules';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 import Loader from '@/components/Loader';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -19,7 +20,7 @@ const CustomerTable: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading } = useSelector((state: RootState) => state.customers);
+  const { items, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.customers);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
@@ -31,15 +32,22 @@ const CustomerTable: React.FC = () => {
       search: filters.search,
       status: filters.status,
       fromDate: filters.fromDate,
-      toDate: filters.toDate
+      toDate: filters.toDate,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
 
   const handleDeleteParams = (id: string) => {
     setDeleteModal({ isOpen: true, id });
+  };
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setSorting({ sortBy: field, sortOrder: newOrder }));
   };
 
   const confirmDelete = () => {
@@ -95,11 +103,11 @@ const CustomerTable: React.FC = () => {
             <thead className="bg-light">
               <tr>
                 <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
-                <th className="py-3 border-0 small fw-bold text-muted">Customer Name</th>
-                <th className="py-3 border-0 small fw-bold text-muted">Email</th>
-                <th className="py-3 border-0 small fw-bold text-muted">Phone Number</th>
-                <th className="py-3 border-0 small fw-bold text-muted">GST Identification</th>
-                <th className="py-3 border-0 small fw-bold text-muted">Created On</th>
+                <SortableHeader field="customer_name" label="Customer Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                <SortableHeader field="email" label="Email" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                <SortableHeader field="phone" label="Phone Number" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                <SortableHeader field="gst" label="GST Identification" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                <SortableHeader field="app_created_at" label="Created On" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
                 <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
               </tr>
             </thead>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchInwards, deleteInward, setInwardFilters, setInwardPage, resetInwardState } from '@/redux/features/inwardSlice';
+import { fetchInwards, deleteInward, setInwardFilters, setInwardPage, setInwardSorting, resetInwardState } from '@/redux/features/inwardSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
+import SortableHeader from '@/components/shared/SortableHeader';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -24,7 +25,7 @@ export default function InwardListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyTypeFilter = searchParams.get('type') as 'customer' | 'vendor' | null;
-  const { items: inwards, filters, pagination, loading } = useSelector((state: RootState) => state.inward);
+  const { items: inwards, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.inward);
   const { company, user } = useSelector((state: RootState) => state.auth);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
@@ -46,15 +47,22 @@ export default function InwardListPage() {
       partyType: partyTypeFilter || filters.partyType,
       status: filters.status !== 'all' ? filters.status : undefined,
       fromDate: filters.fromDate,
-      toDate: filters.toDate
+      toDate: filters.toDate,
+      sortBy: sorting.sortBy,
+      sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate]);
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
   const paginatedInwards = inwards;
 
   const handleDeleteParams = (id: string) => {
     setDeleteModal({ isOpen: true, id });
+  };
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setInwardSorting({ sortBy: field, sortOrder: newOrder }));
   };
 
   const confirmDelete = () => {
@@ -177,11 +185,11 @@ export default function InwardListPage() {
                 <thead className="bg-light">
                   <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-4 border-0">SNO</th>
-                    <th className="py-4 border-0">PARTY</th>
-                    <th className="py-4 border-0">PO NO</th>
-                    <th className="py-4 border-0">DC NO</th>
-                    <th className="py-4 border-0">TYPE</th>
-                    <th className="py-4 border-0">INWARD DATE</th>
+                    <SortableHeader field="customer_name" label="PARTY" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="po_reference" label="PO NO" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="dc_no" label="DC NO" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="party_type" label="TYPE" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="date" label="INWARD DATE" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
                     <th className="py-4 border-0 text-center px-4" style={{ width: '130px' }}>ACTION</th>
                   </tr>
                 </thead>

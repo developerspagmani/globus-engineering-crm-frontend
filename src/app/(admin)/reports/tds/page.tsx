@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchVouchers, setVoucherPage, setVoucherFilters } from '@/redux/features/voucherSlice';
+import { fetchVouchers, setVoucherPage, setVoucherFilters, setVoucherSorting } from '@/redux/features/voucherSlice';
 import Link from 'next/link';
 import Loader from '@/components/Loader';
 import ReportActions from '@/components/ReportActions';
@@ -11,12 +11,13 @@ import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import api from '@/lib/axios';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 const TDSReportPage = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading, aggregates } = useSelector((state: RootState) => state.voucher);
+  const { items, filters, pagination, loading, aggregates, sorting } = useSelector((state: RootState) => state.voucher);
 
   useEffect(() => {
     setMounted(true);
@@ -29,10 +30,17 @@ const TDSReportPage = () => {
         type: filters.type,
         partyType: (filters as any).partyType,
         fromDate: filters.fromDate,
-        toDate: filters.toDate
+        toDate: filters.toDate,
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, (filters as any).partyType, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, (filters as any).partyType, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setVoucherSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   if (!mounted) return null;
 
@@ -207,16 +215,16 @@ const TDSReportPage = () => {
           <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
             <table className="table table-hover align-middle mb-0">
               <thead>
-                <tr className="bg-light">
+                <tr className="bg-light text-capitalize">
                   <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Voucher Info</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Date</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Party / Account</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-end">Amount</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-end">TDS</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-end">Others</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-center">Mode</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Status</th>
+                  <SortableHeader field="voucher_no" label="Voucher Info" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="date" label="Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="party_name" label="Party / Account" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="amount" label="Amount" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-end" />
+                  <SortableHeader field="tds_amount" label="TDS" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-end" />
+                  <SortableHeader field="others_amount" label="Others" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-end" />
+                  <SortableHeader field="payment_mode" label="Mode" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-center" />
+                  <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-center px-4" />
                 </tr>
               </thead>
               <tbody>

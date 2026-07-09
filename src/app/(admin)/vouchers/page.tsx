@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
-import { setVoucherFilters, setVoucherPage, fetchVouchers, deleteVoucher, resetVoucherState } from '@/redux/features/voucherSlice';
+import { setVoucherFilters, setVoucherPage, fetchVouchers, deleteVoucher, resetVoucherState, setVoucherSorting } from '@/redux/features/voucherSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
@@ -17,13 +17,14 @@ import PaginationComponent from '@/components/shared/Pagination';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import html2canvas from 'html2canvas';
+import SortableHeader from '@/components/shared/SortableHeader';
 
 
 const VoucherPage = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, loading, aggregates } = useSelector((state: RootState) => state.voucher);
+  const { items, filters, pagination, loading, aggregates, sorting } = useSelector((state: RootState) => state.voucher);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
 
@@ -46,13 +47,20 @@ const VoucherPage = () => {
         partyType: filters.partyType,
         status: filters.status,
         fromDate: filters.fromDate,
-        toDate: filters.toDate
+        toDate: filters.toDate,
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.partyType, filters.status, filters.fromDate, filters.toDate]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.partyType, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setVoucherSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -260,14 +268,14 @@ const VoucherPage = () => {
               <thead>
                 <tr className="bg-light">
                   <th className="px-4 py-3 border-0 small fw-bold text-muted">Sno</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Voucher Info</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Date</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Party / Account</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-end">Amount</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-end">TDS</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-end">Others</th>
-                  <th className="py-3 border-0 small fw-bold text-muted">Mode</th>
-                  <th className="py-3 border-0 small fw-bold text-muted text-center">Status</th>
+                  <SortableHeader field="voucher_no" label="Voucher Info" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="date" label="Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="party_name" label="Party / Account" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="amount" label="Amount" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-end" />
+                  <SortableHeader field="tds_amount" label="TDS" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-end" />
+                  <SortableHeader field="others_amount" label="Others" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-end" />
+                  <SortableHeader field="payment_mode" label="Mode" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted" />
+                  <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 small fw-bold text-muted text-center" />
                   <th className="py-3 border-0 small fw-bold text-muted text-center px-4">Action</th>
                 </tr>
               </thead>

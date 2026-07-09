@@ -14,6 +14,8 @@ import autoTable from 'jspdf-autotable';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import PaginationComponent from '@/components/shared/Pagination';
 import api from '@/lib/axios';
+import SortableHeader from '@/components/shared/SortableHeader';
+import { setInvoiceSorting } from '@/redux/features/invoiceSlice';
 
 const InvoiceReportPage = () => {
   const router = useRouter();
@@ -25,7 +27,7 @@ const InvoiceReportPage = () => {
   const [toDate, setToDate] = useState('');
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: invoices, pagination, loading, aggregates } = useSelector((state: RootState) => state.invoices);
+  const { items: invoices, pagination, loading, aggregates, sorting } = useSelector((state: RootState) => state.invoices);
 
   useEffect(() => {
     setMounted(true);
@@ -39,10 +41,17 @@ const InvoiceReportPage = () => {
         fromDate: fromDate,
         toDate: toDate,
         partyType: partyType,
-        type: 'all' // Show all invoices to match live counts
+        type: 'all', // Show all invoices to match live counts
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate, partyType]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate, partyType, sorting.sortBy, sorting.sortOrder]);
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setInvoiceSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
@@ -220,12 +229,12 @@ const InvoiceReportPage = () => {
                 <thead className="bg-light">
                   <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Date</th>
-                    <th className="py-3 border-0">Invoice No</th>
-                    <th className="py-3 border-0">Customer Name</th>
-                    <th className="py-3 border-0 text-end">Subtotal</th>
-                    <th className="py-3 border-0 text-end">Taxes</th>
-                    <th className="py-3 border-0 text-end">Grand Total</th>
+                    <SortableHeader field="date" label="Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                    <SortableHeader field="invoice_number" label="Invoice No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                    <SortableHeader field="customer_name" label="Customer Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                    <SortableHeader field="sub_total" label="Subtotal" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end" />
+                    <SortableHeader field="tax_total" label="Taxes" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end" />
+                    <SortableHeader field="grand_total" label="Grand Total" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end" />
                     <th className="py-3 border-0 text-center px-4" style={{ width: '120px' }}>Action</th>
                   </tr>
                 </thead>

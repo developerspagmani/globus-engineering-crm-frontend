@@ -14,6 +14,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import PaginationComponent from '@/components/shared/Pagination';
 import api from '@/lib/axios';
+import SortableHeader from '@/components/shared/SortableHeader';
+import { setInvoiceSorting } from '@/redux/features/invoiceSlice';
 
 const GstReportPage = () => {
   const [mounted, setMounted] = useState(false);
@@ -24,7 +26,7 @@ const GstReportPage = () => {
   const [toDate, setToDate] = useState("");
   const dispatch = useDispatch();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: invoices, pagination, loading: invLoading, aggregates } = useSelector((state: RootState) => state.invoices);
+  const { items: invoices, pagination, loading: invLoading, aggregates, sorting } = useSelector((state: RootState) => state.invoices);
   const { items: customers, loading: custLoading } = useSelector((state: RootState) => state.customers);
 
   useEffect(() => { 
@@ -39,11 +41,18 @@ const GstReportPage = () => {
         fromDate: fromDate,
         toDate: toDate,
         partyType: partyType,
-        type: 'all' // Show all invoices to match live counts
+        type: 'all', // Show all invoices to match live counts
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder
       })); 
       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id })); 
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate, partyType]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, search, statusFilter, fromDate, toDate, partyType, sorting.sortBy, sorting.sortOrder]);
+
+  const handleSort = (field: string) => {
+    const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
+    dispatch(setInvoiceSorting({ sortBy: field, sortOrder: newOrder }));
+  };
 
   const handleFetchAllForExport = async () => {
     if (!activeCompany?.id) return { headers: [], data: [] };
@@ -245,15 +254,15 @@ const GstReportPage = () => {
                 <thead className="bg-light">
                   <tr className="text-capitalize small fw-bold text-muted">
                     <th className="px-4 py-3 border-0">Sno</th>
-                    <th className="py-3 border-0">Received Date</th>
-                    <th className="py-3 border-0">Customer</th>
-                    <th className="py-3 border-0">GST TIN</th>
-                    <th className="py-3 border-0 text-center">Dc No</th>
-                    <th className="py-3 border-0 text-center">Invoice No</th>
-                    <th className="py-3 border-0 text-end">Amount</th>
-                    <th className="py-3 border-0 text-end">CGST</th>
-                    <th className="py-3 border-0 text-end">SGST</th>
-                    <th className="py-3 border-0 text-end">IGST</th>
+                    <SortableHeader field="date" label="Received Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                    <SortableHeader field="customer_name" label="Customer" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                    <SortableHeader field="gstin" label="GST TIN" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0" />
+                    <SortableHeader field="dc_no" label="Dc No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-center" />
+                    <SortableHeader field="invoice_number" label="Invoice No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-center" />
+                    <SortableHeader field="grand_total" label="Amount" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end" />
+                    <SortableHeader field="tax_total" label="CGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end" />
+                    <SortableHeader field="tax_total" label="SGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end" />
+                    <SortableHeader field="tax_total" label="IGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 border-0 text-end" />
                     <th className="py-3 border-0 text-center px-4" style={{ width: '80px' }}>Action</th>
                   </tr>
                 </thead>
