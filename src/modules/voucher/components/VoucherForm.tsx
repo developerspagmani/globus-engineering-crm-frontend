@@ -741,6 +741,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     const isWOP = inv.billType === 'Without Process' || inv.billType === 'without_process' || inv.bill_type === 'Without Process' || inv.bill_type === 'without_process';
     if (isWOP) return false;
 
+    // Only show invoices from 2025 onwards (unless already selected, handled above)
+    const invDateStr = inv.invoiceDate || inv.invoice_date || inv.date;
+    if (invDateStr && new Date(invDateStr) < new Date('2025-01-01T00:00:00.000Z')) {
+      return false;
+    }
+
     const pendingAmount = Number(inv.grandTotal || 0) - Number(inv.paidAmount || 0);
     const isNotPaid = inv.status?.toLowerCase() !== 'paid' && inv.status?.toLowerCase() !== 'completed' && pendingAmount > 0;
     
