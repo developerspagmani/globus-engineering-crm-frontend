@@ -41,14 +41,14 @@ export default function AdminLayout({
   return (
     <div className="admin-container">
       {!isSalesMap && (
-        <React.Suspense fallback={<div className="sidebar" style={{ width: sidebarCollapsed ? '80px' : '260px' }}></div>}>
-          <AdminSidebar collapsed={sidebarCollapsed} />
+        <React.Suspense fallback={<div className="sidebar d-print-none" style={{ width: sidebarCollapsed ? '80px' : '260px' }}></div>}>
+          <div className="d-print-none"><AdminSidebar collapsed={sidebarCollapsed} /></div>
         </React.Suspense>
       )}
-      <main className={`main-wrapper ${isSalesMap ? '' : (sidebarCollapsed ? 'expanded' : '')}`} style={isSalesMap ? { marginLeft: 0 } : {}}>
+      <main className={`main-wrapper print-full-width ${isSalesMap ? '' : (sidebarCollapsed ? 'expanded' : '')}`} style={isSalesMap ? { marginLeft: 0 } : {}}>
         {!isSalesMap && (
-          <React.Suspense fallback={<div className="h-16"></div>}>
-            <AdminNavbar onToggleSidebar={toggleSidebar} />
+          <React.Suspense fallback={<div className="h-16 d-print-none"></div>}>
+            <div className="d-print-none"><AdminNavbar onToggleSidebar={toggleSidebar} /></div>
           </React.Suspense>
         )}
         <div className={`content-area ${isSalesMap ? 'p-0 m-0' : ''}`}>

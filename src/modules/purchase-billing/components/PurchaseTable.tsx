@@ -14,9 +14,10 @@ import PaginationComponent from '@/components/shared/Pagination';
 interface PurchaseTableProps {
   onEdit: (bill: PurchaseBill) => void;
   onView: (bill: PurchaseBill) => void;
+  onPrint: (bill: PurchaseBill) => void;
 }
 
-const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView }) => {
+const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { items: purchaseBills, pagination, loading, sorting } = useSelector((state: RootState) => state.purchaseBills);
@@ -173,7 +174,7 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView }) => {
                         <button
                           className="btn btn-sm btn-action-print"
                           title="Print"
-                          onClick={() => window.print()}
+                          onClick={() => onPrint(item)}
                           style={{ color: '#0d6efd', background: '#e7f1ff', border: 'none', borderRadius: '6px', width: '28px', height: '28px' }}
                         >
                           <i className="bi bi-printer-fill"></i>

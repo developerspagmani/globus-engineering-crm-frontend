@@ -11,6 +11,7 @@ import PurchaseTable from '@/modules/purchase-billing/components/PurchaseTable';
 import PurchaseForm from '@/modules/purchase-billing/components/PurchaseForm';
 import { PurchaseBill } from '@/types/modules';
 import { checkActionPermission } from '@/config/permissions';
+import PurchaseBillDocument from '@/components/shared/PurchaseBillDocument';
 
 export default function PurchaseBillingPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -21,6 +22,7 @@ export default function PurchaseBillingPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedBill, setSelectedBill] = useState<PurchaseBill | null>(null);
+  const [printBill, setPrintBill] = useState<PurchaseBill | null>(null);
 
   // Filter local state
   const [search, setSearch] = useState(filters.search);
@@ -81,6 +83,11 @@ export default function PurchaseBillingPage() {
     setFormOpen(true);
   };
 
+  const handlePrintBill = (bill: PurchaseBill) => {
+    setPrintBill(bill);
+    setTimeout(() => window.print(), 300);
+  };
+
   if (!mounted) return null;
 
   // Calculate high-level metrics for Summary Cards
@@ -94,7 +101,7 @@ export default function PurchaseBillingPage() {
       <div className="container-fluid py-4 animate-fade-in px-4">
         
         {/* Header Block */}
-        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 d-print-none">
           <div>
             <Breadcrumb items={[{ label: 'Purchase Hub', active: true }]} />
             <h2 className="fw-900 tracking-tight text-dark mb-1 mt-2">Purchase Billing</h2>
@@ -134,7 +141,7 @@ export default function PurchaseBillingPage() {
         </div>
 
         {/* Analytics Widgets */}
-        <div className="row g-4 mb-4">
+        <div className="row g-4 mb-4 d-print-none">
           {/* Total Purchased Amount */}
           <div className="col-md-3">
             <div className="card border-0 shadow-sm rounded-4 h-100">
@@ -177,7 +184,7 @@ export default function PurchaseBillingPage() {
         </div>
 
         {/* Filter Section */}
-        <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white d-print-none">
           <form onSubmit={handleApplyFilters} className="row g-3 align-items-end">
             <div className="col-md-4">
               <label className="form-label text-muted small fw-bold text-uppercase">Search</label>
@@ -219,7 +226,9 @@ export default function PurchaseBillingPage() {
         </div>
 
         {/* Listing Table */}
-        <PurchaseTable onEdit={handleEditBill} onView={handleViewBill} />
+        <div className="d-print-none">
+          <PurchaseTable onEdit={handleEditBill} onView={handleViewBill} onPrint={handlePrintBill} />
+        </div>
 
         {/* Form Modal (Add / Edit / View) */}
         <PurchaseForm
@@ -231,6 +240,13 @@ export default function PurchaseBillingPage() {
             setSelectedBill(null);
           }}
         />
+
+        {/* Industrial Print Area */}
+        {printBill && (
+          <div className="d-none d-print-block" id="purchase-bill-print-area" style={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 9999 }}>
+            <PurchaseBillDocument bill={printBill} company={activeCompany} />
+          </div>
+        )}
 
       </div>
     </ModuleGuard>

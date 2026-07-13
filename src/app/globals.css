@@ -2331,3 +2331,4 @@ input[type="number"] {
 *, *::before, *::after, html, body { 
   font-family: var(--font-inter), 'Inter', sans-serif; 
 }
+@media print { .print-full-width { margin-left: 0 !important; width: 100% !important; } body { background: #fff !important; } }
