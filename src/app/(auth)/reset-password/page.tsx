@@ -4,22 +4,42 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 
 export default function ResetPasswordPage() {
+  const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const api = (await import('@/lib/axios')).default;
+      const res = await api.post('/auth/forgot-password', { email });
+      setSuccessMsg(res.data.message || 'OTP sent successfully!');
+      setStep(2);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
       const api = (await import('@/lib/axios')).default;
-      await api.post('/auth/reset-password', { email, password });
+      await api.post('/auth/reset-password-otp', { email, otp, newPassword });
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to reset password');
+      setError(err.response?.data?.error || 'Failed to reset password. Check your OTP.');
     } finally {
       setLoading(false);
     }
@@ -43,7 +63,9 @@ export default function ResetPasswordPage() {
                 {/* Header Section */}
                 <div className="text-center mb-5">
                   <h2 className="fw-900 text-dark tracking-tight mb-2">Reset Password</h2>
-                  <p className="text-muted small px-3">Update your access key directly</p>
+                  <p className="text-muted small px-3">
+                    {step === 1 ? 'Enter your email to receive a secure code.' : 'Enter the code from your email to set a new password.'}
+                  </p>
                 </div>
 
                 {error && (
@@ -52,10 +74,30 @@ export default function ResetPasswordPage() {
                     <span>{error}</span>
                   </div>
                 )}
+                {successMsg && !submitted && (
+                  <div className="alert alert-success d-flex align-items-center mb-4 py-2 px-3 small border-0 bg-success bg-opacity-10 text-success fw-bold">
+                    <i className="bi bi-check-circle-fill me-2 fs-5"></i>
+                    <span>{successMsg}</span>
+                  </div>
+                )}
                 
-                {!submitted ? (
-                  <form onSubmit={handleSubmit} className="px-md-2">
-                    <div className="mb-4">
+                {submitted ? (
+                  <div className="text-center py-4 animate-fade-up">
+                    <div className="success-icon-container mx-auto mb-4 bg-success bg-opacity-10 text-success">
+                      <i className="bi bi-check2-circle display-4"></i>
+                    </div>
+                    <h4 className="fw-800 mb-3 text-dark">Password Updated</h4>
+                    <p className="text-muted small mb-5 px-4">
+                      Your password has been successfully reset. You can now use your new password to sign in.
+                    </p>
+                    <Link href="/login" className="btn-auth-outline d-inline-flex align-items-center justify-content-center gap-2">
+                      <span>Return to Login</span>
+                      <i className="bi bi-arrow-right"></i>
+                    </Link>
+                  </div>
+                ) : step === 1 ? (
+                  <form onSubmit={handleSendOtp} className="px-md-2 animate-fade-in">
+                    <div className="mb-5">
                       <label className="field-label">Account Email</label>
                       <div className="premium-input-wrapper">
                         <div className="input-icon">
@@ -72,6 +114,67 @@ export default function ResetPasswordPage() {
                       </div>
                     </div>
 
+                    <button
+                      type="submit"
+                      className="btn-auth-primary d-flex align-items-center justify-content-center gap-2 mb-4"
+                      disabled={loading || !email}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                          <span>Sending Code...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Send Code</span>
+                          <i className="bi bi-send-fill fs-6"></i>
+                        </>
+                      )}
+                    </button>
+                    
+                    <div className="text-center mt-5">
+                      <Link href="/login" className="btn-auth-ghost small">
+                        <i className="bi bi-arrow-left me-2"></i>
+                        Back to Login
+                      </Link>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResetPassword} className="px-md-2 animate-fade-in">
+                    <div className="mb-4">
+                      <label className="field-label">Account Email</label>
+                      <div className="premium-input-wrapper bg-light opacity-75">
+                        <div className="input-icon">
+                          <i className="bi bi-envelope-at"></i>
+                        </div>
+                        <input
+                          type="email"
+                          className="premium-input bg-transparent"
+                          value={email}
+                          disabled
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="field-label">6-Digit Code</label>
+                      <div className="premium-input-wrapper">
+                        <div className="input-icon">
+                          <i className="bi bi-shield-lock"></i>
+                        </div>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="e.g. 123456"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          required
+                          maxLength={6}
+                          style={{ letterSpacing: '2px', fontWeight: 'bold' }}
+                        />
+                      </div>
+                    </div>
+
                     <div className="mb-5">
                       <label className="field-label">New Password</label>
                       <div className="premium-input-wrapper">
@@ -82,8 +185,8 @@ export default function ResetPasswordPage() {
                           type="password"
                           className="premium-input"
                           placeholder="Enter new password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
                           required
                           minLength={6}
                         />
@@ -92,47 +195,34 @@ export default function ResetPasswordPage() {
 
                     <button
                       type="submit"
-                      className="btn-auth-primary d-flex align-items-center justify-content-center gap-2 mb-3"
-                      disabled={loading}
+                      className="btn-auth-primary d-flex align-items-center justify-content-center gap-2 mb-4"
+                      disabled={loading || !otp || !newPassword}
                     >
                       {loading ? (
                         <>
                           <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                          <span>Saving...</span>
+                          <span>Updating...</span>
                         </>
                       ) : (
                         <>
-                          <span>Save Password</span>
+                          <span>Verify & Reset Password</span>
                           <i className="bi bi-check-circle-fill fs-6"></i>
                         </>
                       )}
                     </button>
                     
-                    <div className="text-center mt-4">
-                      <Link href="/login" className="x-small text-accent fw-800 text-decoration-none text-uppercase tracking-wider">
-                        Return to Login
-                      </Link>
+                    <div className="text-center mt-5">
+                      <button 
+                        type="button"
+                        onClick={() => setStep(1)} 
+                        className="btn-auth-ghost small border-0 bg-transparent"
+                      >
+                        <i className="bi bi-arrow-left me-2"></i>
+                        Use a different email
+                      </button>
                     </div>
                   </form>
-                ) : (
-                  <div className="text-center py-4 animate-fade-in">
-                    <div className="mb-4 text-success">
-                      <div className="bg-success bg-opacity-10 d-inline-block p-4 rounded-circle mb-3">
-                        <i className="bi bi-shield-check fs-1"></i>
-                      </div>
-                    </div>
-                    <h4 className="fw-900 text-dark mb-2">Password Updated</h4>
-                    <p className="small text-muted mb-5">Your password has been successfully updated in the database. You can now use it to log in.</p>
-                    <Link href="/login" className="btn btn-outline-primary rounded-pill px-5 fw-800 tracking-wider text-uppercase small">
-                      Return to Login
-                    </Link>
-                  </div>
                 )}
-              </div>
-
-              <div className="card-status-bar">
-                <div className="status-indicator"></div>
-                <span className="x-small text-muted fw-700 tracking-widest text-uppercase">Recovery System Operational</span>
               </div>
             </div>
           </div>
