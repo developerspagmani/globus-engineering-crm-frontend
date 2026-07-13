@@ -19,6 +19,7 @@ export default function PurchaseBillingPage() {
 
   const [mounted, setMounted] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedBill, setSelectedBill] = useState<PurchaseBill | null>(null);
 
   // Filter local state
@@ -64,11 +65,19 @@ export default function PurchaseBillingPage() {
 
   const handleEditBill = (bill: PurchaseBill) => {
     setSelectedBill(bill);
+    setFormMode('edit');
     setFormOpen(true);
   };
 
   const handleAddBill = () => {
     setSelectedBill(null);
+    setFormMode('create');
+    setFormOpen(true);
+  };
+
+  const handleViewBill = (bill: PurchaseBill) => {
+    setSelectedBill(bill);
+    setFormMode('view');
     setFormOpen(true);
   };
 
@@ -210,12 +219,13 @@ export default function PurchaseBillingPage() {
         </div>
 
         {/* Listing Table */}
-        <PurchaseTable onEdit={handleEditBill} />
+        <PurchaseTable onEdit={handleEditBill} onView={handleViewBill} />
 
-        {/* Form Modal (Add / Edit) */}
+        {/* Form Modal (Add / Edit / View) */}
         <PurchaseForm
           isOpen={formOpen}
           initialData={selectedBill}
+          mode={formMode}
           onClose={() => {
             setFormOpen(false);
             setSelectedBill(null);

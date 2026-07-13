@@ -13,9 +13,10 @@ import PaginationComponent from '@/components/shared/Pagination';
 
 interface PurchaseTableProps {
   onEdit: (bill: PurchaseBill) => void;
+  onView: (bill: PurchaseBill) => void;
 }
 
-const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit }) => {
+const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { items: purchaseBills, pagination, loading, sorting } = useSelector((state: RootState) => state.purchaseBills);
@@ -149,9 +150,17 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit }) => {
                       ₹{item.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
 
-                    {/* Action Dropdown */}
+                    {/* Action Buttons */}
                     <td className="text-center">
                       <div className="d-flex justify-content-center gap-1 align-items-center">
+                        <button
+                          className="btn btn-sm btn-action-view"
+                          title="View"
+                          onClick={() => onView(item)}
+                          style={{ color: '#0dcaf0', background: '#e0f8fb', border: 'none', borderRadius: '6px', width: '28px', height: '28px' }}
+                        >
+                          <i className="bi bi-eye-fill"></i>
+                        </button>
                         {checkActionPermission(user, 'mod_purchase_billing', 'edit') && (
                           <button
                             className="btn btn-sm btn-action-edit"
@@ -161,9 +170,17 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit }) => {
                             <i className="bi bi-pencil-fill"></i>
                           </button>
                         )}
+                        <button
+                          className="btn btn-sm btn-action-print"
+                          title="Print"
+                          onClick={() => window.print()}
+                          style={{ color: '#0d6efd', background: '#e7f1ff', border: 'none', borderRadius: '6px', width: '28px', height: '28px' }}
+                        >
+                          <i className="bi bi-printer-fill"></i>
+                        </button>
                         {checkActionPermission(user, 'mod_purchase_billing', 'delete') && (
                           <button
-                            className="btn btn-sm btn-action-delete ms-1"
+                            className="btn btn-sm btn-action-delete"
                             title="Delete"
                             onClick={() => handleDeleteTrigger(item.id)}
                             style={{ color: '#dc3545', background: '#ffeef0', border: 'none', borderRadius: '6px', width: '28px', height: '28px' }}

@@ -469,6 +469,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         console.log('[VoucherForm] Resolved inwardId:', inwardId, 'inwardNo:', inwardNo);
 
         const currentPaymentItems = formData.selectedInvoices.map(i => ({
+          id: i.id,
           invoiceNo: i.invoiceNo,
           amount: i.amount,
           adjustmentType: i.adjustmentType,
@@ -644,6 +645,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           ...initialData!, 
           ...voucherPayload,
           items: formData.selectedInvoices.map(i => ({
+            id: i.id,
             invoiceNo: i.invoiceNo,
             amount: i.amount,
             adjustmentType: i.adjustmentType,
@@ -939,7 +941,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                       });
                       const invoiceId = inv.id || inv.invoiceNo || Math.random().toString();
                       return (
-                        <React.Fragment key={invoiceId}>
+                        <React.Fragment key={`${invoiceId}-${inv.invoiceNumber || inv.invoiceNo || ''}`}>
                           <tr className="border-bottom border-light">
                             <td className="text-center">
                               <div className="d-flex align-items-center justify-content-center gap-2">

@@ -11,10 +11,11 @@ import { PurchaseBill } from '@/types/modules';
 interface PurchaseFormProps {
   initialData?: PurchaseBill | null;
   isOpen: boolean;
+  mode?: 'create' | 'edit' | 'view';
   onClose: () => void;
 }
 
-const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClose }) => {
+const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode = 'create', onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: vendors } = useSelector((state: RootState) => state.vendors);
@@ -151,23 +152,35 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
   // Real-time CGST/SGST calculator helper
   const applyGstRate = (ratePercent: number) => {
     const halfRate = ratePercent / 2;
-    const computedCgst = (amountNum * halfRate) / 100;
-    const computedSgst = (amountNum * halfRate) / 100;
+    const computedCgst = Number(((amountNum * halfRate) / 100).toFixed(2));
+    const computedSgst = Number(((amountNum * halfRate) / 100).toFixed(2));
+    
+    const rawTotal = amountNum + computedCgst + computedSgst;
+    const roundedTotal = Math.round(rawTotal);
+    const computedRoundOff = Number((roundedTotal - rawTotal).toFixed(2));
+
     setFormData(prev => ({
       ...prev,
       cgst: computedCgst.toFixed(2),
       sgst: computedSgst.toFixed(2),
-      igst: 0
+      igst: 0,
+      roundOff: computedRoundOff
     }));
   };
 
   const applyIgstRate = (ratePercent: number) => {
-    const computedIgst = (amountNum * ratePercent) / 100;
+    const computedIgst = Number(((amountNum * ratePercent) / 100).toFixed(2));
+    
+    const rawTotal = amountNum + computedIgst;
+    const roundedTotal = Math.round(rawTotal);
+    const computedRoundOff = Number((roundedTotal - rawTotal).toFixed(2));
+
     setFormData(prev => ({
       ...prev,
       cgst: '0',
       sgst: '0',
-      igst: computedIgst
+      igst: computedIgst,
+      roundOff: computedRoundOff
     }));
   };
 
@@ -219,7 +232,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
         <div className="modal-content rounded-4 border-0 shadow-lg">
           <div className="modal-header border-bottom-0 p-4">
             <h5 className="modal-title fw-bold text-dark fs-4">
-              {initialData ? 'Edit Purchase Bill' : 'New Purchase Bill Entry'}
+              {mode === 'view' ? 'View Purchase Bill' : initialData ? 'Edit Purchase Bill' : 'New Purchase Bill Entry'}
             </h5>
             <button type="button" className="btn-close shadow-none" onClick={onClose} aria-label="Close"></button>
           </div>
@@ -243,6 +256,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     className="form-control rounded-3 border-light-subtle shadow-none py-2"
                     value={formData.receivedDate}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                     required
                   />
                 </div>
@@ -254,6 +268,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     className="form-select rounded-3 border-light-subtle shadow-none py-2"
                     value={formData.vendorId ? `vendor_${formData.vendorId}` : (formData.customerId ? `customer_${formData.customerId}` : '')}
                     onChange={handlePartySelect}
+                    disabled={mode === 'view'}
                   >
                     <option value="">-- Add Manually / Select Party --</option>
                     <optgroup label="Vendors">
@@ -279,6 +294,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="Enter vendor or company name"
                     value={formData.companyName}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                     required
                   />
                 </div>
@@ -293,6 +309,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="22AAAAA0000A1Z5"
                     value={formData.gstTin}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
@@ -306,6 +323,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="Delivery Challan Number"
                     value={formData.dcNo}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
@@ -319,6 +337,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="Invoice Number"
                     value={formData.invoiceNo}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                     required
                   />
                 </div>
@@ -333,6 +352,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="SAC code"
                     value={formData.sac}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
@@ -347,6 +367,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="0.00"
                     value={formData.qty}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
@@ -361,19 +382,22 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="0.00"
                     value={formData.amount}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
                 {/* Quick GST Actions */}
-                <div className="col-12 py-1">
-                  <div className="d-flex align-items-center gap-2 flex-wrap">
-                    <span className="text-muted small fw-bold me-2">Calculate GST:</span>
-                    <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyGstRate(12)}>CGST+SGST @ 12%</button>
-                    <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyGstRate(18)}>CGST+SGST @ 18%</button>
-                    <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyIgstRate(12)}>IGST @ 12%</button>
-                    <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyIgstRate(18)}>IGST @ 18%</button>
+                {mode !== 'view' && (
+                  <div className="col-12 py-1">
+                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                      <span className="text-muted small fw-bold me-2">Calculate GST:</span>
+                      <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyGstRate(12)}>CGST+SGST @ 12%</button>
+                      <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyGstRate(18)}>CGST+SGST @ 18%</button>
+                      <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyIgstRate(12)}>IGST @ 12%</button>
+                      <button type="button" className="btn btn-sm btn-outline-secondary rounded-pill px-3" onClick={() => applyIgstRate(18)}>IGST @ 18%</button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* CGST */}
                 <div className="col-md-3">
@@ -386,6 +410,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="0.00"
                     value={formData.cgst}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
@@ -400,6 +425,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="0.00"
                     value={formData.sgst}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
@@ -414,6 +440,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="0.00"
                     value={formData.igst}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
 
@@ -428,6 +455,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
                     placeholder="0.00"
                     value={formData.roundOff}
                     onChange={handleChange}
+                    disabled={mode === 'view'}
                   />
                 </div>
               </div>
@@ -445,17 +473,21 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, onClos
             </div>
 
             <div className="modal-footer border-top-0 p-4">
-              <button type="button" className="btn btn-light rounded-3 px-4 shadow-none" onClick={onClose} disabled={submitting}>Cancel</button>
-              <button type="submit" className="btn btn-primary rounded-3 px-4 shadow-none btn-page-action" disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Saving...
-                  </>
-                ) : (
-                  'Save Bill'
-                )}
+              <button type="button" className="btn btn-light rounded-3 px-4 shadow-none" onClick={onClose} disabled={submitting}>
+                {mode === 'view' ? 'Close' : 'Cancel'}
               </button>
+              {mode !== 'view' && (
+                <button type="submit" className="btn btn-primary rounded-3 px-4 shadow-none btn-page-action" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Bill'
+                  )}
+                </button>
+              )}
             </div>
           </form>
         </div>
