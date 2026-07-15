@@ -349,6 +349,12 @@ const inwardSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      .addCase(updateInward.fulfilled, (state, action) => {
+        const index = state.items.findIndex(i => i.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
       .addCase(createInward.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
       })

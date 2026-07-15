@@ -261,7 +261,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         selectedInvoices: (() => {
           // Priority 1: Use structured items array if available
           if (initialData.items && Array.isArray(initialData.items) && initialData.items.length > 0) {
-            return initialData.items.map((it: any) => {
+            const mapped = initialData.items.map((it: any) => {
               // Resolve real UUID from allInvoices to ensure all downstream matching (toggle, detail change) works
               const itNo = String(it.invoiceNo || it.invoice_no || it.id || '').replace(/^0+/, '');
               const resolvedInv = allInvoices.find((i: any) => {
@@ -277,6 +277,14 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
               };
             });
+            
+            const deduplicated = new Map<string, any>();
+            mapped.forEach((item: any) => {
+              if (!deduplicated.has(item.id)) {
+                deduplicated.set(item.id, { ...item });
+              }
+            });
+            return Array.from(deduplicated.values());
           }
 
           // Priority 2: Fallback to parsing referenceNo string (Legacy support)
@@ -310,13 +318,17 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               amount = Number((pending > 0 ? pending : inv.grandTotal).toFixed(2));
             }
             
-            results.push({ 
-              id: inv?.id || invoiceNo, 
-              invoiceNo: inv?.invoiceNumber || invoiceNo, 
-              amount: amount,
-              adjustmentType: adjType,
-              adjustmentValue: adjValue
-            });
+            const key = inv?.id || invoiceNo;
+            const existing = results.find(r => r.id === key);
+            if (!existing) {
+              results.push({ 
+                id: key, 
+                invoiceNo: inv?.invoiceNumber || invoiceNo, 
+                amount: amount,
+                adjustmentType: adjType,
+                adjustmentValue: adjValue
+              });
+            }
           }
           
           if (results.length === 1 && results[0].amount === 0 && initialData.amount > 0) {
@@ -917,7 +929,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   </tr>
                 ) : (
                   <>
-                    {(mode === 'view' ? formData.selectedInvoices : uniqueCustomerInvoices).map((invOrItem: any) => {
+                    {(mode === 'view' ? formData.selectedInvoices : uniqueCustomerInvoices).map((invOrItem: any, index: number) => {
                       const inv: any = mode === 'view' ? (allInvoices.find(i => String(i.id) === String(invOrItem.id)) || invOrItem) : invOrItem;
                       const selectedData = mode === 'view' ? invOrItem : formData.selectedInvoices.find(item => {
                         const itemId = String(item.id || '');
@@ -941,7 +953,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                       });
                       const invoiceId = inv.id || inv.invoiceNo || Math.random().toString();
                       return (
-                        <React.Fragment key={`${invoiceId}-${inv.invoiceNumber || inv.invoiceNo || ''}`}>
+                        <React.Fragment key={`${invoiceId}-${inv.invoiceNumber || inv.invoiceNo || ''}-${index}`}>
                           <tr className="border-bottom border-light">
                             <td className="text-center">
                               <div className="d-flex align-items-center justify-content-center gap-2">

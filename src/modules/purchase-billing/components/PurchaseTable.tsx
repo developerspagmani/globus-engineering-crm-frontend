@@ -53,17 +53,8 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
               {/* This is the empty header column next to Received Date as shown in the screenshot */}
               <th className="fw-semibold px-2 py-3 text-center" style={{ width: '60px' }}></th>
               <SortableHeader field="company_name" label="Company Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '160px' }} />
-              <SortableHeader field="gst_tin" label="GST TIN" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '130px' }} />
-              <SortableHeader field="dc_no" label="D.C No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '100px' }} />
               <SortableHeader field="invoice_no" label="Invoice No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '100px' }} />
-              <SortableHeader field="sac" label="SAC" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-2 py-3 text-center" style={{ minWidth: '70px' }} />
-              <SortableHeader field="qty" label="Qty" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-2 py-3 text-center" style={{ minWidth: '70px' }} />
               <SortableHeader field="amount" label="Amount" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end" style={{ minWidth: '100px' }} />
-              {/* CGST, SGST, IGST, Round Off are styled with red color class */}
-              <SortableHeader field="cgst" label="CGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
-              <SortableHeader field="sgst" label="SGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
-              <SortableHeader field="igst" label="IGST" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
-              <SortableHeader field="round_off" label="Round off" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-danger" style={{ minWidth: '85px' }} />
               <SortableHeader field="grand_total" label="Grand Total" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-primary" style={{ minWidth: '110px' }} />
               <th className="text-center fw-semibold px-3 py-3" style={{ width: '80px' }}>Action</th>
             </tr>
@@ -96,54 +87,14 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
                       {item.companyName || 'N/A'}
                     </td>
 
-                    {/* GST TIN */}
-                    <td className="px-3 text-muted small font-monospace">
-                      {item.gstTin || '-'}
-                    </td>
-
-                    {/* D.C No */}
-                    <td className="px-3 text-muted small">
-                      {item.dcNo || '-'}
-                    </td>
-
                     {/* Invoice No */}
                     <td className="px-3 text-dark small fw-semibold font-monospace">
                       {item.invoiceNo}
                     </td>
 
-                    {/* SAC */}
-                    <td className="px-2 text-center text-muted small font-monospace">
-                      {item.sac || '-'}
-                    </td>
-
-                    {/* Qty */}
-                    <td className="px-2 text-center text-dark font-monospace">
-                      {item.qty || '0'}
-                    </td>
-
                     {/* Amount */}
                     <td className="px-3 text-end font-monospace">
                       ₹{item.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-
-                    {/* CGST - red text */}
-                    <td className="px-3 text-end text-danger font-monospace">
-                      {item.cgst > 0 ? `₹${item.cgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
-                    </td>
-
-                    {/* SGST - red text */}
-                    <td className="px-3 text-end text-danger font-monospace">
-                      {item.sgst > 0 ? `₹${item.sgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
-                    </td>
-
-                    {/* IGST - red text */}
-                    <td className="px-3 text-end text-danger font-monospace">
-                      {item.igst > 0 ? `₹${item.igst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
-                    </td>
-
-                    {/* Round off - red text */}
-                    <td className="px-3 text-end text-danger font-monospace">
-                      {item.roundOff !== 0 ? `₹${item.roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                     </td>
 
                     {/* Grand Total */}

@@ -346,7 +346,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                                     const relevantBal = formData.partyType === 'vendor'
                                       ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
                                       : i.items.reduce((sum: number, it: any) => sum + Math.max(0, (it.invoicedQty || 0) - (it.dispatchedQty || 0)), 0);
-                                    return relevantBal > 0;
+                                    return relevantBal > 0 || String(i.id) === String(formData.inwardId);
                                   })
                                   .map(i => {
                                     const relevantBal = formData.partyType === 'vendor'

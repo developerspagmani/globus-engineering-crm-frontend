@@ -284,6 +284,12 @@ const outwardSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      .addCase(updateOutward.fulfilled, (state, action) => {
+        const index = state.items.findIndex(i => i.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
       .addCase(createOutward.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
       })

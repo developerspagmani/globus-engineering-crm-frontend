@@ -436,13 +436,20 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
                   <label className="form-label mb-0 align-self-center text-muted fw-bold col-3">OUTWARD REF</label>
                   <SearchableSelect
                     className="flex-grow-1"
-                    options={pendingOutwards
-                      .filter(o => (o.totalRemaining || 0) > 0)
-                      .map(o => ({ 
-                        value: o.id, 
-                        label: `${o.outwardNo} (${o.date ? new Date(o.date).toLocaleDateString() : 'N/A'}) - ${o.totalRemaining || 0} Units Pending` 
-                      }))
-                    }
+                    options={[
+                      ...pendingOutwards
+                        .filter(o => (o.totalRemaining || 0) > 0)
+                        .map(o => ({ 
+                          value: o.id, 
+                          label: `${o.outwardNo} (${o.date ? new Date(o.date).toLocaleDateString() : 'N/A'}) - ${o.totalRemaining || 0} Units Pending` 
+                        })),
+                      ...(formData.outwardId && !pendingOutwards.some(o => String(o.id) === String(formData.outwardId) && (o.totalRemaining || 0) > 0)
+                        ? [{
+                            value: formData.outwardId,
+                            label: formData.outwardNo ? `${formData.outwardNo} (Linked)` : 'Linked Outward'
+                          }]
+                        : [])
+                    ]}
                     value={formData.outwardId || ''}
                     onChange={(val) => handleChange({ target: { name: 'outwardId', value: val } } as any)}
                     placeholder={outwardLoading ? 'Loading Pending Dispatches...' : (pendingOutwards.length === 0 ? 'No Pending Dispatches' : 'Select Vendor Challan Reference…')}
