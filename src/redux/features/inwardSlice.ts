@@ -50,7 +50,9 @@ export const fetchInwards = createAsyncThunk(
         date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
         dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : '',
         status: c.status || 'pending',
-        partyType: c.party_type || 'customer',
+        partyType: c.party_type || c.partyType || 'customer',
+        outwardId: c.outwardId || c.outward_id || '',
+        outwardNo: c.outwardNo || c.outward_no || '',
         items: (c.items || []).map((it: any) => ({
           ...it,
           itemName: it.item_name || it.itemName || it.description,
@@ -95,7 +97,9 @@ export const fetchInwardById = createAsyncThunk(
         date: c.date ? new Date(c.date).toISOString().split('T')[0] : '',
         dueDate: c.due_date ? new Date(c.due_date).toISOString().split('T')[0] : '',
         status: c.status || 'pending',
-        partyType: c.party_type || 'customer',
+        partyType: c.party_type || c.partyType || 'customer',
+        outwardId: c.outwardId || c.outward_id || '',
+        outwardNo: c.outwardNo || c.outward_no || '',
         items: (c.items || []).map((it: any) => ({
           ...it,
           itemName: it.item_name || it.itemName || it.description,

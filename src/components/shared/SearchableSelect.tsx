@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 interface Option {
   value: string | number;
   label: string;
+  displayLabel?: string;
 }
 
 interface SearchableSelectProps {
@@ -72,7 +73,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         style={{ cursor: disabled ? 'not-allowed' : 'pointer', minHeight: '38px', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '2.5rem' }}
       >
         <span className={!selectedOption ? 'text-muted' : 'fw-bold text-dark'}>
-          {selectedOption ? selectedOption.label : placeholder}
+          {selectedOption ? (selectedOption.displayLabel || selectedOption.label) : placeholder}
         </span>
       </div>
 

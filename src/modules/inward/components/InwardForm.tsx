@@ -110,7 +110,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
         api.get(`/inward/sequence-dc?companyId=${activeCompany.id}`)
           .then(res => {
             if (res.data?.dcNo) {
-              setFormData(prev => ({ ...prev, dcNo: res.data.dcNo }));
+              setFormData(prev => ({ ...prev, dcNo: prev.partyType === 'vendor' ? '' : res.data.dcNo }));
             }
           })
           .catch(err => console.error('Failed to auto-generate DC No', err));
@@ -166,8 +166,16 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
         vendorName: '',
         outwardId: '',
         outwardNo: '',
+        dcNo: value === 'vendor' ? '' : prev.dcNo,
         items: [{ description: '', process: '', quantity: 1, unit: 'pcs' }]
       }));
+      if (value === 'customer' && mode === 'create') {
+        api.get(`/inward/sequence-dc?companyId=${activeCompany?.id}`).then(res => {
+          if (res.data?.dcNo) {
+            setFormData(prev => ({ ...prev, dcNo: res.data.dcNo }));
+          }
+        });
+      }
     } else if (name === 'customerId') {
       const customer = customers.find(c => c.id === value);
       const addressParts = [
@@ -200,6 +208,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
           ...prev,
           outwardId: value,
           outwardNo: outward.outwardNo,
+          dcNo: prev.partyType === 'vendor' ? outward.outwardNo : prev.dcNo,
           items: outward.items
             .filter((it: any) => (it.remainingQty !== undefined ? it.remainingQty : it.quantity) > 0)
             .map((it: any) => ({
@@ -441,12 +450,14 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
                         .filter(o => (o.totalRemaining || 0) > 0)
                         .map(o => ({ 
                           value: o.id, 
-                          label: `${o.outwardNo} (${o.date ? new Date(o.date).toLocaleDateString() : 'N/A'}) - ${o.totalRemaining || 0} Units Pending` 
+                          label: `${o.outwardNo} (${o.date ? new Date(o.date).toLocaleDateString() : 'N/A'}) - ${o.totalRemaining || 0} Units Pending`,
+                          displayLabel: o.outwardNo
                         })),
                       ...(formData.outwardId && !pendingOutwards.some(o => String(o.id) === String(formData.outwardId) && (o.totalRemaining || 0) > 0)
                         ? [{
                             value: formData.outwardId,
-                            label: formData.outwardNo ? `${formData.outwardNo} (Linked)` : 'Linked Outward'
+                            label: formData.outwardNo ? formData.outwardNo : 'Linked Outward',
+                            displayLabel: formData.outwardNo ? formData.outwardNo : 'Linked Outward'
                           }]
                         : [])
                     ]}

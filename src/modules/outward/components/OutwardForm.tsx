@@ -341,23 +341,33 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                        <div className="col-8">
                            <SearchableSelect
                                className="w-100"
-                               options={availableInwards
-                                  .filter(i => {
-                                    const relevantBal = formData.partyType === 'vendor'
-                                      ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
-                                      : i.items.reduce((sum: number, it: any) => sum + Math.max(0, (it.invoicedQty || 0) - (it.dispatchedQty || 0)), 0);
-                                    return relevantBal > 0 || String(i.id) === String(formData.inwardId);
-                                  })
-                                  .map(i => {
-                                    const relevantBal = formData.partyType === 'vendor'
-                                      ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
-                                      : i.items.reduce((sum: number, it: any) => sum + Math.max(0, (it.invoicedQty || 0) - (it.dispatchedQty || 0)), 0);
-                                    
-                                    return { 
-                                      value: i.id, 
-                                      label: `${i.inwardNo} - Bal: ${relevantBal} (${i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})` 
-                                    };
-                                  })}
+                               options={[
+                                  ...availableInwards
+                                    .filter(i => {
+                                      const relevantBal = formData.partyType === 'vendor'
+                                        ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
+                                        : i.items.reduce((sum: number, it: any) => sum + Math.max(0, (it.invoicedQty || 0) - (it.dispatchedQty || 0)), 0);
+                                      return relevantBal > 0 || String(i.id) === String(formData.inwardId);
+                                    })
+                                    .map(i => {
+                                      const relevantBal = formData.partyType === 'vendor'
+                                        ? i.items.reduce((sum: number, it: any) => sum + (it.vendorWorkBalance || 0), 0)
+                                        : i.items.reduce((sum: number, it: any) => sum + Math.max(0, (it.invoicedQty || 0) - (it.dispatchedQty || 0)), 0);
+                                      
+                                      return { 
+                                        value: i.id, 
+                                        label: `${i.inwardNo} - Bal: ${relevantBal} (${i.date ? new Date(i.date).toLocaleDateString() : 'N/A'})`,
+                                        displayLabel: i.inwardNo
+                                      };
+                                    }),
+                                  ...(formData.inwardId && !availableInwards.some(i => String(i.id) === String(formData.inwardId))
+                                    ? [{
+                                        value: formData.inwardId,
+                                        label: formData.inwardNo ? formData.inwardNo : 'Linked Inward',
+                                        displayLabel: formData.inwardNo ? formData.inwardNo : 'Linked Inward'
+                                      }]
+                                    : [])
+                               ]}
                                value={formData.inwardId || ''}
                                onChange={(val) => handleChange({ target: { name: 'inwardId', value: val } } as any)}
                                placeholder={formData.partyType === 'vendor' ? "Select Original Customer Inward" : "Select Inward Batch"}
