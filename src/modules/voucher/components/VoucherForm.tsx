@@ -515,23 +515,40 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               : null;
             
             if (existingVoucher) {
-              // Append to existing
+              // Append to existing, preventing duplicates
+              const existingItems = existingVoucher.items || [];
+              const uniqueNewItems = currentPaymentItems.filter(newItem => 
+                !existingItems.some((existingItem: any) => String(existingItem.invoiceNo) === String(newItem.invoiceNo))
+              );
+
+              if (uniqueNewItems.length === 0) {
+                 setIsSubmitting(false);
+                 router.push('/vouchers');
+                 return;
+              }
+
+              const uniqueInvoiceAmount = uniqueNewItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+              const uniqueAdjustmentAmount = uniqueNewItems.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0);
+              const uniqueNetPayable = uniqueInvoiceAmount - uniqueAdjustmentAmount;
+              const uniqueTDS = uniqueNewItems.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0);
+              const uniqueOthers = uniqueNewItems.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0);
+
               const updatedPayload = {
                 ...existingVoucher,
                 party_id: existingVoucher.party_id || existingVoucher.partyId || voucherPayload.partyId,
                 party_name: existingVoucher.party_name || existingVoucher.partyName || voucherPayload.partyName,
                 party_type: existingVoucher.party_type || existingVoucher.partyType || voucherPayload.partyType,
                 type: existingVoucher.type || voucherPayload.type,
-                amount: Number(existingVoucher.amount || 0) + netPayableAmount,
-                tdsAmount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + calculatedTDS,
-                tds_amount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + calculatedTDS,
-                othersAmount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + calculatedOthers,
-                others_amount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + calculatedOthers,
-                description: `${existingVoucher.description_ || existingVoucher.description || ''}\n${voucherPayload.description}`,
-                reference_no: `${existingVoucher.reference_no || existingVoucher.referenceNo || ''}, ${voucherPayload.referenceNo}`,
+                amount: Number(existingVoucher.amount || 0) + uniqueNetPayable,
+                tdsAmount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + uniqueTDS,
+                tds_amount: Number(existingVoucher.tds_amount || existingVoucher.tdsAmount || 0) + uniqueTDS,
+                othersAmount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + uniqueOthers,
+                others_amount: Number(existingVoucher.others_amount || existingVoucher.othersAmount || 0) + uniqueOthers,
+                description: `${existingVoucher.description_ || existingVoucher.description || ''}\nPayment for ${voucherPayload.partyType}: ${uniqueNewItems.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')} (Adjust: ₹${uniqueAdjustmentAmount})`,
+                reference_no: `${existingVoucher.reference_no || existingVoucher.referenceNo || ''}, ${uniqueNewItems.map(i => `${i.invoiceNo} (${i.amount}|${i.adjustmentType}:${i.adjustmentValue})`).join(', ')}`,
                 inward_id: inwardId,
                 inward_no: inwardNo,
-                items: [...(existingVoucher.items || []), ...currentPaymentItems]
+                items: [...existingItems, ...uniqueNewItems]
               };
               
               const activeTokenClean = activeToken?.replace(/^"|"$/g, '');
@@ -602,20 +619,37 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             if (fallbackVoucher) {
               console.log('[VoucherForm] Fallback: appending to existing voucher', fallbackVoucher.voucher_no || fallbackVoucher.id);
               const activeTokenClean = activeToken?.replace(/^\"|\"$/g, '');
+              const existingItems = fallbackVoucher.items || [];
+              const uniqueNewItems = currentPaymentItems.filter(newItem => 
+                !existingItems.some((existingItem: any) => String(existingItem.invoiceNo) === String(newItem.invoiceNo))
+              );
+
+              if (uniqueNewItems.length === 0) {
+                 setIsSubmitting(false);
+                 router.push('/vouchers');
+                 return;
+              }
+
+              const uniqueInvoiceAmount = uniqueNewItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+              const uniqueAdjustmentAmount = uniqueNewItems.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0);
+              const uniqueNetPayable = uniqueInvoiceAmount - uniqueAdjustmentAmount;
+              const uniqueTDS = uniqueNewItems.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0);
+              const uniqueOthers = uniqueNewItems.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0);
+
               const updatedPayload = {
                 ...fallbackVoucher,
                 party_id: fallbackVoucher.party_id || voucherPayload.partyId,
                 party_name: fallbackVoucher.party_name || voucherPayload.partyName,
                 party_type: fallbackVoucher.party_type || voucherPayload.partyType,
                 type: fallbackVoucher.type || voucherPayload.type,
-                amount: Number(fallbackVoucher.amount || 0) + netPayableAmount,
-                tds_amount: Number(fallbackVoucher.tds_amount || 0) + calculatedTDS,
-                tdsAmount: Number(fallbackVoucher.tds_amount || 0) + calculatedTDS,
-                others_amount: Number(fallbackVoucher.others_amount || 0) + calculatedOthers,
-                othersAmount: Number(fallbackVoucher.others_amount || 0) + calculatedOthers,
-                description: `${fallbackVoucher.description_ || fallbackVoucher.description || ''}\n${voucherPayload.description}`,
-                reference_no: `${fallbackVoucher.reference_no || ''}, ${voucherPayload.referenceNo}`,
-                items: [...(fallbackVoucher.items || []), ...currentPaymentItems]
+                amount: Number(fallbackVoucher.amount || 0) + uniqueNetPayable,
+                tds_amount: Number(fallbackVoucher.tds_amount || 0) + uniqueTDS,
+                tdsAmount: Number(fallbackVoucher.tds_amount || 0) + uniqueTDS,
+                others_amount: Number(fallbackVoucher.others_amount || 0) + uniqueOthers,
+                othersAmount: Number(fallbackVoucher.others_amount || 0) + uniqueOthers,
+                description: `${fallbackVoucher.description_ || fallbackVoucher.description || ''}\nPayment for ${voucherPayload.partyType}: ${uniqueNewItems.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')} (Adjust: ₹${uniqueAdjustmentAmount})`,
+                reference_no: `${fallbackVoucher.reference_no || ''}, ${uniqueNewItems.map(i => `${i.invoiceNo} (${i.amount}|${i.adjustmentType}:${i.adjustmentValue})`).join(', ')}`,
+                items: [...existingItems, ...uniqueNewItems]
               };
               await fetch(`/api/vouchers/${fallbackVoucher.id}`, {
                 method: 'PUT',
