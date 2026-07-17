@@ -79,7 +79,15 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          };
          isWOP = true;
       }
-   } else if (!isWOP) {
+   } else if (isWOP) {
+      displayItems = displayItems.map((it, idx) => ({
+         ...it,
+         quantity: Number(it.wopQty) || Number(it.quantity) || 0,
+         amount: 0,
+         unitPrice: 0,
+         originalIndex: idx + 1
+      })).filter(it => it.quantity > 0);
+   } else {
       // Default case for Tax Invoices (or BOTH without explicit typeParam)
       // Hide items that have 0 quantity on the Tax Invoice view
       displayItems = displayItems.filter(it => Number(it.quantity || 0) > 0);
@@ -534,7 +542,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                             <td>{item.description}</td>
                             <td style={{ textAlign: 'center' }}>{item.hsnCode || '998898'}</td>
                             {!isWOP && <td style={{ textAlign: 'center' }}>{taxRate}%</td>}
-                            <td style={{ textAlign: 'center' }}>{isWOP ? item.wopQty : item.quantity}</td>
+                            <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                             {!isWOP && <td style={{ textAlign: 'right' }}>{Number(item.unitPrice || 0).toFixed(2)}</td>}
                             {!isWOP && <td style={{ textAlign: 'right' }}>{Number(item.amount || 0).toFixed(2)}</td>}
                          </tr>
@@ -609,7 +617,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                       ) : (
                          <div className="p-totals-row bold">
                             <span>Total Quantity</span>
-                            <span>{invoice.items.reduce((sum: number, item: any) => sum + Number(item.wopQty || 0), 0)}</span>
+                            <span>{invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}</span>
                          </div>
                       )}
                    </div>
