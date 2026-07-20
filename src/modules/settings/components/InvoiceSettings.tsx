@@ -207,6 +207,18 @@ const InvoiceSettings: React.FC = () => {
                     <label className="form-label small text-muted text-uppercase fw-bold">State & Code <span className="text-danger">*</span></label>
                     <input type="text" className="form-control" name="stateDetails" value={(formData as any).stateDetails || ''} onChange={handleInputChange} placeholder="e.g. Tamilnadu - Code: 33" required />
                   </div>
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Website</label>
+                    <input type="text" className="form-control" name="website" value={(formData as any).website || ''} onChange={handleInputChange} placeholder="e.g. www.globusengineering.com" />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Contact Details</label>
+                    <input type="text" className="form-control" name="contactDetails" value={(formData as any).contactDetails || ''} onChange={handleInputChange} placeholder="e.g. +91 9876543210" />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small text-muted text-uppercase fw-bold">Gmail / Email ID</label>
+                    <input type="email" className="form-control" name="emailId" value={(formData as any).emailId || ''} onChange={handleInputChange} placeholder="e.g. globus@gmail.com" />
+                  </div>
 
                 </div>
               </div>

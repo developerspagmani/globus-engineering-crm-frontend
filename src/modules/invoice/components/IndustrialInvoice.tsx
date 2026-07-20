@@ -95,30 +95,72 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
    const totalInWords = numberToWords(Math.round(displayInvoice.grandTotal));
 
-   // PAGINATION CAPACITIES (Strictly calibrated for FULL header on ALL pages)
-   const GLOBAL_PAGE_CAPACITY = 12;     // Full header/meta/address + items
-   const FOOTER_SPACE_ROWS = 9;         // Space for totals on final page
+   const getItemHeight = (item: any) => {
+      let lines = 1;
+      if (item.description) {
+         const texts = String(item.description).split('\n');
+         lines = texts.reduce((acc, text) => acc + Math.max(1, Math.ceil(text.length / 45)), 0);
+      }
+      if (item.process) lines += 1;
+      return 35 + (lines * 15); // 35px padding/borders + 15px per line
+   };
 
    const paginate = (items: any[]) => {
-      let result: any[][] = [];
-      let remaining = [...items];
+      if (!items || items.length === 0) return [[]];
 
-      if (remaining.length === 0) return [[]];
-
-      while (remaining.length > 0) {
-         // If it's the last page and needs footer space
-         if (remaining.length <= (GLOBAL_PAGE_CAPACITY - FOOTER_SPACE_ROWS)) {
-            result.push(remaining);
-            remaining = [];
-         } else if (remaining.length <= GLOBAL_PAGE_CAPACITY) {
-            result.push(remaining);
-            remaining = [];
+      const PAGE_MAX_HEIGHT = 920; 
+      const HEADER_HEIGHT = 200; 
+      const TABLE_HEADER_HEIGHT = 40;
+      const FOOTER_HEIGHT = 300;
+      
+      let pages: any[][] = [];
+      let currentPage: any[] = [];
+      let currentHeight = HEADER_HEIGHT + TABLE_HEADER_HEIGHT;
+      
+      for (let i = 0; i < items.length; i++) {
+         const item = items[i];
+         const h = getItemHeight(item);
+         
+         let remainingItemsHeight = 0;
+         for (let j = i; j < items.length; j++) {
+            remainingItemsHeight += getItemHeight(items[j]);
+         }
+         
+         // If all remaining items fit perfectly with the footer, flush and finish!
+         if (currentHeight + remainingItemsHeight + FOOTER_HEIGHT <= PAGE_MAX_HEIGHT) {
+            pages.push([...currentPage, ...items.slice(i)]);
+            return pages;
+         }
+         
+         // If the page is full, start a new page
+         if (currentHeight + h > PAGE_MAX_HEIGHT) {
+            pages.push(currentPage);
+            currentPage = [item];
+            currentHeight = HEADER_HEIGHT + TABLE_HEADER_HEIGHT + h;
          } else {
-            result.push(remaining.slice(0, GLOBAL_PAGE_CAPACITY));
-            remaining = remaining.slice(GLOBAL_PAGE_CAPACITY);
+            // Fits on current page
+            currentPage.push(item);
+            currentHeight += h;
          }
       }
-      return result;
+      
+      if (currentPage.length > 0) {
+         if (currentHeight + FOOTER_HEIGHT <= PAGE_MAX_HEIGHT) {
+             pages.push(currentPage);
+         } else {
+             // Footer overflows! Pull the last 2 items onto the final page to prevent an empty grid
+             if (currentPage.length > 2) {
+                 const movedItems = currentPage.splice(currentPage.length - 2, 2);
+                 pages.push(currentPage);
+                 pages.push(movedItems);
+             } else {
+                 pages.push(currentPage);
+                 pages.push([]);
+             }
+         }
+      }
+      
+      return pages;
    };
 
    const isPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
@@ -136,10 +178,10 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
                settings={settings}
                items={pageItems}
                isLastPage={idx === totalPages - 1}
+               pageIndex={idx}
+               totalPages={totalPages}
                totalInWords={totalInWords}
                startSno={pagesData.slice(0, idx).reduce((sum: number, p: any[]) => sum + p.length, 0) + 1}
-               capacity={GLOBAL_PAGE_CAPACITY}
-               footerSpaceNeeded={idx === totalPages - 1 ? FOOTER_SPACE_ROWS : 0}
                isWOP={isWOP}
             />
          ))}
@@ -162,8 +204,9 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         }
 
         .invoice-page {
-          width: 190mm;
-          height: 270mm;
+          width: 210mm;
+          height: 296mm;
+          padding: 10mm;
           background: white;
           position: relative;
           color: #000;
@@ -175,13 +218,12 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .page-border-box {
            border: 1px solid #e0e0e0;
            margin: 0 auto;
-           width: 190mm;
-           height: 270mm;
+           width: 100%;
+           height: 100%;
            display: flex;
            flex-direction: column;
            background: #fff;
            box-sizing: border-box;
-           overflow: hidden;
         }
 
         /* HEADER SECTION */
@@ -249,15 +291,16 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          .p-table-area { 
             display: flex; 
             flex-direction: column; 
-            border-bottom: 1px solid #e0e0e0;
+            flex: 1;
          }
-        .p-table { 
-           width: 100%; 
-           border-collapse: collapse; 
-           table-layout: fixed;
-           border-top: 1px solid #e0e0e0;
-           border-bottom: 1px solid #e0e0e0;
-        }
+         .p-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            table-layout: fixed;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            height: 100%;
+         }
         .p-table th { 
            border-bottom: 1px solid #e0e0e0; 
            border-right: 1px solid #e0e0e0;
@@ -270,6 +313,12 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         }
         .p-table th:last-child {
            border-right: none;
+        }
+        .p-table tr.real-row {
+           height: 1px;
+        }
+        .p-table tr.filler-row {
+           height: auto;
         }
         .p-table td { 
            padding: 12px 15px; 
@@ -309,17 +358,17 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         }
         .p-totals-row.bold {
            font-weight: bold;
-           margin-top: 12px;
-           padding-top: 12px;
+           margin-top: 8px;
+           padding-top: 8px;
            font-size: 12px;
         }
 
-        .p-footer { 
-           display: flex;
-           page-break-inside: avoid;
-           margin-top: 120px;
-           padding-bottom: 20px;
-        }
+         .p-footer { 
+            display: flex;
+            page-break-inside: avoid;
+            margin-top: 15px;
+            padding-bottom: 10px;
+         }
         .p-footer-box { 
            flex: 1; 
            padding: 10px 15px;
@@ -344,28 +393,24 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
         /* PRINT OVERRIDES */
         @media print {
-           @page {
-             size: A4;
-             margin: 0mm !important;
-           }
-           html, body { margin: 0 !important; background: #fff !important; }
-           .industrial-print-container { 
-              background: #fff !important; 
-              height: auto !important;
-           }
-           .industrial-print-container:empty {
-              display: none !important;
-           }
-           .invoice-page {
-              overflow: visible !important;
-           }
-           .page-border-box {
-              overflow: visible !important;
-           }
-           .page-border-box.last-page {
-              height: auto !important;
-              min-height: 270mm;
-           }
+          @page {
+            size: A4;
+            margin: 0 !important;
+          }
+          .invoice-page {
+             page-break-after: always;
+             page-break-inside: avoid;
+             margin: 0 !important;
+             border: none !important;
+          }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+          .industrial-print-container { 
+             background: #fff !important; 
+             height: auto !important;
+          }
+          .industrial-print-container:empty {
+             display: none !important;
+          }
            .p-table-area {
               display: flex !important;
               flex-direction: column !important;
@@ -383,10 +428,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    );
 };
 
-const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWords, startSno, capacity, footerSpaceNeeded, isWOP }: any) => {
-   // Filler rows to reach full page height
-   const targetRows = isLastPage ? (capacity - footerSpaceNeeded) : capacity;
-   const fillerCount = 0; // Disabled to prevent ugly stretched boxes
+const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex, totalPages, totalInWords, startSno, isWOP }: any) => {
    const calculatedTaxRate = (invoice.subTotal && invoice.subTotal > 0) 
       ? Math.round(((invoice.taxTotal || 0) / invoice.subTotal) * 100) 
       : (invoice.taxRate || 18);
@@ -403,16 +445,16 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
       >
           <div className={`page-border-box${isLastPage ? ' last-page' : ''}`}>
              
-             {/* Header */}
+             {/* Header ALWAYS SHOW */}
              <div className="p-header">
                 <div style={{ display: 'flex', gap: '20px' }}>
                    {/* Logo Box */}
-                   <div style={{ width: '130px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc', padding: '5px' }}>
+                   <div style={{ width: '130px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc' }}>
                       {(settings.logo || company?.logo) && settings.showLogo ? (
                          <img
                             src={settings.logo && settings.logo.length > 10 ? settings.logo : company?.logo}
                             alt="Logo"
-                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                           />
                       ) : settings.showLogo ? (
                          <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
@@ -440,6 +482,11 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                       <div style={{ fontSize: '11px', color: '#000', marginTop: '6px' }}>
                          GSTIN: {settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}
                       </div>
+                      <div style={{ fontSize: '11px', color: '#000', marginTop: '4px' }}>
+                         Website: {settings.website || company?.website || ''} <br/>
+                         Contact Details: {settings.contactDetails || company?.phone || ''} <br/>
+                         Gmail ID: {settings.emailId || company?.email || ''}
+                      </div>
                    </div>
                 </div>
 
@@ -451,8 +498,9 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                 </div>
              </div>
 
-             {/* Meta Details */}
-             <div className="p-meta">
+             {/* Meta Details ONLY ON FIRST PAGE */}
+             {pageIndex === 0 && (
+                <div className="p-meta">
                 <div className="p-meta-col">
                    <div className="p-meta-row-item">
                       <span className="p-meta-label">{isWOP ? 'Invoice WOP No' : 'Invoice No'}</span>
@@ -468,11 +516,6 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                       <span className="p-meta-label">PO No</span>
                       <span>:</span>
                       <span className="p-meta-val">{invoice.poNo || invoice.po_no || ''}</span>
-                   </div>
-                   <div className="p-meta-row-item">
-                      <span className="p-meta-label">State</span>
-                      <span>:</span>
-                      <span className="p-meta-val">TamilNadu-33</span>
                    </div>
                 </div>
                 <div className="p-meta-col">
@@ -491,17 +534,14 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                       <span>:</span>
                       <span className="p-meta-val">{(invoice.poDate || invoice.po_date) ? new Date(invoice.poDate || invoice.po_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') : ''}</span>
                    </div>
-                   <div className="p-meta-row-item">
-                      <span className="p-meta-label">Reverse Charge</span>
-                      <span>:</span>
-                      <span className="p-meta-val">N</span>
-                   </div>
                 </div>
              </div>
+             )}
 
-             {/* Addresses */}
-             <div className="p-address">
-                <div className="p-addr-box">
+             {/* Addresses ONLY ON FIRST PAGE */}
+             {pageIndex === 0 && (
+                <div className="p-address">
+                   <div className="p-addr-box">
                    <div className="p-addr-title">SUPPLIER DETAILS</div>
                    <div className="p-addr-content">
                       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</div>
@@ -513,13 +553,14 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                 <div className="p-addr-box">
                    <div className="p-addr-title">RECIPIENT DETAILS</div>
                    <div className="p-addr-content">
-                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{invoice.customerName}</div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>M/s. {invoice.customerName}</div>
                       <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{invoice.address || 'N/A'}</div>
                       <div style={{ marginBottom: '4px' }}>GSTIN: {invoice.gstin || 'N/A'}</div>
                       <div>State: {invoice.state || 'N/A'} (Code: {invoice.state?.toLowerCase() === 'telangana' ? '36' : '33'})</div>
                    </div>
                 </div>
              </div>
+             )}
 
              {/* Table */}
              <div className="p-table-area">
@@ -537,9 +578,12 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                    </thead>
                    <tbody>
                       {items.map((item: any, idx: number) => (
-                         <tr key={idx}>
+                         <tr key={idx} className="real-row">
                             <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{item.originalIndex ? item.originalIndex : (startSno + idx)}</td>
-                            <td>{item.description}</td>
+                            <td>
+                               <div style={{ whiteSpace: 'pre-wrap' }}>{item.description}</div>
+                               {item.process && <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>{item.process}</div>}
+                            </td>
                             <td style={{ textAlign: 'center' }}>{item.hsnCode || '998898'}</td>
                             {!isWOP && <td style={{ textAlign: 'center' }}>{taxRate}%</td>}
                             <td style={{ textAlign: 'center' }}>{item.quantity}</td>
@@ -547,79 +591,113 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                             {!isWOP && <td style={{ textAlign: 'right' }}>{Number(item.amount || 0).toFixed(2)}</td>}
                          </tr>
                       ))}
-                      {/* Fillers */}
-                      {[...Array(fillerCount)].map((_, i) => (
-                         <tr key={`filler-${i}`}>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            <td>&nbsp;</td>
-                            {!isWOP && <td>&nbsp;</td>}
-                            <td>&nbsp;</td>
-                            {!isWOP && <td>&nbsp;</td>}
-                            {!isWOP && <td>&nbsp;</td>}
-                         </tr>
-                      ))}
                    </tbody>
-                </table>
-             </div>
+                    {isLastPage && (
+                       <tfoot>
+                          {isWOP ? (
+                             <tr style={{ background: '#fdfdfd' }}>
+                                <td colSpan={2} style={{ borderBottom: 'none', borderTop: '1px solid #e0e0e0', padding: '12px 15px', fontWeight: 'bold' }}>
+                                   WITHOUT PROCESS
+                                </td>
+                                <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #e0e0e0', padding: '12px 15px', fontWeight: 'bold' }}>
+                                   Total Quantity
+                                </td>
+                                <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #e0e0e0', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #e0e0e0' }}>
+                                   {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}
+                                </td>
+                             </tr>
+                          ) : (
+                             <tr style={{ background: '#fdfdfd' }}>
+                                <td colSpan={4} style={{ textAlign: 'right', borderBottom: 'none', borderTop: '1px solid #e0e0e0', padding: '12px 15px', fontWeight: 'bold' }}>
+                                   Total Quantity
+                                </td>
+                                <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #e0e0e0', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #e0e0e0' }}>
+                                   {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
+                                </td>
+                                <td colSpan={2} style={{ borderBottom: 'none', borderTop: '1px solid #e0e0e0', padding: '12px 15px', borderRight: 'none' }}></td>
+                             </tr>
+                          )}
+                       </tfoot>
+                    )}
+                 </table>
+                 {/* Div-based flex spacer to absorb remaining page height and draw vertical borders safely */}
+                 <div style={{ flex: 1, display: 'flex' }}>
+                    <div style={{ width: '45px', borderRight: '1px solid #e0e0e0', boxSizing: 'border-box' }}></div>
+                    <div style={{ flex: 1, borderRight: '1px solid #e0e0e0', boxSizing: 'border-box' }}></div>
+                    <div style={{ width: '90px', borderRight: '1px solid #e0e0e0', boxSizing: 'border-box' }}></div>
+                    {!isWOP && <div style={{ width: '75px', borderRight: '1px solid #e0e0e0', boxSizing: 'border-box' }}></div>}
+                    <div style={{ width: '70px', borderRight: isWOP ? 'none' : '1px solid #e0e0e0', boxSizing: 'border-box' }}></div>
+                    {!isWOP && <div style={{ width: '90px', borderRight: '1px solid #e0e0e0', boxSizing: 'border-box' }}></div>}
+                    {!isWOP && <div style={{ width: '110px', boxSizing: 'border-box' }}></div>}
+                 </div>
+              </div>
 
              {/* Totals Section */}
-             {isLastPage && (
+             {isLastPage && !isWOP && (
                 <div className="p-totals">
                    <div className="p-totals-left">
-                      {!isWOP && (
-                         <>
-                            <div style={{ marginBottom: '6px', fontSize: '11px', color: '#555' }}>Total In Words</div>
-                            <div style={{ fontSize: '12px', textTransform: 'capitalize', fontWeight: 'bold', fontStyle: 'italic', color: '#000' }}>
-                               Indian Rupee {String(totalInWords).toLowerCase().replace(' only', '')} Only
-                            </div>
-                         </>
-                      )}
+                      <div style={{ marginBottom: '6px', fontSize: '11px', color: '#555' }}>Total In Words</div>
+                      <div style={{ fontSize: '12px', textTransform: 'capitalize', fontWeight: 'bold', fontStyle: 'italic', color: '#000' }}>
+                         Indian Rupee {String(totalInWords).toLowerCase().replace(' only', '')} Only
+                      </div>
                    </div>
                    <div className="p-totals-right">
-                      {!isWOP ? (
-                         <>
-                            <div className="p-totals-row bold" style={{ marginTop: '0', paddingTop: '0' }}>
-                               <span>Sub Total</span>
-                               <span>{Number(invoice.subTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                            {(() => {
-                               const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
-                               const taxTotal = invoice.taxTotal || 0;
+                      <div className="p-totals-row bold" style={{ marginTop: '0', paddingTop: '0' }}>
+                         <span>Sub Total</span>
+                         <span>{Number(invoice.subTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      {(() => {
+                         const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
+                         const taxTotal = invoice.taxTotal || 0;
 
-                               if (isIntraState) {
-                                  return (
-                                     <>
-                                        <div className="p-totals-row">
-                                           <span>CGST ({taxRate / 2}%)</span>
-                                           <span>{(taxTotal / 2).toFixed(2)}</span>
-                                        </div>
-                                        <div className="p-totals-row">
-                                           <span>SGST ({taxRate / 2}%)</span>
-                                           <span>{(taxTotal / 2).toFixed(2)}</span>
-                                        </div>
-                                     </>
-                                  );
-                               } else {
-                                  return (
-                                     <div className="p-totals-row">
-                                        <span>IGST ({taxRate}%)</span>
-                                        <span>{taxTotal.toFixed(2)}</span>
-                                     </div>
-                                  );
-                               }
-                            })()}
-                            <div className="p-totals-row bold">
-                               <span>Total</span>
-                               <span>{Math.round(invoice.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                         </>
-                      ) : (
-                         <div className="p-totals-row bold">
-                            <span>Total Quantity</span>
-                            <span>{invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}</span>
-                         </div>
-                      )}
+                         if (isIntraState) {
+                            return (
+                               <>
+                                  <div className="p-totals-row">
+                                     <span>CGST ({taxRate / 2}%)</span>
+                                     <span>{(taxTotal / 2).toFixed(2)}</span>
+                                  </div>
+                                  <div className="p-totals-row">
+                                     <span>SGST ({taxRate / 2}%)</span>
+                                     <span>{(taxTotal / 2).toFixed(2)}</span>
+                                  </div>
+                               </>
+                            );
+                         } else {
+                            return (
+                               <div className="p-totals-row">
+                                  <span>IGST ({taxRate}%)</span>
+                                  <span>{taxTotal.toFixed(2)}</span>
+                               </div>
+                            );
+                         }
+                      })()}
+                      <div className="p-totals-row bold">
+                         <span>Total</span>
+                         <span>{Math.round(invoice.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                   </div>
+                </div>
+             )}
+
+             {/* Company & Bank Details */}
+             {isLastPage && !isWOP && (
+                <div style={{ display: 'flex', borderBottom: '1px solid #e0e0e0', borderTop: '1px solid #e0e0e0', pageBreakInside: 'avoid', fontSize: '11px', marginTop: '10px' }}>
+                   <div style={{ flex: 1, borderRight: '1px solid #e0e0e0', padding: '10px 15px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#000', fontSize: '12px' }}>Company Details</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '80px 10px 1fr', gap: '4px' }}>
+                         <span style={{ color: '#555' }}>VAT TIN</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.vatTin || '33132028969'}</span>
+                         <span style={{ color: '#555' }}>CST NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.cstNo || '1091562'}</span>
+                         <span style={{ color: '#555' }}>PAN NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.panNo || 'AAIFG6568K'}</span>
+                      </div>
+                   </div>
+                   <div style={{ flex: 1, padding: '10px 15px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#000', fontSize: '12px' }}>Bank Details</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '120px 10px 1fr', gap: '4px' }}>
+                         <span style={{ color: '#555' }}>Bank Name</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankName || 'INDIAN OVERSEAS BANK'}</span>
+                         <span style={{ color: '#555' }}>Bank A/C</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankAcc || '170902000000962'}</span>
+                         <span style={{ color: '#555' }}>Branch & IFSC Code</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankBranchIfsc || 'IOBA0001709'}</span>
+                      </div>
                    </div>
                 </div>
              )}
@@ -631,6 +709,10 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, totalInWor
                       <div className="p-footer-head">Notes</div>
                       <div>Thanks for your business.</div>
                       
+                      <div style={{ marginTop: '50px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
+                         Receiver's Signature
+                      </div>
+
                       {settings.showDeclaration && (
                          <div style={{ marginTop: '15px', fontSize: '9px', color: '#555', maxWidth: '90%' }}>
                             {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
