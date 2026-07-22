@@ -21,6 +21,8 @@ const CANONICAL_STATES: Record<string, string> = {
   'ANDHRA PRADESH': 'Andhra Pradesh',
   'ANDHRA': 'Andhra Pradesh',
   'ANDHRAPRADESH': 'Andhra Pradesh',
+  'AP': 'Andhra Pradesh',
+  'A.P.': 'Andhra Pradesh',
   'ARUNACHAL PRADESH': 'Arunachal Pradesh',
   'ASSAM': 'Assam',
   'BIHAR': 'Bihar',
@@ -32,6 +34,8 @@ const CANONICAL_STATES: Record<string, string> = {
   'CHATTISGAR': 'Chhattisgarh',
   'GOA': 'Goa',
   'GUJARAT': 'Gujarat',
+  'GUJRAT': 'Gujarat',
+  'RAJKOT': 'Gujarat',
   'HARYANA': 'Haryana',
   'HARIYANA': 'Haryana',
   'HIMACHAL PRADESH': 'Himachal Pradesh',
@@ -67,8 +71,11 @@ const CANONICAL_STATES: Record<string, string> = {
   'SIKKIM': 'Sikkim',
   'TAMIL NADU': 'Tamil Nadu',
   'TAMILNADU': 'Tamil Nadu',
+  'TAMILNADU STATE': 'Tamil Nadu',
   'TN': 'Tamil Nadu',
   'TELANGANA': 'Telangana',
+  'TELEGANA': 'Telangana',
+  'TELANGANA STATE': 'Telangana',
   'TRIPURA': 'Tripura',
   'UTTAR PRADESH': 'Uttar Pradesh',
   'UP': 'Uttar Pradesh',
@@ -86,14 +93,14 @@ const CANONICAL_STATES: Record<string, string> = {
 const canonicalState = (raw: string | undefined | null): string | null => {
   const trimmed = (raw || '').trim();
   if (!trimmed) return null;
-  // Filter out pure numbers or short junk values
   if (/^\d+$/.test(trimmed)) return null;
   if (trimmed.length < 2) return null;
-  const upper = trimmed.toUpperCase();
-  return CANONICAL_STATES[upper] || toTitleCase(trimmed);
+
+  const upper = trimmed.replace(/^[\s,.\-]+|[\s,.\-]+$/g, '').toUpperCase();
+  if (CANONICAL_STATES[upper]) return CANONICAL_STATES[upper];
+
+  return toTitleCase(trimmed);
 };
-
-
 
 // Always normalize to UPPERCASE for consistent comparison
 const norm = (s: string | undefined | null) => (s || '').trim().toUpperCase();
@@ -102,9 +109,34 @@ const norm = (s: string | undefined | null) => (s || '').trim().toUpperCase();
 const toTitleCase = (s: string) =>
   s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
-// Get district value: district field or city as fallback
+// Clean district/city values (removes leading commas, pincodes, hyphens, and standardizes abbreviations)
+const cleanDistrict = (raw: string | undefined | null): string => {
+  if (!raw) return '';
+  let str = raw.trim();
+
+  // Strip leading/trailing commas, dots, hyphens, spaces
+  str = str.replace(/^[\s,.\-]+|[\s,.\-]+$/g, '');
+
+  // Strip pincode suffixes like "-641048", "- 641107", "-58", " - 600044"
+  str = str.replace(/[-\s]+\d{2,6}$/g, '').trim();
+  str = str.replace(/[-\s]+\d+$/g, '').trim();
+
+  const upper = str.toUpperCase();
+  if (upper === 'CBE' || upper === 'COIMBATORE') return 'Coimbatore';
+  if (upper === 'CHN' || upper === 'CHENNAI') return 'Chennai';
+  if (upper === 'BLR' || upper === 'BANGALORE' || upper === 'BENGALURU') return 'Bengaluru';
+  if (upper === 'HYD' || upper === 'HYDERABAD') return 'Hyderabad';
+  if (upper === 'MDU' || upper === 'MADURAI') return 'Madurai';
+  if (upper === 'TRICHY' || upper === 'TIRUCHIRAPPALLI') return 'Tiruchirappalli';
+  if (upper === 'SLM' || upper === 'SALEM') return 'Salem';
+  if (upper === 'TUP' || upper === 'TIRUPUR' || upper === 'TIRUPPUR') return 'Tirupur';
+
+  return toTitleCase(str);
+};
+
+// Get district value: sanitized district field or city as fallback
 const getDistrict = (c: Customer) =>
-  (c.district || (c as any).city || '').trim();
+  cleanDistrict(c.district || (c as any).city);
 
 const CustomerTable: React.FC<CustomerTableProps> = ({
   customers,
@@ -115,8 +147,8 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
 }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterState, setFilterState] = useState(''); // stored as UPPERCASE
-  const [filterDistrict, setFilterDistrict] = useState(''); // stored as UPPERCASE
+  const [filterState, setFilterState] = useState('');
+  const [filterDistrict, setFilterDistrict] = useState('');
   const itemsPerPage = 10;
 
   // Unique states deduplicated by canonical name (handles all misspellings)
@@ -134,7 +166,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
     const seen = new Set<string>();
     customers.forEach((c) => {
       if (filterState && canonicalState(c.state) !== filterState) return;
-      const d = toTitleCase(getDistrict(c));
+      const d = getDistrict(c);
       if (d) seen.add(d);
     });
     return [...seen].sort();
@@ -144,7 +176,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
     return customers.filter((c) => {
       const matchState = !filterState || canonicalState(c.state) === filterState;
       const matchDistrict =
-        !filterDistrict || toTitleCase(getDistrict(c)) === filterDistrict;
+        !filterDistrict || getDistrict(c) === filterDistrict;
       return matchState && matchDistrict;
     });
   }, [customers, filterState, filterDistrict]);
