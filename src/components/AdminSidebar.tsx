@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { logout } from '@/redux/features/authSlice';
-import { navigationConfig, hasPermission } from '@/config/permissions';
+import { navigationConfig, hasPermission, NavItem } from '@/config/permissions';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -34,9 +34,27 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   };
 
   const filteredItems = React.useMemo(() => {
-    return navigationConfig.filter(item =>
-      hasPermission(item, user, company?.activeModules)
-    );
+    return navigationConfig.map((item: NavItem) => {
+      const isParentAllowed = hasPermission(item, user, company?.activeModules);
+      if (!isParentAllowed) return null;
+
+      if (item.children && item.children.length > 0) {
+        const allowedChildren = item.children.filter((child: NavItem) =>
+          hasPermission(child, user, company?.activeModules)
+        );
+
+        if ((item.path === '#' || !item.path) && allowedChildren.length === 0) {
+          return null;
+        }
+
+        return {
+          ...item,
+          children: allowedChildren
+        };
+      }
+
+      return item;
+    }).filter(Boolean) as NavItem[];
   }, [user, company?.activeModules]);
 
   const searchedItems = React.useMemo(() => {
@@ -44,9 +62,9 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     
     const lowerQuery = searchQuery.toLowerCase();
     
-    return filteredItems.map(item => {
+    return filteredItems.map((item: NavItem) => {
       const parentMatches = item.name.toLowerCase().includes(lowerQuery);
-      const matchingChildren = item.children?.filter(child => 
+      const matchingChildren = item.children?.filter((child: NavItem) => 
         child.name.toLowerCase().includes(lowerQuery)
       ) || [];
       
@@ -145,8 +163,8 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
             };
 
             const isActive = pathname === item.path || 
-                           (pathname.startsWith(item.path + '/') && !filteredItems.some(other => other.path !== item.path && pathname.startsWith(other.path) && other.path.length > item.path.length)) ||
-                           (hasChildren && item.children?.some(c => checkActive(c.path)));
+                           (pathname.startsWith(item.path + '/') && !filteredItems.some((other: NavItem) => other.path !== item.path && pathname.startsWith(other.path) && other.path.length > item.path.length)) ||
+                           (hasChildren && item.children?.some((c: NavItem) => checkActive(c.path)));
 
             if (hasChildren) {
               return (
@@ -166,7 +184,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                   </button>
                   {isExpanded && !collapsed && (
                     <div className="ms-4 my-1 d-flex flex-column gap-1 border-start ps-2">
-                      {item.children?.map(child => {
+                      {item.children?.map((child: NavItem) => {
                         const isChildActive = checkActive(child.path);
                         
                         return (

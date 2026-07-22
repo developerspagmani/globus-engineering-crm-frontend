@@ -74,15 +74,15 @@ export const navigationConfig: NavItem[] = [
   { name: 'Employee Management', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
   { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
   { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
-  { name: 'Field Stores', icon: 'bi-shop', path: '/stores', moduleId: 'mod_lead' }, // Shares lead module permission for now
-  { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'default' },
+  { name: 'Field Stores', icon: 'bi-shop', path: '/stores', moduleId: 'mod_stores' },
+  { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'mod_gst_lookup' },
 
   // Reports
   { 
     name: 'Reports', 
     icon: 'bi-file-earmark-text', 
     path: '#', 
-    moduleId: 'default',
+    moduleId: 'mod_reports',
     children: [
       { name: 'Payment Report', icon: 'bi-cash-stack', path: '/reports/payment', moduleId: 'mod_voucher' },
       { name: 'Invoice Report', icon: 'bi-file-earmark-bar-graph', path: '/reports/invoice', moduleId: 'mod_invoice' },
@@ -94,7 +94,7 @@ export const navigationConfig: NavItem[] = [
 
   { name: 'Companies', icon: 'bi-building', path: '/admin/companies', moduleId: 'super_admin' },
   { name: 'Data Migration', icon: 'bi-database-fill-up', path: '/migration', moduleId: 'super_admin' },
-  { name: 'Sales Map', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'default' },
+  { name: 'Sales Map', icon: 'bi-geo-alt', path: '/sales-map', moduleId: 'mod_sales_map' },
   { name: 'Settings', icon: 'bi-gear', path: '/settings', moduleId: 'default' },
 ];
 

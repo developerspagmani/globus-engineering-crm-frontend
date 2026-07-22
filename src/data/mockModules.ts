@@ -160,6 +160,27 @@ export const availableModules: ModuleData[] = [
     description: 'Track and manage vendor purchase invoices and GST entries.',
     status: 'active',
     icon: 'bi-journal-medical'
+  },
+  {
+    id: 'mod_gst_lookup',
+    name: 'GSTN Lookup',
+    description: 'Verify and lookup GSTIN registration details.',
+    status: 'active',
+    icon: 'bi-shield-check'
+  },
+  {
+    id: 'mod_sales_map',
+    name: 'Sales Map',
+    description: 'Interactive regional sales accounts map and analytics.',
+    status: 'active',
+    icon: 'bi-geo-alt'
+  },
+  {
+    id: 'mod_reports',
+    name: 'Reports System',
+    description: 'Access intelligence reports, financial statements, and analytics exports.',
+    status: 'active',
+    icon: 'bi-file-earmark-text'
   }
 ];
 
@@ -169,7 +190,7 @@ export const mockCompanies: Company[] = [
     name: 'Globus Engineering Main',
     slug: 'globus-eng',
     plan: 'enterprise',
-    activeModules: ['mod_invoice', 'mod_customer', 'mod_inward', 'mod_outward', 'mod_ledger', 'mod_challan', 'mod_voucher', 'mod_employee', 'mod_sales_hub', 'mod_lead', 'mod_pending_payment', 'mod_vendor', 'mod_sales_map', 'mod_user_management', 'mod_items', 'mod_processes', 'mod_price_fixing', 'mod_stores', 'mod_store_visits']
+    activeModules: ['mod_invoice', 'mod_customer', 'mod_inward', 'mod_outward', 'mod_ledger', 'mod_challan', 'mod_voucher', 'mod_employee', 'mod_sales_hub', 'mod_lead', 'mod_pending_payment', 'mod_vendor', 'mod_sales_map', 'mod_gst_lookup', 'mod_reports', 'mod_user_management', 'mod_items', 'mod_processes', 'mod_price_fixing', 'mod_stores', 'mod_store_visits', 'mod_purchase_billing']
   },
   {
     id: 'comp_apex',

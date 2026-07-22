@@ -6,7 +6,7 @@ import ModuleGuard from '@/components/ModuleGuard';
 
 export default function StoresPage() {
   return (
-    <ModuleGuard moduleId="mod_lead">
+    <ModuleGuard moduleId="mod_stores">
       <div className="bg-white min-vh-100 p-4 animate-fade-in shadow-sm">
         <StoreList />
       </div>

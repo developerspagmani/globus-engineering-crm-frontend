@@ -2,48 +2,64 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { hasPermission } from '@/config/permissions';
+import ModuleGuard from '@/components/ModuleGuard';
 
 const ReportsPage = () => {
-  const reports = [
+  const { user, company } = useSelector((state: RootState) => state.auth);
+
+  const allReports = [
     {
       title: 'Payment Report',
       description: 'View and export payment history and records.',
       icon: 'bi-cash-stack',
       color: '#4f46e5',
-      href: '/reports/payment'
+      href: '/reports/payment',
+      moduleId: 'mod_voucher'
     },
     {
       title: 'Invoice Report',
       description: 'Comprehensive analysis of all generated invoices.',
       icon: 'bi-file-earmark-bar-graph',
       color: '#0ea5e9',
-      href: '/reports/invoice'
+      href: '/reports/invoice',
+      moduleId: 'mod_invoice'
     },
     {
       title: 'Inward Report',
       description: 'Track materials and items received from vendors.',
       icon: 'bi-box-arrow-in-left',
       color: '#10b981',
-      href: '/reports/inward'
+      href: '/reports/inward',
+      moduleId: 'mod_inward'
     },
     {
       title: 'GST Report',
       description: 'Detailed report for GST filing and audits.',
       icon: 'bi-file-text',
       color: '#f59e0b',
-      href: '/reports/gst'
+      href: '/reports/gst',
+      moduleId: 'mod_invoice'
     },
     {
       title: 'TDS & Deduction',
       description: 'Analysis of tax deductions and adjustments.',
       icon: 'bi-scissors',
       color: '#ef4444',
-      href: '/reports/tds'
+      href: '/reports/tds',
+      moduleId: 'mod_voucher'
     }
   ];
 
+  const allowedReports = allReports.filter(rep =>
+    hasPermission({ name: rep.title, icon: rep.icon, path: rep.href, moduleId: rep.moduleId }, user, company?.activeModules)
+  );
+
   return (
-    <div className="container-fluid py-4">
+    <ModuleGuard moduleId="mod_reports">
+      <div className="container-fluid py-4">
       <div className="row mb-4">
         <div className="col-12">
           <h4 className="fw-bold text-dark mb-1">Reports Dashboard</h4>
@@ -52,7 +68,7 @@ const ReportsPage = () => {
       </div>
 
       <div className="row g-4">
-        {reports.map((report, idx) => (
+        {allowedReports.map((report, idx) => (
           <div key={idx} className="col-md-6 col-xl-3">
             <Link href={report.href} className="text-decoration-none">
               <div className="card border-0 shadow-sm h-100 report-card">
@@ -84,6 +100,11 @@ const ReportsPage = () => {
             </Link>
           </div>
         ))}
+        {allowedReports.length === 0 && (
+          <div className="col-12 text-center py-5">
+            <div className="text-muted fw-bold">No report permissions granted for your user account.</div>
+          </div>
+        )}
       </div>
 
       <style jsx>{`
@@ -103,6 +124,7 @@ const ReportsPage = () => {
         }
       `}</style>
     </div>
+    </ModuleGuard>
   );
 };
 

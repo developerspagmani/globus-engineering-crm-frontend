@@ -186,7 +186,7 @@ const PendingPaymentPage = () => {
             />
             <button
               className="btn btn-primary btn-page-action px-4"
-              onClick={() => (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id }))}
+              onClick={() => (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id, limit: 1000, status: 'pending', partyType }))}
             >
               <i className="bi bi-arrow-repeat"></i>
               <span>Refresh Data</span>

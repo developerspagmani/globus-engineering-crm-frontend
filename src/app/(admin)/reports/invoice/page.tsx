@@ -16,6 +16,7 @@ import PaginationComponent from '@/components/shared/Pagination';
 import api from '@/lib/axios';
 import SortableHeader from '@/components/shared/SortableHeader';
 import { setInvoiceSorting } from '@/redux/features/invoiceSlice';
+import ModuleGuard from '@/components/ModuleGuard';
 
 const InvoiceReportPage = () => {
   const router = useRouter();
@@ -99,6 +100,31 @@ const InvoiceReportPage = () => {
 
   };
 
+  const handleSingleInvoicePDF = (inv: any) => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`INVOICE SUMMARY - ${inv.invoiceNumber}`, 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Customer: ${inv.customerName}`, 14, 30);
+    doc.text(`Date: ${inv.date}`, 14, 36);
+    doc.text(`Status: ${inv.status.toUpperCase()}`, 14, 42);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [['Field', 'Details']],
+      body: [
+        ['Invoice Number', inv.invoiceNumber],
+        ['Customer Name', inv.customerName],
+        ['Address', inv.address || 'N/A'],
+        ['Sub Total', `INR ${(inv.subTotal || 0).toLocaleString()}`],
+        ['Tax Total', `INR ${(inv.taxTotal || 0).toLocaleString()}`],
+        ['Grand Total', `INR ${(inv.grandTotal || 0).toLocaleString()}`]
+      ],
+      theme: 'grid'
+    });
+    doc.save(`audit_invoice_${inv.invoiceNumber}.pdf`);
+  };
+
   if (!mounted) return null;
 
   const totalPages = pagination.totalPages;
@@ -135,7 +161,8 @@ const InvoiceReportPage = () => {
   };
 
   return (
-    <div className="container-fluid py-4 animate-fade-in bg-light min-vh-100">
+    <ModuleGuard moduleId="mod_invoice">
+      <div className="container-fluid py-4 animate-fade-in bg-light min-vh-100">
       <div className="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-2">
         <div>
           <Breadcrumb items={[{ label: 'Intelligence Reports', active: false }, { label: 'Invoice Report', active: true }]} />
@@ -302,6 +329,7 @@ const InvoiceReportPage = () => {
       </div>
       <style jsx>{` .fw-900 { font-weight: 900; } .bg-light-soft { background-color: #f7f9fc; } .table-responsive { padding-bottom: 80px; } `}</style>
     </div>
+    </ModuleGuard>
   );
 };
 

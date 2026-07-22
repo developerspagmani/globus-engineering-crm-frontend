@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Breadcrumb from '@/components/Breadcrumb';
+import ModuleGuard from '@/components/ModuleGuard';
 
 export default function GstLookupPage() {
     const [gstin, setGstin] = useState('');
@@ -90,6 +91,7 @@ export default function GstLookupPage() {
     };
 
     return (
+        <ModuleGuard moduleId="mod_gst_lookup">
         <div className="container-fluid py-4 min-vh-100 bg-light bg-opacity-50">
             <div className="mb-4 d-flex justify-content-between align-items-center">
                 <div>
@@ -263,5 +265,6 @@ export default function GstLookupPage() {
                 .xx-small { font-size: 0.65rem; }
             `}</style>
         </div>
+        </ModuleGuard>
     );
 }

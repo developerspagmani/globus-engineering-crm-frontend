@@ -12,6 +12,8 @@ import { isDistrictMatch, isRegionMatch } from '@/utils/geo_utils';
 import { Company } from '@/types/modules';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchCompanies } from '@/redux/features/companySlice';
+import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import ModuleGuard from '@/components/ModuleGuard';
 
 const SalesMapPage = () => {
     const dispatch = useDispatch();
@@ -23,6 +25,9 @@ const SalesMapPage = () => {
     useEffect(() => {
         (dispatch as any)(fetchCustomers({ company_id: activeCompany?.id, limit: 5000 }));
         (dispatch as any)(fetchCompanies());
+        if (activeCompany?.id) {
+            (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 5000 }));
+        }
     }, [dispatch, activeCompany?.id]);
     const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'states' | 'districts'>('states');
@@ -118,6 +123,7 @@ const SalesMapPage = () => {
     }, [customers, activeCompany?.id]);
 
     return (
+        <ModuleGuard moduleId="mod_sales_map">
         <div className={`dashboard-layout ${isDarkMode ? 'dark-mode' : ''} bg-white min-vh-100 position-relative`}>
             {/* Page Loader Overlay */}
             {isPageLoading && (
@@ -363,6 +369,7 @@ const SalesMapPage = () => {
                 .mt-n1 { margin-top: -1px; }
             `}</style>
         </div>
+        </ModuleGuard>
     );
 };
 

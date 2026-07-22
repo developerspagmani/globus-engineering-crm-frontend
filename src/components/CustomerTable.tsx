@@ -146,10 +146,32 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
   onLocate,
 }) => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const invoices = useSelector((state: RootState) => state.invoices.items);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterState, setFilterState] = useState('');
   const [filterDistrict, setFilterDistrict] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const itemsPerPage = 10;
+
+  // Set of customer IDs that have invoices within [fromDate, toDate]
+  const matchingCustomerIds = useMemo(() => {
+    if (!fromDate && !toDate) return null; // No date filter applied
+
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+    if (to) to.setHours(23, 59, 59, 999);
+
+    const ids = new Set<string>();
+    (invoices || []).forEach((inv) => {
+      if (!inv.date) return;
+      const invDate = new Date(inv.date);
+      if (from && invDate < from) return;
+      if (to && invDate > to) return;
+      if (inv.customerId) ids.add(String(inv.customerId));
+    });
+    return ids;
+  }, [invoices, fromDate, toDate]);
 
   // Unique states deduplicated by canonical name (handles all misspellings)
   const uniqueStates = useMemo(() => {
@@ -177,9 +199,11 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
       const matchState = !filterState || canonicalState(c.state) === filterState;
       const matchDistrict =
         !filterDistrict || getDistrict(c) === filterDistrict;
-      return matchState && matchDistrict;
+      const matchInvoiceDate =
+        matchingCustomerIds === null || matchingCustomerIds.has(String(c.id));
+      return matchState && matchDistrict && matchInvoiceDate;
     });
-  }, [customers, filterState, filterDistrict]);
+  }, [customers, filterState, filterDistrict, matchingCustomerIds]);
 
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
   const paginatedItems = filteredCustomers.slice(
@@ -198,7 +222,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
     setCurrentPage(1);
   };
 
-  const hasFilters = filterState || filterDistrict;
+  const hasFilters = filterState || filterDistrict || fromDate || toDate;
 
   return (
     <div className="h-100 d-flex flex-column">
@@ -215,12 +239,12 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
           </div>
         </div>
 
-        {/* Filter Row — State and District dropdowns */}
-        <div className="d-flex flex-wrap gap-2 align-items-center">
+        {/* Filter Row — State, District, and Invoice Date Range in a single line */}
+        <div className="d-flex align-items-center gap-2 flex-nowrap overflow-x-auto pb-1">
           {/* State Filter */}
           <select
-            className="form-select form-select-sm bg-light border-0 rounded-3"
-            style={{ minWidth: '130px', maxWidth: '165px', fontSize: '0.78rem' }}
+            className="form-select form-select-sm bg-light border-0 rounded-3 flex-shrink-0"
+            style={{ width: '120px', fontSize: '0.75rem', height: '32px' }}
             value={filterState}
             onChange={(e) => handleStateFilter(e.target.value)}
           >
@@ -232,8 +256,8 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
 
           {/* District Filter */}
           <select
-            className="form-select form-select-sm bg-light border-0 rounded-3"
-            style={{ minWidth: '130px', maxWidth: '165px', fontSize: '0.78rem' }}
+            className="form-select form-select-sm bg-light border-0 rounded-3 flex-shrink-0"
+            style={{ width: '120px', fontSize: '0.75rem', height: '32px' }}
             value={filterDistrict}
             onChange={(e) => handleDistrictFilter(e.target.value)}
             disabled={uniqueDistricts.length === 0}
@@ -244,14 +268,37 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
             ))}
           </select>
 
+          {/* Invoice Date Range Filter */}
+          <div className="d-flex align-items-center gap-1 bg-light px-2 rounded-3 flex-shrink-0" style={{ height: '32px' }}>
+            <input
+              type="date"
+              className="form-control form-control-sm bg-transparent border-0 text-muted p-0 shadow-none"
+              style={{ width: '105px', fontSize: '0.72rem' }}
+              value={fromDate}
+              onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
+              title="From Date (Based on Invoice)"
+            />
+            <span className="text-muted small fw-bold px-1" style={{ fontSize: '0.65rem' }}>TO</span>
+            <input
+              type="date"
+              className="form-control form-control-sm bg-transparent border-0 text-muted p-0 shadow-none"
+              style={{ width: '105px', fontSize: '0.72rem' }}
+              value={toDate}
+              onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
+              title="To Date (Based on Invoice)"
+            />
+          </div>
+
           {/* Clear button */}
           {hasFilters && (
             <button
-              className="btn btn-sm btn-outline-secondary border-0 rounded-3"
-              style={{ fontSize: '0.75rem' }}
+              className="btn btn-sm btn-outline-secondary border-0 rounded-3 flex-shrink-0"
+              style={{ fontSize: '0.72rem', height: '32px' }}
               onClick={() => {
                 setFilterState('');
                 setFilterDistrict('');
+                setFromDate('');
+                setToDate('');
                 setCurrentPage(1);
               }}
             >
