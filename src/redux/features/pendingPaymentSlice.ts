@@ -115,7 +115,7 @@ const initialState: PendingPaymentState = {
     criticalOverdue: 0,
   },
   sorting: {
-    sortBy: 'created_at',
+    sortBy: 'invoice_date',
     sortOrder: 'desc',
   },
 };

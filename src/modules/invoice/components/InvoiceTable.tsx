@@ -28,9 +28,18 @@ const InvoiceTable: React.FC = () => {
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items: invoices, filters, pagination, sorting: invoiceSorting, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
   const { items: inwards, sorting: inwardSorting, loading: inwardLoading } = useSelector((state: RootState) => state.inward);
-  const initialTab = searchParams.get('tab') as any || 'ADD_INVOICE';
-  const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST' | 'ALL_LIST'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'ADD_INVOICE' | 'INVOICELIST' | 'WOP_LIST' | 'BOTH_LIST' | 'ALL_LIST'>(
+    (searchParams.get('tab') as any) || 'ADD_INVOICE'
+  );
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null; type: 'invoice' | 'inward' | null }>({ isOpen: false, id: null, type: null });
+
+  // Sync activeTab whenever the URL tab param changes (e.g. navigating from dashboard cards)
+  React.useEffect(() => {
+    const urlTab = searchParams.get('tab') as any;
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [searchParams]);
 
   const handleTabChange = (tab: any) => { setActiveTab(tab); const params = new URLSearchParams(searchParams.toString()); params.set('tab', tab); router.push(`${pathname}?${params.toString()}`); };
 
@@ -92,7 +101,7 @@ const InvoiceTable: React.FC = () => {
       }
       (dispatch as any)(fetchNextNumbers({ companyId: activeCompany.id }));
     }
-  }, [dispatch, activeCompany?.id, activeTab, inwardSorting?.sortBy, inwardSorting?.sortOrder]);
+  }, [dispatch, activeCompany?.id, activeTab, inwardSorting?.sortBy, inwardSorting?.sortOrder, (filters as any).partyType]);
 
   React.useEffect(() => {
     if (activeCompany?.id) {
@@ -125,12 +134,13 @@ const InvoiceTable: React.FC = () => {
     
     if (user?.role !== 'super_admin' && activeCompany && itemCompId !== activeCompId) return false;
     
-    // We only want inwards that actually have something remaining to bill
+    const isVendor = !!item.vendorId || item.partyType === 'vendor';
+    // We only want inwards that actually have something remaining to bill, but for vendors we allow them to show if they are pending
     const hasRemaining = (item.totalRemaining ?? 1) > 0;
     // Also check if there's any billing balance left specifically, if the backend provides it
     const hasBillingBalance = item.items ? item.items.some((i: any) => (i.billingBalance ?? i.remainingQty ?? 1) > 0) : true;
     
-    if (!hasRemaining || !hasBillingBalance) return false;
+    if (!isVendor && (!hasRemaining || !hasBillingBalance)) return false;
     const search = String(filters.search || '').toLowerCase();
     const custName = String(item.customerName || item.vendorName || '').toLowerCase();
     const dcNo = String(item.dcNo || item.challanNo || '').toLowerCase();

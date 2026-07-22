@@ -146,11 +146,29 @@ export default function LedgerPage() {
       result = result.filter(p => p.partyType.toLowerCase() === filters.partyType.toLowerCase());
     }
 
+    if (filters.search && filters.search.trim()) {
+      const searchLower = filters.search.toLowerCase().trim();
+      result = result.filter(p => {
+        const name = (p.name || '').toLowerCase();
+        const street1 = (p.street1 || '').toLowerCase();
+        const street2 = (p.street2 || '').toLowerCase();
+        const city = (p.city || '').toLowerCase();
+        const state = (p.state || '').toLowerCase();
+        return (
+          name.includes(searchLower) ||
+          street1.includes(searchLower) ||
+          street2.includes(searchLower) ||
+          city.includes(searchLower) ||
+          state.includes(searchLower)
+        );
+      });
+    }
+
     // 5. SORT: Recent First (Parties with transactions show first, others follow)
     result.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
 
     return result;
-  }, [ledgerEntries, customers, vendors, activeCompany?.id, filters.dateFrom, filters.dateTo, filters.partyType]);
+  }, [ledgerEntries, customers, vendors, activeCompany?.id, filters.dateFrom, filters.dateTo, filters.partyType, filters.search]);
 
   const totalItems = uniqueParties.length;
   const itemsPerPage = 10;

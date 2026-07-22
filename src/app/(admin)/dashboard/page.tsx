@@ -29,15 +29,15 @@ export default function DashboardPage() {
 
 
   const stats = isViewingGlobal ? [
-    { label: 'Active Tenants', value: '12', change: '+2', icon: 'bi-building', color: 'primary' },
-    { label: 'Total Users', value: '450', change: '+15', icon: 'bi-people', color: 'success' },
-    { label: 'Monthly Revenue', value: '₹12,400', change: '+8%', icon: 'bi-bank', color: 'info' },
-    { label: 'System Health', value: '99.9%', change: 'Stable', icon: 'bi-cpu', color: 'warning' },
+    { label: 'Active Tenants', value: '12', change: '+2', icon: 'bi-building', color: 'primary', href: '/companies' },
+    { label: 'Total Users', value: '450', change: '+15', icon: 'bi-people', color: 'success', href: '/company-users' },
+    { label: 'Monthly Revenue', value: '₹12,400', change: '+8%', icon: 'bi-bank', color: 'info', href: '/payments/pending' },
+    { label: 'System Health', value: '99.9%', change: 'Stable', icon: 'bi-cpu', color: 'warning', href: '/dashboard' },
   ] : [
-    { label: 'Total Invoiced', value: `${realStats?.summary.totalInvoiced.toLocaleString() || '0'}`, change: '+0%', icon: 'bi-currency-rupee', color: 'secondary' },
-    { label: 'Pending Payments', value: `₹${realStats?.summary.pendingAmount.toLocaleString() || '0'}`, change: 'Live', icon: 'bi-clock-history', color: 'warning' },
-    { label: 'Customer Count', value: realStats?.summary.customerCount.toString() || '0', change: 'Active', icon: 'bi-people', color: 'success' },
-    { label: 'Overdue Invoices', value: realStats?.summary.overdueCount.toString() || '0', change: '>30 Days', icon: 'bi-exclamation-triangle', color: 'danger' },
+    { label: 'Total Invoiced', value: `${realStats?.summary.totalInvoiced.toLocaleString() || '0'}`, change: '+0%', icon: 'bi-currency-rupee', color: 'secondary', href: '/invoices?tab=ALL_LIST' },
+    { label: 'Pending Payments', value: `₹${realStats?.summary.pendingAmount.toLocaleString() || '0'}`, change: 'Live', icon: 'bi-clock-history', color: 'warning', href: '/payments/pending' },
+    { label: 'Customer Count', value: realStats?.summary.customerCount.toString() || '0', change: 'Active', icon: 'bi-people', color: 'success', href: '/customers' },
+    { label: 'Overdue Invoices', value: realStats?.summary.overdueCount.toString() || '0', change: '>30 Days', icon: 'bi-exclamation-triangle', color: 'danger', href: '/payments/pending' },
   ];
 
   return (
@@ -63,7 +63,11 @@ export default function DashboardPage() {
       <div className="row g-4 mb-4">
         {stats.map((stat, idx) => (
           <div className="col-12 col-md-6 col-lg-3" key={idx}>
-            <div className="card h-100 border-0 shadow-sm">
+            <Link href={(stat as any).href || '#'} className="text-decoration-none">
+            <div className="card h-100 border-0 shadow-sm" style={{ cursor: 'pointer', transition: 'transform 0.15s ease, box-shadow 0.15s ease' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
+            >
               <div className="card-body p-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <div className={`p-3 rounded-3`} style={{ backgroundColor: stat.color === 'primary' ? 'var(--accent-soft)' : '', background: stat.color !== 'primary' ? `var(--${stat.color}-soft, rgba(0,0,0,0.05))` : '' }}>
@@ -84,6 +88,7 @@ export default function DashboardPage() {
                 </h3>
               </div>
             </div>
+            </Link>
           </div>
         ))}
       </div>

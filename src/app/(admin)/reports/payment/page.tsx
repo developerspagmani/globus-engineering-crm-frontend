@@ -263,31 +263,7 @@ const PaymentReportPage = () => {
         </div>
       </div>
 
-      {/* Audit Summary Cards */}
-      <div className="row g-3 mb-4">
-        {[
-          { label: 'Payments Received', val: totals.paymentCount, icon: 'shield-check', color: 'primary' },
-          { label: 'Total Collected', val: `₹${totals.totalCollected.toLocaleString()}`, icon: 'bank', color: 'success' },
-          { label: 'Total Outstanding', val: `₹${totals.totalOutstanding.toLocaleString()}`, icon: 'exclamation-diamond', color: 'danger' },
-          { label: 'Critical (>90D)', val: totals.criticalOverdue, icon: 'alarm', color: 'warning' }
-        ].map((item, i) => (
-          <div key={i} className="col-md-3">
-            <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
-              <div className="d-flex align-items-center gap-3">
-                <div className={`rounded-circle bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
-                  <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
-                </div>
-                <div>
-                  <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
-                  <h4 className="fw-900 mb-0">{item.val}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="d-flex gap-2 mb-3">
+      <div className="d-flex gap-2 mb-4">
         <button className={`btn px-4 py-2 fw-bold small rounded-pill ${activeTab === 'PAYMENT' ? 'btn-primary shadow-sm' : 'bg-white text-muted border'}`} onClick={() => { 
           setActiveTab('PAYMENT'); 
           setFromDate(""); 
@@ -304,6 +280,35 @@ const PaymentReportPage = () => {
           setSelectedCustomerId("");
           setPartyType("customer");
         }}>Pending Payments (Ageing)</button>
+      </div>
+
+      {/* Audit Summary Cards - Dynamic per Active Tab */}
+      <div className="row g-3 mb-4">
+        {(activeTab === 'PAYMENT' ? [
+          { label: 'Payments Received', val: totals.paymentCount, icon: 'shield-check', color: 'primary' },
+          { label: 'Total Collected', val: `₹${totals.totalCollected.toLocaleString()}`, icon: 'bank', color: 'success' },
+          { label: 'Average Collection', val: `₹${totals.paymentCount > 0 ? Math.round(totals.totalCollected / totals.paymentCount).toLocaleString() : '0'}`, icon: 'calculator', color: 'info' },
+          { label: 'Total Vouchers', val: vPagination.totalItems || vouchers.length, icon: 'receipt', color: 'secondary' }
+        ] : [
+          { label: 'Pending Invoices', val: totals.pendingCount, icon: 'clock-history', color: 'primary' },
+          { label: 'Total Outstanding', val: `₹${totals.totalOutstanding.toLocaleString()}`, icon: 'exclamation-diamond', color: 'danger' },
+          { label: 'Critical (>90D)', val: totals.criticalOverdue, icon: 'alarm', color: 'warning' },
+          { label: 'Recent Pending (0-30D)', val: pending.filter(p => calculateDays(p.date || (p as any).invoice_date) <= 30).length, icon: 'hourglass-split', color: 'info' }
+        ]).map((item, i) => (
+          <div key={i} className="col-md-3">
+            <div className="card shadow-sm border-0 rounded-4 bg-white p-3 h-100 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div className="d-flex align-items-center gap-3">
+                <div className={`rounded-circle bg-opacity-10 p-2 d-flex align-items-center justify-content-center`} style={{ width: '42px', height: '42px' }}>
+                  <i className={`bi bi-${item.icon} text-${item.color} fs-5`}></i>
+                </div>
+                <div>
+                  <p className="text-muted tiny mb-0 fw-bold text-uppercase" style={{ fontSize: '10px', letterSpacing: '0.5px' }}>{item.label}</p>
+                  <h4 className="fw-900 mb-0">{item.val}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="card shadow-sm border-0 mb-4 rounded-4 overflow-hidden">

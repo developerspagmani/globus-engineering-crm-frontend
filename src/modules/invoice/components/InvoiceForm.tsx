@@ -289,28 +289,45 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       });
    };
 
-   const fetchPendingForCustomer = async (custId: string) => {
-      if (!custId) {
+   const fetchPendingForCustomer = async (partyId: string, isVendorParty?: boolean) => {
+      if (!partyId) {
          setPendingInwards([]);
          return;
       }
 
       setInwardLoading(true);
-      const activeToken = authToken || localStorage.getItem('token');
-      if (activeToken) {
-         try {
-            const res = await fetch(`/api/inward/pending/${custId}`, {
+      try {
+         // First try to filter from already-loaded Redux inwards (supports both customers and vendors)
+         const filtered = inwards.filter((inv: any) => {
+            if (isVendorParty) {
+               return String(inv.vendorId || inv.vendor_id || '') === String(partyId);
+            }
+            return String(inv.customerId || inv.customer_id || '') === String(partyId);
+         });
+
+         if (filtered.length > 0) {
+            setPendingInwards(filtered);
+            setInwardLoading(false);
+            return;
+         }
+
+         // Fallback: fetch from backend API
+         const activeToken = authToken || localStorage.getItem('token');
+         if (activeToken) {
+            const url = isVendorParty
+               ? `/api/inward?vendorId=${partyId}&status=pending&limit=100`
+               : `/api/inward/pending/${partyId}`;
+            const res = await fetch(url, {
                headers: {
                   'Authorization': `Bearer ${activeToken.replace(/^"|"$/g, '')}`
                }
             });
             const data = await res.json();
-            setPendingInwards(Array.isArray(data) ? data : []);
-         } catch (err) {
-         } finally {
-            setInwardLoading(false);
+            const results = Array.isArray(data) ? data : (data?.items || []);
+            setPendingInwards(results);
          }
-      } else {
+      } catch (err) {
+      } finally {
          setInwardLoading(false);
       }
    };
@@ -320,7 +337,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          const inward = inwards.find(i => i.id === inwardId);
          if (inward) {
             populateFromInward(inward);
-            fetchPendingForCustomer((inward as any).customerId || (inward as any).customer_id || '')
+            const isVendorInward = !!(inward as any).vendorId || !!(inward as any).vendor_id;
+            fetchPendingForCustomer((inward as any).customerId || (inward as any).customer_id || (inward as any).vendorId || (inward as any).vendor_id || '', isVendorInward)
                .then(() => setInwardInitLoading(false))
                .catch(() => setInwardInitLoading(false));
          } else {
@@ -402,7 +420,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             inwardId: undefined
          }));
 
-         fetchPendingForCustomer(value);
+         fetchPendingForCustomer(value, !!vendors.find(v => v.id === value));
       } else {
          let updates: any = { [name]: value };
          if (name === 'poNo') updates.po_no = value;

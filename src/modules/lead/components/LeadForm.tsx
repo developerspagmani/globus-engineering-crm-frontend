@@ -30,14 +30,6 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
     }
   }, [dispatch, user?.company_id, companyUsers]);
 
-  const agentOptions = companyUsers
-    .filter((u: any) => u.role === 'sales_agent' || u.role === 'sales')
-    .map((u: any) => ({ value: u.id, label: u.name }));
-  
-  if (user && user.role !== 'sales_agent' && user.role !== 'sales' && !agentOptions.find((o: any) => o.value === user.id)) {
-      agentOptions.push({ value: user.id, label: `${user.name} (You)` });
-  }
-
   const [formData, setFormData] = useState<Omit<Lead, 'id' | 'createdAt'>>({
     name: '',
     email: '',
@@ -51,6 +43,14 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
     notes: '',
     assignedArea: '',
   });
+
+  const agentOptions = companyUsers
+    .filter((u: any) => (u.role === 'sales_agent' || u.role === 'sales') && u.company_id === formData.company_id)
+    .map((u: any) => ({ value: u.id, label: u.name }));
+  
+  if (user && user.role !== 'sales_agent' && user.role !== 'sales' && !agentOptions.find((o: any) => o.value === user.id)) {
+      agentOptions.push({ value: user.id, label: `${user.name} (You)` });
+  }
 
   const [modal, setModal] = useState<{
     isOpen: boolean;

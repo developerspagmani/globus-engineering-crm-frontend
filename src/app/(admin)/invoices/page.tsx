@@ -21,6 +21,14 @@ export default function InvoiceHistoryPage() {
 
   React.useEffect(() => {
     setMounted(true);
+    
+    // Check for status filter in URL (e.g. from dashboard cards)
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusParam = urlParams.get('status');
+    if (statusParam) {
+      dispatch(setInvoiceFilters({ status: statusParam }));
+    }
+
     return () => {
       dispatch(resetInvoiceState());
     };

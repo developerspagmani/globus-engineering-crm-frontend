@@ -62,6 +62,12 @@ const InvoiceSettings: React.FC = () => {
     }
   };
 
+  const handleRemoveLogo = (field: 'logo' | 'logoSecondary') => {
+    setFormData((prev: any) => ({ ...prev, [field]: '' }));
+    dispatch(updateInvoiceSettings({ [field]: '' }));
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!company) return;
@@ -133,6 +139,16 @@ const InvoiceSettings: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    {formData.logo && (
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-danger mt-2" 
+                        style={{ maxWidth: '120px', width: '100%' }}
+                        onClick={() => handleRemoveLogo('logo')}
+                      >
+                        <i className="bi bi-trash"></i> Remove
+                      </button>
+                    )}
                     <input type="file" ref={fileInputRef} className="d-none" accept="image/*" onChange={(e) => handleLogoUpload(e, 'logo')} />
                   </div>
 
@@ -152,6 +168,16 @@ const InvoiceSettings: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    {formData.logoSecondary && (
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-danger mt-2" 
+                        style={{ maxWidth: '120px', width: '100%' }}
+                        onClick={() => handleRemoveLogo('logoSecondary')}
+                      >
+                        <i className="bi bi-trash"></i> Remove
+                      </button>
+                    )}
                     <input type="file" ref={secondaryFileInputRef} className="d-none" accept="image/*" onChange={(e) => handleLogoUpload(e, 'logoSecondary')} />
                   </div>
                   

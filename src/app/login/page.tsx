@@ -26,7 +26,7 @@ function LoginForm({
   
   // Sync selectedContext when companyId prop changes
   useEffect(() => {
-    if (companyId && !selectedContext) {
+    if (companyId) {
       setSelectedContext(companyId);
     }
   }, [companyId]);
@@ -110,10 +110,10 @@ function LoginForm({
                 onChange={(e) => setSelectedContext(e.target.value)}
                 required
               >
-                <option value="super_admin">System / Super Admin</option>
                 {companies.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
+                <option value="super_admin">System / Super Admin</option>
               </select>
             </div>
           </div>
@@ -218,14 +218,18 @@ function LoginContent() {
         const companies = res.data;
         setDbCompanies(companies);
         const gCompany = companies.find((c: any) => c.name.toLowerCase().includes('globus'));
-        const wCompany = companies.find((c: any) => c.name.toLowerCase().includes('wingsman'));
+        const wCompany = companies.find((c: any) => 
+          c.name.toLowerCase().includes('wingsman') || 
+          c.name.toLowerCase().includes('wings')
+        );
         if (gCompany) setGlobusId(gCompany.id);
-        if (wCompany) setWingsmanId(wCompany.id);
-        
-        // Fallback: If no strict name match, but 2 companies exist, assign them
-        if (!gCompany && !wCompany && companies.length >= 2) {
-           setGlobusId(companies[0].id);
-           setWingsmanId(companies[1].id);
+        if (wCompany) {
+          setWingsmanId(wCompany.id);
+        } else if (companies.length > 1) {
+          const secondComp = companies.find((c: any) => c.id !== gCompany?.id);
+          if (secondComp) setWingsmanId(secondComp.id);
+        } else if (companies.length > 0 && !wCompany) {
+          setWingsmanId(companies[0].id);
         }
       })
       .catch(err => console.error('Failed to load companies for login', err));
