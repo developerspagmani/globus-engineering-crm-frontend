@@ -524,7 +524,7 @@ export default function ItemDetailsPage() {
         onClose={() => setSoftDeleteModal({ isOpen: false, id: null })}
         onConfirm={confirmSoftDelete}
         title="Disable Item"
-        message="Are you sure you want to disable this item? It will be hidden from the list, but historical records will remain intact."
+        message="Are you sure you want to disable this item?"
       />
 
       {statusModal.isOpen && (
