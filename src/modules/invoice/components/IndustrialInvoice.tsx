@@ -508,7 +508,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       <span className="p-meta-val">{isWOP ? (invoice.challanNumber || 'N/A') : invoice.invoiceNumber}</span>
                    </div>
                    <div className="p-meta-row-item">
-                      <span className="p-meta-label">DC No</span>
+                      <span className="p-meta-label">{isWOP ? 'Customer DC No' : 'DC No'}</span>
                       <span>:</span>
                       <span className="p-meta-val">{invoice.dcNo || invoice.dc_no || ''}</span>
                    </div>
