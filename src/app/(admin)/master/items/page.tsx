@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk, setItemPage, setItemSearch, setItemSorting } from '@/redux/features/masterSlice';
+import { fetchItems, createItemThunk, updateItemThunk, deleteItemThunk, softDeleteItemThunk, setItemPage, setItemSearch, setItemSorting } from '@/redux/features/masterSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -27,6 +27,7 @@ export default function ItemDetailsPage() {
   const [isViewOnly, setIsViewOnly] = useState(false);
   const [formData, setFormData] = useState({ itemCode: '', itemName: '' });
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [softDeleteModal, setSoftDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [statusModal, setStatusModal] = useState<{ isOpen: boolean; type: 'success' | 'error' | 'warning' | 'info'; title: string; message: string }>({ isOpen: false, type: 'success', title: '', message: '' });
   const [mounted, setMounted] = useState(false);
 
@@ -102,9 +103,26 @@ export default function ItemDetailsPage() {
     setDeleteModal({ isOpen: true, id });
   };
 
+  const handleSoftDeleteParams = (id: string) => {
+    setSoftDeleteModal({ isOpen: true, id });
+  };
+
   const confirmDelete = () => {
     if (deleteModal.id) {
       (dispatch as any)(deleteItemThunk(deleteModal.id));
+    }
+  };
+
+  const confirmSoftDelete = () => {
+    if (softDeleteModal.id) {
+      (dispatch as any)(softDeleteItemThunk(softDeleteModal.id));
+      setSoftDeleteModal({ isOpen: false, id: null });
+      setStatusModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Item Disabled',
+        message: 'The item has been removed from the list.'
+      });
     }
   };
 
@@ -416,6 +434,16 @@ export default function ItemDetailsPage() {
                                       <i className="bi bi-pencil-fill"></i>
                                     </button>
                                   )}
+                                  {mounted && checkActionPermission(user, 'mod_items', 'delete') && (
+                                    <button 
+                                      onClick={() => handleSoftDeleteParams(item.id)} 
+                                      className="btn-action-delete ms-1" 
+                                      style={{ backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                                      title="Disable Item"
+                                    >
+                                      <i className="bi bi-trash-fill"></i>
+                                    </button>
+                                  )}
                                   <div className="dropdown">
                                     <button 
                                       className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
@@ -488,7 +516,15 @@ export default function ItemDetailsPage() {
         onClose={() => setDeleteModal({ isOpen: false, id: null })}
         onConfirm={confirmDelete}
         title="Delete Item"
-        message="Are you sure you want to delete this item? This action cannot be undone."
+        message="Are you sure you want to completely remove this item? This action cannot be undone."
+      />
+
+      <ConfirmationModal 
+        isOpen={softDeleteModal.isOpen}
+        onClose={() => setSoftDeleteModal({ isOpen: false, id: null })}
+        onConfirm={confirmSoftDelete}
+        title="Disable Item"
+        message="Are you sure you want to disable this item? It will be hidden from the list, but historical records will remain intact."
       />
 
       {statusModal.isOpen && (

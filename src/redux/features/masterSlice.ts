@@ -231,6 +231,11 @@ export const deleteItemThunk = createAsyncThunk('master/deleteItem', async (id: 
   return id;
 });
 
+export const softDeleteItemThunk = createAsyncThunk('master/softDeleteItem', async (id: string) => {
+  await api.put(`/items/${id}/disable`);
+  return id;
+});
+
 export const deleteProcessThunk = createAsyncThunk('master/deleteProcess', async (id: string) => {
   await api.delete(`/processes/${id}`);
   return id;
@@ -327,6 +332,9 @@ const masterSlice = createSlice({
         if (index !== -1) state.priceFixings[index] = action.payload;
       })
       .addCase(deleteItemThunk.fulfilled, (state, action) => {
+        state.items = state.items.filter(i => i.id !== action.payload);
+      })
+      .addCase(softDeleteItemThunk.fulfilled, (state, action) => {
         state.items = state.items.filter(i => i.id !== action.payload);
       })
       .addCase(deleteProcessThunk.fulfilled, (state, action) => {
