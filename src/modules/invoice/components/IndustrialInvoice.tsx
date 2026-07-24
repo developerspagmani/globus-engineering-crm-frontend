@@ -167,15 +167,15 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    const isPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
    const urlCopies = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('copies');
    
-   let copyTypes = ['ORIGINAL'];
+   let copyTypes = [''];
    if (isPrint && !isWOP) {
       if (urlCopies) {
          copyTypes = urlCopies.split(',');
       } else {
          copyTypes = ['ORIGINAL', 'DUPLICATE', 'TRIPLICATE'];
       }
-   } else if (isWOP && isPrint) {
-      copyTypes = ['ORIGINAL', 'DUPLICATE'];
+   } else if (!isPrint && !isWOP) {
+      copyTypes = ['ORIGINAL'];
    }
 
    const pagesData = paginate(displayItems);
@@ -225,7 +225,8 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          .invoice-page {
             width: 210mm;
             height: auto;
-            min-height: 275mm;
+            display: flex;
+            flex-direction: column;
             padding: 5mm 10mm;
             background: white;
             position: relative;
@@ -236,13 +237,14 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          }
         
          .page-border-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             border: 1px solid #000000;
             margin: 0 auto;
             width: 100%;
             height: auto;
             min-height: 260mm;
-            display: flex;
-            flex-direction: column;
             background: #fff;
             box-sizing: border-box;
          }
@@ -423,21 +425,19 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
              page-break-inside: avoid;
              margin: 0 !important;
              border: none !important;
-             height: auto !important;
-             min-height: 250mm !important;
+             height: 293mm !important;
              padding: 5mm 10mm !important;
              overflow: visible !important;
           }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           .industrial-print-container { 
              background: #fff !important; 
-             height: auto !important;
           }
           .industrial-print-container:empty {
              display: none;
           }
-          .page-border-box { overflow: visible !important; }
-          .page-border-box.last-page { height: auto !important; min-height: 250mm; }
+          .page-border-box { height: 100% !important; overflow: hidden !important; }
+          .page-border-box.last-page { height: 100% !important; min-height: unset !important; }
         }
       `}</style>
       </div>
@@ -473,7 +473,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
              )}
           </div>
 
-          <div className={`page-border-box${isLastPage ? ' last-page' : ''}`}>
+          <div className={`page-border-box${isLastPage ? ' last-page' : ''}`} style={isWOP ? { height: '260mm' } : {}}>
              
              {/* Header ALWAYS SHOW */}
              <div className="p-header">
@@ -622,45 +622,44 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                          </tr>
                       ))}
                    </tbody>
-                    {isLastPage && (
-                       <tfoot>
-                          {isWOP ? (
-                             <tr style={{ background: '#fdfdfd' }}>
-                                <td colSpan={2} style={{ borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold' }}>
-                                   WITHOUT PROCESS
-                                </td>
-                                <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold' }}>
-                                   Total Quantity
-                                </td>
-                                <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
-                                   {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}
-                                </td>
-                             </tr>
-                          ) : (
-                             <tr style={{ background: '#fdfdfd' }}>
-                                <td colSpan={4} style={{ textAlign: 'right', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold' }}>
-                                   Total Quantity
-                                </td>
-                                <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
-                                   {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
-                                </td>
-                                <td colSpan={2} style={{ borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', borderRight: 'none' }}></td>
-                             </tr>
-                          )}
-                       </tfoot>
-                    )}
-                 </table>
-                 {/* Div-based flex spacer to absorb remaining page height and draw vertical borders safely */}
-                 <div style={{ flex: 1, display: 'flex' }}>
-                    <div style={{ width: '6%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    <div style={{ width: '44%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    <div style={{ width: isWOP ? '25%' : '10%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    {!isWOP && <div style={{ width: '9%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
-                    <div style={{ width: isWOP ? '25%' : '8%', borderRight: isWOP ? 'none' : '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    {!isWOP && <div style={{ width: '11%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
-                    {!isWOP && <div style={{ width: '12%', boxSizing: 'border-box' }}></div>}
-                 </div>
-              </div>
+                   {isLastPage && !isWOP && (
+                      <tfoot>
+                         <tr style={{ background: '#fdfdfd' }}>
+                            <td colSpan={4} style={{ textAlign: 'right', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold' }}>
+                               Total Quantity
+                            </td>
+                            <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
+                               {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
+                            </td>
+                            <td colSpan={2} style={{ borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', borderRight: 'none' }}></td>
+                         </tr>
+                      </tfoot>
+                   )}
+                </table>
+                {/* Flex spacer — draws vertical column borders. For WOP, also pins total row to the bottom. */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                   {/* Empty space with column border lines */}
+                   <div style={{ flex: 1, display: 'flex' }}>
+                      <div style={{ width: '6%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
+                      <div style={{ width: '44%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
+                      <div style={{ width: isWOP ? '25%' : '10%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
+                      {!isWOP && <div style={{ width: '9%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
+                      <div style={{ width: isWOP ? '25%' : '8%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
+                      {!isWOP && <div style={{ width: '11%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
+                      {!isWOP && <div style={{ width: '12%', boxSizing: 'border-box' }}></div>}
+                   </div>
+                   {/* WOP total row — pinned to the bottom of the spacer, matching original tfoot colSpan layout */}
+                   {isLastPage && isWOP && (
+                      <div style={{ display: 'flex', borderTop: '1px solid #000000', borderBottom: '1px solid #000000', background: '#fdfdfd' }}>
+                         <div style={{ width: '50%', borderRight: '1px solid #000000', boxSizing: 'border-box', padding: '12px 15px', fontWeight: 'bold' }}>WITHOUT PROCESS</div>
+                         <div style={{ width: '25%', borderRight: '1px solid #000000', boxSizing: 'border-box', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center' }}>Total Quantity</div>
+                         <div style={{ width: '25%', borderRight: '1px solid #000000', boxSizing: 'border-box', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center' }}>
+                            {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}
+                         </div>
+                      </div>
+                   )}
+                </div>
+             </div>
 
              {/* Totals Section */}
              {isLastPage && !isWOP && (

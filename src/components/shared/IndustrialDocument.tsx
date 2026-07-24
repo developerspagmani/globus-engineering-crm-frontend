@@ -143,7 +143,8 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
          .invoice-page {
            width: 190mm;
            height: auto;
-           min-height: 255mm;
+           display: flex;
+           flex-direction: column;
            background: white;
            position: relative;
            color: black;
@@ -153,14 +154,16 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            margin: 0 auto;
            overflow: visible;
          }
+         
          .page-border-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             border: 1.5pt solid #000;
             margin: 1mm auto;
             width: 185mm;
             height: auto;
-            min-height: 250mm;
-            display: flex;
-            flex-direction: column;
+            min-height: 255mm;
             background: #fff;
             box-sizing: border-box;
          }
@@ -297,9 +300,9 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
             @page { size: A4; margin: 0mm !important; }
             html, body { margin: 0 !important; background: #fff !important; }
             .industrial-print-container { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-            .invoice-page { overflow: visible !important; height: auto !important; min-height: 250mm !important; }
-            .page-border-box { overflow: visible !important; }
-            .page-border-box.last-page { height: auto !important; min-height: 250mm; }
+            .invoice-page { overflow: hidden !important; height: 260mm !important; }
+            .page-border-box { height: 100% !important; overflow: hidden !important; }
+            .page-border-box.last-page { height: 100% !important; min-height: unset !important; }
          }
       `}</style>
       </div>
