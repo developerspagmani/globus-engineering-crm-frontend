@@ -140,29 +140,30 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
           width: 100%;
           margin: 0;
         }
-        .invoice-page {
-          width: 190mm;
-          height: 270mm;
-          background: white;
-          position: relative;
-          color: black;
-          font-family: var(--font-inter), Inter, sans-serif;
-          box-sizing: border-box;
-          border: none;
-          margin: 0 auto;
-          overflow: hidden;
-        }
-        .page-border-box {
-           border: 1.5pt solid #000;
-           margin: 1mm auto;
-           width: 185mm;
-           height: 265mm;
-           display: flex;
-           flex-direction: column;
-           background: #fff;
+         .invoice-page {
+           width: 190mm;
+           height: auto;
+           min-height: 255mm;
+           background: white;
+           position: relative;
+           color: black;
+           font-family: var(--font-inter), Inter, sans-serif;
            box-sizing: border-box;
-           overflow: hidden;
-        }
+           border: none;
+           margin: 0 auto;
+           overflow: visible;
+         }
+         .page-border-box {
+            border: 1.5pt solid #000;
+            margin: 1mm auto;
+            width: 185mm;
+            height: auto;
+            min-height: 250mm;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            box-sizing: border-box;
+         }
         .p-header { 
            height: 100px; 
            border-bottom: 1.5pt solid #000; 
@@ -190,7 +191,8 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            align-items: center;
         }
         .p-meta-col:last-child { border-right: 0; }
-        .p-meta-val { font-weight: bold; }
+        .p-meta-col > span:first-child { font-weight: bold; color: #000; }
+        .p-meta-val { font-weight: bold; color: #000; }
 
         .tax-invoice-label {
            text-align: center;
@@ -291,14 +293,14 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            border-top: 1pt solid #000;
         }
 
-        @media print {
-           @page { size: A4; margin: 0mm !important; }
-           html, body { margin: 0 !important; background: #fff !important; }
-           .industrial-print-container { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-           .invoice-page { overflow: visible !important; }
-           .page-border-box { overflow: visible !important; }
-           .page-border-box.last-page { height: auto !important; min-height: 265mm; }
-        }
+         @media print {
+            @page { size: A4; margin: 0mm !important; }
+            html, body { margin: 0 !important; background: #fff !important; }
+            .industrial-print-container { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+            .invoice-page { overflow: visible !important; height: auto !important; min-height: 250mm !important; }
+            .page-border-box { overflow: visible !important; }
+            .page-border-box.last-page { height: auto !important; min-height: 250mm; }
+         }
       `}</style>
       </div>
    );
@@ -473,14 +475,14 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">SUPPLIER DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
+                        <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
                            <span>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</span>
                         </div>
-                        <div>GST No</div><div>: <strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
-                        <div>State</div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>GST No</div><div>: <strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                            <span>: {settings.stateDetails?.split(' - ')[0] || 'Tamilnadu'}</span>
                            <span>{settings.stateDetails?.split(' - ')[1] || 'Code : 33'}</span>
@@ -492,14 +494,14 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">RECEIPIENTS DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div>Name</div><div>: <strong>{partyName}</strong></div>
-                        <div style={{ alignSelf: 'start' }}>Address</div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{partyName}</strong></div>
+                        <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
                            <span>{partyAddress !== 'N/A' ? partyAddress : 'N/A'}</span>
                         </div>
-                        <div>GST No</div><div>: <strong>{data.gstin || 'N/A'}</strong></div>
-                        <div>State</div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>GST No</div><div>: <strong>{data.gstin || 'N/A'}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                            <span>: {data.state || 'N/A'}</span>
                            <span>Code : {data.state?.toLowerCase() === 'telangana' ? '36' : '33'}</span>

@@ -1310,11 +1310,28 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               }
                            })()}
 
+                           {(() => {
+                              const exactTotal = (formData.subTotal || 0) - (formData.discount || 0) + (Number(formData.otherCharges) || 0) + (formData.taxTotal || 0);
+                              const roundOff = (formData.grandTotal || Math.round(exactTotal)) - exactTotal;
+                              if (Math.abs(roundOff) > 0.005) {
+                                 return (
+                                    <div className="d-flex align-items-center justify-content-between pt-3 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
+                                       <h6 className="text-muted fw-bold small text-uppercase mb-0">Round Off</h6>
+                                       <div className="d-flex align-items-center gap-2 text-dark fs-6 fw-bold">
+                                          <span>₹</span>
+                                          <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                       </div>
+                                    </div>
+                                 );
+                              }
+                              return null;
+                           })()}
+
                            <div className="d-flex align-items-center justify-content-between pt-3 pb-2" style={{ borderBottom: '2.5px solid #212529' }}>
                               <h4 className="fw-bold mb-0 text-dark text-uppercase small" style={{ letterSpacing: '1px' }}>Grand Total</h4>
                               <div className="d-flex align-items-center gap-2 text-danger fw-bold fs-2">
                                  <span>₹</span>
-                                 <span className="text-nowrap">{formData.grandTotal?.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                                 <span className="text-nowrap">{formData.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                               </div>
                            </div>
                         </div>

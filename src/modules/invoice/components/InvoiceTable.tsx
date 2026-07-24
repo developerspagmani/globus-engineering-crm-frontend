@@ -278,11 +278,38 @@ const InvoiceTable: React.FC = () => {
                           <i className="bi bi-three-dots-vertical fs-5"></i>
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                          <li>
-                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item); }}>
-                              <i className="bi bi-printer text-primary"></i> Quick Print
-                            </button>
-                          </li>
+                          {!!item.invoiceNumber ? (
+                             <>
+                                <li><h6 className="dropdown-header text-uppercase" style={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8' }}>Print Copies</h6></li>
+                                <li>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=ORIGINAL,DUPLICATE,TRIPLICATE`); }}>
+                                      <i className="bi bi-printer-fill text-primary"></i> Print All Copies (3)
+                                   </button>
+                                </li>
+                                <li>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=ORIGINAL`); }}>
+                                      <i className="bi bi-printer"></i> Print Original Only
+                                   </button>
+                                </li>
+                                <li>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=DUPLICATE`); }}>
+                                      <i className="bi bi-printer"></i> Print Duplicate Only
+                                   </button>
+                                </li>
+                                <li>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=TRIPLICATE`); }}>
+                                      <i className="bi bi-printer"></i> Print Triplicate Only
+                                   </button>
+                                </li>
+                                <li><hr className="dropdown-divider opacity-50" /></li>
+                             </>
+                          ) : (
+                             <li>
+                                <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item); }}>
+                                   <i className="bi bi-printer text-primary"></i> Quick Print
+                                </button>
+                             </li>
+                          )}
                           <li>
                             <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handleExportPDFRecord(item); }}>
                               <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF

@@ -52,13 +52,14 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          })).filter(it => it.quantity > 0);
          
          const subTotal = displayItems.reduce((sum, it) => sum + it.amount, 0);
-         const taxTotal = subTotal * ((invoice.taxRate || 0) / 100);
+         const taxableAmount = subTotal - (invoice.discount || 0) + (invoice.otherCharges || 0);
+         const taxTotal = taxableAmount * ((invoice.taxRate || 0) / 100);
          displayInvoice = {
             ...invoice,
             items: displayItems,
             subTotal,
             taxTotal,
-            grandTotal: subTotal + taxTotal
+            grandTotal: Math.round(taxableAmount + taxTotal)
          };
          isWOP = false;
       } else if (typeParam === 'WOP') {
@@ -164,26 +165,44 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    };
 
    const isPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
+   const urlCopies = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('copies');
+   
+   let copyTypes = ['ORIGINAL'];
+   if (isPrint && !isWOP) {
+      if (urlCopies) {
+         copyTypes = urlCopies.split(',');
+      } else {
+         copyTypes = ['ORIGINAL', 'DUPLICATE', 'TRIPLICATE'];
+      }
+   } else if (isWOP && isPrint) {
+      copyTypes = ['ORIGINAL', 'DUPLICATE'];
+   }
 
    const pagesData = paginate(displayItems);
    const totalPages = pagesData.length;
 
    return (
       <div className="industrial-print-container">
-         {pagesData.length > 0 && pagesData.map((pageItems, idx) => (
-            <InvoicePage
-               key={idx}
-               invoice={displayInvoice}
-               company={company}
-               settings={settings}
-               items={pageItems}
-               isLastPage={idx === totalPages - 1}
-               pageIndex={idx}
-               totalPages={totalPages}
-               totalInWords={totalInWords}
-               startSno={pagesData.slice(0, idx).reduce((sum: number, p: any[]) => sum + p.length, 0) + 1}
-               isWOP={isWOP}
-            />
+         {copyTypes.map((copyType, copyIdx) => (
+            <React.Fragment key={`copy-${copyIdx}`}>
+               {pagesData.length > 0 && pagesData.map((pageItems, idx) => (
+                  <InvoicePage
+                     key={`page-${idx}`}
+                     invoice={displayInvoice}
+                     company={company}
+                     settings={settings}
+                     items={pageItems}
+                     isLastPage={idx === totalPages - 1}
+                     pageIndex={idx}
+                     totalPages={totalPages}
+                     totalInWords={totalInWords}
+                     startSno={pagesData.slice(0, idx).reduce((sum: number, p: any[]) => sum + p.length, 0) + 1}
+                     isWOP={isWOP}
+                     copyType={copyType}
+                     isLastCopyAndPage={(copyIdx === copyTypes.length - 1) && (idx === totalPages - 1)}
+                  />
+               ))}
+            </React.Fragment>
          ))}
 
          <style jsx global>{`
@@ -203,28 +222,30 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
           font-family: 'Inter', Arial, sans-serif;
         }
 
-        .invoice-page {
-          width: 210mm;
-          height: 296mm;
-          padding: 10mm;
-          background: white;
-          position: relative;
-          color: #000;
-          box-sizing: border-box;
-          margin: 0 auto;
-          overflow: hidden;
-        }
+         .invoice-page {
+            width: 210mm;
+            height: auto;
+            min-height: 275mm;
+            padding: 5mm 10mm;
+            background: white;
+            position: relative;
+            color: #000;
+            box-sizing: border-box;
+            margin: 0 auto;
+            overflow: visible;
+         }
         
-        .page-border-box {
-           border: 1px solid #000000;
-           margin: 0 auto;
-           width: 100%;
-           height: 100%;
-           display: flex;
-           flex-direction: column;
-           background: #fff;
-           box-sizing: border-box;
-        }
+         .page-border-box {
+            border: 1px solid #000000;
+            margin: 0 auto;
+            width: 100%;
+            height: auto;
+            min-height: 260mm;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            box-sizing: border-box;
+         }
 
         /* HEADER SECTION */
         .p-header { 
@@ -257,7 +278,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
             grid-template-columns: 130px 10px 1fr;
             align-items: center;
          }
-         .p-meta-label { color: #555; }
+         .p-meta-label { color: #000; font-weight: bold; }
          .p-meta-val { font-weight: bold; color: #000; }
 
         /* ADDRESS SECTION */
@@ -375,10 +396,10 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            font-size: 11px; 
         }
         .p-footer-head {
-           font-weight: normal;
+           font-weight: bold;
            font-size: 11px;
            margin-bottom: 8px;
-           color: #555;
+           color: #000;
         }
         
         .seal {
@@ -402,6 +423,10 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
              page-break-inside: avoid;
              margin: 0 !important;
              border: none !important;
+             height: auto !important;
+             min-height: 250mm !important;
+             padding: 5mm 10mm !important;
+             overflow: visible !important;
           }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           .industrial-print-container { 
@@ -409,26 +434,17 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
              height: auto !important;
           }
           .industrial-print-container:empty {
-             display: none !important;
+             display: none;
           }
-           .p-table-area {
-              display: flex !important;
-              flex-direction: column !important;
-           }
-           .p-table {
-              width: 100% !important;
-           }
-           .industrial-print-container > *:last-child {
-              page-break-after: avoid !important;
-              break-after: avoid !important;
-           }
+          .page-border-box { overflow: visible !important; }
+          .page-border-box.last-page { height: auto !important; min-height: 250mm; }
         }
       `}</style>
       </div>
    );
 };
 
-const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex, totalPages, totalInWords, startSno, isWOP }: any) => {
+const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex, totalPages, totalInWords, startSno, isWOP, copyType, isLastCopyAndPage }: any) => {
    const calculatedTaxRate = (invoice.subTotal && invoice.subTotal > 0) 
       ? Math.round(((invoice.taxTotal || 0) / invoice.subTotal) * 100) 
       : (invoice.taxRate || 18);
@@ -439,10 +455,24 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
       <div
          className="invoice-page"
          style={{
-            pageBreakAfter: isLastPage ? 'avoid' : 'always',
-            breakAfter: isLastPage ? 'avoid' : 'page',
+            pageBreakAfter: isLastCopyAndPage ? 'avoid' : 'always',
+            breakAfter: isLastCopyAndPage ? 'avoid' : 'page',
          }}
       >
+          {/* Top Title With Copy Type Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', paddingLeft: '5px' }}>
+             {copyType && (
+                <span style={{ 
+                   fontSize: '13px', 
+                   fontWeight: 'bold', 
+                   textTransform: 'uppercase',
+                   letterSpacing: '1px'
+                }}>
+                   {copyType}
+                </span>
+             )}
+          </div>
+
           <div className={`page-border-box${isLastPage ? ' last-page' : ''}`}>
              
              {/* Header ALWAYS SHOW */}
@@ -485,7 +515,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       <div style={{ fontSize: '11px', color: '#000', marginTop: '4px' }}>
                          Website: {settings.website || company?.website || ''} <br/>
                          Contact Details: {settings.contactDetails || company?.phone || ''} <br/>
-                         Gmail ID: {settings.emailId || company?.email || ''}
+                         Mail ID: {settings.emailId || company?.email || ''}
                       </div>
                    </div>
                 </div>
@@ -567,13 +597,13 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                 <table className="p-table">
                    <thead>
                       <tr>
-                         <th style={{ width: '45px', textAlign: 'center' }}>S.NO</th>
-                         <th>DESCRIPTION</th>
-                         <th style={{ width: '90px', textAlign: 'center' }}>HSN CODE</th>
-                         {!isWOP && <th style={{ width: '75px', textAlign: 'center' }}>GST RATE</th>}
-                         <th style={{ width: '70px', textAlign: 'center' }}>QTY</th>
-                         {!isWOP && <th style={{ width: '90px', textAlign: 'right' }}>PRICE</th>}
-                         {!isWOP && <th style={{ width: '110px', textAlign: 'right' }}>AMOUNT (₹)</th>}
+                         <th style={{ width: '6%', textAlign: 'center' }}>S.NO</th>
+                         <th style={{ width: '44%' }}>DESCRIPTION</th>
+                         <th style={{ width: isWOP ? '25%' : '10%', textAlign: 'center' }}>HSN CODE</th>
+                         {!isWOP && <th style={{ width: '9%', textAlign: 'center' }}>GST RATE</th>}
+                         <th style={{ width: isWOP ? '25%' : '8%', textAlign: 'center' }}>QTY</th>
+                         {!isWOP && <th style={{ width: '11%', textAlign: 'right' }}>PRICE</th>}
+                         {!isWOP && <th style={{ width: '12%', textAlign: 'right' }}>AMOUNT (₹)</th>}
                       </tr>
                    </thead>
                    <tbody>
@@ -636,7 +666,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
              {isLastPage && !isWOP && (
                 <div className="p-totals">
                    <div className="p-totals-left">
-                      <div style={{ marginBottom: '6px', fontSize: '11px', color: '#555' }}>Total In Words</div>
+                      <div style={{ marginBottom: '6px', fontSize: '11px', color: '#000', fontWeight: 'bold' }}>Total In Words</div>
                       <div style={{ fontSize: '12px', textTransform: 'capitalize', fontWeight: 'bold', fontStyle: 'italic', color: '#000' }}>
                          Indian Rupee {String(totalInWords).toLowerCase().replace(' only', '')} Only
                       </div>
@@ -644,22 +674,34 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    <div className="p-totals-right">
                       <div className="p-totals-row bold" style={{ marginTop: '0', paddingTop: '0' }}>
                          <span>Sub Total</span>
-                         <span>{Number(invoice.subTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                         <span>{Number(invoice.subTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
+                      {Number(invoice.discount || 0) > 0 && (
+                         <div className="p-totals-row">
+                            <span>Discount</span>
+                            <span>-{Number(invoice.discount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                         </div>
+                      )}
+                      {Number(invoice.otherCharges || 0) > 0 && (
+                         <div className="p-totals-row">
+                            <span>Other Charges</span>
+                            <span>+{Number(invoice.otherCharges).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                         </div>
+                      )}
                       {(() => {
                          const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
-                         const taxTotal = invoice.taxTotal || 0;
+                         const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
 
                          if (isIntraState) {
                             return (
                                <>
                                   <div className="p-totals-row">
                                      <span>CGST ({taxRate / 2}%)</span>
-                                     <span>{(taxTotal / 2).toFixed(2)}</span>
+                                     <span>{(exactTaxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                   </div>
                                   <div className="p-totals-row">
                                      <span>SGST ({taxRate / 2}%)</span>
-                                     <span>{(taxTotal / 2).toFixed(2)}</span>
+                                     <span>{(exactTaxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                   </div>
                                </>
                             );
@@ -667,14 +709,29 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                             return (
                                <div className="p-totals-row">
                                   <span>IGST ({taxRate}%)</span>
-                                  <span>{taxTotal.toFixed(2)}</span>
+                                  <span>{exactTaxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                </div>
                             );
                          }
                       })()}
+                      {(() => {
+                         const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
+                         const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
+                         const roundedTotal = Math.round(invoice.grandTotal || exactTotal);
+                         const roundOff = roundedTotal - exactTotal;
+                         if (Math.abs(roundOff) > 0.005) {
+                            return (
+                               <div className="p-totals-row">
+                                  <span>Round Off</span>
+                                  <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                               </div>
+                            );
+                         }
+                         return null;
+                      })()}
                       <div className="p-totals-row bold">
                          <span>Total</span>
-                         <span>{Math.round(invoice.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                         <span>{Math.round(invoice.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                    </div>
                 </div>
@@ -686,17 +743,17 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    <div style={{ flex: 1, borderRight: '1px solid #000000', padding: '10px 15px' }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#000', fontSize: '12px' }}>Company Details</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '80px 10px 1fr', gap: '4px' }}>
-                         <span style={{ color: '#555' }}>VAT TIN</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.vatTin || '33132028969'}</span>
-                         <span style={{ color: '#555' }}>CST NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.cstNo || '1091562'}</span>
-                         <span style={{ color: '#555' }}>PAN NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.panNo || 'AAIFG6568K'}</span>
+                         <span style={{ color: '#000', fontWeight: 'bold' }}>VAT TIN</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.vatTin || '33132028969'}</span>
+                         <span style={{ color: '#000', fontWeight: 'bold' }}>CST NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.cstNo || '1091562'}</span>
+                         <span style={{ color: '#000', fontWeight: 'bold' }}>PAN NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.panNo || 'AAIFG6568K'}</span>
                       </div>
                    </div>
                    <div style={{ flex: 1, padding: '10px 15px' }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#000', fontSize: '12px' }}>Bank Details</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '120px 10px 1fr', gap: '4px' }}>
-                         <span style={{ color: '#555' }}>Bank Name</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankName || 'INDIAN OVERSEAS BANK'}</span>
-                         <span style={{ color: '#555' }}>Bank A/C</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankAcc || '170902000000962'}</span>
-                         <span style={{ color: '#555' }}>Branch & IFSC Code</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankBranchIfsc || 'IOBA0001709'}</span>
+                         <span style={{ color: '#000', fontWeight: 'bold' }}>Bank Name</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankName || 'INDIAN OVERSEAS BANK'}</span>
+                         <span style={{ color: '#000', fontWeight: 'bold' }}>Bank A/C</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankAcc || '170902000000962'}</span>
+                         <span style={{ color: '#000', fontWeight: 'bold' }}>Branch & IFSC Code</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankBranchIfsc || 'IOBA0001709'}</span>
                       </div>
                    </div>
                 </div>
@@ -714,7 +771,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       </div>
 
                       {settings.showDeclaration && (
-                         <div style={{ marginTop: '15px', fontSize: '9px', color: '#555', maxWidth: '90%' }}>
+                         <div style={{ marginTop: '15px', fontSize: '9px', color: '#000', fontWeight: 'bold', maxWidth: '90%' }}>
                             {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
                          </div>
                       )}
