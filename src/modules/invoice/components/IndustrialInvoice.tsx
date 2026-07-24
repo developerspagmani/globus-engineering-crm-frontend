@@ -652,13 +652,13 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                  </table>
                  {/* Div-based flex spacer to absorb remaining page height and draw vertical borders safely */}
                  <div style={{ flex: 1, display: 'flex' }}>
-                    <div style={{ width: '45px', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    <div style={{ flex: 1, borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    <div style={{ width: '90px', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    {!isWOP && <div style={{ width: '75px', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
-                    <div style={{ width: '70px', borderRight: isWOP ? 'none' : '1px solid #000000', boxSizing: 'border-box' }}></div>
-                    {!isWOP && <div style={{ width: '90px', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
-                    {!isWOP && <div style={{ width: '110px', boxSizing: 'border-box' }}></div>}
+                    <div style={{ width: '6%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
+                    <div style={{ width: '44%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
+                    <div style={{ width: isWOP ? '25%' : '10%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
+                    {!isWOP && <div style={{ width: '9%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
+                    <div style={{ width: isWOP ? '25%' : '8%', borderRight: isWOP ? 'none' : '1px solid #000000', boxSizing: 'border-box' }}></div>
+                    {!isWOP && <div style={{ width: '11%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
+                    {!isWOP && <div style={{ width: '12%', boxSizing: 'border-box' }}></div>}
                  </div>
               </div>
 
@@ -719,15 +719,12 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                          const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
                          const roundedTotal = Math.round(invoice.grandTotal || exactTotal);
                          const roundOff = roundedTotal - exactTotal;
-                         if (Math.abs(roundOff) > 0.005) {
-                            return (
-                               <div className="p-totals-row">
-                                  <span>Round Off</span>
-                                  <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                               </div>
-                            );
-                         }
-                         return null;
+                         return (
+                            <div className="p-totals-row">
+                               <span>Round Off</span>
+                               <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                         );
                       })()}
                       <div className="p-totals-row bold">
                          <span>Total</span>
