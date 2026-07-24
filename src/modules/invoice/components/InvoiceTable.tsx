@@ -278,7 +278,7 @@ const InvoiceTable: React.FC = () => {
                           <i className="bi bi-three-dots-vertical fs-5"></i>
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                          {!!item.invoiceNumber ? (
+                          {!!item.invoiceNumber && activeTab !== 'WOP_LIST' && item.type !== 'WOP' && item.billType !== 'Without Process' && item.billType !== 'without_process' ? (
                              <>
                                 <li><h6 className="dropdown-header text-uppercase" style={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8' }}>Print Copies</h6></li>
                                 <li>

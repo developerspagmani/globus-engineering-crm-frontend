@@ -179,7 +179,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             state: (initialData as any).state || '',
             challanNumber: initialData.challanNumber || (initialData as any).delivery_no || (initialData as any).challanNumber || '',
             otherCharges: initialData.otherCharges || (initialData as any).other_charges || 0,
-            taxRate: initialData.taxRate || (initialData as any).tax_rate || 12,
+            taxRate: (Number(initialData.taxRate) === 12 || Number((initialData as any).tax_rate) === 12) ? 18 : (initialData.taxRate || (initialData as any).tax_rate || 18),
             discount: initialData.discount || 0,
             inwardId: initialData.inwardId || (initialData as any).inward_id || undefined,
             items: initialData.items || []
