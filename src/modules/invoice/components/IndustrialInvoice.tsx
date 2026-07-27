@@ -109,20 +109,21 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          lines = texts.reduce((acc, text) => acc + Math.max(1, Math.ceil(text.length / 45)), 0);
       }
       if (item.process) lines += 1;
-      return 35 + (lines * 15); // 35px padding/borders + 15px per line
+      return 28 + (lines * 14); // 28px padding/borders + 14px per line
    };
 
    const paginate = (items: any[]) => {
       if (!items || items.length === 0) return [[]];
 
-      const PAGE_MAX_HEIGHT = 920; 
-      const HEADER_HEIGHT = 200; 
-      const TABLE_HEADER_HEIGHT = 40;
+      const PAGE_MAX_HEIGHT = 880; // Safe height for A4 at 100% print scale
+      const FIRST_PAGE_HEADER_HEIGHT = 330; // Header + Meta + Addresses on first page
+      const OTHER_PAGE_HEADER_HEIGHT = 140; // Only Header on continuation pages
+      const TABLE_HEADER_HEIGHT = 38;
       const FOOTER_HEIGHT = 300;
       
       let pages: any[][] = [];
       let currentPage: any[] = [];
-      let currentHeight = HEADER_HEIGHT + TABLE_HEADER_HEIGHT;
+      let currentHeight = FIRST_PAGE_HEADER_HEIGHT + TABLE_HEADER_HEIGHT;
       
       for (let i = 0; i < items.length; i++) {
          const item = items[i];
@@ -143,7 +144,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          if (currentHeight + h > PAGE_MAX_HEIGHT) {
             pages.push(currentPage);
             currentPage = [item];
-            currentHeight = HEADER_HEIGHT + TABLE_HEADER_HEIGHT + h;
+            currentHeight = OTHER_PAGE_HEADER_HEIGHT + TABLE_HEADER_HEIGHT + h;
          } else {
             // Fits on current page
             currentPage.push(item);
@@ -259,7 +260,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .p-header { 
            border-bottom: 1px solid #000000; 
            display: flex; 
-           padding: 15px; 
+           padding: 10px 15px; 
            justify-content: space-between;
            page-break-inside: avoid;
         }
@@ -275,8 +276,8 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            padding: 12px 15px;
+            gap: 5px;
+            padding: 8px 15px;
          }
          .p-meta-col:first-child {
             border-right: 1px solid #000000;
@@ -307,13 +308,13 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            font-weight: bold;
            font-size: 12px;
            color: #000;
-           padding: 10px 15px;
+           padding: 6px 15px;
            border-bottom: 1px solid #000000;
         }
          .p-addr-content { 
-            line-height: 1.6;
+            line-height: 1.45;
             color: #000;
-            padding: 10px 15px;
+            padding: 8px 15px;
          }
          
         /* TABLE SECTION */
@@ -333,7 +334,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .p-table th { 
            border-bottom: 1px solid #000000; 
            border-right: 1px solid #000000;
-           padding: 10px 15px; 
+           padding: 8px 12px; 
            font-size: 11px; 
            text-align: left; 
            background: #fdfdfd; 
@@ -350,7 +351,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            height: auto;
         }
         .p-table td { 
-           padding: 12px 15px; 
+           padding: 8px 12px; 
            font-size: 11px; 
            color: #000;
            vertical-align: top;
@@ -369,7 +370,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .p-totals { 
            display: flex;
            page-break-inside: avoid;
-           padding-top: 15px;
+           padding-top: 8px;
         }
         .p-totals-left {
            flex: 1;
@@ -382,31 +383,31 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .p-totals-row {
            display: flex;
            justify-content: space-between;
-           margin-bottom: 8px;
+           margin-bottom: 5px;
            font-size: 11px;
         }
         .p-totals-row.bold {
            font-weight: bold;
-           margin-top: 8px;
-           padding-top: 8px;
+           margin-top: 6px;
+           padding-top: 6px;
            font-size: 12px;
         }
 
          .p-footer { 
             display: flex;
             page-break-inside: avoid;
-            margin-top: 15px;
-            padding-bottom: 10px;
+            margin-top: 8px;
+            padding-bottom: 6px;
          }
         .p-footer-box { 
            flex: 1; 
-           padding: 10px 15px;
+           padding: 8px 15px;
            font-size: 11px; 
         }
         .p-footer-head {
            font-weight: bold;
            font-size: 11px;
-           margin-bottom: 8px;
+           margin-bottom: 6px;
            color: #000;
         }
         
@@ -604,7 +605,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    <thead>
                       <tr>
                          <th style={{ width: '6%', textAlign: 'center' }}>S.NO</th>
-                         <th style={{ width: '44%' }}>DESCRIPTION</th>
+                         <th style={{ width: '44%', textAlign: 'center' }}>DESCRIPTION</th>
                          <th style={{ width: isWOP ? '25%' : '12%', textAlign: 'center' }}>HSN CODE</th>
                          <th style={{ width: isWOP ? '25%' : '10%', textAlign: 'center' }}>QTY</th>
                          {!isWOP && <th style={{ width: '14%', textAlign: 'right' }}>PRICE</th>}
@@ -615,7 +616,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       {items.map((item: any, idx: number) => (
                          <tr key={idx} className="real-row">
                             <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{item.originalIndex ? item.originalIndex : (startSno + idx)}</td>
-                            <td>
+                            <td style={{ textAlign: 'center' }}>
                                <div style={{ whiteSpace: 'pre-wrap' }}>{item.description}</div>
                                {item.process && <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>{item.process}</div>}
                             </td>
@@ -637,26 +638,26 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    {isLastPage && !isWOP && (
                       <tfoot>
                          <tr style={{ background: '#fdfdfd' }}>
-                            <td colSpan={3} style={{ textAlign: 'right', borderTop: '1px solid #000000', borderBottom: 'none', padding: '12px 15px', fontWeight: 'bold' }}>
+                            <td colSpan={3} style={{ textAlign: 'right', borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', fontWeight: 'bold' }}>
                                Total Quantity
                             </td>
-                            <td style={{ textAlign: 'center', borderTop: '1px solid #000000', borderBottom: 'none', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
+                            <td style={{ textAlign: 'center', borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
                                {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
                             </td>
-                            <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '12px 15px', borderRight: 'none' }}></td>
+                            <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', borderRight: 'none' }}></td>
                          </tr>
                       </tfoot>
                    )}
                    {isLastPage && isWOP && (
                       <tfoot>
                          <tr style={{ background: '#fdfdfd' }}>
-                            <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
+                            <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '8px 12px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
                                WITHOUT PROCESS
                             </td>
-                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
+                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '8px 12px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
                                Total Quantity
                             </td>
-                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: 'none', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
+                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: 'none', padding: '8px 12px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
                                {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}
                             </td>
                          </tr>
@@ -745,17 +746,17 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
 
              {/* Company & Bank Details */}
              {isLastPage && !isWOP && (
-                <div style={{ display: 'flex', borderBottom: '1px solid #000000', borderTop: '1px solid #000000', pageBreakInside: 'avoid', fontSize: '11px', marginTop: '10px' }}>
-                   <div style={{ flex: 1, borderRight: '1px solid #000000', padding: '10px 15px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#000', fontSize: '12px' }}>Company Details</div>
+                <div style={{ display: 'flex', borderBottom: '1px solid #000000', borderTop: '1px solid #000000', pageBreakInside: 'avoid', fontSize: '11px', marginTop: '6px' }}>
+                   <div style={{ flex: 1, borderRight: '1px solid #000000', padding: '8px 15px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#000', fontSize: '12px' }}>Company Details</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '80px 10px 1fr', gap: '4px' }}>
                          <span style={{ color: '#000', fontWeight: 'bold' }}>VAT TIN</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.vatTin || '33132028969'}</span>
                          <span style={{ color: '#000', fontWeight: 'bold' }}>CST NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.cstNo || '1091562'}</span>
                          <span style={{ color: '#000', fontWeight: 'bold' }}>PAN NO</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.panNo || 'AAIFG6568K'}</span>
                       </div>
                    </div>
-                   <div style={{ flex: 1, padding: '10px 15px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#000', fontSize: '12px' }}>Bank Details</div>
+                   <div style={{ flex: 1, padding: '8px 15px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#000', fontSize: '12px' }}>Bank Details</div>
                       <div style={{ display: 'grid', gridTemplateColumns: '120px 10px 1fr', gap: '4px' }}>
                          <span style={{ color: '#000', fontWeight: 'bold' }}>Bank Name</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankName || 'INDIAN OVERSEAS BANK'}</span>
                          <span style={{ color: '#000', fontWeight: 'bold' }}>Bank A/C</span><span>:</span><span style={{ fontWeight: 'bold', color: '#000' }}>{settings.bankAcc || '170902000000962'}</span>
@@ -767,30 +768,31 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
 
              {/* Footer / Notes */}
              {isLastPage && (
-                <div className="p-footer">
-                   <div className="p-footer-box" style={{ flex: 1.5 }}>
-                      <div className="p-footer-head">Notes</div>
-                      <div>Thanks for your business.</div>
+                <div className="p-footer" style={{ minHeight: '100px', display: 'flex' }}>
+                   <div className="p-footer-box" style={{ flex: 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                         <div className="p-footer-head">Notes</div>
+                         <div style={{ marginBottom: '6px' }}>Thanks for your business.</div>
+                         {settings.showDeclaration && (
+                            <div style={{ fontSize: '10px', color: '#000', fontWeight: 'bold', maxWidth: '95%', lineHeight: '1.4' }}>
+                               {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
+                            </div>
+                         )}
+                      </div>
                       
-                      <div style={{ marginTop: '50px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
+                      <div style={{ marginTop: '25px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
                          Receiver's Signature
                       </div>
-
-                      {settings.showDeclaration && (
-                         <div style={{ marginTop: '15px', fontSize: '9px', color: '#000', fontWeight: 'bold', maxWidth: '90%' }}>
-                            {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
-                         </div>
-                      )}
                    </div>
-                   <div className="p-footer-box" style={{ position: 'relative' }}>
-                      <div className="p-footer-head" style={{ marginBottom: '10px' }}>Authorized signature</div>
+                   <div className="p-footer-box" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
                       <img
                          src="/seal.png"
                          className="seal"
-                         style={{ left: '30px', transform: 'rotate(-5deg)', top: '30px', width: '90px', height: '90px' }}
+                         style={{ position: 'absolute', right: '25px', bottom: '25px', transform: 'rotate(-5deg)', width: '75px', height: '75px', top: 'auto', left: 'auto' }}
                          alt="seal"
                          onError={(e) => (e.target as any).style.display = 'none'}
                       />
+                      <div className="p-footer-head" style={{ margin: 0, marginTop: '25px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>Authorized signature</div>
                    </div>
                 </div>
              )}
