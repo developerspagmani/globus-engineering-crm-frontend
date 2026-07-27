@@ -96,43 +96,43 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   return (
     <div className="invoice-preview-page">
       {!hideControls && (
-        <div className="d-flex justify-content-between align-items-center mb-4 no-print flex-wrap gap-3 p-3 bg-white rounded-4 shadow-sm border">
-          <div className="d-flex align-items-center gap-3">
+        <div className="d-flex justify-content-between align-items-center mb-4 no-print flex-nowrap gap-3 p-3 bg-white rounded-4 shadow-sm border overflow-x-auto text-nowrap">
+          <div className="d-flex align-items-center gap-2 flex-shrink-0">
             <BackButton />
-            <h4 className="m-0 fw-bold text-dark">Invoice Preview</h4>
-            <div className="declaration-toggle-wrapper ms-3 d-flex align-items-center gap-4">
-               <label className="switch">
+            <h5 className="m-0 fw-bold text-dark pe-2">Invoice Preview</h5>
+            <div className="declaration-toggle-wrapper ms-2 d-flex align-items-center gap-3">
+               <label className="switch mb-0">
                   <input 
                     type="checkbox" 
                     checked={settings.showDeclaration}
                     onChange={toggleDeclaration}
                   />
-                  <span className="slider round"></span>
+                  <span className="slider round flex-shrink-0"></span>
                   <span className="label-text">Declaration</span>
                </label>
-               <label className="switch">
+               <label className="switch mb-0">
                   <input 
                     type="checkbox" 
                     checked={settings.enableRoundOff !== false}
                     onChange={toggleRoundOff}
                   />
-                  <span className="slider round"></span>
+                  <span className="slider round flex-shrink-0"></span>
                   <span className="label-text">Round Off</span>
                </label>
             </div>
           </div>
           
-          <div className="d-flex gap-2">
+          <div className="d-flex align-items-center gap-2 flex-shrink-0">
             {!isReadOnly && (
-              <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill">
+              <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-outline-secondary d-flex align-items-center gap-1 px-3 fw-semibold rounded-pill text-nowrap">
                 <i className="bi bi-pencil"></i> Edit
               </Link>
             )}
             <InvoiceEmailReminderToggle invoice={invoice} />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill" onClick={handlePrint}>
+            <button className="btn btn-outline-dark d-flex align-items-center gap-1 px-3 fw-semibold rounded-pill text-nowrap" onClick={handlePrint}>
               <i className="bi bi-printer"></i> Print
             </button>
-            <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleDownload}>
+            <button className="btn btn-primary d-flex align-items-center gap-2 px-3 fw-bold rounded-pill shadow-sm text-nowrap" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleDownload}>
               <i className="bi bi-filetype-pdf"></i> Export PDF
             </button>
           </div>

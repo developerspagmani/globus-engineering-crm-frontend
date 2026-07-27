@@ -486,15 +486,29 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
              <div className="p-header">
                 <div style={{ display: 'flex', gap: '20px' }}>
                    {/* Logo Box */}
-                   <div style={{ width: '130px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #ccc' }}>
+                   <div style={{ 
+                      width: 'auto', 
+                      minWidth: '110px', 
+                      maxWidth: '220px', 
+                      minHeight: '80px', 
+                      maxHeight: '130px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      border: ((settings.logo && settings.logo.length > 10) || company?.logo) && settings.showLogo ? 'none' : '1px solid #ccc',
+                      padding: ((settings.logo && settings.logo.length > 10) || company?.logo) && settings.showLogo ? '0' : '6px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      boxSizing: 'border-box' 
+                   }}>
                       {(settings.logo || company?.logo) && settings.showLogo ? (
                          <img
                             src={settings.logo && settings.logo.length > 10 ? settings.logo : company?.logo}
                             alt="Logo"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            style={{ maxWidth: '220px', maxHeight: '120px', width: 'auto', height: 'auto', objectFit: 'contain', display: 'block', borderRadius: '12px', overflow: 'hidden' }}
                           />
                       ) : settings.showLogo ? (
-                         <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
+                         <svg viewBox="0 0 100 100" style={{ width: '120px', height: '120px' }}>
                             <path d="M25 5 L75 5 L95 25 L95 75 L75 95 L25 95 L5 75 L5 25 Z" fill="none" stroke="#ccc" strokeWidth="1.2" />
                             <circle cx="50" cy="50" r="28" fill="none" stroke="#ccc" strokeWidth="1.2" />
                             <circle cx="50" cy="50" r="22" fill="none" stroke="#ccc" strokeWidth="0.8" />
