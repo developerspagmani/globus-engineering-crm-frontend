@@ -19,6 +19,7 @@ interface IndustrialInvoiceProps {
       logo: string | null;
       logoSecondary: string | null;
       showDeclaration: boolean;
+      enableRoundOff?: boolean;
       accentColor: string;
       vatTin?: string;
       cstNo?: string;
@@ -59,7 +60,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
             items: displayItems,
             subTotal,
             taxTotal,
-            grandTotal: Math.round(taxableAmount + taxTotal)
+            grandTotal: settings?.enableRoundOff === false ? (taxableAmount + taxTotal) : Math.round(taxableAmount + taxTotal)
          };
          isWOP = false;
       } else if (typeParam === 'WOP') {
@@ -94,7 +95,12 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
       displayItems = displayItems.filter(it => Number(it.quantity || 0) > 0);
    }
 
-   const totalInWords = numberToWords(Math.round(displayInvoice.grandTotal));
+   const isRoundOffEnabled = settings?.enableRoundOff !== false;
+   const exactSubTotal = Number(displayInvoice.subTotal || 0);
+   const exactTaxTotal = exactSubTotal * ((Number(displayInvoice.taxRate) || 0) / 100);
+   const exactGrandTotal = exactSubTotal - (Number(displayInvoice.discount) || 0) + (Number(displayInvoice.otherCharges) || 0) + exactTaxTotal;
+   const wordsTotal = isRoundOffEnabled ? Math.round(displayInvoice.grandTotal || exactGrandTotal) : (exactGrandTotal > 0 ? exactGrandTotal : Number(displayInvoice.grandTotal || 0));
+   const totalInWords = numberToWords(Number(wordsTotal.toFixed(2)));
 
    const getItemHeight = (item: any) => {
       let lines = 1;
@@ -322,7 +328,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
             table-layout: fixed;
             border-top: 1px solid #000000;
             border-bottom: 1px solid #000000;
-            height: 100%;
+            height: auto;
          }
         .p-table th { 
            border-bottom: 1px solid #000000; 
@@ -594,16 +600,15 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
 
              {/* Table */}
              <div className="p-table-area">
-                <table className="p-table">
+                <table className="p-table" style={isWOP ? { flex: 1, height: '100%' } : {}}>
                    <thead>
                       <tr>
                          <th style={{ width: '6%', textAlign: 'center' }}>S.NO</th>
                          <th style={{ width: '44%' }}>DESCRIPTION</th>
-                         <th style={{ width: isWOP ? '25%' : '10%', textAlign: 'center' }}>HSN CODE</th>
-                         {!isWOP && <th style={{ width: '9%', textAlign: 'center' }}>GST RATE</th>}
-                         <th style={{ width: isWOP ? '25%' : '8%', textAlign: 'center' }}>QTY</th>
-                         {!isWOP && <th style={{ width: '11%', textAlign: 'right' }}>PRICE</th>}
-                         {!isWOP && <th style={{ width: '12%', textAlign: 'right' }}>AMOUNT (₹)</th>}
+                         <th style={{ width: isWOP ? '25%' : '12%', textAlign: 'center' }}>HSN CODE</th>
+                         <th style={{ width: isWOP ? '25%' : '10%', textAlign: 'center' }}>QTY</th>
+                         {!isWOP && <th style={{ width: '14%', textAlign: 'right' }}>PRICE</th>}
+                         {!isWOP && <th style={{ width: '14%', textAlign: 'right' }}>AMOUNT (₹)</th>}
                       </tr>
                    </thead>
                    <tbody>
@@ -615,50 +620,49 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                                {item.process && <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>{item.process}</div>}
                             </td>
                             <td style={{ textAlign: 'center' }}>{item.hsnCode || '998898'}</td>
-                            {!isWOP && <td style={{ textAlign: 'center' }}>{taxRate}%</td>}
                             <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                             {!isWOP && <td style={{ textAlign: 'right' }}>{Number(item.unitPrice || 0).toFixed(2)}</td>}
                             {!isWOP && <td style={{ textAlign: 'right' }}>{Number(item.amount || 0).toFixed(2)}</td>}
                          </tr>
                       ))}
+                      {isWOP && (
+                         <tr className="filler-row">
+                            <td style={{ borderBottom: 'none' }}></td>
+                            <td style={{ borderBottom: 'none' }}></td>
+                            <td style={{ borderBottom: 'none' }}></td>
+                            <td style={{ borderBottom: 'none' }}></td>
+                         </tr>
+                      )}
                    </tbody>
                    {isLastPage && !isWOP && (
                       <tfoot>
                          <tr style={{ background: '#fdfdfd' }}>
-                            <td colSpan={4} style={{ textAlign: 'right', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold' }}>
+                            <td colSpan={3} style={{ textAlign: 'right', borderTop: '1px solid #000000', borderBottom: 'none', padding: '12px 15px', fontWeight: 'bold' }}>
                                Total Quantity
                             </td>
-                            <td style={{ textAlign: 'center', borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
+                            <td style={{ textAlign: 'center', borderTop: '1px solid #000000', borderBottom: 'none', padding: '12px 15px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
                                {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
                             </td>
-                            <td colSpan={2} style={{ borderBottom: 'none', borderTop: '1px solid #000000', padding: '12px 15px', borderRight: 'none' }}></td>
+                            <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '12px 15px', borderRight: 'none' }}></td>
+                         </tr>
+                      </tfoot>
+                   )}
+                   {isLastPage && isWOP && (
+                      <tfoot>
+                         <tr style={{ background: '#fdfdfd' }}>
+                            <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
+                               WITHOUT PROCESS
+                            </td>
+                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
+                               Total Quantity
+                            </td>
+                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: 'none', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
+                               {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}
+                            </td>
                          </tr>
                       </tfoot>
                    )}
                 </table>
-                {/* Flex spacer — draws vertical column borders. For WOP, also pins total row to the bottom. */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                   {/* Empty space with column border lines */}
-                   <div style={{ flex: 1, display: 'flex' }}>
-                      <div style={{ width: '6%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                      <div style={{ width: '44%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                      <div style={{ width: isWOP ? '25%' : '10%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                      {!isWOP && <div style={{ width: '9%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
-                      <div style={{ width: isWOP ? '25%' : '8%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>
-                      {!isWOP && <div style={{ width: '11%', borderRight: '1px solid #000000', boxSizing: 'border-box' }}></div>}
-                      {!isWOP && <div style={{ width: '12%', boxSizing: 'border-box' }}></div>}
-                   </div>
-                   {/* WOP total row — pinned to the bottom of the spacer, matching original tfoot colSpan layout */}
-                   {isLastPage && isWOP && (
-                      <div style={{ display: 'flex', borderTop: '1px solid #000000', borderBottom: '1px solid #000000', background: '#fdfdfd' }}>
-                         <div style={{ width: '50%', borderRight: '1px solid #000000', boxSizing: 'border-box', padding: '12px 15px', fontWeight: 'bold' }}>WITHOUT PROCESS</div>
-                         <div style={{ width: '25%', borderRight: '1px solid #000000', boxSizing: 'border-box', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center' }}>Total Quantity</div>
-                         <div style={{ width: '25%', borderRight: '1px solid #000000', boxSizing: 'border-box', padding: '12px 15px', fontWeight: 'bold', textAlign: 'center' }}>
-                            {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}
-                         </div>
-                      </div>
-                   )}
-                </div>
              </div>
 
              {/* Totals Section */}
@@ -703,35 +707,41 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                                      <span>{(exactTaxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                   </div>
                                </>
-                            );
-                         } else {
-                            return (
-                               <div className="p-totals-row">
-                                  <span>IGST ({taxRate}%)</span>
-                                  <span>{exactTaxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                               </div>
-                            );
-                         }
-                      })()}
-                      {(() => {
-                         const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
-                         const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
-                         const roundedTotal = Math.round(invoice.grandTotal || exactTotal);
-                         const roundOff = roundedTotal - exactTotal;
-                         return (
-                            <div className="p-totals-row">
-                               <span>Round Off</span>
-                               <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                         );
-                      })()}
-                      <div className="p-totals-row bold">
-                         <span>Total</span>
-                         <span>{Math.round(invoice.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      </div>
-                   </div>
-                </div>
-             )}
+                             );
+                          } else {
+                             return (
+                                <div className="p-totals-row">
+                                   <span>IGST ({taxRate}%)</span>
+                                   <span>{exactTaxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                             );
+                          }
+                       })()}
+                       {(() => {
+                          if (settings?.enableRoundOff === false) return null;
+                          const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
+                          const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
+                          const roundedTotal = Math.round(invoice.grandTotal || exactTotal);
+                          const roundOff = roundedTotal - exactTotal;
+                          return (
+                             <div className="p-totals-row">
+                                <span>Round Off</span>
+                                <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                             </div>
+                          );
+                       })()}
+                       <div className="p-totals-row bold">
+                          <span>Total</span>
+                          <span>{(() => {
+                             const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
+                             const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
+                             const finalVal = settings?.enableRoundOff === false ? exactTotal : Math.round(invoice.grandTotal || exactTotal || 0);
+                             return Number(finalVal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                          })()}</span>
+                       </div>
+                    </div>
+                 </div>
+              )}
 
              {/* Company & Bank Details */}
              {isLastPage && !isWOP && (

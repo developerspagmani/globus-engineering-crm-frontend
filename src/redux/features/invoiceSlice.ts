@@ -301,6 +301,7 @@ interface InvoiceState {
     nextInvoice: string | null;
     nextChallan: string | null;
     showDeclaration: boolean;
+    enableRoundOff?: boolean;
     vatTin?: string;
     cstNo?: string;
     panNo?: string;
@@ -358,6 +359,7 @@ const initialState: InvoiceState = {
     nextInvoice: null,
     nextChallan: null,
     showDeclaration: false,
+    enableRoundOff: true,
 
     vatTin: '',
     cstNo: '',

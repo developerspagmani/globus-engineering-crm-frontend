@@ -3,7 +3,7 @@
  * (e.g., 1,00,000 -> One Lakh)
  */
 export const numberToWords = (num: number): string => {
-  if (num === 0) return 'Zero';
+  if (num === 0) return 'Zero Only';
 
   const a = [
     '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -18,32 +18,43 @@ export const numberToWords = (num: number): string => {
     return '';
   };
 
-  const lakh = Math.floor(num / 100000);
-  const thousand = Math.floor((num % 100000) / 1000);
-  const remainder = Math.floor(num % 1000);
-  const crore = Math.floor(num / 10000000);
+  const integerPart = Math.floor(num);
+  const paise = Math.round((num - integerPart) * 100);
 
+  if (integerPart === 0 && paise > 0) {
+    return `${convert(paise)} Paise Only`;
+  }
+
+  let n = integerPart;
   let result = '';
 
+  const crore = Math.floor(n / 10000000);
   if (crore > 0) {
     result += convert(crore) + ' Crore ';
-    num %= 10000000;
+    n %= 10000000;
   }
   
-  const currentLakh = Math.floor(num / 100000);
+  const currentLakh = Math.floor(n / 100000);
   if (currentLakh > 0) {
     result += convert(currentLakh) + ' Lakh ';
+    n %= 100000;
   }
   
-  const currentThousand = Math.floor((num % 100000) / 1000);
+  const currentThousand = Math.floor(n / 1000);
   if (currentThousand > 0) {
     result += convert(currentThousand) + ' Thousand ';
+    n %= 1000;
   }
   
-  const currentRemainder = Math.floor(num % 1000);
+  const currentRemainder = Math.floor(n);
   if (currentRemainder > 0) {
     result += convert(currentRemainder);
   }
 
-  return result.trim() + ' Only';
+  let words = result.trim();
+  if (paise > 0) {
+    words += ` and ${convert(paise)} Paise`;
+  }
+
+  return words + ' Only';
 };

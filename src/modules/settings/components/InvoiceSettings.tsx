@@ -334,9 +334,15 @@ const InvoiceSettings: React.FC = () => {
                 </div>
 
                 <div className="mb-3">
-                  <div className="form-check form-switch custom-switch mb-2">
-                    <input className="form-check-input" type="checkbox" id="showDeclaration" name="showDeclaration" checked={formData.showDeclaration} onChange={handleCheckboxChange} />
-                    <label className="form-check-label fw-bold small text-dark" htmlFor="showDeclaration">Show Declaration Section</label>
+                  <div className="d-flex flex-wrap gap-4 mb-2">
+                    <div className="form-check form-switch custom-switch">
+                      <input className="form-check-input" type="checkbox" id="showDeclaration" name="showDeclaration" checked={formData.showDeclaration} onChange={handleCheckboxChange} />
+                      <label className="form-check-label fw-bold small text-dark" htmlFor="showDeclaration">Show Declaration Section</label>
+                    </div>
+                    <div className="form-check form-switch custom-switch">
+                      <input className="form-check-input" type="checkbox" id="enableRoundOff" name="enableRoundOff" checked={(formData as any).enableRoundOff !== false} onChange={handleCheckboxChange} />
+                      <label className="form-check-label fw-bold small text-dark" htmlFor="enableRoundOff">Enable Round Off</label>
+                    </div>
                   </div>
                   <textarea 
                     className="form-control bg-light x-small" 

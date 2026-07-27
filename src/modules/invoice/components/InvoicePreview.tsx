@@ -63,6 +63,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     dispatch(updateInvoiceSettings({ showDeclaration: !settings.showDeclaration }));
   };
 
+  const toggleRoundOff = () => {
+    dispatch(updateInvoiceSettings({ enableRoundOff: settings.enableRoundOff === false ? true : false }));
+  };
+
   // Sync settings and reset declaration on mount or company change
   React.useEffect(() => {
     if (!company) return;
@@ -75,6 +79,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
         ...settings,
         ...dbSettings,
         showDeclaration: false,
+        enableRoundOff: dbSettings.enableRoundOff !== undefined ? dbSettings.enableRoundOff : (settings.enableRoundOff !== undefined ? settings.enableRoundOff : true),
         // Prioritize actual database columns for logos if JSON settings are empty or invalid
         logo: (dbSettings.logo && dbSettings.logo.length > 10) ? dbSettings.logo : (company.logo || settings.logo),
         logoSecondary: (dbSettings.logoSecondary && dbSettings.logoSecondary.length > 10) ? dbSettings.logoSecondary : (company.logoSecondary || settings.logoSecondary)
@@ -95,7 +100,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
           <div className="d-flex align-items-center gap-3">
             <BackButton />
             <h4 className="m-0 fw-bold text-dark">Invoice Preview</h4>
-            <div className="declaration-toggle-wrapper ms-3">
+            <div className="declaration-toggle-wrapper ms-3 d-flex align-items-center gap-4">
                <label className="switch">
                   <input 
                     type="checkbox" 
@@ -104,6 +109,15 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
                   />
                   <span className="slider round"></span>
                   <span className="label-text">Declaration</span>
+               </label>
+               <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={settings.enableRoundOff !== false}
+                    onChange={toggleRoundOff}
+                  />
+                  <span className="slider round"></span>
+                  <span className="label-text">Round Off</span>
                </label>
             </div>
           </div>
