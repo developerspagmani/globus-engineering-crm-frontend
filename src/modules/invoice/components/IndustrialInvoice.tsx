@@ -105,8 +105,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    const getItemHeight = (item: any) => {
       let lines = 1;
       if (item.description) {
-         const texts = String(item.description).split('\n');
-         lines = texts.reduce((acc, text) => acc + Math.max(1, Math.ceil(text.length / 45)), 0);
+         lines = Math.ceil(item.description.length / 50); // Adjusted for 11px font in a wide column
       }
       if (item.process) lines += 1;
       return 12 + (lines * 14); // 12px padding/borders + 14px per line
@@ -115,14 +114,14 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    const paginate = (items: any[]) => {
       if (!items || items.length === 0) return [[]];
 
-      const PAGE_MAX_HEIGHT = 1055; // Safe height for A4 at 100% print scale
-      const FIRST_PAGE_HEADER_HEIGHT = 330; // Header + Meta + Addresses on first page
-      const OTHER_PAGE_HEADER_HEIGHT = 140; // Only Header on continuation pages
+      const PAGE_MAX_HEIGHT = 1050; 
+      const FIRST_PAGE_HEADER_HEIGHT = 290; 
+      const OTHER_PAGE_HEADER_HEIGHT = 120; 
       const TABLE_HEADER_HEIGHT = 38;
       const declarationText = (!isWOP && settings?.showDeclaration) ? (settings?.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.') : '';
       const declarationLines = declarationText ? Math.ceil(declarationText.length / 90) : 0;
       const declarationHeight = declarationLines > 0 ? (declarationLines * 14) + 10 : 0;
-      const FOOTER_HEIGHT = (isWOP ? 80 : 270) + declarationHeight;
+      const FOOTER_HEIGHT = (isWOP ? 120 : (settings?.showDeclaration ? 270 : 310)) + declarationHeight;
       
       let pages: any[][] = [];
       let currentPage: any[] = [];
@@ -234,7 +233,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
          .invoice-page {
             width: 210mm;
-            height: 293mm;
+            height: 285mm;
             display: flex;
             flex-direction: column;
             padding: 5mm 10mm;
@@ -434,7 +433,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
              page-break-inside: avoid;
              margin: 0 !important;
              border: none !important;
-             height: 293mm !important;
+             height: 285mm !important;
              padding: 5mm 10mm !important;
              overflow: visible !important;
           }
@@ -466,6 +465,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
          style={{
             pageBreakAfter: isLastCopyAndPage ? 'avoid' : 'always',
             breakAfter: isLastCopyAndPage ? 'avoid' : 'page',
+            minHeight: '285mm',
          }}
       >
           {/* Top Title With Copy Type Badge */}
@@ -617,7 +617,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
 
              {/* Table */}
              <div className="p-table-area">
-                <table className="p-table" style={{ flex: 1, height: '100%' }}>
+                <table className="p-table" style={{ flex: 1, height: '100%', borderBottom: isLastPage ? '1px solid #000000' : 'none' }}>
                    <thead>
                       <tr>
                          <th style={{ width: '6%', textAlign: 'center' }}>S.NO</th>
@@ -643,14 +643,14 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                          </tr>
                       ))}
                       {isWOP ? (
-                         <tr className="filler-row">
+                         <tr className="filler-row" style={{ height: '100%' }}>
                             <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
                          </tr>
                       ) : (
-                         <tr className="filler-row">
+                         <tr className="filler-row" style={{ height: '100%' }}>
                             <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
@@ -669,7 +669,8 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                             <td style={{ textAlign: 'center', borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
                                {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
                             </td>
-                            <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', borderRight: 'none' }}></td>
+                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', borderRight: '1px solid #000000' }}></td>
+                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', borderRight: 'none' }}></td>
                          </tr>
                       </tfoot>
                    )}
@@ -810,7 +811,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                        <div style={{ flex: 1 }} />
                     </div>
                     {/* Signature row — always directly below notes, no empty gap */}
-                    <div style={{ display: 'flex', borderTop: 'none', padding: '6px 15px', paddingTop: isWOP ? '80px' : '50px' }}>
+                    <div style={{ display: 'flex', borderTop: 'none', padding: '6px 15px', paddingTop: isWOP ? '120px' : (settings?.showDeclaration ? '50px' : '90px'), paddingBottom: '15px' }}>
                        <div style={{ flex: 1.5, fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
                           Receiver's Signature
                        </div>
