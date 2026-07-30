@@ -115,11 +115,14 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    const paginate = (items: any[]) => {
       if (!items || items.length === 0) return [[]];
 
-      const PAGE_MAX_HEIGHT = 880; // Safe height for A4 at 100% print scale
+      const PAGE_MAX_HEIGHT = 980; // Safe height for A4 at 100% print scale
       const FIRST_PAGE_HEADER_HEIGHT = 330; // Header + Meta + Addresses on first page
       const OTHER_PAGE_HEADER_HEIGHT = 140; // Only Header on continuation pages
       const TABLE_HEADER_HEIGHT = 38;
-      const FOOTER_HEIGHT = 300;
+      const declarationText = settings?.showDeclaration ? (settings?.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.') : '';
+      const declarationLines = declarationText ? Math.ceil(declarationText.length / 90) : 0;
+      const declarationHeight = declarationLines > 0 ? (declarationLines * 14) + 10 : 0;
+      const FOOTER_HEIGHT = (isWOP ? 140 : 280) + declarationHeight;
       
       let pages: any[][] = [];
       let currentPage: any[] = [];
@@ -629,7 +632,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    <tbody>
                       {items.map((item: any, idx: number) => (
                          <tr key={idx} className="real-row">
-                            <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{item.originalIndex ? item.originalIndex : (startSno + idx)}</td>
+                            <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{startSno + idx}</td>
                             <td style={{ textAlign: 'center' }}>
                                <div style={{ whiteSpace: 'pre-wrap' }}>{item.description}</div>
                                {item.process && <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>{item.process}</div>}
@@ -782,34 +785,38 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
 
              {/* Footer / Notes */}
              {isLastPage && (
-                <div className="p-footer" style={{ minHeight: '100px', display: 'flex' }}>
-                   <div className="p-footer-box" style={{ flex: 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                      <div>
-                         <div className="p-footer-head">Notes</div>
-                         <div style={{ marginBottom: '6px' }}>Thanks for your business.</div>
-                         {settings.showDeclaration && (
-                            <div style={{ fontSize: '10px', color: '#000', fontWeight: 'bold', maxWidth: '95%', lineHeight: '1.4' }}>
-                               {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
-                            </div>
-                         )}
-                      </div>
-                      
-                      <div style={{ marginTop: '25px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
-                         Receiver's Signature
-                      </div>
-                   </div>
-                   <div className="p-footer-box" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
-                      <img
-                         src="/seal.png"
-                         className="seal"
-                         style={{ position: 'absolute', right: '25px', bottom: '25px', transform: 'rotate(-5deg)', width: '75px', height: '75px', top: 'auto', left: 'auto' }}
-                         alt="seal"
-                         onError={(e) => (e.target as any).style.display = 'none'}
-                      />
-                      <div className="p-footer-head" style={{ margin: 0, marginTop: '25px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>Authorized signature</div>
-                   </div>
-                </div>
-             )}
+                 <div className="p-footer" style={{ display: 'flex', flexDirection: 'column', borderTop: 'none' }}>
+                    {/* Notes row — natural height, no flex stretch */}
+                    <div style={{ display: 'flex', padding: '8px 15px', fontSize: '11px' }}>
+                       <div style={{ flex: 1.5 }}>
+                          <div className="p-footer-head">Notes</div>
+                          <div style={{ marginBottom: '4px' }}>Thanks for your business.</div>
+                          {settings.showDeclaration && (
+                             <div style={{ fontSize: '10px', color: '#000', fontWeight: 'bold', maxWidth: '95%', lineHeight: '1.4' }}>
+                                {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
+                             </div>
+                          )}
+                       </div>
+                       <div style={{ flex: 1 }} />
+                    </div>
+                    {/* Signature row — always directly below notes, no empty gap */}
+                    <div style={{ display: 'flex', borderTop: 'none', padding: '6px 15px' }}>
+                       <div style={{ flex: 1.5, fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
+                          Receiver's Signature
+                       </div>
+                       <div style={{ flex: 1, position: 'relative', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <img
+                             src="/seal.png"
+                             className="seal"
+                             style={{ position: 'absolute', right: '100px', bottom: '0px', transform: 'rotate(-5deg)', width: '60px', height: '60px', top: 'auto', left: 'auto', opacity: 0.55 }}
+                             alt="seal"
+                             onError={(e) => (e.target as any).style.display = 'none'}
+                          />
+                          <div className="p-footer-head" style={{ margin: 0, fontWeight: 'bold', fontSize: '11px', color: '#000' }}>Authorized signature</div>
+                       </div>
+                    </div>
+                 </div>
+              )}
           </div>
       </div>
 );
