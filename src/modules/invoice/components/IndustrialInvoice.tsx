@@ -115,14 +115,14 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    const paginate = (items: any[]) => {
       if (!items || items.length === 0) return [[]];
 
-      const PAGE_MAX_HEIGHT = 1040; // Safe height for A4 at 100% print scale
+      const PAGE_MAX_HEIGHT = 1055; // Safe height for A4 at 100% print scale
       const FIRST_PAGE_HEADER_HEIGHT = 330; // Header + Meta + Addresses on first page
       const OTHER_PAGE_HEADER_HEIGHT = 140; // Only Header on continuation pages
       const TABLE_HEADER_HEIGHT = 38;
-      const declarationText = settings?.showDeclaration ? (settings?.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.') : '';
+      const declarationText = (!isWOP && settings?.showDeclaration) ? (settings?.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.') : '';
       const declarationLines = declarationText ? Math.ceil(declarationText.length / 90) : 0;
       const declarationHeight = declarationLines > 0 ? (declarationLines * 14) + 10 : 0;
-      const FOOTER_HEIGHT = (isWOP ? 90 : 220) + declarationHeight;
+      const FOOTER_HEIGHT = (isWOP ? 80 : 270) + declarationHeight;
       
       let pages: any[][] = [];
       let currentPage: any[] = [];
@@ -234,7 +234,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
          .invoice-page {
             width: 210mm;
-            height: auto;
+            height: 293mm;
             display: flex;
             flex-direction: column;
             padding: 5mm 10mm;
@@ -254,7 +254,6 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
             margin: 0 auto;
             width: 100%;
             height: auto;
-            min-height: 260mm;
             background: #fff;
             box-sizing: border-box;
          }
@@ -618,7 +617,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
 
              {/* Table */}
              <div className="p-table-area">
-                <table className="p-table" style={isWOP ? { flex: 1, height: '100%' } : {}}>
+                <table className="p-table" style={{ flex: 1, height: '100%' }}>
                    <thead>
                       <tr>
                          <th style={{ width: '6%', textAlign: 'center' }}>S.NO</th>
@@ -643,8 +642,17 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                             {!isWOP && <td style={{ textAlign: 'right' }}>{Number(item.amount || 0).toFixed(2)}</td>}
                          </tr>
                       ))}
-                      {isWOP && (
+                      {isWOP ? (
                          <tr className="filler-row">
+                            <td style={{ borderBottom: 'none' }}></td>
+                            <td style={{ borderBottom: 'none' }}></td>
+                            <td style={{ borderBottom: 'none' }}></td>
+                            <td style={{ borderBottom: 'none' }}></td>
+                         </tr>
+                      ) : (
+                         <tr className="filler-row">
+                            <td style={{ borderBottom: 'none' }}></td>
+                            <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
                             <td style={{ borderBottom: 'none' }}></td>
@@ -693,61 +701,65 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       </div>
                    </div>
                    <div className="p-totals-right">
-                      <div className="p-totals-row bold" style={{ marginTop: '0', paddingTop: '0' }}>
-                         <span>Sub Total</span>
-                         <span>{Number(invoice.subTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      </div>
-                      {Number(invoice.discount || 0) > 0 && (
-                         <div className="p-totals-row">
-                            <span>Discount</span>
-                            <span>-{Number(invoice.discount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                         </div>
-                      )}
-                      {Number(invoice.otherCharges || 0) > 0 && (
-                         <div className="p-totals-row">
-                            <span>Other Charges</span>
-                            <span>+{Number(invoice.otherCharges).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                         </div>
-                      )}
-                      {(() => {
-                         const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
-                         const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
+                      {!settings.showDeclaration && (
+                         <>
+                            <div className="p-totals-row bold" style={{ marginTop: '0', paddingTop: '0' }}>
+                               <span>Sub Total</span>
+                               <span>{Number(invoice.subTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            {Number(invoice.discount || 0) > 0 && (
+                               <div className="p-totals-row">
+                                  <span>Discount</span>
+                                  <span>-{Number(invoice.discount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                               </div>
+                            )}
+                            {Number(invoice.otherCharges || 0) > 0 && (
+                               <div className="p-totals-row">
+                                  <span>Other Charges</span>
+                                  <span>+{Number(invoice.otherCharges).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                               </div>
+                            )}
+                            {(() => {
+                               const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
+                               const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
 
-                         if (isIntraState) {
-                            return (
-                               <>
-                                  <div className="p-totals-row">
-                                     <span>CGST ({taxRate / 2}%)</span>
-                                     <span>{(exactTaxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                  </div>
-                                  <div className="p-totals-row">
-                                     <span>SGST ({taxRate / 2}%)</span>
-                                     <span>{(exactTaxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                  </div>
-                               </>
-                             );
-                          } else {
-                             return (
-                                <div className="p-totals-row">
-                                   <span>IGST ({taxRate}%)</span>
-                                   <span>{exactTaxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                </div>
-                             );
-                          }
-                       })()}
-                       {(() => {
-                          if (settings?.enableRoundOff === false) return null;
-                          const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
-                          const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
-                          const roundedTotal = Math.round(invoice.grandTotal || exactTotal);
-                          const roundOff = roundedTotal - exactTotal;
-                          return (
-                             <div className="p-totals-row">
-                                <span>Round Off</span>
-                                <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                             </div>
-                          );
-                       })()}
+                               if (isIntraState) {
+                                  return (
+                                     <>
+                                        <div className="p-totals-row">
+                                           <span>CGST ({taxRate / 2}%)</span>
+                                           <span>{(exactTaxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                        <div className="p-totals-row">
+                                           <span>SGST ({taxRate / 2}%)</span>
+                                           <span>{(exactTaxTotal / 2).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                     </>
+                                   );
+                                } else {
+                                   return (
+                                      <div className="p-totals-row">
+                                         <span>IGST ({taxRate}%)</span>
+                                         <span>{exactTaxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                      </div>
+                                   );
+                                }
+                             })()}
+                             {(() => {
+                                if (settings?.enableRoundOff === false) return null;
+                                const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
+                                const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
+                                const roundedTotal = Math.round(invoice.grandTotal || exactTotal);
+                                const roundOff = roundedTotal - exactTotal;
+                                return (
+                                   <div className="p-totals-row">
+                                      <span>Round Off</span>
+                                      <span>{roundOff > 0 ? '+' : ''}{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                   </div>
+                                );
+                             })()}
+                         </>
+                      )}
                        <div className="p-totals-row bold">
                           <span>Total</span>
                           <span>{(() => {
@@ -789,7 +801,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                     {/* Notes row — natural height, no flex stretch */}
                     <div style={{ display: 'flex', padding: '0px 15px', fontSize: '11px' }}>
                        <div style={{ flex: 1.5 }}>
-                          {settings.showDeclaration && (
+                          {!isWOP && settings.showDeclaration && (
                              <div style={{ fontSize: '10px', color: '#000', fontWeight: 'bold', maxWidth: '95%', lineHeight: '1.4', paddingTop: '8px' }}>
                                 {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
                              </div>
@@ -798,7 +810,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                        <div style={{ flex: 1 }} />
                     </div>
                     {/* Signature row — always directly below notes, no empty gap */}
-                    <div style={{ display: 'flex', borderTop: 'none', padding: '6px 15px' }}>
+                    <div style={{ display: 'flex', borderTop: 'none', padding: '6px 15px', paddingTop: isWOP ? '80px' : '50px' }}>
                        <div style={{ flex: 1.5, fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
                           Receiver's Signature
                        </div>
