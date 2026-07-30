@@ -214,9 +214,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
                   <option value="Distributor">Distributor</option>
                 </select>
               </div>
-              {renderInput('Customer Name', 'name', 'text', true)}
-              {renderInput('Email Address', 'email', 'text', true)}
-              {renderInput('Phone Number', 'phone', 'text', true)}
+              {renderInput('Customer Name', 'name', 'text')}
+              {renderInput('Email Address', 'email', 'text')}
+              {renderInput('Phone Number', 'phone', 'text')}
 
               <div className="col-md-6 mb-3">
                 <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Status</label>
@@ -236,9 +236,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   
             <h5 className="mb-4 text-primary border-bottom pb-2 fw-bold" style={{ fontSize: '1rem' }}>ADDRESS DETAILS</h5>
             <div className="row g-3 mb-4">
-              {renderInput('Street 1', 'street1', 'text', true)}
+              {renderInput('Street 1', 'street1', 'text')}
               {renderInput('Street 2', 'street2')}
-              {renderInput('City', 'city', 'text', true)}
+              {renderInput('City', 'city', 'text')}
               {renderInput('Area', 'area')}
               <div className="col-md-6 mb-3">
                 <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">State</label>
@@ -259,17 +259,17 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
                   style={{ cursor: 'not-allowed' }}
                 />
               </div>
-              {renderInput('Pin code', 'pinCode', 'text', true)}
+              {renderInput('Pin code', 'pinCode', 'text')}
 
             </div>
 
   
             <h5 className="mb-4 text-primary border-bottom pb-2 fw-bold" style={{ fontSize: '1rem' }}>CONTACT PERSONS</h5>
             <div className="row g-3 mb-4">
-              {renderInput('Contact Person 1', 'contactPerson1', 'text', true)}
-              {renderInput('Designation 1', 'designation1', 'text', true)}
-              {renderInput('Email Id 1', 'emailId1', 'email', true)}
-              {renderInput('Phone Number 1', 'phoneNumber1', 'text', true)}
+              {renderInput('Contact Person 1', 'contactPerson1', 'text')}
+              {renderInput('Designation 1', 'designation1', 'text')}
+              {renderInput('Email Id 1', 'emailId1', 'email')}
+              {renderInput('Phone Number 1', 'phoneNumber1', 'text')}
               
               {renderInput('Contact Person 2', 'contactPerson2')}
               {renderInput('Designation 2', 'designation2')}
@@ -287,9 +287,9 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   
             <h5 className="mb-4 text-primary border-bottom pb-2 fw-bold" style={{ fontSize: '1rem' }}>TAX DETAILS</h5>
             <div className="row g-3 mb-4">
-              {renderInput('GST', 'gst', 'text', true)}
-              {renderInput('TIN', 'tin', 'text', true)}
-              {renderInput('CST', 'cst', 'text', true)}
+              {renderInput('GST', 'gst', 'text')}
+              {renderInput('TIN', 'tin', 'text')}
+              {renderInput('CST', 'cst', 'text')}
             </div>
 
   
@@ -298,7 +298,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               {renderInput('T/C', 'tc')}
               {renderInput('VMC', 'vmc')}
               {renderInput('HMC', 'hmc')}
-              {renderInput('Payment Terms', 'paymentTerms', 'text', true)}
+              {renderInput('Payment Terms', 'paymentTerms', 'text')}
             </div>
   
             <div className="mt-5 pt-4 border-top d-flex gap-3">

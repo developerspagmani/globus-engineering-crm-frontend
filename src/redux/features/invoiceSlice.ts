@@ -342,7 +342,7 @@ const initialState: InvoiceState = {
     totalOutstanding: 0,
   },
   sorting: {
-    sortBy: 'invoice_date',
+    sortBy: 'id',
     sortOrder: 'desc',
   },
   settings: {
