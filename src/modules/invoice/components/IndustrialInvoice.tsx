@@ -109,20 +109,20 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          lines = texts.reduce((acc, text) => acc + Math.max(1, Math.ceil(text.length / 45)), 0);
       }
       if (item.process) lines += 1;
-      return 28 + (lines * 14); // 28px padding/borders + 14px per line
+      return 12 + (lines * 14); // 12px padding/borders + 14px per line
    };
 
    const paginate = (items: any[]) => {
       if (!items || items.length === 0) return [[]];
 
-      const PAGE_MAX_HEIGHT = 980; // Safe height for A4 at 100% print scale
+      const PAGE_MAX_HEIGHT = 1040; // Safe height for A4 at 100% print scale
       const FIRST_PAGE_HEADER_HEIGHT = 330; // Header + Meta + Addresses on first page
       const OTHER_PAGE_HEADER_HEIGHT = 140; // Only Header on continuation pages
       const TABLE_HEADER_HEIGHT = 38;
       const declarationText = settings?.showDeclaration ? (settings?.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.') : '';
       const declarationLines = declarationText ? Math.ceil(declarationText.length / 90) : 0;
       const declarationHeight = declarationLines > 0 ? (declarationLines * 14) + 10 : 0;
-      const FOOTER_HEIGHT = (isWOP ? 140 : 280) + declarationHeight;
+      const FOOTER_HEIGHT = (isWOP ? 90 : 220) + declarationHeight;
       
       let pages: any[][] = [];
       let currentPage: any[] = [];
@@ -263,7 +263,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .p-header { 
            border-bottom: 1px solid #000000; 
            display: flex; 
-           padding: 10px 15px; 
+           padding: 5px 15px; 
            justify-content: space-between;
            page-break-inside: avoid;
         }
@@ -280,7 +280,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
             display: flex;
             flex-direction: column;
             gap: 5px;
-            padding: 8px 15px;
+            padding: 4px 15px;
          }
          .p-meta-col:first-child {
             border-right: 1px solid #000000;
@@ -311,13 +311,13 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            font-weight: bold;
            font-size: 12px;
            color: #000;
-           padding: 6px 15px;
+           padding: 4px 15px;
            border-bottom: 1px solid #000000;
         }
          .p-addr-content { 
             line-height: 1.45;
             color: #000;
-            padding: 8px 15px;
+            padding: 4px 15px;
          }
          
         /* TABLE SECTION */
@@ -337,8 +337,8 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .p-table th { 
            border-bottom: 1px solid #000000; 
            border-right: 1px solid #000000;
-           padding: 8px 12px; 
-           font-size: 11px; 
+           padding: 2px 8px; 
+           font-size: 10px; 
            text-align: left; 
            background: #fdfdfd; 
            color: #000;
@@ -354,8 +354,8 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
            height: auto;
         }
         .p-table td { 
-           padding: 8px 12px; 
-           font-size: 11px; 
+           padding: 2px 8px; 
+           font-size: 10px; 
            color: #000;
            vertical-align: top;
            word-break: break-word;
@@ -386,7 +386,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
         .p-totals-row {
            display: flex;
            justify-content: space-between;
-           margin-bottom: 5px;
+           margin-bottom: 2px;
            font-size: 11px;
         }
         .p-totals-row.bold {
@@ -404,7 +404,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          }
         .p-footer-box { 
            flex: 1; 
-           padding: 8px 15px;
+           padding: 4px 15px;
            font-size: 11px; 
         }
         .p-footer-head {
@@ -787,12 +787,10 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
              {isLastPage && (
                  <div className="p-footer" style={{ display: 'flex', flexDirection: 'column', borderTop: 'none' }}>
                     {/* Notes row — natural height, no flex stretch */}
-                    <div style={{ display: 'flex', padding: '8px 15px', fontSize: '11px' }}>
+                    <div style={{ display: 'flex', padding: '0px 15px', fontSize: '11px' }}>
                        <div style={{ flex: 1.5 }}>
-                          <div className="p-footer-head">Notes</div>
-                          <div style={{ marginBottom: '4px' }}>Thanks for your business.</div>
                           {settings.showDeclaration && (
-                             <div style={{ fontSize: '10px', color: '#000', fontWeight: 'bold', maxWidth: '95%', lineHeight: '1.4' }}>
+                             <div style={{ fontSize: '10px', color: '#000', fontWeight: 'bold', maxWidth: '95%', lineHeight: '1.4', paddingTop: '8px' }}>
                                 {settings.declarationText || 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.'}
                              </div>
                           )}

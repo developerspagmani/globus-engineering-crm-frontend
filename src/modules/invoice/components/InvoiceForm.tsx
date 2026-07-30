@@ -1005,7 +1005,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                               <div className="row mb-3 align-items-center">
                                  <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Delivery Challan</label>
                                  <div className="col-sm-9">
-                                    <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '38px', fontSize: '0.85rem' } : { height: '38px', fontSize: '0.85rem' }} />
+                                    <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} readOnly={true} style={{ height: '38px', fontSize: '0.85rem' }} />
                                  </div>
                               </div>
                            ) : (
@@ -1013,14 +1013,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                  <div className="row mb-3 align-items-center">
                                     <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Invoice No</label>
                                     <div className="col-sm-9">
-                                       <input type="text" className="form-control px-2 fw-bold shadow-none" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '38px', fontSize: '0.85rem' } : { height: '38px', fontSize: '0.85rem' }} />
+                                       <input type="text" className="form-control px-2 fw-bold shadow-none" name="invoiceNumber" value={formData.invoiceNumber} onChange={handleInputChange} readOnly={true} style={{ height: '38px', fontSize: '0.85rem' }} />
                                     </div>
                                  </div>
                                  {formData.billType === 'Both' && (
                                     <div className="row mb-3 align-items-center">
                                        <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Delivery Challan</label>
                                        <div className="col-sm-9">
-                                          <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} disabled={mode === 'edit'} style={mode === 'edit' ? { backgroundColor: '#f4f4f4', cursor: 'not-allowed', height: '38px', fontSize: '0.85rem' } : { height: '38px', fontSize: '0.85rem' }} />
+                                          <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} readOnly={true} style={{ height: '38px', fontSize: '0.85rem' }} />
                                        </div>
                                     </div>
                                  )}
