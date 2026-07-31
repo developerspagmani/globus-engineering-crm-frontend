@@ -325,7 +325,10 @@ const ChallanForm: React.FC<ChallanFormProps> = ({ initialData, mode }) => {
                     <tr key={index}>
                       <td className="px-3 py-2">
                         <SearchableSelect
-                          options={masterItems.map(mi => ({ value: mi.itemName, label: `${mi.itemName} (${mi.itemCode})` }))}
+                          options={[
+                            ...masterItems.map(mi => ({ value: mi.itemName, label: `${mi.itemName} (${mi.itemCode})` })),
+                            ...(item.description && !masterItems.find(mi => mi.itemName === item.description) ? [{ value: item.description, label: item.description }] : [])
+                          ]}
                           value={item.description || ''}
                           onChange={(val) => handleItemChange(index, 'description', val)}
                           placeholder="Select Item"

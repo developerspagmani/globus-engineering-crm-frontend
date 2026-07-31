@@ -106,6 +106,7 @@ export const fetchInvoices = createAsyncThunk(
     status?: string; 
     fromDate?: string; 
     toDate?: string;
+    process?: string;
     type?: string;
     partyType?: string;
     customerId?: string;
@@ -114,13 +115,14 @@ export const fetchInvoices = createAsyncThunk(
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, type, partyType, customerId, invoice_nos, sortBy, sortOrder } = params;
+      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, process, type, partyType, customerId, invoice_nos, sortBy, sortOrder } = params;
       let url = `/invoices?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
+      if (process && process !== 'all') url += `&process=${encodeURIComponent(process)}`;
       if (type && type !== 'all') url += `&type=${type}`;
       if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
       if (customerId) url += `&customer_id=${customerId}`;
@@ -269,6 +271,7 @@ interface InvoiceState {
     partyType: string;
     fromDate: string;
     toDate: string;
+    process?: string;
   };
   pagination: {
     currentPage: number;
@@ -301,6 +304,7 @@ interface InvoiceState {
     nextInvoice: string | null;
     nextChallan: string | null;
     showDeclaration: boolean;
+    showWopText?: boolean;
     enableRoundOff?: boolean;
     vatTin?: string;
     cstNo?: string;
@@ -327,6 +331,7 @@ const initialState: InvoiceState = {
     partyType: 'customer',
     fromDate: '',
     toDate: '',
+    process: 'all',
   },
   pagination: {
     currentPage: 1,
@@ -359,6 +364,7 @@ const initialState: InvoiceState = {
     nextInvoice: null,
     nextChallan: null,
     showDeclaration: false,
+    showWopText: true,
     enableRoundOff: true,
 
     vatTin: '',

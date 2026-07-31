@@ -678,7 +678,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       <tfoot>
                          <tr style={{ background: '#fdfdfd' }}>
                             <td colSpan={2} style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '8px 12px', fontWeight: 'bold', fontSize: '11px', color: '#000' }}>
-                               WITHOUT PROCESS
+                               {settings?.showWopText !== false ? 'WITHOUT PROCESS' : ''}
                             </td>
                             <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: '1px solid #000000', padding: '8px 12px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
                                Total Quantity

@@ -120,6 +120,7 @@ const InvoiceTable: React.FC = () => {
         status: filters.status,
         fromDate: filters.fromDate,
         toDate: filters.toDate,
+        process: filters.process,
         partyType: (filters as any).partyType,
         type: typeMap[activeTab] || 'all',
         sortBy: invoiceSorting?.sortBy,

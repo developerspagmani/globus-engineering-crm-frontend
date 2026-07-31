@@ -63,6 +63,10 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     dispatch(updateInvoiceSettings({ showDeclaration: !settings.showDeclaration }));
   };
 
+  const toggleWopText = () => {
+    dispatch(updateInvoiceSettings({ showWopText: settings.showWopText === false ? true : false }));
+  };
+
   const toggleRoundOff = () => {
     dispatch(updateInvoiceSettings({ enableRoundOff: settings.enableRoundOff === false ? true : false }));
   };
@@ -110,6 +114,17 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
                   <span className="slider round flex-shrink-0"></span>
                   <span className="label-text">Declaration</span>
                </label>
+               {(invoice?.billType === 'Without Process' || invoice?.type === 'WOP' || String(invoice?.billType || '').toLowerCase().includes('without')) && (
+                 <label className="switch mb-0">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.showWopText !== false}
+                      onChange={toggleWopText}
+                    />
+                    <span className="slider round flex-shrink-0"></span>
+                    <span className="label-text">WOP Label</span>
+                 </label>
+               )}
                <label className="switch mb-0">
                   <input 
                     type="checkbox" 
