@@ -197,9 +197,9 @@ const InvoiceTable: React.FC = () => {
   );
 
   return (
-    <div className="card shadow-sm border-0 bg-white rounded-4 overflow-hidden">
+    <div className="card shadow-sm border-0 bg-white rounded-4" style={{ overflow: 'visible' }}>
       {renderTabs()}
-      <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
+      <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px', overflow: 'visible' }}>
         <table className="table align-middle mb-0 table-hover bg-white mb-0">
           <thead className="bg-light text-muted small">
             <tr className="border-bottom">
