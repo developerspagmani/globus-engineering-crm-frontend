@@ -367,9 +367,9 @@ const initialState: InvoiceState = {
     bankName: '',
     bankAcc: '',
     bankBranchIfsc: '',
-    companyName: 'GLOBUS ENGINEERING TOOLS',
-    companySubHeader: 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.',
-    companyAddress: 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.',
+    companyName: '',
+    companySubHeader: '',
+    companyAddress: '',
     gstNo: '',
     stateDetails: '',
     declarationText: 'Supplied to Special Economic Zone-Duties & Taxes Are Exempted\n(Folio-No.8/3/2007 Suzlon ON INFRA SEZ DT.24.9.2007)\n\nUNDER EPCG LICENCE NO\n\n"Supply Meant For export/supply yo SEZ Unit or Sez developer for authorised Operations under Bond or Letter of Undertaking without Payment of Integrated Tax"\n(Export Covered Under LUT NO AD330625078562X v Dated 25/06/2025)\n\nDeclartion: We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct'

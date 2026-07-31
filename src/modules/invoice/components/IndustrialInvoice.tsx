@@ -524,12 +524,12 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    <div style={{ paddingTop: '5px' }}>
                       <h1 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#000' }}>
                          {(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) 
-                            ? 'GLOBUS ENGINEERING TOOLS' 
+                            ? (company?.name || 'GLOBUS ENGINEERING TOOLS') 
                             : settings.companyName}
                       </h1>
                       <div style={{ fontSize: '11px', color: '#000', marginTop: '6px', lineHeight: '1.5', maxWidth: '350px' }}>
                          {(!settings.companySubHeader || settings.companySubHeader.includes('Machining') || settings.companySubHeader.includes('Quality')) 
-                            ? 'No 24, Annaiyappan Street, S.S.Nagar,\nNallampalayam, Ganapathy Post,\nCoimbatore - 641006.' 
+                            ? (company?.address || 'No 24, Annaiyappan Street, S.S.Nagar,\nNallampalayam, Ganapathy Post,\nCoimbatore - 641006.') 
                             : settings.companySubHeader}
                       </div>
                       <div style={{ fontSize: '11px', color: '#000', marginTop: '6px' }}>
@@ -597,8 +597,8 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    <div className="p-addr-box">
                    <div className="p-addr-title">SUPPLIER DETAILS</div>
                    <div className="p-addr-content">
-                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</div>
-                      <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Ganapathy Post, Coimbatore - 641006.' : settings.companyAddress}</div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? (company?.name?.toUpperCase() || 'GLOBUS ENGINEERING TOOLS') : settings.companyName.toUpperCase()}</div>
+                      <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? (company?.address || 'No 24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Ganapathy Post, Coimbatore - 641006.') : settings.companyAddress}</div>
                       <div style={{ marginBottom: '4px' }}>GSTIN: {settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</div>
                       <div>State: {settings.stateDetails?.split(' - ')[0] || 'Tamilnadu'} (Code : 33)</div>
                    </div>
