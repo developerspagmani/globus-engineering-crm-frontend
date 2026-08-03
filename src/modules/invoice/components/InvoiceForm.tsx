@@ -902,6 +902,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            </select>
                            {inwardLoading && <span className="spinner-border spinner-border-sm text-orange"></span>}
                         </div>
+                        <div className="d-flex align-items-center gap-2 ms-2" style={{ minWidth: '150px' }}>
+                           <input 
+                              type="text" 
+                              className="form-control fw-bold shadow-none" 
+                              placeholder="HSN (Apply All)"
+                              style={{ fontSize: '0.85rem', padding: '6px 14px', borderRadius: '8px', border: '1px solid #dee2e6' }}
+                              onChange={(e) => {
+                                 const val = e.target.value;
+                                 setFormData((prev: any) => ({
+                                    ...prev,
+                                    items: prev.items.map((it: any) => ({ ...it, hsnCode: val }))
+                                 }));
+                              }}
+                           />
+                        </div>
                      </div>
                   )}
 
@@ -1101,6 +1116,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <tr className="text-muted border-bottom small text-uppercase">
                               <th className="py-3">Item</th>
                               <th className="py-3">Process</th>
+                              <th className="py-3 text-center" style={{ width: '120px' }}>HSN Code</th>
                               {formData.inwardId && <th className="py-3 text-center" style={{ width: '90px' }}>Total Qty</th>}
                               <th className="py-3 text-center" style={{ width: '80px' }}>
                                  {formData.billType === 'Without Process' ? 'WOP Qty' : 'WP Qty'}
@@ -1142,6 +1158,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                         value={String(item.process || '')}
                                         onChange={val => handleItemChange(index, 'process', val)}
                                         placeholder="Select Process"
+                                     />
+                                  </td>
+                                  <td className="py-3 text-center">
+                                     <input 
+                                        type="text" 
+                                        className="form-control bg-transparent p-1 text-center border" 
+                                        placeholder="HSN" 
+                                        value={item.hsnCode || ''} 
+                                        onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)} 
                                      />
                                   </td>
                                   {formData.inwardId && (
@@ -1187,7 +1212,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      <button type="button" className="btn btn-sm btn-link text-decoration-none mt-2" onClick={() => {
                         setFormData((prev: any) => ({
                            ...prev,
-                            items: [...(prev.items || []), { id: Date.now().toString(), description: '', process: '', quantity: 1, wopQty: 0, unitPrice: 0, tax: 0, amount: 0, total: 0 }]
+                            items: [...(prev.items || []), { id: Date.now().toString(), description: '', process: '', quantity: 1, wopQty: 0, hsnCode: '', unitPrice: 0, tax: 0, amount: 0, total: 0 }]
                          }));
                       }}>+ Add Item</button>
                    </div>

@@ -310,8 +310,9 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
 };
 
 const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalInWords, startSno, capacity, footerSpaceNeeded, title }: any) => {
+   const isOutwardVendor = type === 'outward' && data.partyType === 'vendor';
    const targetRows = isLastPage ? (capacity - footerSpaceNeeded) : capacity;
-   const fillerCount = type === 'voucher' ? 0 : Math.max(0, targetRows - items.length);
+   const fillerCount = type === 'voucher' || isOutwardVendor ? 0 : Math.max(0, targetRows - items.length);
 
    const partyName = data.partyType === 'vendor' ? (data.vendorName || data.partyName || 'N/A Vendor') : (data.customerName || data.partyName || 'N/A Customer');
    const partyAddress = data.address || data.partyAddress || 'N/A';
@@ -374,7 +375,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
 
             {/* Meta Grid */}
             <div className="p-meta">
-               <div className="p-meta-row">
+               <div className="p-meta-row" style={isOutwardVendor ? { fontSize: '11px', minHeight: '35px' } : {}}>
                   {type === 'statement' ? (
                      <>
                         <div className="p-meta-col">
@@ -390,18 +391,18 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                      </>
                   ) : (
                      <>
-                        <div className="p-meta-col">
+                        <div className="p-meta-col" style={isOutwardVendor ? { gridTemplateColumns: '95px 14px 1fr', padding: '6px 12px' } : {}}>
                            <span>{type.toUpperCase()} NO</span>
                            <span>:</span>
                            <span className="p-meta-val">{data.outwardNo || data.inwardNo || data.challanNo || data.voucherNo}</span>
                         </div>
-                        <div className="p-meta-col">
+                        <div className="p-meta-col" style={isOutwardVendor ? { gridTemplateColumns: '40px 14px 1fr', padding: '6px 12px' } : {}}>
                            <span>DATE</span>
                            <span>:</span>
                            <span className="p-meta-val">{data.date ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</span>
                         </div>
                         {type === 'outward' && (
-                           <div className="p-meta-col">
+                           <div className="p-meta-col" style={isOutwardVendor ? { gridTemplateColumns: '90px 14px 1fr', padding: '6px 12px' } : {}}>
                               <span>INVOICE REF</span>
                               <span>:</span>
                               <span className="p-meta-val">{data.invoiceReference || '-'}</span>
@@ -431,7 +432,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                      </>
                   )}
                </div>
-               {type !== 'statement' && (
+               {type !== 'statement' && !isOutwardVendor && (
                   <div className="p-meta-row">
                      {type === 'outward' && data.partyType === 'vendor' ? (
                         <div className="p-meta-col">
