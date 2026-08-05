@@ -98,7 +98,7 @@ const VendorTable: React.FC = () => {
   return (
     <div className="card border-0 shadow-sm overflow-hidden">
       <div className="card-body p-0">
-        <div className="table-responsive">
+        <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
           <table className="table table-hover align-middle mb-0">
             <thead className="bg-light">
               <tr className="text-uppercase small fw-bold text-muted">
@@ -150,8 +150,8 @@ const VendorTable: React.FC = () => {
                               <li><button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDF(vendor)}><i className="bi bi-file-earmark-pdf text-danger"></i> <span className="small fw-semibold">Download PDF</span></button></li>
                               {checkActionPermission(user, 'mod_vendor', 'delete') && (
                                 <>
-                                  <div className="dropdown-divider"></div>
-                                  <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" type="button" onClick={() => handleDelete(vendor.id)}><i className="bi bi-trash"></i> <span className="small fw-semibold text-uppercase" style={{ fontSize: '10px' }}>Delete Vendor</span></button></li>
+                                  <li><hr className="dropdown-divider" /></li>
+                                  <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" type="button" onClick={(e) => { e.stopPropagation(); handleDelete(vendor.id); }}><i className="bi bi-trash"></i> <span className="small fw-semibold text-uppercase" style={{ fontSize: '10px' }}>Remove Record</span></button></li>
                                 </>
                               )}
                             </ul>

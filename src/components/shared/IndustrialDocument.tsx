@@ -718,9 +718,18 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                      <div className="p-sign-box">
                         <div style={{ marginBottom: '40px' }}>Receiver's Signature:</div>
                      </div>
-                     <div className="p-sign-box" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ textAlign: 'center' }}>FOR <strong>{(settings.companyName || company?.name || 'Globus Engineering Tools').toUpperCase()}</strong></div>
-                        <div style={{ fontSize: '10px', opacity: 0.6, textAlign: 'center' }}>Authorized Signatory</div>
+                     <div className="p-sign-box" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+                        <div style={{ textAlign: 'center', zIndex: 2, position: 'relative' }}>FOR <strong>{(settings.companyName || company?.name || 'Globus Engineering Tools').toUpperCase()}</strong></div>
+                        {(type === 'outward' && data?.partyType === 'vendor') && (
+                           <img
+                              src="/seal.png"
+                              className="seal"
+                              style={{ position: 'absolute', right: '50%', transform: 'translateX(50%) rotate(-5deg)', bottom: '15px', width: '70px', height: '70px', opacity: 0.55, zIndex: 1 }}
+                              alt="seal"
+                              onError={(e) => (e.target as any).style.display = 'none'}
+                           />
+                        )}
+                        <div style={{ fontSize: '10px', opacity: 0.6, textAlign: 'center', zIndex: 2, position: 'relative' }}>Authorized Signatory</div>
                      </div>
                   </div>
 
