@@ -351,9 +351,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    useEffect(() => {
       const subTotal = formData.items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
-      const taxableAmount = subTotal - (formData.discount || 0) + (formData.otherCharges || 0);
-      const taxTotal = (taxableAmount * (formData.taxRate || 0)) / 100;
-      const grandTotal = Math.round(taxableAmount + taxTotal);
+      const taxableAmount = subTotal - Number(formData.discount || 0);
+      const taxTotal = (taxableAmount * Number(formData.taxRate || 0)) / 100;
+      const grandTotal = Math.round(taxableAmount + taxTotal + Number(formData.otherCharges || 0));
 
       if (formData.subTotal !== subTotal || formData.taxTotal !== taxTotal || formData.grandTotal !== grandTotal) {
          setFormData((prev: any) => ({

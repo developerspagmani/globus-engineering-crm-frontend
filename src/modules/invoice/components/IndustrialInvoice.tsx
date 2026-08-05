@@ -97,8 +97,9 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
    const isRoundOffEnabled = settings?.enableRoundOff !== false;
    const exactSubTotal = Number(displayInvoice.subTotal || 0);
-   const exactTaxTotal = exactSubTotal * ((Number(displayInvoice.taxRate) || 0) / 100);
-   const exactGrandTotal = exactSubTotal - (Number(displayInvoice.discount) || 0) + (Number(displayInvoice.otherCharges) || 0) + exactTaxTotal;
+   const taxableAmount = exactSubTotal - (Number(displayInvoice.discount) || 0);
+   const exactTaxTotal = taxableAmount * ((Number(displayInvoice.taxRate) || 0) / 100);
+   const exactGrandTotal = taxableAmount + (Number(displayInvoice.otherCharges) || 0) + exactTaxTotal;
    const wordsTotal = isRoundOffEnabled ? Math.round(displayInvoice.grandTotal || exactGrandTotal) : (exactGrandTotal > 0 ? exactGrandTotal : Number(displayInvoice.grandTotal || 0));
    const totalInWords = numberToWords(Number(wordsTotal.toFixed(2)));
 
@@ -722,7 +723,8 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                             )}
                             {(() => {
                                const isIntraState = (invoice.state || '').toLowerCase().replace(/[^a-z]/g, '') === 'tamilnadu';
-                               const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
+                               const taxableAmt = (invoice.subTotal || 0) - (invoice.discount || 0);
+                               const exactTaxTotal = taxableAmt * (taxRate / 100);
 
                                if (isIntraState) {
                                   return (
@@ -748,8 +750,9 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                              })()}
                              {(() => {
                                 if (settings?.enableRoundOff === false) return null;
-                                const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
-                                const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
+                                const taxableAmt = (invoice.subTotal || 0) - (invoice.discount || 0);
+                                const exactTaxTotal = taxableAmt * (taxRate / 100);
+                                const exactTotal = taxableAmt + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
                                 const roundedTotal = Math.round(invoice.grandTotal || exactTotal);
                                 const roundOff = roundedTotal - exactTotal;
                                 return (
@@ -764,8 +767,9 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                        <div className="p-totals-row bold">
                           <span>Total</span>
                           <span>{(() => {
-                             const exactTaxTotal = (invoice.subTotal || 0) * (taxRate / 100);
-                             const exactTotal = (invoice.subTotal || 0) - (invoice.discount || 0) + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
+                             const taxableAmt = (invoice.subTotal || 0) - (invoice.discount || 0);
+                             const exactTaxTotal = taxableAmt * (taxRate / 100);
+                             const exactTotal = taxableAmt + (Number(invoice.otherCharges) || 0) + exactTaxTotal;
                              const finalVal = settings?.enableRoundOff === false ? exactTotal : Math.round(invoice.grandTotal || exactTotal || 0);
                              return Number(finalVal).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                           })()}</span>
