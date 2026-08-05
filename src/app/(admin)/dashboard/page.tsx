@@ -1,5 +1,5 @@
 'use client';
-// Force re-evaluation to fix 404 glitch
+// Force re-evaluation to fix 404 glitch - Triggered reload
 
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';

@@ -224,7 +224,7 @@ const initialState: OutwardState = {
     totalPages: 0,
   },
   sorting: {
-    sortBy: 'date',
+    sortBy: 'outward_no',
     sortOrder: 'desc',
   }
 };

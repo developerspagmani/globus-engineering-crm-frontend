@@ -179,13 +179,19 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
   };
 
   const handleItemChange = (index: number, field: string, value: any) => {
-    const newItems = [...formData.items];
-    let val = value;
-    if (field === 'quantity') {
-      val = value;
-    }
-    (newItems[index] as any)[field] = val;
-    setFormData(prev => ({ ...prev, items: newItems }));
+    setFormData(prev => {
+      const newItems = prev.items.map((item, i) => {
+        if (i === index) {
+          let val = value;
+          if (field === 'quantity') {
+            val = value === '' ? '' : Number(value);
+          }
+          return { ...item, [field]: val };
+        }
+        return item;
+      });
+      return { ...prev, items: newItems };
+    });
   };
 
   const addItem = () => {
@@ -269,7 +275,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                        <div className="row mb-3 align-items-center">
                           <label className="col-4 text-muted x-small fw-bold">CHALLAN NO</label>
                           <div className="col-8">
-                              <input type="text" className="form-control fw-bold px-3 py-2" name="outwardNo" value={formData.outwardNo} onChange={handleChange} disabled />
+                              <input type="text" className="form-control fw-bold px-3 py-2" name="outwardNo" value={formData.outwardNo || ''} onChange={handleChange} disabled />
                           </div>
                        </div>
                     )}
@@ -406,7 +412,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                       <div className="row mb-3 align-items-center">
                          <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
                          <div className="col-8">
-                             <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
+                             <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo || ''} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
                          </div>
                       </div>
                     )}
@@ -419,7 +425,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                     <div className="row mb-3 align-items-center">
                        <label className="col-4 text-muted x-small fw-bold">DOC REF NO</label>
                        <div className="col-8">
-                           <input type="text" className="form-control" name="challanNo" value={formData.challanNo} onChange={handleChange} placeholder="Ext Challan / PO" disabled={mode === 'view'} />
+                           <input type="text" className="form-control" name="challanNo" value={formData.challanNo || ''} onChange={handleChange} placeholder="Ext Challan / PO" disabled={mode === 'view'} />
                        </div>
                     </div>
 
@@ -427,7 +433,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                       <div className="row mb-3 align-items-center">
                         <label className="col-4 text-muted small fw-bold text-danger">JOB VALUE (INR)</label>
                         <div className="col-8">
-                            <input type="number" className="form-control border-danger-subtle bg-danger-light rounded-pill px-3 py-2 fw-bold text-danger" name="amount" value={formData.amount} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={handleChange} placeholder="Value for Ledger" disabled={mode === 'view'} />
+                            <input type="number" className="form-control border-danger-subtle bg-danger-light rounded-pill px-3 py-2 fw-bold text-danger" name="amount" value={formData.amount || ''} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={handleChange} placeholder="Value for Ledger" disabled={mode === 'view'} />
                         </div>
                       </div>
                     )}
