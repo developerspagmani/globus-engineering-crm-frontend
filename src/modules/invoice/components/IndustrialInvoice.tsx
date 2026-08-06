@@ -820,13 +820,6 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                           Receiver's Signature
                        </div>
                        <div style={{ flex: 1, position: 'relative', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <img
-                             src="/seal.png"
-                             className="seal"
-                             style={{ position: 'absolute', right: '100px', bottom: '0px', transform: 'rotate(-5deg)', width: '60px', height: '60px', top: 'auto', left: 'auto', opacity: 0.55 }}
-                             alt="seal"
-                             onError={(e) => (e.target as any).style.display = 'none'}
-                          />
                           <div className="p-footer-head" style={{ margin: 0, fontWeight: 'bold', fontSize: '11px', color: '#000' }}>Authorized signature</div>
                        </div>
                     </div>
