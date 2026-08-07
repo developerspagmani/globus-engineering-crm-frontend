@@ -438,6 +438,7 @@ export interface PurchaseBill {
   sgst: number;
   igst: number;
   roundOff: number;
+  tds?: number;
   grandTotal: number;
   company_id: string;
   vendorId?: string;

@@ -34,6 +34,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
     sgst: '',
     igst: 0,
     roundOff: 0,
+    tds: 0,
     vendorId: '',
     customerId: ''
   });
@@ -63,6 +64,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
         sgst: initialData.sgst?.toString() || '0',
         igst: initialData.igst || 0,
         roundOff: initialData.roundOff || 0,
+        tds: initialData.tds || 0,
         vendorId: initialData.vendorId || '',
         customerId: initialData.customerId || ''
       });
@@ -80,6 +82,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
         sgst: '',
         igst: 0,
         roundOff: 0,
+        tds: 0,
         vendorId: '',
         customerId: ''
       });
@@ -148,7 +151,8 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
   const sgstNum = Number(formData.sgst) || 0;
   const igstNum = Number(formData.igst) || 0;
   const roundOffNum = Number(formData.roundOff) || 0;
-  const grandTotal = amountNum + cgstNum + sgstNum + igstNum + roundOffNum;
+  const tdsNum = Number(formData.tds) || 0;
+  const grandTotal = amountNum + cgstNum + sgstNum + igstNum + roundOffNum + tdsNum;
 
   // Real-time CGST/SGST calculator helper
   const applyGstRate = (ratePercent: number) => {
@@ -208,6 +212,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
       sgst: sgstNum,
       igst: igstNum,
       roundOff: roundOffNum,
+      tds: tdsNum,
       vendorId: formData.vendorId || undefined,
       customerId: formData.customerId || undefined,
       company_id: activeCompany?.id
@@ -455,6 +460,21 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
                     className="form-control rounded-3 border-light-subtle shadow-none py-2 text-danger-emphasis"
                     placeholder="0.00"
                     value={formData.roundOff}
+                    onChange={handleChange}
+                    disabled={mode === 'view'}
+                  />
+                </div>
+
+                {/* TDS */}
+                <div className="col-md-3">
+                  <label className="form-label text-danger-emphasis small fw-bold text-uppercase">TDS (+)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    name="tds"
+                    className="form-control rounded-3 border-light-subtle shadow-none py-2 text-danger-emphasis"
+                    placeholder="0.00"
+                    value={formData.tds}
                     onChange={handleChange}
                     disabled={mode === 'view'}
                   />
