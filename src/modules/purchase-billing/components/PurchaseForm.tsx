@@ -113,7 +113,8 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
       return;
     }
 
-    const [type, id] = value.split('_');
+    const type = value.startsWith('vendor_') ? 'vendor' : value.startsWith('customer_') ? 'customer' : '';
+    const id = value.replace(`${type}_`, '');
 
     if (type === 'vendor') {
       const selectedVendor = vendors.find(v => String(v.id) === id);
