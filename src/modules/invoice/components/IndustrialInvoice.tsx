@@ -598,10 +598,10 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    <div className="p-addr-box">
                    <div className="p-addr-title">BILLING DETAILS</div>
                    <div className="p-addr-content">
-                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? (company?.name?.toUpperCase() || 'GLOBUS ENGINEERING TOOLS') : settings.companyName.toUpperCase()}</div>
-                      <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? (company?.address || 'No 24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Ganapathy Post, Coimbatore - 641006.') : settings.companyAddress}</div>
-                      <div style={{ marginBottom: '4px' }}>GSTIN: {settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</div>
-                      <div>State: {settings.stateDetails?.split(' - ')[0] || 'Tamilnadu'} (Code : 33)</div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>M/s. {invoice.customerName}</div>
+                      <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{invoice.address || 'N/A'}</div>
+                      <div style={{ marginBottom: '4px' }}>GSTIN: {invoice.gstin || 'N/A'}</div>
+                      <div>State: {invoice.state || 'N/A'} (Code: {(invoice.state)?.toLowerCase() === 'telangana' ? '36' : '33'})</div>
                    </div>
                 </div>
                 <div className="p-addr-box">
