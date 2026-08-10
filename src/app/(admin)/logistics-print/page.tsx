@@ -17,6 +17,7 @@ import Link from 'next/link';
 import api from '@/lib/axios';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 const PrintContent = () => {
    const searchParams = useSearchParams();
@@ -128,6 +129,39 @@ const PrintContent = () => {
       pdf.save(`${type.toUpperCase()}_${data?.inwardNo || data?.outwardNo || data?.challanNo || data?.voucherNo || id}.pdf`);
    };
 
+   const handleExportExcel = () => {
+      if (!data) return;
+      
+      const wb = XLSX.utils.book_new();
+      const headerData = [
+         ["Outward No", data.outwardNo || ""],
+         ["Date", data.date ? new Date(data.date).toLocaleDateString('en-GB') : ""],
+         ["Vendor Name", data.vendorName || data.partyName || ""],
+         ["Coating Name", data.coatingName || ""],
+         ["Purpose", data.purpose || ""],
+         ["Driver Name", data.driverName || ""],
+         ["Notes", data.notes || ""],
+         [],
+         ["S.NO", "DESCRIPTION", "QUANTITY", "UNIT"]
+      ];
+      
+      const itemsData = (data.items || []).map((item: any, idx: number) => [
+         idx + 1,
+         item.description || "",
+         Number(item.quantity) || 0,
+         item.unit || "pcs"
+      ]);
+      
+      const totalQty = itemsData.reduce((sum: number, row: any) => sum + (Number(row[2]) || 0), 0);
+      itemsData.push(["", "TOTAL QUANTITY", totalQty, ""]);
+      
+      const wsData = [...headerData, ...itemsData];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      XLSX.utils.book_append_sheet(wb, ws, "Outward");
+      XLSX.writeFile(wb, `Outward_${data.outwardNo || 'Vendor'}.xlsx`);
+   };
+
    if (!id || !type) return <div className="p-5 text-center text-warning">Invalid print parameters provided.</div>;
    if (loading || !company?.id) return <div className="p-5 text-center"><Loader text="Preparing Document..." /></div>;
    if (!data) return (
@@ -166,6 +200,11 @@ const PrintContent = () => {
                <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleExport}>
                   <i className="bi bi-filetype-pdf"></i> Export PDF
                </button>
+               {type === 'outward' && data?.partyType === 'vendor' && (
+                  <button className="btn btn-success d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" onClick={handleExportExcel}>
+                     <i className="bi bi-file-earmark-excel"></i> Export Excel
+                  </button>
+               )}
             </div>
          </div>
 

@@ -596,7 +596,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
              {pageIndex === 0 && (
                 <div className="p-address">
                    <div className="p-addr-box">
-                   <div className="p-addr-title">SUPPLIER DETAILS</div>
+                   <div className="p-addr-title">BILLING DETAILS</div>
                    <div className="p-addr-content">
                       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? (company?.name?.toUpperCase() || 'GLOBUS ENGINEERING TOOLS') : settings.companyName.toUpperCase()}</div>
                       <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? (company?.address || 'No 24, Annaiyappan Street, S.S.Nagar, Nallampalayam, Ganapathy Post, Coimbatore - 641006.') : settings.companyAddress}</div>
@@ -605,12 +605,12 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                    </div>
                 </div>
                 <div className="p-addr-box">
-                   <div className="p-addr-title">RECIPIENT DETAILS</div>
+                   <div className="p-addr-title">SHIPPING DETAILS</div>
                    <div className="p-addr-content">
                       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>M/s. {invoice.customerName}</div>
-                      <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{invoice.address || 'N/A'}</div>
-                      <div style={{ marginBottom: '4px' }}>GSTIN: {invoice.gstin || 'N/A'}</div>
-                      <div>State: {invoice.state || 'N/A'} (Code: {invoice.state?.toLowerCase() === 'telangana' ? '36' : '33'})</div>
+                      <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{invoice.shippingAddress || invoice.shipping_address || invoice.address || 'N/A'}</div>
+                      <div style={{ marginBottom: '4px' }}>GSTIN: {invoice.shippingGstin || invoice.shipping_gstin || invoice.gstin || 'N/A'}</div>
+                      <div>State: {invoice.shippingState || invoice.shipping_state || invoice.state || 'N/A'} (Code: {(invoice.shippingState || invoice.shipping_state || invoice.state)?.toLowerCase() === 'telangana' ? '36' : '33'})</div>
                    </div>
                 </div>
              </div>

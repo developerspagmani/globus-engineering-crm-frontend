@@ -40,6 +40,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     vendorId: '',
     partyId: '',
     partyName: '',
+    commonTds: 0,
     selectedInvoices: [] as { id: string, invoiceNo: string, amount: number, adjustmentType: string, adjustmentValue: number }[]
   });
 
@@ -74,7 +75,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
    };
 
   const totalInvoiceAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-  const totalAdjustmentAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0);
+  const commonTdsAmount = Number(formData.commonTds) || 0;
+  const totalAdjustmentAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0) + commonTdsAmount;
   const netPayableAmount = totalInvoiceAmount - totalAdjustmentAmount;
 
   const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
@@ -642,9 +644,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                 party_name: fallbackVoucher.party_name || voucherPayload.partyName,
                 party_type: fallbackVoucher.party_type || voucherPayload.partyType,
                 type: fallbackVoucher.type || voucherPayload.type,
-                amount: Number(fallbackVoucher.amount || 0) + uniqueNetPayable,
-                tds_amount: Number(fallbackVoucher.tds_amount || 0) + uniqueTDS,
-                tdsAmount: Number(fallbackVoucher.tds_amount || 0) + uniqueTDS,
+                amount: Number(fallbackVoucher.amount || 0) + uniqueNetPayable - commonTdsAmount,
+                tds_amount: Number(fallbackVoucher.tds_amount || 0) + uniqueTDS + commonTdsAmount,
+                tdsAmount: Number(fallbackVoucher.tds_amount || 0) + uniqueTDS + commonTdsAmount,
                 others_amount: Number(fallbackVoucher.others_amount || 0) + uniqueOthers,
                 othersAmount: Number(fallbackVoucher.others_amount || 0) + uniqueOthers,
                 description: `${fallbackVoucher.description_ || fallbackVoucher.description || ''}\nPayment for ${voucherPayload.partyType}: ${uniqueNewItems.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')} (Adjust: ₹${uniqueAdjustmentAmount})`,
@@ -663,7 +665,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             } else {
               // Truly no matching existing voucher — create new
               await (dispatch as any)(createVoucher({ 
-                ...voucherPayload, 
+                ...voucherPayload,
+                tdsAmount: (Number(voucherPayload.tdsAmount) || 0) + commonTdsAmount,
+                tds_amount: (Number(voucherPayload.tds_amount) || 0) + commonTdsAmount,
                 items: currentPaymentItems 
               } as any)).unwrap();
               if (activeCompany?.id) {
@@ -674,7 +678,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
           } catch (fallbackErr) {
             console.error('[VoucherForm] Fallback consolidation failed, creating new:', fallbackErr);
             await (dispatch as any)(createVoucher({ 
-              ...voucherPayload, 
+              ...voucherPayload,
+              tdsAmount: (Number(voucherPayload.tdsAmount) || 0) + commonTdsAmount,
+              tds_amount: (Number(voucherPayload.tds_amount) || 0) + commonTdsAmount,
               items: currentPaymentItems 
             } as any)).unwrap();
           }
@@ -690,6 +696,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         await (dispatch as any)(updateVoucher({ 
           ...initialData!, 
           ...voucherPayload,
+          tdsAmount: (Number(voucherPayload.tdsAmount) || 0) + commonTdsAmount,
+          tds_amount: (Number(voucherPayload.tds_amount) || 0) + commonTdsAmount,
           items: formData.selectedInvoices.map(i => ({
             id: i.id,
             invoiceNo: i.invoiceNo,
@@ -1127,6 +1135,24 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   <td className="text-end py-2 text-muted small fw-semibold border-bottom border-secondary-subtle">Gross Total:</td>
                   <td className="fw-bold text-end py-2 text-dark border-bottom border-secondary-subtle" style={{ minWidth: '150px' }}>
                     ₹ {totalInvoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td className="text-end py-2 text-muted small fw-semibold border-bottom border-secondary-subtle align-middle">TDS:</td>
+                  <td className="fw-bold text-end py-2 text-muted border-bottom border-secondary-subtle align-middle">
+                    <div className="d-flex align-items-center justify-content-end gap-1">
+                      <span className="text-danger small">(-)</span>
+                      <input 
+                        type="number"
+                        className="form-control form-control-sm text-end shadow-none d-inline-block"
+                        style={{ width: '100px', fontWeight: 'bold' }}
+                        placeholder="0.00"
+                        value={formData.commonTds || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, commonTds: Number(e.target.value) }))}
+                        disabled={mode === 'view'}
+                      />
+                    </div>
                   </td>
                 </tr>
                 <tr>

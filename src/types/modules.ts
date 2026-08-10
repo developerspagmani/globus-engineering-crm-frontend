@@ -16,6 +16,9 @@ export interface Invoice {
   customerId: string;
   customerName: string;
   address?: string; 
+  shippingAddress?: string;
+  shippingState?: string;
+  shippingGstin?: string;
   company_id: string;
   poNo?: string;        
   po_no?: string;       
@@ -64,6 +67,7 @@ export interface InwardEntry {
   customerId?: string;
   customerName?: string;
   address?: string;
+  shippingAddress?: string;
   vendorId?: string;
   vendorName?: string;
   outwardId?: string;
@@ -101,6 +105,8 @@ export interface OutwardEntry {
   partyType?: 'customer' | 'vendor';
   customerId?: string;
   customerName?: string;
+  address?: string;
+  shippingAddress?: string;
   vendorId?: string;
   vendorName?: string;
   processName?: string;
@@ -240,6 +246,11 @@ export interface Customer {
   city?: string;
   area?: string;
   pinCode?: string;
+  shippingAddress?: string;
+  shippingCity?: string;
+  shippingState?: string;
+  shippingPinCode?: string;
+  shippingGstin?: string;
   contactPerson1?: string;
   designation1?: string;
   emailId1?: string;

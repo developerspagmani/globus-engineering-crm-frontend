@@ -476,7 +476,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
             {/* Address */}
             <div className="p-address">
                <div className="p-addr-box">
-                  <div className="p-addr-title">SUPPLIER DETAILS :</div>
+                  <div className="p-addr-title">BILLING DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
                         <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
@@ -495,20 +495,20 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   </div>
                </div>
                <div className="p-addr-box">
-                  <div className="p-addr-title">RECEIPIENTS DETAILS :</div>
+                  <div className="p-addr-title">SHIPPING DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
                         <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{partyName}</strong></div>
                         <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
-                           <span>{partyAddress !== 'N/A' ? partyAddress : 'N/A'}</span>
+                           <span>{data.shippingAddress || data.shipping_address || (partyAddress !== 'N/A' ? partyAddress : 'N/A')}</span>
                         </div>
-                        <div style={{ fontWeight: 'bold', color: '#000' }}>GST No</div><div>: <strong>{data.gstin || 'N/A'}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>GST No</div><div>: <strong>{data.shippingGstin || data.shipping_gstin || data.gstin || 'N/A'}</strong></div>
                         <div style={{ fontWeight: 'bold', color: '#000' }}>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                           <span>: {data.state || 'N/A'}</span>
-                           <span>Code : {data.state?.toLowerCase() === 'telangana' ? '36' : '33'}</span>
+                           <span>: {data.shippingState || data.shipping_state || data.state || 'N/A'}</span>
+                           <span>Code : {(data.shippingState || data.shipping_state || data.state)?.toLowerCase() === 'telangana' ? '36' : '33'}</span>
                         </div>
                      </div>
                   </div>

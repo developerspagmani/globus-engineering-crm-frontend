@@ -59,6 +59,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       dcDate: '',
       dc_date: '',
       address: '',
+      shippingAddress: '',
+      shippingState: '',
+      shippingGstin: '',
       gstin: '',
       state: '',
       items: [{ id: '1', description: '', process: '', quantity: 1, wopQty: 0, unitPrice: 0, tax: 0, amount: 0, total: 0 }],
@@ -241,6 +244,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                customerId: partyId || prev.customerId,
                customerName: inward.customerName || inward.customer_name || inward.vendorName || (inward as any).vendor_name || party?.name || (party as any)?.company || prev.customerName,
                address: inward.address || formattedAddress || prev.address,
+               shippingAddress: inward.shippingAddress || inward.shipping_address || (party as any)?.shippingAddress || (party as any)?.shipping_address || prev.shippingAddress,
+               shippingState: inward.shippingState || inward.shipping_state || (party as any)?.shippingState || (party as any)?.shipping_state || prev.shippingState,
+               shippingGstin: inward.shippingGstin || inward.shipping_gstin || (party as any)?.shippingGstin || (party as any)?.shipping_gstin || prev.shippingGstin,
                poNo: inward.po_reference || inward.poReference || '',
                po_no: inward.po_reference || inward.poReference || '',
                poDate: pDate,
@@ -415,6 +421,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             [name]: value,
             customerName: entity?.name || (entity as any)?.company || '',
             address: (entity as any)?.address || (entity as any)?.street1 || '',
+            shippingAddress: (entity as any)?.shippingAddress || (entity as any)?.shipping_address || '',
+            shippingState: (entity as any)?.shippingState || (entity as any)?.shipping_state || '',
+            shippingGstin: (entity as any)?.shippingGstin || (entity as any)?.shipping_gstin || '',
             gstin: entity?.gst || (entity as any)?.gstin || '',
             state: entity?.state || '',
             inwardId: undefined
@@ -923,6 +932,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                   <div className="">
                      <div className="row g-4">
                         <div className="col-md-6">
+                           <div className="mb-3 border-bottom pb-2 d-flex align-items-center" style={{ height: '32px' }}>
+                               <h6 className="fw-bold text-muted text-uppercase mb-0" style={{fontSize: '11px', letterSpacing: '1px'}}>Billing Details</h6>
+                           </div>
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Customer</label>
                               <div className="col-sm-9">
@@ -946,7 +958,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                           className="form-control border-0 shadow-none py-2 text-uppercase fw-bold"
                                           placeholder="Enter GSTIN for lookup"
                                           name="gstin"
-                                          value={formData.gstin}
+                                          value={formData.gstin || ''}
                                           onChange={(e) => {
                                              const val = e.target.value.toUpperCase();
                                              handleInputChange(e);
@@ -960,7 +972,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                        {gstLoading && <div className="input-group-text border-0 bg-transparent pe-3"><span className="spinner-border spinner-border-sm text-primary"></span></div>}
                                     </div>
                                   )}
-
                               </div>
                            </div>
                            <div className="row mb-3 align-items-center">
@@ -970,29 +981,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     type="text"
                                     className="form-control bg-transparent shadow-none px-2"
                                     name="address"
-                                    value={formData.address}
+                                    value={formData.address || ''}
                                     onChange={handleInputChange}
-                                    placeholder="Physical address..."
+                                    placeholder="Billing address..."
                                     style={{ height: '38px', fontSize: '0.85rem' }}
                                  />
-                              </div>
-                           </div>
-                        </div>
-
-                        <div className="col-md-6">
-                           <div className="row mb-3 align-items-center">
-                              <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">GSTIN</label>
-                              <div className="col-sm-9">
-                                 <input
-                                    type="text"
-                                    className="form-control bg-transparent text-uppercase fw-bold shadow-none px-2"
-                                    name="gstin"
-                                    placeholder="GSTIN"
-                                    value={formData.gstin}
-                                    onChange={handleInputChange}
-                                    style={{ height: '38px', fontSize: '0.85rem' }}
-                                 />
-                                 {gstError && <div className="text-danger small mt-1">{gstError}</div>}
                               </div>
                            </div>
                            <div className="row mb-3 align-items-center">
@@ -1003,8 +996,101 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     className="form-control bg-transparent fw-bold shadow-none px-2"
                                     name="state"
                                     placeholder="e.g. KARNATAKA"
-                                    value={formData.state}
+                                    value={formData.state || ''}
                                     onChange={handleInputChange}
+                                    style={{ height: '38px', fontSize: '0.85rem' }}
+                                 />
+                              </div>
+                           </div>
+                           <div className="row mb-3 align-items-center">
+                              <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">GSTIN</label>
+                              <div className="col-sm-9">
+                                 <input
+                                    type="text"
+                                    className="form-control bg-transparent text-uppercase fw-bold shadow-none px-2"
+                                    name="gstin"
+                                    placeholder="Billing GSTIN"
+                                    value={formData.gstin || ''}
+                                    onChange={handleInputChange}
+                                    maxLength={15}
+                                    style={{ height: '38px', fontSize: '0.85rem' }}
+                                 />
+                                 {gstError && <div className="text-danger small mt-1">{gstError}</div>}
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="col-md-6">
+                           <div className="mb-3 border-bottom pb-2 d-flex justify-content-between align-items-center" style={{ height: '32px' }}>
+                               <h6 className="fw-bold text-muted text-uppercase mb-0" style={{fontSize: '11px', letterSpacing: '1px'}}>Shipping Details</h6>
+                               <div className="form-check form-switch mb-0 d-flex align-items-center gap-2">
+                                   <input 
+                                       className="form-check-input shadow-none cursor-pointer m-0" 
+                                       type="checkbox" 
+                                       id="sameAsBilling"
+                                       onChange={(e) => {
+                                           if (e.target.checked) {
+                                               setFormData((prev: any) => ({
+                                                   ...prev,
+                                                   shippingAddress: prev.address,
+                                                   shippingState: prev.state,
+                                                   shippingGstin: prev.gstin
+                                               }));
+                                           } else {
+                                               setFormData((prev: any) => ({
+                                                   ...prev,
+                                                   shippingAddress: '',
+                                                   shippingState: '',
+                                                   shippingGstin: ''
+                                               }));
+                                           }
+                                       }}
+                                   />
+                                   <label className="form-check-label text-muted fw-bold" style={{fontSize: '10px', cursor: 'pointer', paddingTop: '2px'}} htmlFor="sameAsBilling">
+                                       Same as Billing
+                                   </label>
+                               </div>
+                           </div>
+                           <div className="row mb-3 d-none d-md-flex" style={{ height: '38px' }}></div>
+                           <div className="row mb-3 align-items-center">
+                              <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Address</label>
+                              <div className="col-sm-9">
+                                 <input
+                                    type="text"
+                                    className="form-control bg-transparent shadow-none px-2"
+                                    name="shippingAddress"
+                                    value={formData.shippingAddress || ''}
+                                    onChange={handleInputChange}
+                                    placeholder="Shipping address..."
+                                    style={{ height: '38px', fontSize: '0.85rem' }}
+                                 />
+                              </div>
+                           </div>
+                           <div className="row mb-3 align-items-center">
+                              <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">State</label>
+                              <div className="col-sm-9">
+                                 <input
+                                    type="text"
+                                    className="form-control bg-transparent fw-bold shadow-none px-2"
+                                    name="shippingState"
+                                    placeholder="e.g. KARNATAKA"
+                                    value={formData.shippingState || ''}
+                                    onChange={handleInputChange}
+                                    style={{ height: '38px', fontSize: '0.85rem' }}
+                                 />
+                              </div>
+                           </div>
+                           <div className="row mb-3 align-items-center">
+                              <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">GSTIN</label>
+                              <div className="col-sm-9">
+                                 <input
+                                    type="text"
+                                    className="form-control bg-transparent text-uppercase fw-bold shadow-none px-2"
+                                    name="shippingGstin"
+                                    placeholder="Shipping GSTIN"
+                                    value={formData.shippingGstin || ''}
+                                    onChange={handleInputChange}
+                                    maxLength={15}
                                     style={{ height: '38px', fontSize: '0.85rem' }}
                                  />
                               </div>
@@ -1035,7 +1121,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     <div className="row mb-3 align-items-center">
                                        <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Delivery Challan</label>
                                        <div className="col-sm-9">
-                                          <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber} onChange={handleInputChange} readOnly={true} style={{ height: '38px', fontSize: '0.85rem' }} />
+                                          <input type="text" className="form-control px-2 shadow-none" name="challanNumber" value={formData.challanNumber || ''} onChange={handleInputChange} readOnly={true} style={{ height: '38px', fontSize: '0.85rem' }} />
                                        </div>
                                     </div>
                                  )}
@@ -1048,7 +1134,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                         type="text" 
                                         className="form-control shadow-none px-2" 
                                         name="poNo" 
-                                        value={formData.poNo} 
+                                        value={formData.poNo || ''} 
                                         onChange={handleInputChange} 
                                         onKeyDown={(e) => {
                                            if (e.key === 'Enter') {
@@ -1070,7 +1156,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                         type="text" 
                                         className="form-control shadow-none px-2" 
                                         name="dcNo" 
-                                        value={formData.dcNo} 
+                                        value={formData.dcNo || ''} 
                                         onChange={handleInputChange} 
                                         onKeyDown={(e) => {
                                            if (e.key === 'Enter') {
@@ -1097,13 +1183,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Po Date</label>
                               <div className="col-sm-9">
-                                 <input type="date" className="form-control shadow-none px-2 bg-transparent" name="poDate" value={formData.poDate} onChange={handleInputChange} style={{ height: '38px', fontSize: '0.85rem' }} />
+                                 <input type="date" className="form-control shadow-none px-2 bg-transparent" name="poDate" value={formData.poDate || ''} onChange={handleInputChange} style={{ height: '38px', fontSize: '0.85rem' }} />
                               </div>
                            </div>
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Dc Date</label>
                               <div className="col-sm-9">
-                                 <input type="date" className="form-control shadow-none px-2 bg-transparent" name="dcDate" value={formData.dcDate} onChange={handleInputChange} style={{ height: '38px', fontSize: '0.85rem' }} />
+                                 <input type="date" className="form-control shadow-none px-2 bg-transparent" name="dcDate" value={formData.dcDate || ''} onChange={handleInputChange} style={{ height: '38px', fontSize: '0.85rem' }} />
                               </div>
                            </div>
                         </div>

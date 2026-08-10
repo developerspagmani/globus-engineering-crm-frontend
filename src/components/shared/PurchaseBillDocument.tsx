@@ -92,7 +92,7 @@ const PurchaseBillDocument: React.FC<PurchaseBillDocumentProps> = ({ bill, compa
           {/* ── ADDRESS ── */}
           <div className="p-address">
             <div className="p-addr-box">
-              <div className="p-addr-title">SUPPLIER DETAILS :</div>
+              <div className="p-addr-title">BILLING DETAILS :</div>
               <div className="p-addr-content">
                 <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
                   <div>Name</div><div>: <strong>{(bill.companyName || 'N/A').toUpperCase()}</strong></div>
@@ -110,7 +110,7 @@ const PurchaseBillDocument: React.FC<PurchaseBillDocumentProps> = ({ bill, compa
               </div>
             </div>
             <div className="p-addr-box">
-              <div className="p-addr-title">RECEIPIENTS DETAILS :</div>
+              <div className="p-addr-title">SHIPPING DETAILS :</div>
               <div className="p-addr-content">
                 <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
                   <div>Name</div><div>: <strong>{companyName}</strong></div>
