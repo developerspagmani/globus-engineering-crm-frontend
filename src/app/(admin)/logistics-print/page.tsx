@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
-import VendorOutwardDocument from '@/components/shared/VendorOutwardDocument';
 import { fetchInwardById } from '@/redux/features/inwardSlice';
 import { fetchOutwardById } from '@/redux/features/outwardSlice';
 import { fetchChallanById } from '@/redux/features/challanSlice';
@@ -39,7 +38,6 @@ const PrintContent = () => {
    const [data, setData] = useState<any>(null);
    const [loading, setLoading] = useState(true);
    const [showDeclaration, setShowDeclaration] = useState(false);
-   const [formatType, setFormatType] = useState<'format1' | 'format2'>('format1');
    const accentColor = company?.invoiceSettings?.accentColor || '#0d6efd';
    const printRef = React.useRef<HTMLDivElement>(null);
 
@@ -183,20 +181,6 @@ const PrintContent = () => {
             </div>
             
             <div className="d-flex align-items-center gap-3">
-               {type === 'outward' && data?.partyType === 'vendor' && (
-                  <div className="d-flex align-items-center gap-2 me-2">
-                     <label className="small fw-bold text-muted mb-0 text-nowrap">Format:</label>
-                     <select 
-                        className="form-select form-select-sm fw-bold border-0 shadow-sm"
-                        value={formatType}
-                        onChange={(e) => setFormatType(e.target.value as 'format1' | 'format2')}
-                        style={{ width: '160px', backgroundColor: '#f8f9fa' }}
-                     >
-                        <option value="format1">Delivery Challan</option>
-                        <option value="format2">Gate Pass</option>
-                     </select>
-                  </div>
-               )}
                <div className="form-check form-switch mb-0">
                   <input 
                      className="form-check-input" 
@@ -225,21 +209,12 @@ const PrintContent = () => {
          </div>
 
          <div ref={printRef}>
-            {type === 'outward' && data?.partyType === 'vendor' ? (
-               <VendorOutwardDocument 
-                  data={data} 
-                  company={company} 
-                  settings={{ ...company?.invoiceSettings, showDeclaration }}
-                  formatType={formatType}
-               />
-            ) : (
-               <IndustrialDocument 
-                  data={data} 
-                  type={type} 
-                  company={company} 
-                  settings={{ ...company?.invoiceSettings, showDeclaration }} 
-               />
-            )}
+            <IndustrialDocument 
+               data={data} 
+               type={type} 
+               company={company} 
+               settings={{ ...company?.invoiceSettings, showDeclaration }} 
+            />
          </div>
          
          <style jsx>{`
