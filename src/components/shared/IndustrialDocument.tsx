@@ -176,7 +176,7 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
            padding: 0 15px; 
         }
          .p-meta { 
-            font-size: 8.5px; 
+            font-size: 10.5px; 
             border-bottom: 1.5pt solid #000; 
             page-break-inside: avoid;
          }
@@ -188,9 +188,9 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
         .p-meta-col { 
            flex: 1; 
            border-right: 1pt solid #000; 
-           padding: 4px 8px; 
+           padding: 6px 12px; 
            display: grid;
-           grid-template-columns: 78px 14px 1fr;
+           grid-template-columns: 95px 14px 1fr;
            align-items: center;
         }
         .p-meta-col:last-child { border-right: 0; }
@@ -312,7 +312,7 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
 const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalInWords, startSno, capacity, footerSpaceNeeded, title }: any) => {
    const isOutwardVendor = type === 'outward' && data.partyType === 'vendor';
    const targetRows = isLastPage ? (capacity - footerSpaceNeeded) : capacity;
-   const fillerCount = type === 'voucher' || isOutwardVendor ? 0 : Math.max(0, targetRows - items.length);
+   const fillerCount = 0;
 
    const partyName = data.partyType === 'vendor' ? (data.vendorName || data.partyName || 'N/A Vendor') : (data.customerName || data.partyName || 'N/A Customer');
    const partyAddress = data.address || data.partyAddress || 'N/A';
@@ -386,7 +386,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         <div className="p-meta-col">
                            <span>CUSTOMER REF</span>
                            <span>:</span>
-                           <span className="p-meta-val">{data.partyName || '-'}</span>
+                           <span className="p-meta-val">{data.partyName ? `M/s ${data.partyName}` : '-'}</span>
                         </div>
                      </>
                   ) : (
@@ -432,7 +432,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                      </>
                   )}
                </div>
-               {type !== 'statement' && !isOutwardVendor && (
+               {type !== 'statement' && type !== 'challan' && !isOutwardVendor && (
                   <div className="p-meta-row">
                      {type === 'outward' && data.partyType === 'vendor' ? (
                         <div className="p-meta-col">
@@ -479,17 +479,17 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">BILLING DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{(!settings.companyName || settings.companyName.toUpperCase().includes('MACHINING')) ? 'GLOBUS ENGINEERING TOOLS' : settings.companyName.toUpperCase()}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{type === 'statement' ? `M/s ${partyName}` : partyName}</strong></div>
                         <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
-                           <span>{(!settings.companyAddress || settings.companyAddress.toUpperCase().includes('MACHINING')) ? 'No 24,Annaiyappan Street,S.S.Nagar, Nallampalayam,Ganapathy Post, Coimbatore-641006.' : settings.companyAddress}</span>
+                           <span>{partyAddress}</span>
                         </div>
-                        <div style={{ fontWeight: 'bold', color: '#000' }}>GST No</div><div>: <strong>{settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ'}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>GST No</div><div>: <strong>{data.gstin || 'N/A'}</strong></div>
                         <div style={{ fontWeight: 'bold', color: '#000' }}>State</div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                           <span>: {settings.stateDetails?.split(' - ')[0] || 'Tamilnadu'}</span>
-                           <span>{settings.stateDetails?.split(' - ')[1] || 'Code : 33'}</span>
+                           <span>: {data.state || 'N/A'}</span>
+                           <span>Code : {(data.stateCode) || ((data.state)?.toLowerCase() === 'telangana' ? '36' : '33')}</span>
                         </div>
                      </div>
                   </div>
@@ -498,7 +498,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">SHIPPING DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{partyName}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{type === 'statement' ? `M/s ${partyName}` : partyName}</strong></div>
                         <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
