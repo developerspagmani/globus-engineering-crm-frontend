@@ -86,7 +86,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
         enableRoundOff: dbSettings.enableRoundOff !== undefined ? dbSettings.enableRoundOff : (settings.enableRoundOff !== undefined ? settings.enableRoundOff : true),
         // Prioritize actual database columns for logos if JSON settings are empty or invalid
         logo: (dbSettings.logo && dbSettings.logo.length > 10) ? dbSettings.logo : (company.logo || settings.logo),
-        logoSecondary: (dbSettings.logoSecondary && dbSettings.logoSecondary.length > 10) ? dbSettings.logoSecondary : (company.logoSecondary || settings.logoSecondary)
+        logoSecondary: dbSettings.logoSecondary !== undefined ? dbSettings.logoSecondary : (settings.logoSecondary !== undefined ? settings.logoSecondary : company.logoSecondary)
       };
       dispatch(initializeInvoiceSettings(initialSettings));
     } else {

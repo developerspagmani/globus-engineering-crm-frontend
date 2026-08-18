@@ -354,22 +354,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                </div>
 
                <div style={{ width: '85px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                  {(settings.logoSecondary || company?.logoSecondary) && settings.showLogo ? (
-                     <img 
-                        src={settings.logoSecondary && settings.logoSecondary.length > 10 ? settings.logoSecondary : company?.logoSecondary} 
-                        alt="Secondary Logo" 
-                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
-                     />
-                  ) : settings.showLogo ? (
-                     <div style={{ width: '65px', border: '1.5pt solid #000', textAlign: 'center' }}>
-                        <div style={{ fontSize: '10px', fontWeight: '900', borderBottom: '1.2pt solid #000', background: '#f0f0f0', padding: '1px 0' }}>Q</div>
-                        <div style={{ padding: '3px 0' }}>
-                           <div style={{ fontSize: '18px', fontWeight: '900', lineHeight: 1 }}>TÜV</div>
-                           <div style={{ fontSize: '11px', fontWeight: '900' }}>SÜD</div>
-                        </div>
-                        <div style={{ fontSize: '8px', fontWeight: '900', borderTop: '1.2pt solid #000', padding: '1px 0' }}>ISO 9001</div>
-                     </div>
-                  ) : null}
+                  {/* Secondary logo intentionally removed per user request */}
                </div>
             </div>
 

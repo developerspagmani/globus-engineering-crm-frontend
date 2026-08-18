@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import VendorChallanFormatA from '@/components/shared/VendorChallanFormatA';
+import VendorChallanFormatB from '@/components/shared/VendorChallanFormatB';
 import { fetchInwardById } from '@/redux/features/inwardSlice';
 import { fetchOutwardById } from '@/redux/features/outwardSlice';
 import { fetchChallanById } from '@/redux/features/challanSlice';
@@ -38,7 +40,10 @@ const PrintContent = () => {
    const [data, setData] = useState<any>(null);
    const [loading, setLoading] = useState(true);
    const [showDeclaration, setShowDeclaration] = useState(false);
+   const [challanFormat, setChallanFormat] = useState<'A' | 'B'>('A');
    const accentColor = company?.invoiceSettings?.accentColor || '#0d6efd';
+
+   const isVendorOutward = type === 'outward' && data?.partyType === 'vendor';
    const printRef = React.useRef<HTMLDivElement>(null);
 
    useEffect(() => {
@@ -180,19 +185,44 @@ const PrintContent = () => {
                <h4 className="m-0 fw-bold text-dark text-capitalize">{type} Preview</h4>
             </div>
             
-            <div className="d-flex align-items-center gap-3">
-               <div className="form-check form-switch mb-0">
-                  <input 
-                     className="form-check-input" 
-                     type="checkbox" 
-                     id="declarationToggle" 
-                     checked={showDeclaration} 
-                     onChange={(e) => setShowDeclaration(e.target.checked)}
-                  />
-                  <label className="form-check-label small fw-bold text-muted" htmlFor="declarationToggle">
-                     Include Declaration
-                  </label>
-               </div>
+            <div className="d-flex align-items-center gap-3 flex-wrap">
+               {/* Format picker — only for vendor outward */}
+               {isVendorOutward && (
+                  <div className="d-flex align-items-center gap-0 rounded-pill border overflow-hidden" style={{ border: '1.5px solid #dee2e6' }}>
+                     <button
+                        id="formatPickerA"
+                        className={`btn btn-sm px-3 py-1 fw-bold rounded-0 ${challanFormat === 'A' ? 'btn-dark' : 'btn-outline-dark border-0'}`}
+                        style={{ fontSize: '12px', borderRadius: '20px 0 0 20px' }}
+                        onClick={() => setChallanFormat('A')}
+                     >
+                        📄 Format A
+                     </button>
+                     <button
+                        id="formatPickerB"
+                        className={`btn btn-sm px-3 py-1 fw-bold rounded-0 ${challanFormat === 'B' ? 'btn-dark' : 'btn-outline-dark border-0'}`}
+                        style={{ fontSize: '12px', borderRadius: '0 20px 20px 0' }}
+                        onClick={() => setChallanFormat('B')}
+                     >
+                        📋 Format B
+                     </button>
+                  </div>
+               )}
+
+               {!isVendorOutward && (
+                  <div className="form-check form-switch mb-0">
+                     <input 
+                        className="form-check-input" 
+                        type="checkbox" 
+                        id="declarationToggle" 
+                        checked={showDeclaration} 
+                        onChange={(e) => setShowDeclaration(e.target.checked)}
+                     />
+                     <label className="form-check-label small fw-bold text-muted" htmlFor="declarationToggle">
+                        Include Declaration
+                     </label>
+                  </div>
+               )}
+
                <div className="vr mx-2 opacity-25" style={{ height: '24px' }}></div>
                <button className="btn btn-outline-dark d-flex align-items-center gap-2 px-3 fw-semibold rounded-pill" onClick={() => window.print()}>
                   <i className="bi bi-printer"></i> Print
@@ -200,7 +230,7 @@ const PrintContent = () => {
                <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleExport}>
                   <i className="bi bi-filetype-pdf"></i> Export PDF
                </button>
-               {type === 'outward' && data?.partyType === 'vendor' && (
+               {isVendorOutward && (
                   <button className="btn btn-success d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" onClick={handleExportExcel}>
                      <i className="bi bi-file-earmark-excel"></i> Export Excel
                   </button>
@@ -209,12 +239,28 @@ const PrintContent = () => {
          </div>
 
          <div ref={printRef}>
-            <IndustrialDocument 
-               data={data} 
-               type={type} 
-               company={company} 
-               settings={{ ...company?.invoiceSettings, showDeclaration }} 
-            />
+            {isVendorOutward ? (
+               challanFormat === 'A' ? (
+                  <VendorChallanFormatA
+                     data={data}
+                     company={company}
+                     settings={company?.invoiceSettings}
+                  />
+               ) : (
+                  <VendorChallanFormatB
+                     data={data}
+                     company={company}
+                     settings={company?.invoiceSettings}
+                  />
+               )
+            ) : (
+               <IndustrialDocument 
+                  data={data} 
+                  type={type} 
+                  company={company} 
+                  settings={{ ...company?.invoiceSettings, showDeclaration }} 
+               />
+            )}
          </div>
          
          <style jsx>{`

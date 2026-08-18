@@ -281,7 +281,7 @@ export default function LedgerPage() {
     const docSettings = settings || activeCompany?.invoiceSettings || {};
     const showLogo = docSettings.showLogo !== false;
     const logoUrl = (docSettings.logo && docSettings.logo.length > 10) ? docSettings.logo : activeCompany?.logo;
-    const logoSecondaryUrl = (docSettings.logoSecondary && docSettings.logoSecondary.length > 10) ? docSettings.logoSecondary : activeCompany?.logoSecondary;
+    const logoSecondaryHtml = '';
 
     const logoHtml = logoUrl && showLogo 
       ? `<img src="${logoUrl}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;" />`
@@ -294,20 +294,6 @@ export default function LedgerPage() {
              <text x="50" y="62" font-size="32" font-weight="900" text-anchor="middle" fill="#000" font-family="Inter, sans-serif">S</text>
            </svg>`
         : '';
-
-    const logoSecondaryHtml = logoSecondaryUrl && showLogo
-      ? `<img src="${logoSecondaryUrl}" alt="Secondary Logo" style="max-width:100%;max-height:100%;object-fit:contain;" />`
-      : showLogo
-        ? `<div class="iso-border">
-             <div class="iso-q">Q</div>
-             <div class="iso-tuv-box">
-                <div class="iso-tuv">TÜV</div>
-                <div class="iso-sud">SÜD</div>
-             </div>
-             <div class="iso-std">ISO 9001</div>
-           </div>`
-        : '';
-
     const fmt = (n: number) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtDate = (d: string) => { if (!d) return ''; const dt = new Date(d); return `${String(dt.getDate()).padStart(2, '0')}.${String(dt.getMonth() + 1).padStart(2, '0')}.${dt.getFullYear()}`; };
     const sorted = [...entries].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -398,7 +384,7 @@ export default function LedgerPage() {
             <div class="company-addr-small">${companyAddress}</div>
          </div>
          <div class="header-iso-box">
-            ${logoSecondaryHtml}
+            <!-- Secondary logo intentionally removed -->
          </div>
       </div>
       <div class="report-title-bar">FULL LEDGER AUDIT REPORT</div>

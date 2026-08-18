@@ -15,7 +15,7 @@ const InvoiceSettings: React.FC = () => {
     ...settings,
     ...(company?.invoiceSettings || {}),
     logo: company?.logo || settings.logo,
-    logoSecondary: company?.logoSecondary || settings.logoSecondary
+    logoSecondary: settings.logoSecondary ?? company?.logoSecondary
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -29,7 +29,7 @@ const InvoiceSettings: React.FC = () => {
         ...settings,
         ...(company.invoiceSettings || {}),
         logo: company.logo || settings.logo,
-        logoSecondary: company.logoSecondary || settings.logoSecondary
+        logoSecondary: settings.logoSecondary ?? company?.logoSecondary
       };
       dispatch(initializeInvoiceSettings(initialSettings));
       setFormData(initialSettings);

@@ -7,7 +7,7 @@ import { RootState } from '@/redux/store';
 import OutwardForm from '@/modules/outward/components/OutwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
-import { fetchOutwards } from '@/redux/features/outwardSlice';
+import { fetchOutwardById } from '@/redux/features/outwardSlice';
 import Link from 'next/link';
 import PageModeIndicator from '@/components/PageModeIndicator';
 import { checkActionPermission } from '@/config/permissions';
@@ -20,21 +20,22 @@ export default function OutwardDetailPage() {
   const isEdit = searchParams.get('edit') === 'true';
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const [mounted, setMounted] = React.useState(false);
+  const [fetchError, setFetchError] = React.useState(false);
 
   const { items, loading } = useSelector((state: RootState) => state.outward);
   const outward = items.find(item => String(item.id) === String(id));
 
   React.useEffect(() => {
     setMounted(true);
-    if (items.length === 0 && activeCompany?.id) {
-      dispatch(fetchOutwards({ 
-        company_id: activeCompany.id,
-        id: id as string 
-      }) as any);
+    // Always fetch the specific record by ID — avoids pagination misses
+    if (id) {
+      (dispatch(fetchOutwardById(id as string) as any))
+        .unwrap()
+        .catch(() => setFetchError(true));
     }
-  }, [dispatch, activeCompany?.id, items.length, id]);
+  }, [dispatch, id]);
 
-  if (!mounted || loading || (items.length === 0 && !outward)) {
+  if (!mounted || (loading && !outward)) {
     return (
       <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
         <Loader text="Loading outward details..." />
@@ -42,7 +43,7 @@ export default function OutwardDetailPage() {
     );
   }
 
-  if (!outward) {
+  if (fetchError || (!loading && !outward)) {
     return (
       <div className="container-fluid py-5 text-center">
         <h4 className="fw-800 text-dark">Outward Not Found</h4>
@@ -59,14 +60,14 @@ export default function OutwardDetailPage() {
       <div className="container-fluid py-4 min-vh-100 bg-light-subtle px-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Outward: {outward.outwardNo}</h2>
+            <h2 className="fw-bold mb-0 text-dark">{isEdit ? 'Edit' : 'View'} Outward: {outward?.outwardNo}</h2>
             <p className="text-muted small mb-0">Track material dispatches and outward logistics.</p>
           </div>
           
           <div className="flex-grow-1"></div>
           <div className="d-flex gap-2">
             <Link 
-              href={`/logistics-print?type=outward&id=${outward.id}&print=true`}
+              href={`/logistics-print?type=outward&id=${outward?.id}&print=true`}
               target="_blank"
               className="btn btn-outline-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
             >

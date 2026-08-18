@@ -88,22 +88,7 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
             <div className="company-addr-small">{companyAddress}</div>
          </div>
          <div className="header-iso-box">
-            {logoSecondaryUrl && showLogo ? (
-               <img
-                  src={logoSecondaryUrl}
-                  alt="Secondary Logo"
-                  className="logo-img"
-               />
-            ) : showLogo ? (
-               <div className="iso-border">
-                  <div className="iso-q">Q</div>
-                  <div className="iso-tuv-box">
-                     <div className="iso-tuv">TÜV</div>
-                     <div className="iso-sud">SÜD</div>
-                  </div>
-                  <div className="iso-std">ISO 9001</div>
-               </div>
-            ) : null}
+            {/* Secondary logo intentionally removed */}
          </div>
       </div>
 
