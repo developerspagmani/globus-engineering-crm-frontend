@@ -87,9 +87,25 @@ const PrintContent = () => {
          else if (type === 'challan') found = challanData.find(c => String(c.id) === tid);
          else if (type === 'voucher') found = voucherData.find(v => String(v.id) === tid);
          
-         if (found) setData(found);
+         if (found) {
+            let enrichedData: any = { ...found };
+            const anyFound = found as any;
+            if (type === 'outward' && (anyFound.partyType === 'vendor' || anyFound.party_type === 'vendor')) {
+               const vId = anyFound.vendorId || anyFound.vendor_id;
+               if (vId) {
+                  const vendorInfo = vendors.find(v => String(v.id) === String(vId));
+                  if (vendorInfo) {
+                     const addrParts = [vendorInfo.street1, vendorInfo.street2, vendorInfo.area, vendorInfo.city, vendorInfo.state, vendorInfo.pinCode].filter(Boolean);
+                     enrichedData.address = addrParts.join(', ');
+                     enrichedData.gstin = vendorInfo.gst || (vendorInfo as any).gstin || '';
+                     enrichedData.pan = (vendorInfo as any).pan || '';
+                  }
+               }
+            }
+            setData(enrichedData);
+         }
       }
-   }, [loading, inwardData, outwardData, challanData, voucherData, id, type]);
+   }, [loading, inwardData, outwardData, challanData, voucherData, id, type, vendors]);
 
    useEffect(() => {
       if (data && print && !download) {

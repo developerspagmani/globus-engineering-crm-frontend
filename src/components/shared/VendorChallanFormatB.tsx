@@ -105,7 +105,6 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
          {/* ── TOP LABEL ─────────────────────────────────────── */}
          <div className="fmtb-top-label">
             <span className="fmtb-tax-invoice-text">TAX INVOICE</span>
-            <span className="fmtb-original-box">ORIGINAL FOR RECIPIENT</span>
          </div>
 
          {/* ── COMPANY NAME ──────────────────────────────────── */}
@@ -157,7 +156,6 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                <thead>
                   <tr>
                      <th className="fmtb-th fmtb-col-items">ITEMS</th>
-                     <th className="fmtb-th fmtb-col-hsn">HSN</th>
                      <th className="fmtb-th fmtb-col-qty">QTY.</th>
                   </tr>
                </thead>
@@ -170,7 +168,6 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                      return (
                         <tr key={i}>
                            <td className="fmtb-td fmtb-td-items">{item.description || ''}</td>
-                           <td className="fmtb-td fmtb-td-center">{item.hsnCode || item.hsn || ''}</td>
                            <td className="fmtb-td fmtb-td-center">
                               {qty > 0 ? `${qty} ${item.unit ? item.unit.toUpperCase() : 'NOS'}` : ''}
                            </td>
@@ -179,7 +176,6 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                   })}
                   {[...Array(fillerCount)].map((_, i) => (
                      <tr key={`f-${i}`}>
-                        <td className="fmtb-td">&nbsp;</td>
                         <td className="fmtb-td">&nbsp;</td>
                         <td className="fmtb-td">&nbsp;</td>
                      </tr>
@@ -239,12 +235,6 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                font-size: 10px;
                font-weight: bold;
                letter-spacing: 0.5pt;
-            }
-            .fmtb-original-box {
-               border: 1pt solid #000;
-               padding: 1px 6px;
-               font-size: 8.5px;
-               font-weight: bold;
             }
 
             /* Company name */
@@ -349,7 +339,6 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                line-height: 1.2;
             }
             .fmtb-col-items { /* flex */ text-align: left; }
-            .fmtb-col-hsn { width: 70px; text-align: center; }
             .fmtb-col-qty { width: 65px; text-align: center; }
             .fmtb-col-rate { width: 65px; text-align: center; }
             .fmtb-col-tax { width: 65px; text-align: center; }

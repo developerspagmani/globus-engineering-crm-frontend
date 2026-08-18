@@ -115,6 +115,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                         <div className="cha-dc-key">JOB VALUE</div>
                         <div className="cha-dc-val cha-dc-job-val">{data.jobNo || data.jobValue || data.job || '-'}</div>
                      </div>
+
                   </div>
                </div>
 
@@ -127,7 +128,6 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                   <div className="cha-tbl-head">
                      <div className="cha-col-sno cha-th">S.NO</div>
                      <div className="cha-col-desc cha-th">DESCRIPTION</div>
-                     <div className="cha-col-blank cha-th"></div>
                      <div className="cha-col-qty cha-th">QTY</div>
                   </div>
 
@@ -151,15 +151,6 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                            <div key={`fd-${i}`} className="cha-cell cha-filler">&nbsp;</div>
                         ))}
                      </div>
-                     {/* BLANK column */}
-                     <div className="cha-col-blank cha-col-body">
-                        {items.map((_, i) => (
-                           <div key={i} className="cha-cell">&nbsp;</div>
-                        ))}
-                        {[...Array(fillerCount)].map((_, i) => (
-                           <div key={`fb-${i}`} className="cha-cell cha-filler">&nbsp;</div>
-                        ))}
-                     </div>
                      {/* QTY column */}
                      <div className="cha-col-qty cha-col-body cha-col-last">
                         {items.map((item: any, i: number) => (
@@ -174,8 +165,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                   {/* TOTAL row */}
                   <div className="cha-tbl-total">
                      <div className="cha-col-sno"></div>
-                     <div className="cha-col-desc"></div>
-                     <div className="cha-col-blank cha-td-total-label">TOTAL</div>
+                     <div className="cha-col-desc cha-td-total-label" style={{ justifyContent: 'flex-end', paddingRight: '20px' }}>TOTAL</div>
                      <div className="cha-col-qty cha-td-total-val">{totalQty || ''}</div>
                   </div>
                </div>
@@ -187,6 +177,11 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                    Row 3: Receivers signature   | Authorised signature
                ══════════════════════════════════════════════ */}
                <div className="cha-footer">
+                  {/* Row 0 - Purpose */}
+                  <div className="cha-foot-row cha-foot-purpose-row">
+                     <div className="cha-foot-left cha-foot-purpose">PURPOSE: {data.purpose || '-'}</div>
+                     <div className="cha-foot-right"></div>
+                  </div>
                   {/* Row 1 – Coating / Process label */}
                   <div className="cha-foot-row cha-foot-coating-row">
                      <div className="cha-foot-left cha-foot-coating">{coatingOrVendorLabel.toUpperCase()}</div>
@@ -317,7 +312,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                font-weight: 900;
                text-transform: uppercase;
                text-align: center;
-               font-size: 10px;
+               font-size: 16px;
             }
             .cha-to-addr {
                text-transform: uppercase;
@@ -393,10 +388,6 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
             }
             .cha-col-desc {
                flex: 1;
-               border-right: 1pt solid #000;
-            }
-            .cha-col-blank {
-               width: 140px;
                border-right: 1pt solid #000;
             }
             .cha-col-qty {
@@ -505,11 +496,17 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                text-align: center;
                padding: 5px 8px;
             }
+            /* Row 0 - Purpose */
+            .cha-foot-purpose-row .cha-foot-left {
+               font-weight: bold;
+               font-size: 14px;
+               min-height: 24px;
+            }
             /* Row 1 – coating shaded */
             .cha-foot-coating-row .cha-foot-left {
                background: #e6e6e6;
                font-weight: 900;
-               font-size: 11px;
+               font-size: 16px;
                min-height: 24px;
             }
             /* Row 2 – received | For company */
