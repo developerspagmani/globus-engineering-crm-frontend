@@ -104,7 +104,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
       <div className="fmtb-page">
          {/* ── TOP LABEL ─────────────────────────────────────── */}
          <div className="fmtb-top-label">
-            <span className="fmtb-tax-invoice-text">TAX INVOICE</span>
+            <span className="fmtb-tax-invoice-text">DELIVERY CHALLAN</span>
          </div>
 
          {/* ── COMPANY NAME ──────────────────────────────────── */}
@@ -147,6 +147,10 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                <div className="fmtb-dc-row">
                   <div className="fmtb-dc-key">JOB VALUE</div>
                   <div className="fmtb-dc-val">{data.jobNo || data.jobValue || data.job || '-'}</div>
+               </div>
+               <div className="fmtb-dc-row">
+                  <div className="fmtb-dc-key">COATING</div>
+                  <div className="fmtb-dc-val" style={{ fontSize: '14px', fontWeight: '900' }}>{coatingName}</div>
                </div>
             </div>
          </div>
@@ -202,9 +206,15 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
             </div>
 
             {/* Right Column: Authorised Signatory */}
-            <div className="fmtb-sign-right-col">
-               <div className="fmtb-sign-stamp-box">&nbsp;</div>
-               <div className="fmtb-sign-auth-label">AUTHORISED SIGNATORY FOR<br />{companyName}</div>
+            <div className="fmtb-sign-right-col" style={{ position: 'relative' }}>
+               <img
+                  src="/seal.png"
+                  alt="seal"
+                  style={{ position: 'absolute', right: '50px', bottom: '15px', width: '70px', height: '70px', opacity: 0.55, zIndex: 1, transform: 'rotate(-5deg)' }}
+                  onError={(e) => (e.target as any).style.display = 'none'}
+               />
+               <div className="fmtb-sign-stamp-box" style={{ position: 'relative', zIndex: 2, backgroundColor: 'transparent' }}>&nbsp;</div>
+               <div className="fmtb-sign-auth-label" style={{ position: 'relative', zIndex: 2 }}>AUTHORISED SIGNATORY FOR<br />{companyName}</div>
             </div>
          </div>
 
@@ -338,12 +348,12 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                height: 22px;
                line-height: 1.2;
             }
-            .fmtb-col-items { /* flex */ text-align: left; }
+            .fmtb-col-items { /* flex */ text-align: center; }
             .fmtb-col-qty { width: 65px; text-align: center; }
             .fmtb-col-rate { width: 65px; text-align: center; }
             .fmtb-col-tax { width: 65px; text-align: center; }
             .fmtb-col-amt { width: 75px; text-align: right; padding-right: 8px; }
-            .fmtb-td-items { text-align: left; padding-left: 6px; }
+            .fmtb-td-items { text-align: center; padding-left: 6px; }
             .fmtb-td-center { text-align: center; }
             .fmtb-td-right { text-align: right; padding-right: 8px; }
             .fmtb-tax-cell { text-align: center; font-size: 8px; }
@@ -469,7 +479,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
             .fmtb-sign-stamp-box {
                width: 175px;
                height: 55px;
-               border: 1pt solid #000;
+               border: none;
                margin-bottom: 2px;
             }
             .fmtb-sign-auth-label {
@@ -483,7 +493,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
             .fmtb-sign-receiver-box {
                width: 175px;
                height: 55px;
-               border: 1pt solid #000;
+               border: none;
                margin-bottom: 2px;
             }
             .fmtb-sign-receiver-label {
