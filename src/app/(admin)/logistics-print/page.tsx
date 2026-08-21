@@ -43,7 +43,7 @@ const PrintContent = () => {
    const [challanFormat, setChallanFormat] = useState<'A' | 'B'>('A');
    const accentColor = company?.invoiceSettings?.accentColor || '#0d6efd';
 
-   const isVendorOutward = type === 'outward' && data?.partyType === 'vendor';
+   const isOutwardChallan = type === 'outward';
    const printRef = React.useRef<HTMLDivElement>(null);
 
    useEffect(() => {
@@ -90,22 +90,35 @@ const PrintContent = () => {
          if (found) {
             let enrichedData: any = { ...found };
             const anyFound = found as any;
-            if (type === 'outward' && (anyFound.partyType === 'vendor' || anyFound.party_type === 'vendor')) {
-               const vId = anyFound.vendorId || anyFound.vendor_id;
-               if (vId) {
-                  const vendorInfo = vendors.find(v => String(v.id) === String(vId));
-                  if (vendorInfo) {
-                     const addrParts = [vendorInfo.street1, vendorInfo.street2, vendorInfo.area, vendorInfo.city, vendorInfo.state, vendorInfo.pinCode].filter(Boolean);
-                     enrichedData.address = addrParts.join(', ');
-                     enrichedData.gstin = vendorInfo.gst || (vendorInfo as any).gstin || '';
-                     enrichedData.pan = (vendorInfo as any).pan || '';
+            if (type === 'outward') {
+               if (anyFound.partyType === 'vendor' || anyFound.party_type === 'vendor') {
+                  const vId = anyFound.vendorId || anyFound.vendor_id;
+                  if (vId) {
+                     const vendorInfo = vendors.find(v => String(v.id) === String(vId));
+                     if (vendorInfo) {
+                        const addrParts = [vendorInfo.street1, vendorInfo.street2, vendorInfo.area, vendorInfo.city, vendorInfo.state, vendorInfo.pinCode].filter(Boolean);
+                        enrichedData.address = addrParts.join(', ');
+                        enrichedData.gstin = vendorInfo.gst || (vendorInfo as any).gstin || '';
+                        enrichedData.pan = (vendorInfo as any).pan || '';
+                     }
+                  }
+               } else if (anyFound.partyType === 'customer' || anyFound.party_type === 'customer') {
+                  const cId = anyFound.customerId || anyFound.customer_id;
+                  if (cId) {
+                     const customerInfo = customers.find(c => String(c.id) === String(cId));
+                     if (customerInfo) {
+                        const addrParts = [customerInfo.street1, customerInfo.street2, customerInfo.area, customerInfo.city, customerInfo.state, customerInfo.pinCode].filter(Boolean);
+                        enrichedData.address = addrParts.join(', ');
+                        enrichedData.gstin = customerInfo.gst || (customerInfo as any).gstin || '';
+                        enrichedData.pan = (customerInfo as any).pan || '';
+                     }
                   }
                }
             }
             setData(enrichedData);
          }
       }
-   }, [loading, inwardData, outwardData, challanData, voucherData, id, type, vendors]);
+   }, [loading, inwardData, outwardData, challanData, voucherData, id, type, vendors, customers]);
 
    useEffect(() => {
       if (data && print && !download) {
@@ -202,8 +215,7 @@ const PrintContent = () => {
             </div>
             
             <div className="d-flex align-items-center gap-3 flex-wrap">
-               {/* Format picker — only for vendor outward */}
-               {isVendorOutward && (
+               {isOutwardChallan && (
                   <div className="d-flex align-items-center gap-0 rounded-pill border overflow-hidden" style={{ border: '1.5px solid #dee2e6' }}>
                      <button
                         id="formatPickerA"
@@ -224,7 +236,7 @@ const PrintContent = () => {
                   </div>
                )}
 
-               {!isVendorOutward && (
+               {!isOutwardChallan && (
                   <div className="form-check form-switch mb-0">
                      <input 
                         className="form-check-input" 
@@ -246,7 +258,7 @@ const PrintContent = () => {
                <button className="btn btn-primary d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleExport}>
                   <i className="bi bi-filetype-pdf"></i> Export PDF
                </button>
-               {isVendorOutward && (
+               {isOutwardChallan && (
                   <button className="btn btn-success d-flex align-items-center gap-2 px-4 fw-bold rounded-pill shadow-sm" onClick={handleExportExcel}>
                      <i className="bi bi-file-earmark-excel"></i> Export Excel
                   </button>
@@ -255,7 +267,7 @@ const PrintContent = () => {
          </div>
 
          <div ref={printRef}>
-            {isVendorOutward ? (
+            {isOutwardChallan ? (
                challanFormat === 'A' ? (
                   <VendorChallanFormatA
                      data={data}

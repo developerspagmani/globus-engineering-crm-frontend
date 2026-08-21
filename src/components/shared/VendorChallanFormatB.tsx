@@ -54,7 +54,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
    // But looking at the reference image, the "Bill To" / "Ship To" is the RECIPIENT of the invoice
    // In the vendor's invoice they send to us — but since we're generating OUR challan for vendor:
    // Bill To = Vendor, Ship To = Vendor
-   const vendorName = data.vendorName || data.partyName || '';
+   const vendorName = data.vendorName || data.customerName || data.partyName || '';
    const vendorAddress = data.address || data.partyAddress || '';
    const vendorGst = data.gstin || '';
    const vendorPan = data.pan || '';
@@ -148,10 +148,18 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                   <div className="fmtb-dc-key">JOB VALUE</div>
                   <div className="fmtb-dc-val">{data.jobNo || data.jobValue || data.job || '-'}</div>
                </div>
-               <div className="fmtb-dc-row">
-                  <div className="fmtb-dc-key">COATING</div>
-                  <div className="fmtb-dc-val" style={{ fontSize: '14px', fontWeight: '900' }}>{coatingName}</div>
-               </div>
+               {data.processName && (
+                  <div className="fmtb-dc-row">
+                     <div className="fmtb-dc-key">PROCESS</div>
+                     <div className="fmtb-dc-val" style={{ fontSize: '14px', fontWeight: '900' }}>{data.processName}</div>
+                  </div>
+               )}
+               {data.partyType !== 'customer' && (
+                  <div className="fmtb-dc-row">
+                     <div className="fmtb-dc-key">COATING</div>
+                     <div className="fmtb-dc-val" style={{ fontSize: '14px', fontWeight: '900' }}>{coatingName}</div>
+                  </div>
+               )}
             </div>
          </div>
 

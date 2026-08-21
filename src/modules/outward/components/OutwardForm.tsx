@@ -310,7 +310,6 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                          </div>
                       </div>
                     ) : (
-                      <>
                          <div className="row mb-3 align-items-center">
                             <label className="col-4 text-muted x-small fw-bold">VENDOR</label>
 
@@ -324,21 +323,20 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                                 />
                             </div>
                          </div>
-                         <div className="row mb-3 align-items-center">
-                            <label className="col-4 text-muted small fw-bold text-info">ASSIGN PROCESS</label>
-                            <div className="col-8">
-                                <SearchableSelect
-                                  className="w-100"
-                                  options={processes.map(p => ({ value: p.processName, label: p.processName }))}
-                                  value={formData.processName || ''}
-                                  onChange={(val) => handleChange({ target: { name: 'processName', value: val } } as any)}
-                                  placeholder="Select Process (for Vendor)"
-                                  disabled={mode === 'view'}
-                                />
-                            </div>
-                         </div>
-                      </>
                     )}
+                    <div className="row mb-3 align-items-center">
+                       <label className="col-4 text-muted small fw-bold text-info">ASSIGN PROCESS</label>
+                       <div className="col-8">
+                           <SearchableSelect
+                             className="w-100"
+                             options={processes.map(p => ({ value: p.processName, label: p.processName }))}
+                             value={formData.processName || ''}
+                             onChange={(val) => handleChange({ target: { name: 'processName', value: val } } as any)}
+                             placeholder="Select Process"
+                             disabled={mode === 'view'}
+                           />
+                       </div>
+                    </div>
 
                     <div className="row mb-3 align-items-center">
                        <label className={`col-4 small fw-bold text-muted`}>
@@ -393,29 +391,28 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                  </div>
 
                  <div className="col-md-6 px-lg-5">
-                    {formData.partyType === 'vendor' ? (
-                      <>
+                    {formData.partyType === 'vendor' && (
                         <div className="row mb-3 align-items-center">
                            <label className="col-4 text-muted x-small fw-bold">COATING NAME</label>
                            <div className="col-8">
                                <input type="text" className="form-control" name="coatingName" value={formData.coatingName || ''} onChange={handleChange} placeholder="Required" disabled={mode === 'view'} />
                            </div>
                         </div>
+                    )}
+                    {formData.partyType === 'customer' && (
                         <div className="row mb-3 align-items-center">
-                           <label className="col-4 text-muted x-small fw-bold">PURPOSE</label>
+                           <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
                            <div className="col-8">
-                               <input type="text" className="form-control" name="purpose" value={formData.purpose || ''} onChange={handleChange} placeholder="Required" disabled={mode === 'view'} />
+                               <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo || ''} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
                            </div>
                         </div>
-                      </>
-                    ) : (
-                      <div className="row mb-3 align-items-center">
-                         <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
-                         <div className="col-8">
-                             <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo || ''} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
-                         </div>
-                      </div>
                     )}
+                    <div className="row mb-3 align-items-center">
+                       <label className="col-4 text-muted x-small fw-bold">PURPOSE</label>
+                       <div className="col-8">
+                           <input type="text" className="form-control" name="purpose" value={formData.purpose || ''} onChange={handleChange} placeholder="Required" disabled={mode === 'view'} />
+                       </div>
+                    </div>
                     <div className="row mb-3 align-items-center">
                        <label className="col-4 text-muted x-small fw-bold">DRIVER NAME</label>
                        <div className="col-8">

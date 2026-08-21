@@ -39,7 +39,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
    const gstNo = settings.gstNo || company?.gstin || '33AAIFG6568K1ZZ';
    const website = company?.website || 'www.globusengineeringtools.com';
 
-   const vendorName = data.vendorName || data.partyName || '';
+   const vendorName = data.vendorName || data.customerName || data.partyName || '';
    const vendorAddress = data.address || data.partyAddress || '';
    const vendorGst = data.gstin || '';
 
@@ -115,10 +115,18 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                         <div className="cha-dc-key">JOB VALUE</div>
                         <div className="cha-dc-val cha-dc-job-val">{data.jobNo || data.jobValue || data.job || '-'}</div>
                      </div>
-                     <div className="cha-dc-row">
-                        <div className="cha-dc-key">COATING</div>
-                        <div className="cha-dc-val" style={{ fontSize: '14px', fontWeight: 'bold', color: '#000' }}>{data.coatingName || data.processType || 'ULTRA COATING'}</div>
-                     </div>
+                     {data.processName && (
+                        <div className="cha-dc-row">
+                           <div className="cha-dc-key">PROCESS</div>
+                           <div className="cha-dc-val" style={{ fontSize: '14px', fontWeight: 'bold', color: '#000' }}>{data.processName}</div>
+                        </div>
+                     )}
+                     {data.partyType !== 'customer' && (
+                        <div className="cha-dc-row">
+                           <div className="cha-dc-key">COATING</div>
+                           <div className="cha-dc-val" style={{ fontSize: '14px', fontWeight: 'bold', color: '#000' }}>{data.coatingName || data.processType || 'ULTRA COATING'}</div>
+                        </div>
+                     )}
 
                   </div>
                </div>
@@ -187,10 +195,12 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                      <div className="cha-foot-right"></div>
                   </div>
                   {/* Row 1 – Coating / Process label */}
-                  <div className="cha-foot-row cha-foot-coating-row">
-                     <div className="cha-foot-left cha-foot-coating">{coatingOrVendorLabel.toUpperCase()}</div>
-                     <div className="cha-foot-right"></div>
-                  </div>
+                  {data.partyType !== 'customer' && (
+                     <div className="cha-foot-row cha-foot-coating-row">
+                        <div className="cha-foot-left cha-foot-coating">{coatingOrVendorLabel.toUpperCase()}</div>
+                        <div className="cha-foot-right"></div>
+                     </div>
+                  )}
                   {/* Row 2 – Received text | For company */}
                   <div className="cha-foot-row cha-foot-received-row">
                      <div className="cha-foot-left cha-foot-received">Received the above goods in good condition</div>
