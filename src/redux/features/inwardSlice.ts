@@ -239,6 +239,18 @@ export const deleteInward = createAsyncThunk(
   }
 );
 
+export const cancelInward = createAsyncThunk(
+  'inward/cancel',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/inward/${id}/cancel`);
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to cancel inward entry');
+    }
+  }
+);
+
 interface InwardState {
   items: InwardEntry[];
   loading: boolean;
@@ -364,6 +376,15 @@ const inwardSlice = createSlice({
       })
       .addCase(deleteInward.fulfilled, (state, action) => {
         state.items = state.items.filter(i => i.id !== action.payload);
+      })
+      .addCase(cancelInward.fulfilled, (state, action) => {
+        const index = state.items.findIndex(i => i.id === action.meta.arg);
+        if (index !== -1) {
+          state.items[index].status = 'cancelled';
+          if (action.payload.outwardNo) {
+            state.items[index].outwardNo = action.payload.outwardNo;
+          }
+        }
       });
   }
 });

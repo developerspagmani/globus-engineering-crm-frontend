@@ -43,7 +43,7 @@ const PrintContent = () => {
    const [challanFormat, setChallanFormat] = useState<'A' | 'B'>('A');
    const accentColor = company?.invoiceSettings?.accentColor || '#0d6efd';
 
-   const isOutwardChallan = type === 'outward';
+   const isOutwardChallan = type === 'outward' || (type === 'inward' && data?.status === 'cancelled');
    const printRef = React.useRef<HTMLDivElement>(null);
 
    useEffect(() => {

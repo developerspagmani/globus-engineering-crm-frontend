@@ -154,6 +154,7 @@ export default function InwardListPage() {
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
                   <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
               <div className="date-filter-group">

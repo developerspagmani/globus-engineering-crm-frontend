@@ -7,7 +7,8 @@ import { RootState } from '@/redux/store';
 import InwardForm from '@/modules/inward/components/InwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
-import { fetchInwards } from '@/redux/features/inwardSlice';
+import { fetchInwards, cancelInward } from '@/redux/features/inwardSlice';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import Link from 'next/link';
 import PageModeIndicator from '@/components/PageModeIndicator';
 import { checkActionPermission } from '@/config/permissions';
@@ -23,6 +24,20 @@ export default function InwardDetailPage() {
 
   const { items, loading } = useSelector((state: RootState) => state.inward);
   const inward = items.find(item => String(item.id) === String(id));
+  const [cancelling, setCancelling] = React.useState(false);
+  const [showCancelModal, setShowCancelModal] = React.useState(false);
+
+  const handleCancelConfirm = async () => {
+    setCancelling(true);
+    try {
+      await dispatch(cancelInward(String(id)) as any).unwrap();
+      window.alert('Inward cancelled and return challan generated successfully');
+    } catch (err: any) {
+      window.alert(err || 'Failed to cancel inward');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   React.useEffect(() => {
     setMounted(true);
@@ -71,8 +86,18 @@ export default function InwardDetailPage() {
               className="btn btn-outline-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
             >
               <i className="bi bi-printer"></i>
-              <span>Print Inward</span>
+              <span>Print {inward.status === 'cancelled' ? 'Return Challan' : 'Inward'}</span>
             </Link>
+            {!isEdit && inward.status === 'pending' && checkActionPermission(user, 'mod_inward', 'edit') && (
+              <button 
+                onClick={() => setShowCancelModal(true)}
+                disabled={cancelling}
+                className="btn btn-danger rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
+              >
+                <i className="bi bi-x-circle"></i>
+                <span>{cancelling ? 'Cancelling...' : 'Cancel Inward'}</span>
+              </button>
+            )}
             {!isEdit && checkActionPermission(user, 'mod_inward', 'edit') && (
               <button 
                 onClick={() => router.push(`/inward/${id}?edit=true`)}
@@ -88,6 +113,16 @@ export default function InwardDetailPage() {
         <div className="animate-fade-in">
           <InwardForm mode={isEdit ? 'edit' : 'view'} initialData={inward} />
         </div>
+
+        <ConfirmationModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleCancelConfirm}
+          title="Cancel Inward"
+          message="Are you sure you want to cancel this inward? A return challan will be automatically generated."
+          confirmLabel="Yes, Cancel"
+          type="danger"
+        />
       </div>
     </ModuleGuard>
   );
