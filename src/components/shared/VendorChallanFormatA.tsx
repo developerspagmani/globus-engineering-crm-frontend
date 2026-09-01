@@ -216,12 +216,14 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                   <div className="cha-foot-row cha-foot-sign-row">
                      <div className="cha-foot-left cha-foot-sign-text">Receivers signature</div>
                      <div className="cha-foot-right cha-foot-sign-text" style={{ position: 'relative' }}>
-                        <img
-                           src="/seal.png"
-                           alt="seal"
-                           style={{ position: 'absolute', right: '50px', bottom: '15px', width: '70px', height: '70px', opacity: 0.55, zIndex: 1, transform: 'rotate(-5deg)' }}
-                           onError={(e) => (e.target as any).style.display = 'none'}
-                        />
+                        {companyName.includes('GLOBUS') && (
+                           <img
+                              src="/seal.png"
+                              alt="seal"
+                              style={{ position: 'absolute', right: '50px', bottom: '15px', width: '70px', height: '70px', opacity: 0.55, zIndex: 1, transform: 'rotate(-5deg)' }}
+                              onError={(e) => (e.target as any).style.display = 'none'}
+                           />
+                        )}
                         <span style={{ position: 'relative', zIndex: 2 }}>Authorised signature</span>
                      </div>
                   </div>

@@ -221,12 +221,14 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
 
             {/* Right Column: Authorised Signatory */}
             <div className="fmtb-sign-right-col" style={{ position: 'relative' }}>
-               <img
-                  src="/seal.png"
-                  alt="seal"
-                  style={{ position: 'absolute', right: '50px', bottom: '15px', width: '70px', height: '70px', opacity: 0.55, zIndex: 1, transform: 'rotate(-5deg)' }}
-                  onError={(e) => (e.target as any).style.display = 'none'}
-               />
+               {companyName.includes('GLOBUS') && (
+                  <img
+                     src="/seal.png"
+                     alt="seal"
+                     style={{ position: 'absolute', right: '50px', bottom: '15px', width: '70px', height: '70px', opacity: 0.55, zIndex: 1, transform: 'rotate(-5deg)' }}
+                     onError={(e) => (e.target as any).style.display = 'none'}
+                  />
+               )}
                <div className="fmtb-sign-stamp-box" style={{ position: 'relative', zIndex: 2, backgroundColor: 'transparent' }}>&nbsp;</div>
                <div className="fmtb-sign-auth-label" style={{ position: 'relative', zIndex: 2 }}>AUTHORISED SIGNATORY FOR<br />{companyName}</div>
             </div>
