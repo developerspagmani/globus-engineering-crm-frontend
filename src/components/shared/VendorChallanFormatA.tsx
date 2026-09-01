@@ -366,6 +366,9 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                border-bottom: 1pt solid #000;
                flex: 1;
             }
+            .cha-dc-row:last-child {
+               border-bottom: none;
+            }
             .cha-dc-row-empty {
                flex: 0.5; /* The empty row is a bit shorter */
             }
@@ -408,7 +411,6 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                flex: 1;
                display: flex;
                flex-direction: column;
-               border-top: 1pt solid #000;
             }
 
             /* Column Widths */
