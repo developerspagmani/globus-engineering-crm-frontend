@@ -173,7 +173,7 @@ const PrintContent = () => {
          ["Vendor Name", data.vendorName || data.partyName || ""],
          ["Coating Name", data.coatingName || ""],
          ["Purpose", data.purpose || ""],
-         ["Driver Name", data.driverName || ""],
+         ["Vehicle No", data.vehicleNo || data.driverName || ""],
          ["Notes", data.notes || ""],
          [],
          ["S.NO", "DESCRIPTION", "QUANTITY", "UNIT"]

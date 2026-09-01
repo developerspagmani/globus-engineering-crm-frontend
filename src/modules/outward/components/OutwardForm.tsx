@@ -399,14 +399,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                            </div>
                         </div>
                     )}
-                    {formData.partyType === 'customer' && (
-                        <div className="row mb-3 align-items-center">
-                           <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
-                           <div className="col-8">
-                               <input type="text" className="form-control" name="vehicleNo" value={formData.vehicleNo || ''} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
-                           </div>
-                        </div>
-                    )}
+
                     <div className="row mb-3 align-items-center">
                        <label className="col-4 text-muted x-small fw-bold">PURPOSE</label>
                        <div className="col-8">
@@ -414,9 +407,9 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
-                       <label className="col-4 text-muted x-small fw-bold">DRIVER NAME</label>
+                       <label className="col-4 text-muted x-small fw-bold">VEHICLE NO</label>
                        <div className="col-8">
-                           <input type="text" className="form-control border-0 bg-light rounded-pill px-3 py-2" name="driverName" value={formData.driverName || ''} onChange={handleChange} placeholder="Required" disabled={mode === 'view'} />
+                           <input type="text" className="form-control border-0 bg-light rounded-pill px-3 py-2" name="vehicleNo" value={formData.vehicleNo || ''} onChange={handleChange} placeholder="TN-01-AB-1234" disabled={mode === 'view'} />
                        </div>
                     </div>
                     <div className="row mb-3 align-items-center">
