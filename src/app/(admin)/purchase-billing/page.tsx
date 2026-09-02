@@ -12,6 +12,7 @@ import PurchaseForm from '@/modules/purchase-billing/components/PurchaseForm';
 import { PurchaseBill } from '@/types/modules';
 import { checkActionPermission } from '@/config/permissions';
 import PurchaseBillDocument from '@/components/shared/PurchaseBillDocument';
+import api from '@/lib/axios';
 
 export default function PurchaseBillingPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -88,6 +89,25 @@ export default function PurchaseBillingPage() {
     setTimeout(() => window.print(), 300);
   };
 
+  const fetchExportData = async () => {
+    if (!activeCompany?.id) return [];
+    
+    let url = `/purchase-bills?page=1&limit=1000000&company_id=${activeCompany.id}`;
+    if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
+    if (filters.fromDate) url += `&fromDate=${filters.fromDate}`;
+    if (filters.toDate) url += `&toDate=${filters.toDate}`;
+    if (sorting.sortBy) url += `&sortBy=${sorting.sortBy}`;
+    if (sorting.sortOrder) url += `&sortOrder=${sorting.sortOrder}`;
+    
+    try {
+      const response = await api.get(url);
+      return response.data.items || [];
+    } catch (err) {
+      console.error('Error fetching export data:', err);
+      return [];
+    }
+  };
+
   if (!mounted) return null;
 
   // Calculate high-level metrics for Summary Cards
@@ -110,6 +130,7 @@ export default function PurchaseBillingPage() {
           <div className="d-flex align-items-center gap-3">
             <ExportExcel 
               data={purchaseBills} 
+              fetchData={fetchExportData}
               fileName="Purchase_Billing_Report" 
               headers={{
                 receivedDate: 'Received Date',
