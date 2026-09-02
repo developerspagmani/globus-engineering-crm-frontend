@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import StatusModal from '@/components/StatusModal';
 
@@ -12,6 +12,7 @@ interface ExportExcelProps {
   className?: string;
   buttonText?: string;
   variant?: 'primary' | 'success' | 'outline-success' | 'light';
+  fetchData?: () => Promise<any[]>;
 }
 
 const ExportExcel: React.FC<ExportExcelProps> = ({
@@ -21,12 +22,34 @@ const ExportExcel: React.FC<ExportExcelProps> = ({
   sheetName = 'Sheet1',
   className = '',
   buttonText = 'Export to Excel',
-  variant = 'outline-success'
+  variant = 'outline-success',
+  fetchData
 }) => {
   const [modal, setModal] = React.useState({ isOpen: false, title: '', message: '' });
+  const [loading, setLoading] = React.useState(false);
 
-  const exportToExcel = () => {
-    if (!data || data.length === 0) {
+  const exportToExcel = async () => {
+    let exportData = data;
+    
+    if (fetchData) {
+      try {
+        setLoading(true);
+        exportData = await fetchData();
+      } catch (error) {
+        console.error("Failed to fetch data for export:", error);
+        setModal({
+          isOpen: true,
+          title: 'Export Failed',
+          message: 'Failed to fetch the full list of records for export. Please try again.'
+        });
+        setLoading(false);
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (!exportData || exportData.length === 0) {
       setModal({
         isOpen: true,
         title: 'Empty Dataset',
@@ -36,9 +59,9 @@ const ExportExcel: React.FC<ExportExcelProps> = ({
     }
 
     // Transform data if headers mapping is provided
-    let processedData = data;
+    let processedData = exportData;
     if (headers) {
-      processedData = data.map((item) => {
+      processedData = exportData.map((item) => {
         const newItem: any = {};
         Object.keys(headers).forEach((key) => {
           // Handle nested objects if needed (e.g., 'customer.name')
@@ -73,11 +96,16 @@ const ExportExcel: React.FC<ExportExcelProps> = ({
     <>
       <button
         onClick={exportToExcel}
+        disabled={loading}
         className={`btn btn-${variant} btn-page-action ${className}`}
         style={{ border: variant.includes('success') ? '1.5px solid #198754' : undefined }}
       >
-        <i className="bi bi-file-earmark-excel-fill"></i>
-        <span>{buttonText}</span>
+        {loading ? (
+          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        ) : (
+          <i className="bi bi-file-earmark-excel-fill"></i>
+        )}
+        <span>{loading ? 'Exporting...' : buttonText}</span>
       </button>
 
       <StatusModal 

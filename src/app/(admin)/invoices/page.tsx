@@ -17,7 +17,7 @@ export default function InvoiceHistoryPage() {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, aggregates, pagination } = useSelector((state: RootState) => state.invoices);
+  const { items, aggregates, pagination, filters } = useSelector((state: RootState) => state.invoices);
 
   React.useEffect(() => {
     setMounted(true);
@@ -56,8 +56,51 @@ export default function InvoiceHistoryPage() {
           <div className="d-flex align-items-center gap-3">
             <ExportExcel 
               data={filteredInvoices} 
+              fetchData={async () => {
+                const api = (await import('@/lib/axios')).default;
+                const { mapInvoice } = await import('@/redux/features/invoiceSlice');
+                const params = new URLSearchParams({
+                  company_id: activeCompany?.id || '',
+                  limit: '5000',
+                  search: filters.search || '',
+                  status: filters.status || 'all',
+                  fromDate: filters.fromDate || '',
+                  toDate: filters.toDate || '',
+                  partyType: filters.partyType || 'all',
+                  process: filters.process || 'all'
+                });
+                const response = await api.get(`/invoices?${params.toString()}`);
+                return response.data.items.map((raw: any) => {
+                  const inv = mapInvoice(raw);
+                  const qty = inv.items.reduce((acc, it) => acc + (it.quantity || 0) + (it.wopQty || 0), 0);
+                  const sac = (inv.items[0] as any)?.hsnCode || '';
+                  const expectedGrand = inv.subTotal + inv.taxTotal;
+                  const roundOff = inv.grandTotal - expectedGrand;
+                  return {
+                    ...inv,
+                    qty,
+                    sac,
+                    roundOff: Math.abs(roundOff) > 0.01 ? roundOff.toFixed(2) : 0
+                  };
+                });
+              }}
               fileName="Invoice_History" 
-              headers={{ invoiceNumber: 'Invoice No', date: 'Date', customerName: 'Customer', grandTotal: 'Amount', status: 'Status' }}
+              headers={{
+                date: 'Date',
+                customerName: 'Company Name',
+                gstin: 'GST TIN',
+                dcNo: 'D.C No',
+                invoiceNumber: 'Invoice No',
+                sac: 'SAC',
+                qty: 'Qty',
+                subTotal: 'Taxable Amount',
+                gst1: 'CGST',
+                gst2: 'SGST',
+                igst: 'IGST',
+                roundOff: 'Round off',
+                grandTotal: 'Grand Total',
+                status: 'Status'
+              }}
               buttonText="Export List"
             />
             {checkActionPermission(user, 'mod_invoice', 'create') && (

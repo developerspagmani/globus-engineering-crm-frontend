@@ -2,7 +2,7 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Invoice } from '@/types/modules';
 import api from '@/lib/axios';
 
-const mapInvoice = (inv: any): Invoice => {
+export const mapInvoice = (inv: any): Invoice => {
   const cleanStr = (val: any): string => {
     if (val === null || val === undefined) return '';
     const str = String(val).trim();
