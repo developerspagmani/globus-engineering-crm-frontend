@@ -430,11 +430,7 @@ const InwardForm: React.FC<InwardFormProps> = ({ initialData, mode, initialParty
                 <label className="form-label mb-0 align-self-center text-muted col-3">Dc Date</label>
                 <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dcDate" value={formData.dcDate} onChange={handleChange} disabled={mode === 'view'} />
               </div>
-              <div className="col-md-6 d-flex">
-                <label className="form-label mb-0 align-self-center text-muted col-3">Due Date</label>
 
-                <input type="date" className="form-control border-bottom rounded-0 px-2 shadow-none" name="dueDate" value={formData.dueDate} onChange={handleChange} disabled={mode === 'view'} />
-              </div>
               <div className="col-md-6 d-flex">
                 <label className="form-label mb-0 align-self-center text-muted col-3">Vehicle No</label>
                 <input type="text" className="form-control border-bottom rounded-0 px-2 shadow-none" name="vehicleNo" value={formData.vehicleNo} onChange={handleChange} placeholder="Vehicle No" disabled={mode === 'view'} />

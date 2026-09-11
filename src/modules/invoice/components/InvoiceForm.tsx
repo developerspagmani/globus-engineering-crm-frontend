@@ -45,7 +45,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       customerName: '',
       company_id: company?.id || '',
       date: new Date().toISOString().split('T')[0],
-      dueDate: '', // Manual due date entry
+      dueDate: '',
       type: 'INVOICE',
       billType: defaultBillType,
       inwardId: inwardId || undefined,
@@ -185,6 +185,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             taxRate: (Number(initialData.taxRate) === 12 || Number((initialData as any).tax_rate) === 12) ? 18 : (initialData.taxRate || (initialData as any).tax_rate || 18),
             discount: initialData.discount || 0,
             inwardId: initialData.inwardId || (initialData as any).inward_id || undefined,
+            dueDate: initialData.dueDate || (initialData as any).due_date ? new Date(initialData.dueDate || (initialData as any).due_date).toISOString().split('T')[0] : '',
             items: initialData.items || []
          };
          setFormData(mappedData);
@@ -1066,7 +1067,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                    </label>
                                </div>
                            </div>
-                           <div className="row mb-3 d-none d-md-flex" style={{ height: '38px' }}></div>
+                           <div className="row mb-3 align-items-center">
+                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Due Date <span className="text-danger">*</span></label>
+                               <div className="col-sm-9">
+                                  <input
+                                     type="date"
+                                     className="form-control bg-transparent shadow-none px-2 fw-bold"
+                                     name="dueDate"
+                                     value={formData.dueDate || ''}
+                                     onChange={handleInputChange}
+                                     required
+                                     style={{ height: '38px', fontSize: '0.85rem', borderColor: !formData.dueDate ? '#dc3545' : undefined }}
+                                  />
+                                  {!formData.dueDate && <div className="text-danger" style={{fontSize:'11px',marginTop:'2px'}}>Due date is required</div>}
+                               </div>
+                            </div>
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Address</label>
                               <div className="col-sm-9">

@@ -290,6 +290,7 @@ export interface Lead {
   company_id: string;
   assignedArea?: string; // New field for Sprint 2
   notes?: string;
+  next_visit_date?: string;
   createdAt: string;
 }
 

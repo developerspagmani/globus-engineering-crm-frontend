@@ -42,6 +42,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
     company_id: user?.company_id || 'comp_globus',
     notes: '',
     assignedArea: '',
+    next_visit_date: '',
   });
 
   const agentOptions = companyUsers
@@ -74,6 +75,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
         company_id: initialData.company_id,
         notes: initialData.notes || '',
         assignedArea: initialData.assignedArea || '',
+        next_visit_date: initialData.next_visit_date ? new Date(initialData.next_visit_date).toISOString().split('T')[0] : '',
       });
     }
   }, [initialData]);
