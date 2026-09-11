@@ -304,11 +304,18 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       setInwardLoading(true);
       try {
          // First try to filter from already-loaded Redux inwards (supports both customers and vendors)
+         // Exclude 'completed' inwards — they are fully billed and should not appear in the selection dropdown
          const filtered = inwards.filter((inv: any) => {
+            const notCompleted = (inv.status || '').toLowerCase() !== 'completed';
+            let hasBillable = false;
+            (inv.items || []).forEach((it: any) => {
+               const bal = it.vendorWorkBalance ?? it.billingBalance ?? it.remainingQty ?? it.quantity ?? 0;
+               if (Number(bal) > 0) hasBillable = true;
+            });
             if (isVendorParty) {
-               return String(inv.vendorId || inv.vendor_id || '') === String(partyId);
+               return notCompleted && hasBillable && String(inv.vendorId || inv.vendor_id || '') === String(partyId);
             }
-            return String(inv.customerId || inv.customer_id || '') === String(partyId);
+            return notCompleted && hasBillable && String(inv.customerId || inv.customer_id || '') === String(partyId);
          });
 
          if (filtered.length > 0) {
@@ -330,7 +337,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             });
             const data = await res.json();
             const results = Array.isArray(data) ? data : (data?.items || []);
-            setPendingInwards(results);
+            const finalResults = results.filter((inv: any) => {
+               let hasBillable = false;
+               (inv.items || []).forEach((it: any) => {
+                  const bal = it.vendorWorkBalance ?? it.billingBalance ?? it.remainingQty ?? it.quantity ?? 0;
+                  if (Number(bal) > 0) hasBillable = true;
+               });
+               return hasBillable;
+            });
+            setPendingInwards(finalResults);
          }
       } catch (err) {
       } finally {
@@ -1231,6 +1246,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                         value={item.description}
                                         onChange={val => handleItemChange(index, 'description', val)}
                                         placeholder="Select Item"
+                                        disabled={!!formData.inwardId}
                                      />
                                   </td>
                                   <td className="py-3">
@@ -1244,6 +1260,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                         value={String(item.process || '')}
                                         onChange={val => handleItemChange(index, 'process', val)}
                                         placeholder="Select Process"
+                                        disabled={!!formData.inwardId}
                                      />
                                   </td>
                                   <td className="py-3 text-center">

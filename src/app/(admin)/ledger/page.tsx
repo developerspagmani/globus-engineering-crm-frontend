@@ -500,6 +500,23 @@ export default function LedgerPage() {
   };
 
 
+  const fetchExportData = async () => {
+    if (!activeCompany?.id) return [];
+    try {
+      const result = await (dispatch as any)(fetchLedgerEntries({ 
+        companyId: activeCompany.id,
+        page: 1,
+        limit: 1000000,
+        search: filters.search,
+        partyType: filters.partyType
+      })).unwrap();
+      return result.items || [];
+    } catch (err) {
+      console.error('Error fetching export data:', err);
+      return [];
+    }
+  };
+
   return (
     <ModuleGuard moduleId="mod_ledger">
       <div className="container-fluid py-4 min-vh-100 animate-fade-in px-4">
@@ -513,6 +530,7 @@ export default function LedgerPage() {
           <div className="d-flex align-items-center gap-2 hide-print">
             <ExportExcel 
               data={ledgerEntries} 
+              fetchData={fetchExportData}
               fileName="Ledger_Report" 
               headers={{ partyName: 'Party Name', date: 'Date', description: 'Description', debit: 'Debit', credit: 'Credit', balance: 'Balance' }}
               buttonText="Export List"

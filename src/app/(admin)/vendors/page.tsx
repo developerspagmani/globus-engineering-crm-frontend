@@ -7,14 +7,38 @@ import ExportExcel from '@/components/shared/ExportExcel';
 import VendorFilter from '@/modules/vendor/components/VendorFilter';
 import VendorTable from '@/modules/vendor/components/VendorTable';
 import ModuleGuard from '@/components/ModuleGuard';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { checkActionPermission } from '@/config/permissions';
+import { fetchVendors } from '@/redux/features/vendorSlice';
 
 export default function VendorListPage() {
   const [mounted, setMounted] = React.useState(false);
-  const { user } = useSelector((state: RootState) => state.auth);
-  const { items } = useSelector((state: RootState) => state.vendors);
+  const dispatch = useDispatch();
+  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
+  const { items, filters, sorting } = useSelector((state: RootState) => state.vendors);
+
+  const fetchExportData = async () => {
+    if (!activeCompany?.id) return [];
+    try {
+      const result = await (dispatch as any)(fetchVendors({
+        company_id: activeCompany.id,
+        limit: 1000000,
+        page: 1,
+        search: filters.search,
+        status: filters.status,
+        category: filters.category,
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+        sortBy: sorting.sortBy,
+        sortOrder: sorting.sortOrder
+      })).unwrap();
+      return result.items || [];
+    } catch (err) {
+      console.error('Error fetching export data:', err);
+      return [];
+    }
+  };
 
   React.useEffect(() => {
     setMounted(true);
@@ -34,6 +58,7 @@ export default function VendorListPage() {
           <div className="d-flex align-items-center gap-3">
             <ExportExcel 
               data={items} 
+              fetchData={fetchExportData}
               fileName="Vendor_List" 
               headers={{ name: 'Vendor Name', phone: 'Phone', email: 'Email', gst: 'GSTN', city: 'City', status: 'Status' }}
               buttonText="Export List"

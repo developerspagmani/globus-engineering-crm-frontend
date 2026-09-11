@@ -18,6 +18,7 @@ import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
 import html2canvas from 'html2canvas';
 import SortableHeader from '@/components/shared/SortableHeader';
+import api from '@/lib/axios';
 
 
 const VoucherPage = () => {
@@ -116,6 +117,28 @@ const VoucherPage = () => {
     setDeleteModal({ isOpen: true, id });
   };
 
+  const fetchExportData = async () => {
+    if (!activeCompany?.id) return [];
+    
+    let url = `/vouchers?page=1&limit=1000000&company_id=${activeCompany.id}`;
+    if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
+    if (filters.type && filters.type !== 'all') url += `&type=${filters.type}`;
+    if (filters.partyType) url += `&partyType=${filters.partyType}`;
+    if (filters.status && filters.status !== 'all') url += `&status=${filters.status}`;
+    if (filters.fromDate) url += `&fromDate=${filters.fromDate}`;
+    if (filters.toDate) url += `&toDate=${filters.toDate}`;
+    if (sorting.sortBy) url += `&sortBy=${sorting.sortBy}`;
+    if (sorting.sortOrder) url += `&sortOrder=${sorting.sortOrder}`;
+    
+    try {
+      const response = await api.get(url);
+      return response.data.items || [];
+    } catch (err) {
+      console.error('Error fetching export data:', err);
+      return [];
+    }
+  };
+
   const confirmDelete = () => {
     if (deleteModal.id) {
       (dispatch as any)(deleteVoucher(deleteModal.id));
@@ -137,6 +160,7 @@ const VoucherPage = () => {
           <div className="d-flex align-items-center gap-3">
             <ExportExcel 
               data={items} 
+              fetchData={fetchExportData}
               fileName="Voucher_Records" 
               headers={{ voucherNo: 'Voucher No', type: 'Type', partyName: 'Party', amount: 'Amount', date: 'Date', status: 'Status' }}
               buttonText="Export List"
