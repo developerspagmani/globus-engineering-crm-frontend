@@ -69,6 +69,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       taxTotal: 0,
       discount: 0,
       otherCharges: 0,
+      otherChargesDesc: '',
       taxRate: 18,
       grandTotal: 0,
       paidAmount: 0,
@@ -182,6 +183,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             state: (initialData as any).state || '',
             challanNumber: initialData.challanNumber || (initialData as any).delivery_no || (initialData as any).challanNumber || '',
             otherCharges: initialData.otherCharges || (initialData as any).other_charges || 0,
+            otherChargesDesc: initialData.otherChargesDesc || (initialData as any).other_charges_desc || '',
             taxRate: (Number(initialData.taxRate) === 12 || Number((initialData as any).tax_rate) === 12) ? 18 : (initialData.taxRate || (initialData as any).tax_rate || 18),
             discount: initialData.discount || 0,
             inwardId: initialData.inwardId || (initialData as any).inward_id || undefined,
@@ -1363,7 +1365,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                            </div>
 
                            <div className="d-flex align-items-center justify-content-between mb-4 pb-2" style={{ borderBottom: '1px dashed #dee2e6' }}>
-                              <h6 className="text-muted fw-bold small text-uppercase mb-0">(+) Other Charges</h6>
+                              <div className="d-flex align-items-center">
+                                 <h6 className="text-muted fw-bold small text-uppercase mb-0 me-2">(+) Other Charges</h6>
+                                 <input
+                                    type="text"
+                                    className="form-control form-control-sm bg-light text-muted"
+                                    style={{ width: '150px' }}
+                                    placeholder="Description"
+                                    value={formData.otherChargesDesc || ''}
+                                    onChange={e => setFormData((prev: any) => ({ ...prev, otherChargesDesc: e.target.value }))}
+                                 />
+                              </div>
                               <div className="d-flex align-items-center justify-content-center text-dark fw-bold fs-5">
                                  <span className="me-2">₹</span>
                                  <input

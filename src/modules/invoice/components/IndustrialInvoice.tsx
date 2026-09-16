@@ -53,7 +53,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          })).filter(it => it.quantity > 0);
          
          const subTotal = displayItems.reduce((sum, it) => sum + it.amount, 0);
-         const taxableAmount = subTotal - (invoice.discount || 0) + (invoice.otherCharges || 0);
+         const taxableAmount = subTotal - (invoice.discount || 0);
          const taxTotal = taxableAmount * ((invoice.taxRate || 0) / 100);
          displayInvoice = {
             ...invoice,
@@ -115,7 +115,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    const paginate = (items: any[]) => {
       if (!items || items.length === 0) return [[]];
 
-      const PAGE_MAX_HEIGHT = 1050; 
+      const PAGE_MAX_HEIGHT = 950; 
       const FIRST_PAGE_HEADER_HEIGHT = 290; 
       const OTHER_PAGE_HEADER_HEIGHT = 120; 
       const TABLE_HEADER_HEIGHT = 38;
@@ -454,8 +454,9 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 };
 
 const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex, totalPages, totalInWords, startSno, isWOP, copyType, isLastCopyAndPage }: any) => {
-   const calculatedTaxRate = (invoice.subTotal && invoice.subTotal > 0) 
-      ? Math.round(((invoice.taxTotal || 0) / invoice.subTotal) * 100) 
+   const taxableAmountForRate = (invoice.subTotal || 0) - (invoice.discount || 0);
+   const calculatedTaxRate = (taxableAmountForRate > 0) 
+      ? Math.round(((invoice.taxTotal || 0) / taxableAmountForRate) * 100) 
       : (invoice.taxRate || 18);
    
    const taxRate = calculatedTaxRate;
@@ -701,6 +702,14 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       <div style={{ fontSize: '12px', textTransform: 'capitalize', fontWeight: 'bold', fontStyle: 'italic', color: '#000' }}>
                          Indian Rupee {String(totalInWords).toLowerCase().replace(' only', '')} Only
                       </div>
+                      {invoice.otherChargesDesc && (
+                         <div style={{ marginTop: '12px' }}>
+                            <div style={{ marginBottom: '4px', fontSize: '11px', color: '#000', fontWeight: 'bold' }}>Other Charges Description</div>
+                            <div style={{ fontSize: '12px', color: '#000' }}>
+                               {invoice.otherChargesDesc}
+                            </div>
+                         </div>
+                      )}
                    </div>
                    <div className="p-totals-right">
                       {!settings.showDeclaration && (

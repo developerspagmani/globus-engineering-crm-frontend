@@ -70,7 +70,7 @@ export const mapInvoice = (inv: any): Invoice => {
       };
     }),
     subTotal,
-    taxTotal: grandTotal - subTotal,
+    taxTotal: parseFloat(String(inv.tax_total || inv.taxTotal || '0').replace(/[^\d.]/g, '')) || 0,
     discount: parseFloat(String(inv.discount || '0').replace(/[^\d.]/g, '')) || 0,
     type: inv.type || (
       (inv.billType || inv.bill_type) === 'Without Process' || (inv.billType || inv.bill_type) === 'without_process' ? 'WOP' :
@@ -88,6 +88,7 @@ export const mapInvoice = (inv: any): Invoice => {
     state,
     paidAmount: parseFloat(String(inv.paid_amount || inv.paidAmount || '0').replace(/[^\d.]/g, '')) || 0,
     otherCharges: parseFloat(String(inv.other_charges || inv.otherCharges || '0').replace(/[^\d.]/g, '')) || 0,
+    otherChargesDesc: inv.other_charges_desc || inv.otherChargesDesc || '',
     taxRate: parseFloat(String(inv.tax_rate || inv.taxRate || '12').replace(/[^\d.]/g, '')) || 0,
     gst1: inv.gst1,
     gst2: inv.gst2,
@@ -171,6 +172,8 @@ export const createInvoice = createAsyncThunk(
         gstin: (data as any).gstin,
         state: (data as any).state,
         other_charges: data.otherCharges,
+        other_charges_desc: data.otherChargesDesc,
+        tax_total: data.taxTotal,
         tax_rate: data.taxRate
       });
       return mapInvoice(response.data);
@@ -207,6 +210,8 @@ export const updateInvoice = createAsyncThunk(
         gstin: (data as any).gstin,
         state: (data as any).state,
         other_charges: data.otherCharges,
+        other_charges_desc: data.otherChargesDesc,
+        tax_total: data.taxTotal,
         tax_rate: data.taxRate
       });
       return mapInvoice(response.data);

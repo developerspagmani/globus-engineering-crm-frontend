@@ -52,6 +52,7 @@ export interface Invoice {
   state?: string;
   notes?: string;
   otherCharges?: number;
+  otherChargesDesc?: string;
   taxRate?: number;
   gst1?: string;
   gst2?: string;
