@@ -59,6 +59,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       dcDate: '',
       dc_date: '',
       address: '',
+      shippingName: '',
       shippingAddress: '',
       shippingState: '',
       shippingGstin: '',
@@ -247,6 +248,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                customerId: partyId || prev.customerId,
                customerName: inward.customerName || inward.customer_name || inward.vendorName || (inward as any).vendor_name || party?.name || (party as any)?.company || prev.customerName,
                address: inward.address || formattedAddress || prev.address,
+               shippingName: inward.shippingName || inward.shipping_name || prev.shippingName,
                shippingAddress: inward.shippingAddress || inward.shipping_address || (party as any)?.shippingAddress || (party as any)?.shipping_address || prev.shippingAddress,
                shippingState: inward.shippingState || inward.shipping_state || (party as any)?.shippingState || (party as any)?.shipping_state || prev.shippingState,
                shippingGstin: inward.shippingGstin || inward.shipping_gstin || (party as any)?.shippingGstin || (party as any)?.shipping_gstin || prev.shippingGstin,
@@ -439,6 +441,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             [name]: value,
             customerName: entity?.name || (entity as any)?.company || '',
             address: (entity as any)?.address || (entity as any)?.street1 || '',
+            shippingName: (entity as any)?.shippingName || (entity as any)?.shipping_name || '',
             shippingAddress: (entity as any)?.shippingAddress || (entity as any)?.shipping_address || '',
             shippingState: (entity as any)?.shippingState || (entity as any)?.shipping_state || '',
             shippingGstin: (entity as any)?.shippingGstin || (entity as any)?.shipping_gstin || '',
@@ -1050,6 +1053,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                            if (e.target.checked) {
                                                setFormData((prev: any) => ({
                                                    ...prev,
+                                                   shippingName: prev.customerName,
                                                    shippingAddress: prev.address,
                                                    shippingState: prev.state,
                                                    shippingGstin: prev.gstin
@@ -1057,6 +1061,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                            } else {
                                                setFormData((prev: any) => ({
                                                    ...prev,
+                                                   shippingName: '',
                                                    shippingAddress: '',
                                                    shippingState: '',
                                                    shippingGstin: ''
@@ -1084,6 +1089,20 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                   {!formData.dueDate && <div className="text-danger" style={{fontSize:'11px',marginTop:'2px'}}>Due date is required</div>}
                                </div>
                             </div>
+                           <div className="row mb-3 align-items-center">
+                              <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Name</label>
+                              <div className="col-sm-9">
+                                 <input
+                                    type="text"
+                                    className="form-control bg-transparent shadow-none px-2"
+                                    name="shippingName"
+                                    value={formData.shippingName || ''}
+                                    onChange={handleInputChange}
+                                    placeholder="Shipping name..."
+                                    style={{ height: '38px', fontSize: '0.85rem' }}
+                                 />
+                              </div>
+                           </div>
                            <div className="row mb-3 align-items-center">
                               <label className="col-sm-3 text-muted x-small text-uppercase fw-bold p-0">Address</label>
                               <div className="col-sm-9">

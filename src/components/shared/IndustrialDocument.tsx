@@ -483,7 +483,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">SHIPPING DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{type === 'statement' ? `M/s ${partyName}` : partyName}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{type === 'statement' ? `M/s ${data.shippingName || data.shipping_name || partyName}` : (data.shippingName || data.shipping_name || partyName)}</strong></div>
                         <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>

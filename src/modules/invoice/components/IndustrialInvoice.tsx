@@ -608,7 +608,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                 <div className="p-addr-box">
                    <div className="p-addr-title">SHIPPING DETAILS</div>
                    <div className="p-addr-content">
-                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>M/s. {invoice.customerName}</div>
+                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>M/s. {invoice.shippingName || invoice.shipping_name || invoice.customerName}</div>
                       <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{invoice.shippingAddress || invoice.shipping_address || invoice.address || 'N/A'}</div>
                       <div style={{ marginBottom: '4px' }}>GSTIN: {invoice.shippingGstin || invoice.shipping_gstin || invoice.gstin || 'N/A'}</div>
                       <div>State: {invoice.shippingState || invoice.shipping_state || invoice.state || 'N/A'} (Code: {(invoice.shippingState || invoice.shipping_state || invoice.state)?.toLowerCase() === 'telangana' ? '36' : '33'})</div>

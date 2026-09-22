@@ -1,5 +1,0 @@
-content = open('src/components/shared/VendorChallanFormatB.tsx', 'r', encoding='utf-8').read()
-content = content.replace('<div className="cha-dc-row">', '<div className="fmtb-dc-row">')
-content = content.replace('<div className="cha-dc-key" style={{ color: ''#000'' }}>STATUS</div>', '<div className="fmtb-dc-key" style={{ color: ''#000'' }}>STATUS</div>')
-content = content.replace('<div className="cha-dc-val" style={{ fontSize: ''18px'', fontWeight: ''900'', color: ''#000'', letterSpacing: ''1px'' }}>CANCELLED</div>', '<div className="fmtb-dc-val" style={{ fontSize: ''18px'', fontWeight: ''900'', color: ''#000'', letterSpacing: ''1px'' }}>CANCELLED</div>')
-open('src/components/shared/VendorChallanFormatB.tsx', 'w', encoding='utf-8').write(content)

@@ -16,6 +16,7 @@ export interface Invoice {
   customerId: string;
   customerName: string;
   address?: string; 
+  shippingName?: string;
   shippingAddress?: string;
   shippingState?: string;
   shippingGstin?: string;
