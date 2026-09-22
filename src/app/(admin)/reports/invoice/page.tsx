@@ -71,7 +71,13 @@ const InvoiceReportPage = () => {
     let totalTax = 0;
     let totalGrand = 0;
 
-    const data = allInvoices.map((inv: any, idx: number) => {
+    const filteredInvoices = allInvoices.filter((inv: any) => {
+      const grand = parseFloat(inv.grand_total || '0');
+      const sub = parseFloat(inv.total || '0');
+      return grand > 0 || sub > 0;
+    });
+
+    const data = filteredInvoices.map((inv: any, idx: number) => {
       const sub = parseFloat(inv.total || '0');
       const tax = parseFloat(inv.tax_total || '0');
       const grand = parseFloat(inv.grand_total || '0');
@@ -128,7 +134,11 @@ const InvoiceReportPage = () => {
   if (!mounted) return null;
 
   const totalPages = pagination.totalPages;
-  const paginatedItems = invoices;
+  const paginatedItems = invoices.filter((inv: any) => {
+    const grand = parseFloat(String(inv.grandTotal || '0').replace(/[^\d.]/g, ''));
+    const sub = parseFloat(String(inv.subTotal || '0').replace(/[^\d.]/g, ''));
+    return grand > 0 || sub > 0;
+  });
 
   // All monetary totals come from backend aggregates (all pages, all matching records)
   const totals = {

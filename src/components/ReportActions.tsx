@@ -57,7 +57,8 @@ const ReportActions: React.FC<ReportActionsProps> = ({
     if (type === 'week') {
       from.setDate(today.getDate() - 7);
     } else if (type === 'month') {
-      from.setMonth(today.getMonth() - 1);
+      from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      to = new Date(today.getFullYear(), today.getMonth(), 0);
     } else if (type === 'thisMonth') {
       from = new Date(today.getFullYear(), today.getMonth(), 1);
     } else if (type === 'year') {
@@ -302,8 +303,8 @@ const ReportActions: React.FC<ReportActionsProps> = ({
       startY: isIndustrial ? 60 : 55,
       theme: isIndustrial ? 'grid' : 'grid',
       headStyles: { 
-        fillColor: isIndustrial ? [240, 240, 240] : [60, 60, 60], 
-        textColor: isIndustrial ? [0, 0, 0] : [255, 255, 255], 
+        fillColor: isIndustrial ? [240, 240, 240] : [220, 220, 220], 
+        textColor: [0, 0, 0], 
         fontStyle: 'bold', 
         fontSize: 9, 
         halign: 'center',

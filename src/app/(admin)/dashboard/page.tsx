@@ -7,18 +7,23 @@ import Link from 'next/link';
 import { RootState, AppDispatch } from '@/redux/store';
 import { checkActionPermission } from '@/config/permissions';
 import { fetchDashboardStats, fetchAuditLogs } from '@/redux/features/dashboardSlice';
+import { fetchPendingPayments } from '@/redux/features/pendingPaymentSlice';
 
 export default function DashboardPage() {
   const [mounted, setMounted] = React.useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const { company, user } = useSelector((state: RootState) => state.auth);
   const { stats: realStats, logs: auditLogs, loading } = useSelector((state: RootState) => state.dashboard);
+  const { aggregates: pendingAggregates } = useSelector((state: RootState) => state.pendingPayments);
 
   React.useEffect(() => {
     setMounted(true);
     if (company?.id || user?.role === 'super_admin') {
       dispatch(fetchDashboardStats());
       dispatch(fetchAuditLogs());
+      if (company?.id) {
+        dispatch(fetchPendingPayments({ company_id: company.id }));
+      }
     }
   }, [dispatch, company?.id, user?.role]);
   
@@ -35,7 +40,7 @@ export default function DashboardPage() {
     { label: 'System Health', value: '99.9%', change: 'Stable', icon: 'bi-cpu', color: 'warning', href: '/dashboard' },
   ] : [
     { label: 'Total Invoiced', value: `${realStats?.summary.totalInvoiced.toLocaleString() || '0'}`, change: '+0%', icon: 'bi-currency-rupee', color: 'secondary', href: '/invoices?tab=ALL_LIST' },
-    { label: 'Pending Payments', value: `₹${realStats?.summary.pendingAmount.toLocaleString() || '0'}`, change: 'Live', icon: 'bi-clock-history', color: 'warning', href: '/payments/pending' },
+    { label: 'Pending Payments', value: `₹${pendingAggregates?.totalOutstanding?.toLocaleString() || realStats?.summary.pendingAmount.toLocaleString() || '0'}`, change: 'Live', icon: 'bi-clock-history', color: 'warning', href: '/payments/pending' },
     { label: 'Customer Count', value: realStats?.summary.customerCount.toString() || '0', change: 'Active', icon: 'bi-people', color: 'success', href: '/customers' },
     { label: 'Overdue Invoices', value: realStats?.summary.overdueCount.toString() || '0', change: '>30 Days', icon: 'bi-exclamation-triangle', color: 'danger', href: '/payments/pending' },
   ];
