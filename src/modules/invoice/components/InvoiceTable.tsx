@@ -47,7 +47,7 @@ const InvoiceTable: React.FC = () => {
 
   const handleTabChange = (tab: any) => { setActiveTab(tab); const params = new URLSearchParams(searchParams.toString()); params.set('tab', tab); router.push(`${pathname}?${params.toString()}`); };
 
-  const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'invoice' | 'inward', layout?: InvoiceLayoutFormat} | null>(null);
+  const [downloadingItem, setDownloadingItem] = useState<{ item: any, type: 'invoice' | 'inward', layout?: InvoiceLayoutFormat, copies?: string } | null>(null);
   const downloadRef = React.useRef<HTMLDivElement>(null);
   const { settings: invoiceSettings } = useSelector((state: RootState) => state.invoices);
   const [layoutModal, setLayoutModal] = useState<{
@@ -69,15 +69,28 @@ const InvoiceTable: React.FC = () => {
       const captureAndDownload = async () => {
         await new Promise(resolve => setTimeout(resolve, 800));
         if (downloadRef.current) {
-          const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
-          const imgData = canvas.toDataURL('image/png');
+          const pageElements = downloadRef.current.querySelectorAll('.modern-invoice-page, .invoice-page-container');
           const pdf = new jsPDF('p', 'mm', 'a4');
-          const imgProps = pdf.getImageProperties(imgData);
           const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          const fileName = downloadingItem.type === 'invoice' 
-            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}_${(downloadingItem.layout || 'CLASSIC').toUpperCase()}.pdf`
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+
+          if (pageElements && pageElements.length > 0) {
+            for (let i = 0; i < pageElements.length; i++) {
+              const el = pageElements[i] as HTMLElement;
+              const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
+              const imgData = canvas.toDataURL('image/png');
+              if (i > 0) pdf.addPage();
+              pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            }
+          } else {
+            const canvas = await html2canvas(downloadRef.current, { scale: 2, useCORS: true, logging: false });
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          }
+
+          const copySuffix = downloadingItem.copies ? `_${downloadingItem.copies.replace(/,/g, '_')}` : '';
+          const fileName = downloadingItem.type === 'invoice'
+            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}_${(downloadingItem.layout || 'CLASSIC').toUpperCase()}${copySuffix}.pdf`
             : `INWARD_${downloadingItem.item.inwardNo || downloadingItem.item.id}.pdf`;
           pdf.save(fileName);
           setDownloadingItem(null);
@@ -102,13 +115,14 @@ const InvoiceTable: React.FC = () => {
     router.push(`/logistics-print?type=inward&id=${item.id}&print=true`);
   };
 
-  const handleExportPDFRecord = (item: any) => {
+  const handleExportPDFRecord = (item: any, defaultCopies = 'ORIGINAL,DUPLICATE,TRIPLICATE') => {
     const isInvoice = !!item.invoiceNumber;
     if (isInvoice) {
       setLayoutModal({
         isOpen: true,
         item,
-        actionType: 'export'
+        actionType: 'export',
+        defaultCopies
       });
       return;
     }
@@ -121,7 +135,7 @@ const InvoiceTable: React.FC = () => {
   React.useEffect(() => {
     if (activeCompany?.id) {
       if (activeTab === 'ADD_INVOICE') {
-        (dispatch as any)(fetchInwards({ 
+        (dispatch as any)(fetchInwards({
           company_id: activeCompany.id,
           status: 'pending',
           purpose: 'invoice',
@@ -143,7 +157,7 @@ const InvoiceTable: React.FC = () => {
         'BOTH_LIST': 'BOTH',
         'ALL_LIST': 'all'
       };
-      
+
       (dispatch as any)(fetchInvoices({
         company_id: activeCompany.id,
         page: pagination.currentPage,
@@ -164,9 +178,9 @@ const InvoiceTable: React.FC = () => {
   const filteredInwards = inwards.filter(item => {
     const itemCompId = String(item.company_id || (item as any).companyId || '').toLowerCase();
     const activeCompId = String(activeCompany?.id || '').toLowerCase();
-    
+
     if (user?.role !== 'super_admin' && activeCompany && itemCompId !== activeCompId) return false;
-    
+
     // Completed inwards are already finished and must not appear under invoice selection
     if ((item.status || '').toLowerCase() === 'completed') return false;
 
@@ -174,13 +188,13 @@ const InvoiceTable: React.FC = () => {
     // Only show inwards that have at least one item with remaining billing balance
     const hasBillingBalance = item.items && item.items.length > 0
       ? item.items.some((i: any) => {
-          const bal = isVendor 
-            ? (i.vendorWorkBalance ?? i.billingBalance ?? 0)
-            : (i.billingBalance ?? 0);
-          return Number(bal) > 0;
-        })
+        const bal = isVendor
+          ? (i.vendorWorkBalance ?? i.billingBalance ?? 0)
+          : (i.billingBalance ?? 0);
+        return Number(bal) > 0;
+      })
       : Number(item.totalRemaining || 0) > 0;
-    
+
     if (!hasBillingBalance) return false;
 
     const search = String(filters.search || '').toLowerCase();
@@ -201,8 +215,8 @@ const InvoiceTable: React.FC = () => {
   };
 
   const displayItems: any[] = activeTab === 'ADD_INVOICE' ? filteredInwards : invoices;
-  const totalPages = activeTab === 'ADD_INVOICE' 
-    ? Math.ceil(filteredInwards.length / pagination.itemsPerPage) 
+  const totalPages = activeTab === 'ADD_INVOICE'
+    ? Math.ceil(filteredInwards.length / pagination.itemsPerPage)
     : pagination.totalPages;
 
   const paginatedItems = activeTab === 'ADD_INVOICE'
@@ -228,10 +242,10 @@ const InvoiceTable: React.FC = () => {
             className={`btn shadow-none border-0 rounded-3 py-2 px-3 fw-bold small transition-all ${activeTab === tab ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'text-muted'}`}
             onClick={() => handleTabChange(tab)}
           >
-            {tab === 'ADD_INVOICE' ? 'Invoice Selection' : 
-             tab === 'INVOICELIST' ? 'WP List' : 
-             tab === 'WOP_LIST' ? 'WOP List' : 
-             tab === 'BOTH_LIST' ? 'Both List' : 'All Invoices'}
+            {tab === 'ADD_INVOICE' ? 'Invoice Selection' :
+              tab === 'INVOICELIST' ? 'WP List' :
+                tab === 'WOP_LIST' ? 'WOP List' :
+                  tab === 'BOTH_LIST' ? 'Both List' : 'All Invoices'}
           </button>
         ))}
       </div>
@@ -258,148 +272,148 @@ const InvoiceTable: React.FC = () => {
           <tbody>
             {(activeTab === 'ADD_INVOICE' ? inwardLoading : invoiceLoading) ? <tr><td colSpan={6}><Loader text="Loading..." /></td></tr> : (
               paginatedItems.map((item, index) => {
-                const rowUrl = activeTab === 'ADD_INVOICE' 
-                  ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}` 
+                const rowUrl = activeTab === 'ADD_INVOICE'
+                  ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}`
                   : `/invoices/${item.id}`;
                 return (
-                <tr key={`${activeTab}-${item.id}`} className="border-bottom text-uppercase table-row-hover" style={{ cursor: 'pointer' }} onClick={() => router.push(rowUrl)}>
-                  <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
-                  <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
-                  <td className="text-muted small">
-                    {activeTab === 'ADD_INVOICE' ? (item.dcNo || item.dc_no || '-') : (activeTab === 'WOP_LIST' ? (item.challanNumber || '-') : (
-                      <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>
-                        {(item.billType === 'Without Process' || item.billType === 'without_process') ? (item.challanNumber || item.dc_no || '-') : item.invoiceNumber}
-                      </Link>
-                    ))}
-                  </td>
-                  <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
-                  {activeTab !== 'WOP_LIST' && (
-                    <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small text-end"}>
-                      {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : ((item.billType === 'Without Process' || item.billType === 'without_process') ? '-' : `₹${item.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`)}
+                  <tr key={`${activeTab}-${item.id}`} className="border-bottom text-uppercase table-row-hover" style={{ cursor: 'pointer' }} onClick={() => router.push(rowUrl)}>
+                    <td className="px-4 text-muted small">{(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}</td>
+                    <td><div className="fw-bold text-dark small">{activeTab === 'ADD_INVOICE' ? (item.customerName || item.vendorName) : item.customerName}</div></td>
+                    <td className="text-muted small">
+                      {activeTab === 'ADD_INVOICE' ? (item.dcNo || item.dc_no || '-') : (activeTab === 'WOP_LIST' ? (item.challanNumber || '-') : (
+                        <Link href={`/invoices/${item.id}`} className="text-dark fw-bold text-decoration-none hover-underline" onClick={(e) => e.stopPropagation()}>
+                          {(item.billType === 'Without Process' || item.billType === 'without_process') ? (item.challanNumber || item.dc_no || '-') : item.invoiceNumber}
+                        </Link>
+                      ))}
                     </td>
-                  )}
-                  <td className="text-center pe-4">
-                    <div className="d-flex justify-content-center gap-1 align-items-center">
-                      {activeTab === 'ADD_INVOICE' && (
+                    <td className="text-muted small">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
+                    {activeTab !== 'WOP_LIST' && (
+                      <td className={activeTab === 'ADD_INVOICE' ? "text-muted small" : "text-dark fw-bold small text-end"}>
+                        {activeTab === 'ADD_INVOICE' ? (item.poReference || '-') : ((item.billType === 'Without Process' || item.billType === 'without_process') ? '-' : `₹${item.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`)}
+                      </td>
+                    )}
+                    <td className="text-center pe-4">
+                      <div className="d-flex justify-content-center gap-1 align-items-center">
+                        {activeTab === 'ADD_INVOICE' && (
+                          <Link
+                            href={`/inward/${item.id}`}
+                            className="btn-action-view mx-1"
+                            title="View Inward"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </Link>
+                        )}
                         <Link
-                          href={`/inward/${item.id}`}
-                          className="btn-action-view mx-1"
-                          title="View Inward"
+                          href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}` : `/invoices/${item.id}`}
+                          className="btn-action-view"
+                          title={activeTab === 'ADD_INVOICE' ? "Create Invoice" : "View Invoice"}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <i className="bi bi-eye-fill"></i>
+                          <i className={activeTab === 'ADD_INVOICE' ? "bi bi-plus-lg" : "bi bi-eye-fill"}></i>
                         </Link>
-                      )}
-                      <Link
-                        href={activeTab === 'ADD_INVOICE' ? `/invoices/new?inwardId=${item.id}&tab=${activeTab}` : `/invoices/${item.id}`}
-                        className="btn-action-view"
-                        title={activeTab === 'ADD_INVOICE' ? "Create Invoice" : "View Invoice"}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <i className={activeTab === 'ADD_INVOICE' ? "bi bi-plus-lg" : "bi bi-eye-fill"}></i>
-                      </Link>
 
-                      {activeTab !== 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'edit') && (
-                        <Link
-                          href={`/invoices/${item.id}/edit`}
-                          className="btn-action-edit mx-1"
-                          title="Edit Invoice"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <i className="bi bi-pencil-fill"></i>
-                        </Link>
-                      )}
+                        {activeTab !== 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'edit') && (
+                          <Link
+                            href={`/invoices/${item.id}/edit`}
+                            className="btn-action-edit mx-1"
+                            title="Edit Invoice"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <i className="bi bi-pencil-fill"></i>
+                          </Link>
+                        )}
 
-                      <div className="dropdown">
-                        <button
-                          className="btn btn-sm btn-outline-secondary border-0 text-muted p-0"
-                          data-bs-toggle="dropdown"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ width: '32px', height: '32px' }}
-                        >
-                          <i className="bi bi-three-dots-vertical fs-5"></i>
-                        </button>
-                        <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
-                          {!!item.invoiceNumber && activeTab !== 'WOP_LIST' && item.type !== 'WOP' && item.billType !== 'Without Process' && item.billType !== 'without_process' ? (
-                             <>
+                        <div className="dropdown">
+                          <button
+                            className="btn btn-sm btn-outline-secondary border-0 text-muted p-0"
+                            data-bs-toggle="dropdown"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ width: '32px', height: '32px' }}
+                          >
+                            <i className="bi bi-three-dots-vertical fs-5"></i>
+                          </button>
+                          <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
+                            {!!item.invoiceNumber && activeTab !== 'WOP_LIST' && item.type !== 'WOP' && item.billType !== 'Without Process' && item.billType !== 'without_process' ? (
+                              <>
                                 <li><h6 className="dropdown-header text-uppercase" style={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8' }}>Print Copies</h6></li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE,TRIPLICATE'); }}>
-                                      <i className="bi bi-printer-fill text-primary"></i> Print All Copies (3)
-                                   </button>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE,TRIPLICATE'); }}>
+                                    <i className="bi bi-printer-fill text-primary"></i> Print All Copies (3)
+                                  </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL'); }}>
-                                      <i className="bi bi-printer"></i> Print Original Only
-                                   </button>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL'); }}>
+                                    <i className="bi bi-printer"></i> Print Original Only
+                                  </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'DUPLICATE'); }}>
-                                      <i className="bi bi-printer"></i> Print Duplicate Only
-                                   </button>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'DUPLICATE'); }}>
+                                    <i className="bi bi-printer"></i> Print Duplicate Only
+                                  </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'TRIPLICATE'); }}>
-                                      <i className="bi bi-printer"></i> Print Triplicate Only
-                                   </button>
+                                  <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'TRIPLICATE'); }}>
+                                    <i className="bi bi-printer"></i> Print Triplicate Only
+                                  </button>
                                 </li>
                                 <li><hr className="dropdown-divider opacity-50" /></li>
-                             </>
-                          ) : (
-                             <li>
+                              </>
+                            ) : (
+                              <li>
                                 <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item); }}>
-                                   <i className="bi bi-printer text-primary"></i> Quick Print
+                                  <i className="bi bi-printer text-primary"></i> Quick Print
                                 </button>
-                             </li>
-                          )}
-                          <li>
-                            <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handleExportPDFRecord(item); }}>
-                              <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
-                            </button>
-                          </li>
-                          {!!item.invoiceNumber && activeTab !== 'ADD_INVOICE' && (
+                              </li>
+                            )}
                             <li>
-                              <button 
-                                className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  setReminderModalInvoice(item); 
-                                }}
-                              >
-                                <i className="bi bi-bell-fill text-warning"></i> Send Email Reminder
+                              <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handleExportPDFRecord(item); }}>
+                                <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
                               </button>
                             </li>
-                          )}
-                          {item.type === 'BOTH' && (
-                            <>
+                            {!!item.invoiceNumber && activeTab !== 'ADD_INVOICE' && (
                               <li>
                                 <button
-                                  className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-primary"
-                                  onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE,TRIPLICATE', 'WP'); }}
+                                  className="dropdown-item d-flex align-items-center gap-2 py-2 small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReminderModalInvoice(item);
+                                  }}
                                 >
-                                  <i className="bi bi-printer-fill"></i> WP Print
+                                  <i className="bi bi-bell-fill text-warning"></i> Send Email Reminder
                                 </button>
                               </li>
-                              <li>
-                                <button
-                                  className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-danger"
-                                  onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE', 'WOP'); }}
-                                >
-                                  <i className="bi bi-printer-fill"></i> WOP Print
-                                </button>
-                              </li>
-                            </>
-                          )}
-                          {activeTab !== 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'delete') && (
-                            <>
-                              <li><hr className="dropdown-divider opacity-50" /></li>
-                              <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={(e) => { e.stopPropagation(); handleDeleteParams(item.id, 'invoice'); }}><i className="bi bi-trash3"></i> Remove Record</button></li>
-                            </>
-                          )}
-                        </ul>
+                            )}
+                            {item.type === 'BOTH' && (
+                              <>
+                                <li>
+                                  <button
+                                    className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-primary"
+                                    onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE,TRIPLICATE', 'WP'); }}
+                                  >
+                                    <i className="bi bi-printer-fill"></i> WP Print
+                                  </button>
+                                </li>
+                                <li>
+                                  <button
+                                    className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-danger"
+                                    onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE', 'WOP'); }}
+                                  >
+                                    <i className="bi bi-printer-fill"></i> WOP Print
+                                  </button>
+                                </li>
+                              </>
+                            )}
+                            {activeTab !== 'ADD_INVOICE' && checkActionPermission(user, 'mod_invoice', 'delete') && (
+                              <>
+                                <li><hr className="dropdown-divider opacity-50" /></li>
+                                <li><button className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger fw-bold small" onClick={(e) => { e.stopPropagation(); handleDeleteParams(item.id, 'invoice'); }}><i className="bi bi-trash3"></i> Remove Record</button></li>
+                              </>
+                            )}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
                   </tr>
                 );
               })
@@ -433,19 +447,21 @@ const InvoiceTable: React.FC = () => {
                   invoice={downloadingItem.item}
                   company={activeCompany}
                   settings={invoiceSettings}
+                  copyType={downloadingItem.copies}
                 />
               ) : (
-                <IndustrialInvoice 
-                  invoice={downloadingItem.item} 
-                  company={activeCompany} 
-                  settings={invoiceSettings} 
+                <IndustrialInvoice
+                  invoice={downloadingItem.item}
+                  company={activeCompany}
+                  settings={invoiceSettings}
+                  copiesProp={downloadingItem.copies}
                 />
               )
             ) : (
-              <IndustrialDocument 
-                data={downloadingItem.item} 
-                type="inward" 
-                company={activeCompany!} 
+              <IndustrialDocument
+                data={downloadingItem.item}
+                type="inward"
+                company={activeCompany!}
               />
             )}
           </div>
@@ -480,7 +496,8 @@ const InvoiceTable: React.FC = () => {
             setDownloadingItem({
               item,
               type: 'invoice',
-              layout: chosenLayout
+              layout: chosenLayout,
+              copies: chosenCopies || 'ORIGINAL,DUPLICATE,TRIPLICATE'
             });
           }
         }}

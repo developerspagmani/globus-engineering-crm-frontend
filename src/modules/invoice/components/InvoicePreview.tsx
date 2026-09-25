@@ -39,10 +39,18 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     actionType: 'print'
   });
 
+  const [currentCopies, setCurrentCopies] = React.useState<string>(
+    searchParams.get('copies') || 'ORIGINAL,DUPLICATE,TRIPLICATE'
+  );
+
   React.useEffect(() => {
     const paramLayout = searchParams.get('layout') || searchParams.get('format');
     if (paramLayout === 'modern' || paramLayout === 'classic') {
       setLayout(paramLayout);
+    }
+    const paramCopies = searchParams.get('copies');
+    if (paramCopies) {
+      setCurrentCopies(paramCopies);
     }
   }, [searchParams]);
 
@@ -50,20 +58,38 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     window.print();
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (copiesToUse?: string) => {
     if (!invoiceRef.current) return;
-    const canvas = await html2canvas(invoiceRef.current, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-    });
-    const imgData = canvas.toDataURL('image/png');
+    const pageElements = invoiceRef.current.querySelectorAll('.modern-invoice-page, .invoice-page-container');
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`INVOICE_${invoice.invoiceNumber || invoice.id}_${layout.toUpperCase()}.pdf`);
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    if (pageElements && pageElements.length > 0) {
+      for (let i = 0; i < pageElements.length; i++) {
+        const el = pageElements[i] as HTMLElement;
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        });
+        const imgData = canvas.toDataURL('image/png');
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      }
+    } else {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    }
+
+    const activeCopies = copiesToUse || currentCopies;
+    const copySuffix = activeCopies ? `_${activeCopies.replace(/,/g, '_')}` : '';
+    pdf.save(`INVOICE_${invoice.invoiceNumber || invoice.id}_${layout.toUpperCase()}${copySuffix}.pdf`);
   };
 
   React.useEffect(() => {
@@ -215,7 +241,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               company={company}
               settings={settings}
               typeParam={searchParams.get('type')}
-              copyType={searchParams.get('copies') || undefined}
+              copyType={currentCopies}
             />
           ) : (
             <IndustrialInvoice
@@ -223,6 +249,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               company={company}
               settings={settings}
               typeParam={searchParams.get('type')}
+              copiesProp={currentCopies}
             />
           )}
         </div>
@@ -233,10 +260,11 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
         isOpen={layoutModal.isOpen}
         actionType={layoutModal.actionType}
         invoiceNumber={invoice.invoiceNumber}
-        defaultCopies={searchParams.get('copies') || 'ORIGINAL,DUPLICATE,TRIPLICATE'}
+        defaultCopies={currentCopies}
         onClose={() => setLayoutModal({ isOpen: false, actionType: 'print' })}
         onConfirm={(chosenLayout, chosenCopies) => {
           setLayout(chosenLayout);
+          if (chosenCopies) setCurrentCopies(chosenCopies);
           const currentAction = layoutModal.actionType;
           setLayoutModal({ isOpen: false, actionType: 'print' });
           if (currentAction === 'print') {
@@ -245,8 +273,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
             }, 300);
           } else {
             setTimeout(() => {
-              handleDownload();
-            }, 300);
+              handleDownload(chosenCopies);
+            }, 400);
           }
         }}
       />

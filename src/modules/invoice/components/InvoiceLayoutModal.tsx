@@ -24,6 +24,12 @@ export const InvoiceLayoutModal: React.FC<InvoiceLayoutModalProps> = ({
   const [selectedLayout, setSelectedLayout] = useState<InvoiceLayoutFormat>('modern');
   const [selectedCopies, setSelectedCopies] = useState<string>(defaultCopies);
 
+  React.useEffect(() => {
+    if (defaultCopies) {
+      setSelectedCopies(defaultCopies);
+    }
+  }, [defaultCopies, isOpen]);
+
   if (!isOpen) return null;
 
   const handleAction = () => {
@@ -126,35 +132,33 @@ export const InvoiceLayoutModal: React.FC<InvoiceLayoutModalProps> = ({
             </div>
           </div>
 
-          {/* Copies Selector (Only when action is print) */}
-          {actionType === 'print' && (
-            <div className="copies-section bg-light p-3 rounded-3 border mb-3">
-              <label className="form-label fw-bold small text-muted mb-2">
-                <i className="bi bi-copy me-1"></i> Print Copies:
-              </label>
-              <div className="d-flex flex-wrap gap-2">
-                {[
-                  { label: 'All Copies (3)', val: 'ORIGINAL,DUPLICATE,TRIPLICATE' },
-                  { label: 'Original Only', val: 'ORIGINAL' },
-                  { label: 'Duplicate Only', val: 'DUPLICATE' },
-                  { label: 'Triplicate Only', val: 'TRIPLICATE' }
-                ].map((c) => (
-                  <button
-                    key={c.val}
-                    type="button"
-                    className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold transition-all ${
-                      selectedCopies === c.val
-                        ? 'btn-dark shadow-sm'
-                        : 'btn-outline-secondary bg-white'
-                    }`}
-                    onClick={() => setSelectedCopies(c.val)}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
+          {/* Copies Selector (Available for both Print and Export PDF) */}
+          <div className="copies-section bg-light p-3 rounded-3 border mb-3">
+            <label className="form-label fw-bold small text-muted mb-2">
+              <i className="bi bi-copy me-1"></i> {actionType === 'print' ? 'Print Copies:' : 'Select Copies for PDF:'}
+            </label>
+            <div className="d-flex flex-wrap gap-2">
+              {[
+                { label: 'All Copies (3)', val: 'ORIGINAL,DUPLICATE,TRIPLICATE' },
+                { label: 'Original Only', val: 'ORIGINAL' },
+                { label: 'Duplicate Only', val: 'DUPLICATE' },
+                { label: 'Triplicate Only', val: 'TRIPLICATE' }
+              ].map((c) => (
+                <button
+                  key={c.val}
+                  type="button"
+                  className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold transition-all ${
+                    selectedCopies === c.val
+                      ? 'btn-dark shadow-sm'
+                      : 'btn-outline-secondary bg-white'
+                  }`}
+                  onClick={() => setSelectedCopies(c.val)}
+                >
+                  {c.label}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Footer Actions */}

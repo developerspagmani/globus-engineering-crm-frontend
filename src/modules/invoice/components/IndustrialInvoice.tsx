@@ -14,6 +14,7 @@ interface IndustrialInvoiceProps {
    invoice: Invoice;
    company?: Company | null;
    typeParam?: string | null;
+   copiesProp?: string;
    settings: {
       showLogo: boolean;
       logo: string | null;
@@ -37,7 +38,7 @@ interface IndustrialInvoiceProps {
    };
 }
 
-const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company, settings, typeParam }) => {
+const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company, settings, typeParam, copiesProp }) => {
    
    let displayItems = [...invoice.items];
    let displayInvoice = { ...invoice };
@@ -176,16 +177,17 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
 
    const isPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
    const urlCopies = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('copies');
+   const effectiveCopies = copiesProp || urlCopies;
    
    let copyTypes = [''];
-   if (isPrint && !isWOP) {
-      if (urlCopies) {
-         copyTypes = urlCopies.split(',');
-      } else {
+   if (!isWOP) {
+      if (effectiveCopies) {
+         copyTypes = effectiveCopies.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (isPrint) {
          copyTypes = ['ORIGINAL', 'DUPLICATE', 'TRIPLICATE'];
+      } else {
+         copyTypes = ['ORIGINAL'];
       }
-   } else if (!isPrint && !isWOP) {
-      copyTypes = ['ORIGINAL'];
    }
 
    const pagesData = paginate(displayItems);

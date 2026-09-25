@@ -149,15 +149,32 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
   // Empty rows to preserve table layout height
   const minRows = Math.max(0, 7 - displayItems.length);
 
+  // Copies handling (e.g. 'ORIGINAL,DUPLICATE,TRIPLICATE' or 'ORIGINAL')
+  const urlCopies = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('copies') : null;
+  const isPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
+  const effectiveCopies = copyType || urlCopies;
+
+  let copyList: string[] = [''];
+  if (!isWOP) {
+    if (effectiveCopies) {
+      copyList = effectiveCopies.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (isPrint) {
+      copyList = ['ORIGINAL', 'DUPLICATE', 'TRIPLICATE'];
+    } else {
+      copyList = ['ORIGINAL'];
+    }
+  }
+
   return (
     <div className="modern-invoice-container">
-      <div className="modern-invoice-page">
-        {/* Copy Type Header (ORIGINAL / DUPLICATE / TRIPLICATE) */}
-        {copyType && (
-          <div className="copy-badge-header">
-            <span>{copyType} COPY</span>
-          </div>
-        )}
+      {copyList.map((currentCopy, copyIdx) => (
+        <div key={`modern-page-copy-${copyIdx}-${currentCopy}`} className="modern-invoice-page">
+          {/* Copy Type Header (ORIGINAL / DUPLICATE / TRIPLICATE) */}
+          {currentCopy && (
+            <div className="copy-badge-header">
+              <span>{currentCopy} COPY</span>
+            </div>
+          )}
 
         {/* 1. TOP HEADER SECTION */}
         <div className="modern-header">
@@ -548,6 +565,7 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
           )}
         </div>
       </div>
+    ))}
 
       {/* STYLES */}
       <style jsx>{`
@@ -555,7 +573,9 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
           background: #f8fafc;
           padding: 20px 0;
           display: flex;
-          justify-content: center;
+          flex-direction: column;
+          align-items: center;
+          gap: 24px;
           width: 100%;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
           color: #0f172a;
@@ -571,6 +591,13 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
           display: flex;
           flex-direction: column;
           position: relative;
+          page-break-after: always;
+          break-after: page;
+        }
+
+        .modern-invoice-page:last-child {
+          page-break-after: avoid;
+          break-after: avoid;
         }
 
         .copy-badge-header {
@@ -1016,14 +1043,19 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
 
           .modern-invoice-page {
             width: 210mm !important;
-            height: 297mm !important;
-            max-height: 297mm !important;
+            min-height: 297mm !important;
             margin: 0 auto !important;
             padding: 10mm 15mm 10mm 15mm !important;
             box-shadow: none !important;
             border: none !important;
-            page-break-after: avoid !important;
+            page-break-after: always !important;
+            break-after: page !important;
             page-break-inside: avoid !important;
+          }
+
+          .modern-invoice-page:last-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
           }
 
           .nexus-items-table thead th {
