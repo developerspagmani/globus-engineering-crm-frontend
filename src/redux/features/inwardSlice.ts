@@ -11,6 +11,7 @@ export const fetchInwards = createAsyncThunk(
     limit?: number; 
     search?: string; 
     status?: string;
+    purpose?: string;
     fromDate?: string;
     toDate?: string;
     id?: string;
@@ -19,11 +20,12 @@ export const fetchInwards = createAsyncThunk(
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, id, partyType, sortBy, sortOrder } = params;
+      const { company_id, page = 1, limit = 10, search, status, purpose, fromDate, toDate, id, partyType, sortBy, sortOrder } = params;
       let url = `/inward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
+      if (purpose) url += `&purpose=${purpose}`;
       if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
@@ -56,7 +58,10 @@ export const fetchInwards = createAsyncThunk(
         items: (c.items || []).map((it: any) => ({
           ...it,
           itemName: it.item_name || it.itemName || it.description,
-          remainingQty: it.remaining_qty ?? it.remainingQty ?? it.quantity
+          remainingQty: it.remaining_qty ?? it.remainingQty ?? it.quantity,
+          billingBalance: it.billingBalance !== undefined ? Number(it.billingBalance) : (it.billing_balance !== undefined ? Number(it.billing_balance) : undefined),
+          vendorWorkBalance: it.vendorWorkBalance !== undefined ? Number(it.vendorWorkBalance) : undefined,
+          dispatchBalance: it.dispatchBalance !== undefined ? Number(it.dispatchBalance) : undefined
         })),
         totalRemaining: c.totalRemaining ?? c.total_remaining,
         createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
@@ -103,7 +108,10 @@ export const fetchInwardById = createAsyncThunk(
         items: (c.items || []).map((it: any) => ({
           ...it,
           itemName: it.item_name || it.itemName || it.description,
-          remainingQty: it.remaining_qty ?? it.remainingQty ?? it.quantity
+          remainingQty: it.remaining_qty ?? it.remainingQty ?? it.quantity,
+          billingBalance: it.billingBalance !== undefined ? Number(it.billingBalance) : (it.billing_balance !== undefined ? Number(it.billing_balance) : undefined),
+          vendorWorkBalance: it.vendorWorkBalance !== undefined ? Number(it.vendorWorkBalance) : undefined,
+          dispatchBalance: it.dispatchBalance !== undefined ? Number(it.dispatchBalance) : undefined
         })),
         createdAt: c.app_created_at || c.created_at || c.createdAt || new Date().toISOString()
       };
@@ -353,7 +361,7 @@ const inwardSlice = createSlice({
       })
       .addCase(fetchInwardById.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.items.findIndex(i => i.id === action.payload.id);
+        const index = state.items.findIndex(i => String(i.id) === String(action.payload.id));
         if (index !== -1) {
           state.items[index] = action.payload;
         } else {

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import PaginationComponent from '@/components/shared/Pagination';
 import PartyTypeToggle from '@/components/shared/PartyTypeToggle';
+import InvoiceLayoutModal, { InvoiceLayoutFormat } from './InvoiceLayoutModal';
 
 const InvoiceStatus = () => {
   const router = useRouter();
@@ -17,6 +18,17 @@ const InvoiceStatus = () => {
   const [activeTab, setActiveTab] = React.useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>('all');
   const [searchTerm, setSearchTerm] = React.useState('');
   const [partyType, setPartyType] = React.useState<'customer' | 'vendor'>('customer');
+  const [layoutModal, setLayoutModal] = React.useState<{
+    isOpen: boolean;
+    item: any | null;
+    defaultCopies?: string;
+    typeParam?: string;
+  }>({
+    isOpen: false,
+    item: null,
+    defaultCopies: 'ORIGINAL,DUPLICATE,TRIPLICATE',
+    typeParam: undefined
+  });
 
   React.useEffect(() => {
     if (activeCompany?.id) {
@@ -264,22 +276,22 @@ const InvoiceStatus = () => {
                              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2">
                                 <li><h6 className="dropdown-header text-uppercase" style={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8' }}>Print Copies</h6></li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${inv.id}?print=true&copies=ORIGINAL,DUPLICATE,TRIPLICATE`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); setLayoutModal({ isOpen: true, item: inv, defaultCopies: 'ORIGINAL,DUPLICATE,TRIPLICATE' }); }}>
                                       <i className="bi bi-printer-fill text-primary"></i> Print All Copies (3)
                                    </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${inv.id}?print=true&copies=ORIGINAL`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); setLayoutModal({ isOpen: true, item: inv, defaultCopies: 'ORIGINAL' }); }}>
                                       <i className="bi bi-printer"></i> Print Original Only
                                    </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${inv.id}?print=true&copies=DUPLICATE`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); setLayoutModal({ isOpen: true, item: inv, defaultCopies: 'DUPLICATE' }); }}>
                                       <i className="bi bi-printer"></i> Print Duplicate Only
                                    </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${inv.id}?print=true&copies=TRIPLICATE`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); setLayoutModal({ isOpen: true, item: inv, defaultCopies: 'TRIPLICATE' }); }}>
                                       <i className="bi bi-printer"></i> Print Triplicate Only
                                    </button>
                                 </li>
@@ -288,7 +300,7 @@ const InvoiceStatus = () => {
                                   <li>
                                     <button 
                                       className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
-                                      onClick={() => router.push(`/invoices/${inv.id}?print=true&type=WP&copies=ORIGINAL,DUPLICATE,TRIPLICATE`)}
+                                      onClick={() => setLayoutModal({ isOpen: true, item: inv, defaultCopies: 'ORIGINAL,DUPLICATE,TRIPLICATE', typeParam: 'WP' })}
                                     >
                                       <i className="bi bi-printer text-primary"></i> WP Print All
                                     </button>
@@ -298,7 +310,7 @@ const InvoiceStatus = () => {
                                   <li>
                                     <button 
                                       className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
-                                      onClick={() => router.push(`/invoices/${inv.id}?print=true&type=WOP&copies=ORIGINAL,DUPLICATE`)}
+                                      onClick={() => setLayoutModal({ isOpen: true, item: inv, defaultCopies: 'ORIGINAL,DUPLICATE', typeParam: 'WOP' })}
                                     >
                                       <i className="bi bi-file-earmark-text text-danger"></i> WOP Print
                                     </button>
@@ -330,6 +342,30 @@ const InvoiceStatus = () => {
           />
         </div>
       )}
+
+      {/* Invoice Layout Choice Modal */}
+      <InvoiceLayoutModal
+        isOpen={layoutModal.isOpen}
+        actionType="print"
+        invoiceNumber={layoutModal.item?.invoiceNumber}
+        defaultCopies={layoutModal.defaultCopies}
+        onClose={() => setLayoutModal({ isOpen: false, item: null })}
+        onConfirm={(chosenLayout, chosenCopies) => {
+          const item = layoutModal.item;
+          const typeParam = layoutModal.typeParam;
+          setLayoutModal({ isOpen: false, item: null });
+
+          if (!item) return;
+
+          const queryParams = new URLSearchParams();
+          queryParams.set('print', 'true');
+          queryParams.set('layout', chosenLayout);
+          if (chosenCopies) queryParams.set('copies', chosenCopies);
+          if (typeParam) queryParams.set('type', typeParam);
+
+          router.push(`/invoices/${item.id}?${queryParams.toString()}`);
+        }}
+      />
 
       <style jsx>{`
         .hover-bg-light:hover {

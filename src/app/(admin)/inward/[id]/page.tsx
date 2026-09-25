@@ -7,7 +7,7 @@ import { RootState } from '@/redux/store';
 import InwardForm from '@/modules/inward/components/InwardForm';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
-import { fetchInwards, cancelInward } from '@/redux/features/inwardSlice';
+import { fetchInwards, fetchInwardById, cancelInward } from '@/redux/features/inwardSlice';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import Link from 'next/link';
 import PageModeIndicator from '@/components/PageModeIndicator';
@@ -41,15 +41,12 @@ export default function InwardDetailPage() {
 
   React.useEffect(() => {
     setMounted(true);
-    if (items.length === 0 && activeCompany?.id) {
-      dispatch(fetchInwards({ 
-        company_id: activeCompany.id,
-        id: id as string 
-      }) as any);
+    if (!inward && id) {
+      dispatch(fetchInwardById(String(id)) as any);
     }
-  }, [dispatch, activeCompany?.id, items.length, id]);
+  }, [dispatch, inward, id]);
 
-  if (!mounted || loading || (items.length === 0 && !inward)) {
+  if (!mounted || loading || (!inward && items.length === 0)) {
     return (
       <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
         <Loader text="Loading inward details..." />

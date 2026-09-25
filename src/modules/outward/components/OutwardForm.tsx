@@ -14,6 +14,7 @@ import StatusModal from '@/components/StatusModal';
 import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
 import PageModeIndicator from '@/components/PageModeIndicator';
+import api from '@/lib/axios';
 
 
 interface OutwardFormProps {
@@ -149,13 +150,13 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
         inwardNo: ''
       }));
     } else if (name === 'inwardId') {
-      const selectedInward = inwards.find(i => String(i.id) === String(value));
-      if (selectedInward) {
+      const applyInwardItems = (inw: any) => {
+        const inwItems = inw.items || [];
         setFormData(prev => ({
           ...prev,
-          inwardId: value,
-          inwardNo: selectedInward.inwardNo,
-          items: selectedInward.items.filter((i: any) => {
+          inwardId: String(inw.id || value),
+          inwardNo: inw.inwardNo || inw.inward_no,
+          items: inwItems.filter((i: any) => {
             if (prev.partyType === 'vendor') {
               return (i.vendorWorkBalance || 0) > 0;
             } else {
@@ -170,6 +171,17 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
             unit: i.unit || 'pcs'
           }))
         }));
+      };
+
+      const selectedInward = inwards.find(i => String(i.id) === String(value));
+      if (selectedInward) {
+        applyInwardItems(selectedInward);
+      } else if (value) {
+        api.get(`/inward/${value}`)
+          .then((res: any) => {
+            if (res.data) applyInwardItems(res.data);
+          })
+          .catch((err: any) => console.error('Failed to fetch inward for outward', err));
       } else {
         setFormData(prev => ({ ...prev, inwardId: '', inwardNo: '' }));
       }

@@ -8,7 +8,7 @@ import { logout, setCompanyContext } from '@/redux/features/authSlice';
 import { useRouter } from 'next/navigation';
 import IndiaMap from '@/components/IndiaMap';
 import CustomerTable from '@/components/CustomerTable';
-import { isDistrictMatch, isRegionMatch } from '@/utils/geo_utils';
+import { canonicalState, cleanDistrict, getDistrict, getCustomerState, isDistrictMatch, isRegionMatch, formatINR } from '@/utils/geo_utils';
 import { Company } from '@/types/modules';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchCompanies } from '@/redux/features/companySlice';
@@ -21,15 +21,18 @@ const SalesMapPage = () => {
     const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
     const { items: companies } = useSelector((state: RootState) => state.companies);
     const customers = useSelector((state: RootState) => state.customers.items);
+    const invoices = useSelector((state: RootState) => state.invoices.items);
 
     useEffect(() => {
         (dispatch as any)(fetchCustomers({ company_id: activeCompany?.id, limit: 5000 }));
         (dispatch as any)(fetchCompanies());
-        if (activeCompany?.id) {
-            (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 5000 }));
-        }
+        (dispatch as any)(fetchInvoices({ company_id: activeCompany?.id, limit: 5000 }));
     }, [dispatch, activeCompany?.id]);
-    const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+
+    const [selectedState, setSelectedState] = useState<string | null>(null);
+    const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
     const [viewMode, setViewMode] = useState<'states' | 'districts'>('states');
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -40,10 +43,9 @@ const SalesMapPage = () => {
     // Initial page load delay for a smooth reveal
     useEffect(() => {
         setHasMounted(true);
-        const timer = setTimeout(() => setIsPageLoading(false), 1200);
+        const timer = setTimeout(() => setIsPageLoading(false), 1000);
         return () => clearTimeout(timer);
     }, []);
-    const [timeFilter, setTimeFilter] = useState<'today' | 'month' | 'year' | 'all'>('all');
 
     // Debounce search query to prevent excessive map re-renders
     useEffect(() => {
@@ -51,62 +53,143 @@ const SalesMapPage = () => {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    // Filter customers based on selected region, search query, and time period
+    // Correct isolation of data to only the active company (or all if Global View)
+    const companyCustomers = useMemo(() => {
+        if (!activeCompany?.id) return customers;
+        return customers.filter(c => String(c.company_id || (c as any).companyId) === String(activeCompany.id));
+    }, [customers, activeCompany?.id]);
+
+    // 1. Customers matching the chosen State & District
+    const regionMatchingCustomers = useMemo(() => {
+        return companyCustomers.filter(customer => {
+            const cState = getCustomerState(customer);
+            const cDistrict = getDistrict(customer);
+
+            const matchesState = !selectedState || 
+                cState === canonicalState(selectedState) || 
+                isRegionMatch(cState, selectedState);
+
+            const matchesDistrict = !selectedDistrict || 
+                isDistrictMatch(cDistrict, selectedDistrict) || 
+                cleanDistrict(cDistrict).toLowerCase() === cleanDistrict(selectedDistrict).toLowerCase();
+
+            return matchesState && matchesDistrict;
+        });
+    }, [companyCustomers, selectedState, selectedDistrict]);
+
+    const regionCustomerIdsSet = useMemo(() => {
+        return new Set(regionMatchingCustomers.map(c => String(c.id)));
+    }, [regionMatchingCustomers]);
+
+    // 2. Invoices matching active company context, region customer set, and From-To date range
+    const matchingInvoices = useMemo(() => {
+        const from = fromDate ? new Date(fromDate) : null;
+        const to = toDate ? new Date(toDate) : null;
+        if (to) to.setHours(23, 59, 59, 999);
+
+        return (invoices || []).filter(inv => {
+            // Company isolation
+            if (activeCompany?.id && String(inv.company_id || (inv as any).companyId) !== String(activeCompany.id)) {
+                return false;
+            }
+
+            // Region filter: if state or district is selected, invoice must belong to a customer in that territory
+            if (selectedState || selectedDistrict) {
+                if (!inv.customerId || !regionCustomerIdsSet.has(String(inv.customerId))) {
+                    return false;
+                }
+            }
+
+            // Date filter
+            if (from || to) {
+                const rawDate = inv.date || inv.invoice_date;
+                if (!rawDate) return false;
+                const invDate = new Date(rawDate);
+                if (from && invDate < from) return false;
+                if (to && invDate > to) return false;
+            }
+
+            return true;
+        });
+    }, [invoices, activeCompany?.id, selectedState, selectedDistrict, regionCustomerIdsSet, fromDate, toDate]);
+
+    // 3. Dynamic Total Billing Calculation based on state, district, and From-To date
+    const totalBilling = useMemo(() => {
+        return matchingInvoices.reduce((sum, inv) => {
+            const amt = Number(inv.grandTotal ?? inv.grand_total ?? 0);
+            return sum + (isNaN(amt) ? 0 : amt);
+        }, 0);
+    }, [matchingInvoices]);
+
+    // 4. Set of customer IDs that have invoices within [fromDate, toDate]
+    const billedCustomerIds = useMemo(() => {
+        const set = new Set<string>();
+        matchingInvoices.forEach(inv => {
+            if (inv.customerId) set.add(String(inv.customerId));
+        });
+        return set;
+    }, [matchingInvoices]);
+
+    // 5. Filtered customers for display in table and count calculation
     const filteredCustomers = useMemo(() => {
-        const now = new Date();
-        const today = now.toISOString().split('T')[0];
-        const thisMonth = now.getMonth();
-        const thisYear = now.getFullYear();
-
-        return customers.filter(customer => {
-            // Company data isolation - Ensure we only show data for the active company context
-            if (activeCompany?.id && String(customer.company_id) !== String(activeCompany.id)) return false;
-
-            const customerState = customer.state || '';
-            const customerDistrict = customer.district || '';
-
-            const matchesRegion = !selectedRegion ||
-                isRegionMatch(customerState, selectedRegion) ||
-                isDistrictMatch(customerDistrict, selectedRegion);
+        return regionMatchingCustomers.filter(customer => {
+            // If date range is selected, only show customers who have invoices within that period
+            if (fromDate || toDate) {
+                if (!billedCustomerIds.has(String(customer.id))) {
+                    return false;
+                }
+            }
 
             const matchesSearch = !searchQuery ||
                 Object.values(customer).some(val =>
                     String(val).toLowerCase().includes(searchQuery.toLowerCase())
                 );
 
-            let matchesTime = true;
-            if (customer.createdAt) {
-                const regDate = new Date(customer.createdAt);
-                if (timeFilter === 'today') {
-                    matchesTime = customer.createdAt === today;
-                } else if (timeFilter === 'month') {
-                    matchesTime = regDate.getMonth() === thisMonth && regDate.getFullYear() === thisYear;
-                } else if (timeFilter === 'year') {
-                    matchesTime = regDate.getFullYear() === thisYear;
-                }
-            }
-
-            return matchesRegion && matchesSearch && matchesTime;
+            return matchesSearch;
         });
-    }, [customers, selectedRegion, searchQuery, timeFilter, activeCompany?.id]);
+    }, [regionMatchingCustomers, fromDate, toDate, billedCustomerIds, searchQuery]);
 
     const stats = useMemo(() => {
-        const uniqueStates = [...new Set(filteredCustomers.map(c => c.state || 'Unknown'))].length;
+        const uniqueStatesCount = [...new Set(filteredCustomers.map(c => getCustomerState(c)).filter(Boolean))].length;
         const activeCount = filteredCustomers.filter(c => c.status === 'active').length;
         return {
             totalCustomers: filteredCustomers.length,
             activeHubs: 6,
-            states: uniqueStates,
+            states: uniqueStatesCount,
             activePercentage: filteredCustomers.length > 0 ? Math.round((activeCount / filteredCustomers.length) * 100) : 0
         };
     }, [filteredCustomers]);
 
+    const handleStateSelect = (stateName: string | null) => {
+        const canonical = stateName ? (canonicalState(stateName) || stateName) : null;
+        setSelectedState(canonical);
+        setSelectedDistrict(null);
+    };
 
-    const handleRegionSelect = (region: string | null) => {
-        setSelectedRegion(region);
-        if (region) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    const handleDistrictSelect = (districtName: string | null, feature?: any) => {
+        const clean = districtName ? (cleanDistrict(districtName) || districtName) : null;
+        setSelectedDistrict(clean);
+
+        // If no state is currently chosen, auto-detect parent state
+        if (clean && !selectedState) {
+            const sName = feature?.properties?.st_nm;
+            if (sName) {
+                setSelectedState(canonicalState(sName) || sName);
+            } else {
+                const found = companyCustomers.find(c => isDistrictMatch(getDistrict(c), clean));
+                if (found) {
+                    const inferredState = getCustomerState(found);
+                    if (inferredState) setSelectedState(inferredState);
+                }
+            }
         }
+    };
+
+    const handleResetAll = () => {
+        setSelectedState(null);
+        setSelectedDistrict(null);
+        setFromDate('');
+        setToDate('');
     };
 
     const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -116,11 +199,17 @@ const SalesMapPage = () => {
         router.refresh();
     };
 
-    // Correct isolation of data to only the active company
-    const companyCustomers = useMemo(() => {
-        if (!activeCompany) return [];
-        return customers.filter(c => String(c.company_id) === String(activeCompany.id));
-    }, [customers, activeCompany?.id]);
+    // Active districts on the map:
+    // If a state is selected, highlight districts with customers in that state.
+    // If All India is viewed, highlight all active customer districts across the country.
+    const activeDistrictsList = useMemo(() => {
+        const sourceList = selectedState ? filteredCustomers : companyCustomers;
+        return [...new Set(sourceList.map(c => getDistrict(c)).filter(Boolean))] as string[];
+    }, [selectedState, filteredCustomers, companyCustomers]);
+
+    const activeStatesList = useMemo(() => {
+        return [...new Set(companyCustomers.map(c => getCustomerState(c)).filter(Boolean))] as string[];
+    }, [companyCustomers]);
 
     return (
         <ModuleGuard moduleId="mod_sales_map">
@@ -136,12 +225,12 @@ const SalesMapPage = () => {
                     <h2 className="h5 fw-black text-capitalize tracking-widest mb-2">Globus Engineering</h2>
                     <div className="d-flex align-items-center gap-2">
                         <div className="spinner-grow spinner-grow-sm text-primary" role="status"></div>
-                        <span className="small fw-bold text-muted text-capitalize tracking-wider">Syncing Map Data...</span>
+                        <span className="small fw-bold text-muted text-capitalize tracking-wider">Syncing Map & Territory Data...</span>
                     </div>
                 </div>
             )}
 
-            {/* Page Header - Edge to Edge */}
+            {/* Page Header */}
             <div className={`bg-white border-bottom px-4 py-3 d-flex align-items-center justify-content-between sticky-top z-3 mt-n1 shadow-sm transition-all duration-500 ${isPageLoading ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="d-flex align-items-center gap-4">
                     <Link href="/dashboard" className="btn btn-light border rounded-pill d-flex align-items-center gap-2 px-3 py-2 transition-all hover-shadow">
@@ -222,29 +311,35 @@ const SalesMapPage = () => {
                 </div>
             </div>
 
-            <div className={`container-fluid px-5 py-4 content-fade-in dashboard-viewport mt-3 transition-all duration-700 ${isPageLoading ? 'opacity-0 transform-translate-y' : 'opacity-100'}`}>
-                <div className="row g-5">
-                    <div className="col-xl-7">
-                            <div className="card shadow-sm h-100 bg-white rounded-4 border-0 overflow-hidden">
-                                <div className="card-body p-0 d-flex flex-column" style={{ height: 'calc(100vh - 180px)', minHeight: '580px', maxHeight: '750px', background: '#fcfcfd' }}>
-                                    <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white bg-opacity-80">
-                                        <div className="d-flex align-items-center gap-2">
-                                            <i className="bi bi-geo-alt-fill text-primary"></i>
-                                            <span className="fw-black text-capitalize tracking-wider small">Regional Distribution</span>
-                                        </div>
-                                        <div className="badge bg-light text-dark border rounded-pill px-3">
-                                            {viewMode === 'states' ? 'All India View' : `Viewing State: ${selectedRegion}`}
-                                        </div>
+            <div className={`container-fluid px-3 px-xl-4 py-3 content-fade-in dashboard-viewport transition-all duration-700 ${isPageLoading ? 'opacity-0 transform-translate-y' : 'opacity-100'}`}>
+                <div className="row g-3">
+                    {/* Left Side: Dynamic Territory Map */}
+                    <div className="col-xl-6 col-lg-6">
+                        <div className="card shadow-sm h-100 bg-white rounded-4 border-0 overflow-hidden">
+                            <div className="card-body p-0 d-flex flex-column" style={{ height: 'calc(100vh - 165px)', minHeight: '600px', maxHeight: '820px', background: '#fcfcfd' }}>
+                                <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white bg-opacity-80">
+                                    <div className="d-flex align-items-center gap-2">
+                                        <i className="bi bi-geo-alt-fill text-primary"></i>
+                                        <span className="fw-black text-capitalize tracking-wider small">Regional Territory Distribution</span>
                                     </div>
-                                    <div 
-                                        className="flex-grow-1 d-flex justify-content-center align-items-center position-relative"
-                                        style={{ width: '100%', minHeight: '0', flex: 1 }}
-                                    >
+                                    <div className="badge bg-light text-dark border rounded-pill px-3 fw-bold">
+                                        {!selectedState && !selectedDistrict ? 'All India View' : 
+                                         selectedDistrict ? `District: ${selectedDistrict} (${selectedState || 'Regional'})` : 
+                                         `State: ${selectedState}`}
+                                    </div>
+                                </div>
+                                <div 
+                                    className="flex-grow-1 d-flex justify-content-center align-items-center position-relative"
+                                    style={{ width: '100%', minHeight: '0', flex: 1 }}
+                                >
                                     <IndiaMap
-                                        onRegionSelect={handleRegionSelect}
-                                        selectedRegion={selectedRegion}
-                                        activeDistricts={useMemo(() => [...new Set(companyCustomers.map((c: any) => c.district || ''))], [companyCustomers]) as string[]}
-                                        activeStates={useMemo(() => [...new Set(companyCustomers.map((c: any) => c.state || ''))], [companyCustomers]) as string[]}
+                                        selectedState={selectedState}
+                                        selectedDistrict={selectedDistrict}
+                                        onStateSelect={handleStateSelect}
+                                        onDistrictSelect={handleDistrictSelect}
+                                        onResetZoom={handleResetAll}
+                                        activeDistricts={activeDistrictsList}
+                                        activeStates={activeStatesList}
                                         searchTerm={debouncedSearchQuery}
                                         onViewModeChange={(mode) => setViewMode(mode as any)}
                                     />
@@ -253,55 +348,31 @@ const SalesMapPage = () => {
                         </div>
                     </div>
 
-                    <div className="col-xl-5 d-flex flex-column gap-4" style={{ height: 'calc(100vh - 180px)', minHeight: '580px', maxHeight: '750px' }}>
-                        {/* Selected Region Client Insights */}
-                        {selectedRegion && (
-                            <div className="card shadow-sm border-0 rounded-4 overflow-hidden animate-fade-in" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)' }}>
-                                <div className="card-body p-4">
-                                    <div className="d-flex align-items-center justify-content-between mb-4">
-                                        <div>
-                                            <div className="x-small text-primary fw-black text-capitalize tracking-widest mb-1">Regional Deep-Dive</div>
-                                            <h2 className="h4 fw-black text-dark mb-0">{selectedRegion}</h2>
-                                        </div>
-                                        <div className="p-3 bg-white shadow-sm rounded-circle text-primary">
-                                            <i className="bi bi-info-circle-fill fs-4"></i>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="row g-3 mb-4">
-                                        <div className="col-6">
-                                            <div className="p-3 bg-white rounded-4 shadow-sm border border-light">
-                                                <div className="smaller text-muted fw-bold text-capitalize mb-1">Customers</div>
-                                                <div className="h3 fw-black text-dark mb-0">{filteredCustomers.length}</div>
-                                            </div>
-                                        </div>
-                                        <div className="col-6">
-                                            <div className="p-3 bg-white rounded-4 shadow-sm border border-light">
-                                                <div className="smaller text-muted fw-bold text-capitalize mb-1">Engagement</div>
-                                                <div className="h3 fw-black text-success mb-0">{stats.activePercentage}%</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="card shadow-sm bg-white rounded-4 border-0 flex-grow-1 overflow-hidden">
-                            <CustomerTable
-                                customers={filteredCustomers}
-                                selectedRegion={selectedRegion}
-                                searchQuery={searchQuery}
-                                onSearchChange={setSearchQuery}
-                                onLocate={(customer) => {
-                                    if (customer.state) {
-                                        setSelectedRegion(customer.state);
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }
-                                }}
-                            />
-                        </div>
+                    {/* Right Side: Customer Table & Live Territory Metrics */}
+                    <div className="col-xl-6 col-lg-6" style={{ height: 'calc(100vh - 165px)', minHeight: '600px', maxHeight: '820px' }}>
+                        <CustomerTable
+                            customers={companyCustomers}
+                            selectedState={selectedState}
+                            selectedDistrict={selectedDistrict}
+                            onStateChange={handleStateSelect}
+                            onDistrictChange={handleDistrictSelect}
+                            fromDate={fromDate}
+                            toDate={toDate}
+                            onFromDateChange={setFromDate}
+                            onToDateChange={setToDate}
+                            totalBilling={totalBilling}
+                            matchingInvoicesCount={matchingInvoices.length}
+                            onClearFilters={handleResetAll}
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            onLocate={(customer) => {
+                                const cState = getCustomerState(customer);
+                                const cDistrict = getDistrict(customer);
+                                if (cState) setSelectedState(cState);
+                                if (cDistrict) setSelectedDistrict(cDistrict);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                        />
                     </div>
                 </div>
             </div>
@@ -313,6 +384,7 @@ const SalesMapPage = () => {
                 }
                 .bg-light-gray { background-color: #f8fafc; }
                 .fw-black { font-weight: 800; }
+                .fw-900 { font-weight: 900; }
                 .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
                 .leading-none { line-height: 1; }
                 .z-50 { z-index: 5000; }

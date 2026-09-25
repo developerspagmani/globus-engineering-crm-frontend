@@ -74,7 +74,6 @@ export const navigationConfig: NavItem[] = [
   { name: 'Employee Management', icon: 'bi-person-badge', path: '/employees', moduleId: 'mod_employee' },
   { name: 'User Management', icon: 'bi-person-gear', path: '/users', moduleId: 'mod_user_management' },
   { name: 'Lead Management', icon: 'bi-funnel', path: '/leads', moduleId: 'mod_lead' },
-  { name: 'Field Stores', icon: 'bi-shop', path: '/stores', moduleId: 'mod_stores' },
   { name: 'GSTN Lookup', icon: 'bi-shield-check', path: '/gst-lookup', moduleId: 'mod_gst_lookup' },
 
   // Reports

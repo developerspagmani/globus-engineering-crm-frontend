@@ -7,6 +7,8 @@ import { Invoice, Company } from '@/types/modules';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import IndustrialInvoice from './IndustrialInvoice';
+import ModernTaxInvoice from './ModernTaxInvoice';
+import InvoiceLayoutModal, { InvoiceLayoutFormat } from './InvoiceLayoutModal';
 import { updateInvoiceSettings, initializeInvoiceSettings } from '@/redux/features/invoiceSlice';
 import InvoiceEmailReminderToggle from './InvoiceEmailReminderToggle';
 import BackButton from '@/components/BackButton';
@@ -29,6 +31,21 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
   const isReadOnly = searchParams.get('readonly') === 'true';
   const router = useRouter();
 
+  const initialLayout: InvoiceLayoutFormat =
+    (searchParams.get('layout') || searchParams.get('format')) === 'modern' ? 'modern' : 'classic';
+  const [layout, setLayout] = React.useState<InvoiceLayoutFormat>(initialLayout);
+  const [layoutModal, setLayoutModal] = React.useState<{ isOpen: boolean; actionType: 'print' | 'export' }>({
+    isOpen: false,
+    actionType: 'print'
+  });
+
+  React.useEffect(() => {
+    const paramLayout = searchParams.get('layout') || searchParams.get('format');
+    if (paramLayout === 'modern' || paramLayout === 'classic') {
+      setLayout(paramLayout);
+    }
+  }, [searchParams]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -46,7 +63,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`INVOICE_${invoice.invoiceNumber || invoice.id}.pdf`);
+    pdf.save(`INVOICE_${invoice.invoiceNumber || invoice.id}_${layout.toUpperCase()}.pdf`);
   };
 
   React.useEffect(() => {
@@ -104,37 +121,64 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
           <div className="d-flex align-items-center gap-2 flex-shrink-0">
             <BackButton />
             <h5 className="m-0 fw-bold text-dark pe-2">Invoice Preview</h5>
-            <div className="declaration-toggle-wrapper ms-2 d-flex align-items-center gap-3">
-               <label className="switch mb-0">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.showDeclaration}
-                    onChange={toggleDeclaration}
-                  />
-                  <span className="slider round flex-shrink-0"></span>
-                  <span className="label-text">Declaration</span>
-               </label>
-               {(invoice?.billType === 'Without Process' || invoice?.type === 'WOP' || String(invoice?.billType || '').toLowerCase().includes('without')) && (
+            
+            {/* Invoice Layout Format Switcher */}
+            <div className="d-flex align-items-center bg-light border rounded-pill p-1 ms-1">
+              <button
+                type="button"
+                className={`btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all ${
+                  layout === 'classic' ? 'btn-dark text-white shadow-sm' : 'text-muted'
+                }`}
+                onClick={() => setLayout('classic')}
+                title="Format 1: Classic Industrial Globus layout"
+              >
+                <i className="bi bi-layout-text-window me-1"></i> Classic Layout
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all ${
+                  layout === 'modern' ? 'btn-primary text-white shadow-sm' : 'text-muted'
+                }`}
+                onClick={() => setLayout('modern')}
+                title="Format 2: Modern Nexus Tax Invoice layout"
+              >
+                <i className="bi bi-file-earmark-spreadsheet-fill me-1"></i> Modern Format (Nexus)
+              </button>
+            </div>
+
+            {layout === 'classic' && (
+              <div className="declaration-toggle-wrapper ms-2 d-flex align-items-center gap-3">
                  <label className="switch mb-0">
                     <input 
                       type="checkbox" 
-                      checked={settings.showWopText !== false}
-                      onChange={toggleWopText}
+                      checked={settings.showDeclaration}
+                      onChange={toggleDeclaration}
                     />
                     <span className="slider round flex-shrink-0"></span>
-                    <span className="label-text">WOP Label</span>
+                    <span className="label-text">Declaration</span>
                  </label>
-               )}
-               <label className="switch mb-0">
-                  <input 
-                    type="checkbox" 
-                    checked={settings.enableRoundOff !== false}
-                    onChange={toggleRoundOff}
-                  />
-                  <span className="slider round flex-shrink-0"></span>
-                  <span className="label-text">Round Off</span>
-               </label>
-            </div>
+                 {(invoice?.billType === 'Without Process' || invoice?.type === 'WOP' || String(invoice?.billType || '').toLowerCase().includes('without')) && (
+                   <label className="switch mb-0">
+                      <input 
+                        type="checkbox" 
+                        checked={settings.showWopText !== false}
+                        onChange={toggleWopText}
+                      />
+                      <span className="slider round flex-shrink-0"></span>
+                      <span className="label-text">WOP Label</span>
+                   </label>
+                 )}
+                 <label className="switch mb-0">
+                    <input 
+                      type="checkbox" 
+                      checked={settings.enableRoundOff !== false}
+                      onChange={toggleRoundOff}
+                    />
+                    <span className="slider round flex-shrink-0"></span>
+                    <span className="label-text">Round Off</span>
+                 </label>
+              </div>
+            )}
           </div>
           
           <div className="d-flex align-items-center gap-2 flex-shrink-0">
@@ -144,10 +188,19 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               </Link>
             )}
             <InvoiceEmailReminderToggle invoice={invoice} />
-            <button className="btn btn-outline-dark d-flex align-items-center gap-1 px-3 fw-semibold rounded-pill text-nowrap" onClick={handlePrint}>
+            <button
+              className="btn btn-outline-dark d-flex align-items-center gap-1 px-3 fw-semibold rounded-pill text-nowrap"
+              onClick={() => setLayoutModal({ isOpen: true, actionType: 'print' })}
+              title="Choose format and print invoice"
+            >
               <i className="bi bi-printer"></i> Print
             </button>
-            <button className="btn btn-primary d-flex align-items-center gap-2 px-3 fw-bold rounded-pill shadow-sm text-nowrap" style={{ backgroundColor: accentColor, borderColor: accentColor }} onClick={handleDownload}>
+            <button
+              className="btn btn-primary d-flex align-items-center gap-2 px-3 fw-bold rounded-pill shadow-sm text-nowrap"
+              style={{ backgroundColor: accentColor, borderColor: accentColor }}
+              onClick={() => setLayoutModal({ isOpen: true, actionType: 'export' })}
+              title="Choose format and export PDF"
+            >
               <i className="bi bi-filetype-pdf"></i> Export PDF
             </button>
           </div>
@@ -156,9 +209,47 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
 
       <div ref={invoiceRef} className="print-area">
         <div className="print-wrapper">
-          <IndustrialInvoice invoice={invoice} company={company} settings={settings} typeParam={searchParams.get('type')} />
+          {layout === 'modern' ? (
+            <ModernTaxInvoice
+              invoice={invoice}
+              company={company}
+              settings={settings}
+              typeParam={searchParams.get('type')}
+              copyType={searchParams.get('copies') || undefined}
+            />
+          ) : (
+            <IndustrialInvoice
+              invoice={invoice}
+              company={company}
+              settings={settings}
+              typeParam={searchParams.get('type')}
+            />
+          )}
         </div>
       </div>
+
+      {/* Invoice Layout Choice Modal */}
+      <InvoiceLayoutModal
+        isOpen={layoutModal.isOpen}
+        actionType={layoutModal.actionType}
+        invoiceNumber={invoice.invoiceNumber}
+        defaultCopies={searchParams.get('copies') || 'ORIGINAL,DUPLICATE,TRIPLICATE'}
+        onClose={() => setLayoutModal({ isOpen: false, actionType: 'print' })}
+        onConfirm={(chosenLayout, chosenCopies) => {
+          setLayout(chosenLayout);
+          const currentAction = layoutModal.actionType;
+          setLayoutModal({ isOpen: false, actionType: 'print' });
+          if (currentAction === 'print') {
+            setTimeout(() => {
+              window.print();
+            }, 300);
+          } else {
+            setTimeout(() => {
+              handleDownload();
+            }, 300);
+          }
+        }}
+      />
 
       <style jsx>{`
         .print-area {

@@ -11,7 +11,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import { checkActionPermission } from '@/config/permissions';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 import SortableHeader from '@/components/shared/SortableHeader';
@@ -23,20 +23,116 @@ import jsPDF from 'jspdf';
 export default function InwardListPage() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const partyTypeFilter = searchParams.get('type') as 'customer' | 'vendor' | null;
   const { items: inwards, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.inward);
   const { company, user } = useSelector((state: RootState) => state.auth);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
+  const isInitializedRef = React.useRef(false);
 
-
+  // 1. Initial Load: Read all query parameters from URL and populate Redux state
   useEffect(() => {
     setMounted(true);
+
+    const qType = searchParams.get('type') as 'customer' | 'vendor' | null;
+    const qSearch = searchParams.get('search');
+    const qStatus = searchParams.get('status');
+    const qFromDate = searchParams.get('fromDate');
+    const qToDate = searchParams.get('toDate');
+    const qPage = searchParams.get('page');
+    const qSortBy = searchParams.get('sortBy');
+    const qSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
+
+    const initialFilters: any = {};
+    if (qType) initialFilters.partyType = qType;
+    if (qSearch !== null && qSearch !== '') initialFilters.search = qSearch;
+    if (qStatus !== null && qStatus !== '') initialFilters.status = qStatus;
+    if (qFromDate !== null && qFromDate !== '') initialFilters.fromDate = qFromDate;
+    if (qToDate !== null && qToDate !== '') initialFilters.toDate = qToDate;
+
+    if (Object.keys(initialFilters).length > 0) {
+      dispatch(setInwardFilters(initialFilters));
+    }
+
+    if (qPage && !isNaN(parseInt(qPage)) && parseInt(qPage) > 1) {
+      dispatch(setInwardPage(parseInt(qPage)));
+    }
+
+    if (qSortBy) {
+      dispatch(setInwardSorting({
+        sortBy: qSortBy,
+        sortOrder: qSortOrder === 'asc' ? 'asc' : 'desc'
+      }));
+    }
+
+    isInitializedRef.current = true;
+
     return () => {
       dispatch(resetInwardState());
     };
   }, [dispatch]);
+
+  // 2. State to URL Sync: Whenever filters, page, or sorting change, update the URL
+  useEffect(() => {
+    if (!isInitializedRef.current || !mounted) return;
+
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams();
+
+      const currentType = searchParams.get('type') || (filters.partyType !== 'all' ? filters.partyType : null);
+      if (currentType) {
+        params.set('type', currentType);
+      }
+
+      if (filters.search && filters.search.trim()) {
+        params.set('search', filters.search.trim());
+      }
+      if (filters.status && filters.status !== 'all') {
+        params.set('status', filters.status);
+      }
+      if (filters.fromDate) {
+        params.set('fromDate', filters.fromDate);
+      }
+      if (filters.toDate) {
+        params.set('toDate', filters.toDate);
+      }
+
+      if (pagination.currentPage > 1) {
+        params.set('page', String(pagination.currentPage));
+      }
+
+      if (sorting?.sortBy && sorting.sortBy !== 'id' && sorting.sortBy !== 'created_at') {
+        params.set('sortBy', sorting.sortBy);
+      }
+      if (sorting?.sortOrder && sorting.sortOrder !== 'desc') {
+        params.set('sortOrder', sorting.sortOrder);
+      }
+
+      const currentQs = searchParams.toString();
+      const newQs = params.toString();
+
+      if (currentQs !== newQs) {
+        router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
+      }
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [
+    filters.search,
+    filters.status,
+    filters.partyType,
+    filters.fromDate,
+    filters.toDate,
+    pagination.currentPage,
+    sorting?.sortBy,
+    sorting?.sortOrder,
+    searchParams,
+    pathname,
+    router,
+    mounted
+  ]);
 
   useEffect(() => {
     (dispatch as any)(fetchInwards({
@@ -172,6 +268,19 @@ export default function InwardListPage() {
                   onChange={(e) => dispatch(setInwardFilters({ toDate: e.target.value }))}
                 />
               </div>
+
+              {(filters.search || (filters.status && filters.status !== 'all') || filters.fromDate || filters.toDate) && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
+                  style={{ height: '38px', borderRadius: '8px', fontSize: '0.78rem' }}
+                  onClick={() => dispatch(setInwardFilters({ search: '', status: 'all', fromDate: '', toDate: '' }))}
+                  title="Reset all filters"
+                >
+                  <i className="bi bi-x-circle"></i>
+                  <span>Clear</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

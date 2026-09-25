@@ -8,31 +8,136 @@ import ModuleGuard from '@/components/ModuleGuard';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { checkActionPermission } from '@/config/permissions';
-import { setInvoiceFilters, resetInvoiceState } from '@/redux/features/invoiceSlice';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { setInvoiceFilters, setInvoicePage, setInvoiceSorting, resetInvoiceState } from '@/redux/features/invoiceSlice';
 import ExportExcel from '@/components/shared/ExportExcel';
 
 import Breadcrumb from '@/components/Breadcrumb';
 
 export default function InvoiceHistoryPage() {
   const [mounted, setMounted] = React.useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, aggregates, pagination, filters } = useSelector((state: RootState) => state.invoices);
+  const { items, aggregates, pagination, filters, sorting: invoiceSorting } = useSelector((state: RootState) => state.invoices);
+  const isInitializedRef = React.useRef(false);
 
+  // 1. Initial Load: Read all query parameters from URL and populate Redux state
   React.useEffect(() => {
     setMounted(true);
     
-    // Check for status filter in URL (e.g. from dashboard cards)
-    const urlParams = new URLSearchParams(window.location.search);
-    const statusParam = urlParams.get('status');
-    if (statusParam) {
-      dispatch(setInvoiceFilters({ status: statusParam }));
+    const qSearch = searchParams.get('search');
+    const qStatus = searchParams.get('status');
+    const qPartyType = searchParams.get('partyType');
+    const qFromDate = searchParams.get('fromDate');
+    const qToDate = searchParams.get('toDate');
+    const qProcess = searchParams.get('process');
+    const qPage = searchParams.get('page');
+    const qSortBy = searchParams.get('sortBy');
+    const qSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
+
+    const initialFilters: any = {};
+    if (qSearch !== null && qSearch !== '') initialFilters.search = qSearch;
+    if (qStatus !== null && qStatus !== '') initialFilters.status = qStatus;
+    if (qPartyType !== null && qPartyType !== '') initialFilters.partyType = qPartyType;
+    if (qFromDate !== null && qFromDate !== '') initialFilters.fromDate = qFromDate;
+    if (qToDate !== null && qToDate !== '') initialFilters.toDate = qToDate;
+    if (qProcess !== null && qProcess !== '') initialFilters.process = qProcess;
+
+    if (Object.keys(initialFilters).length > 0) {
+      dispatch(setInvoiceFilters(initialFilters));
     }
+
+    if (qPage && !isNaN(parseInt(qPage)) && parseInt(qPage) > 1) {
+      dispatch(setInvoicePage(parseInt(qPage)));
+    }
+
+    if (qSortBy) {
+      dispatch(setInvoiceSorting({ 
+        sortBy: qSortBy, 
+        sortOrder: qSortOrder === 'asc' ? 'asc' : 'desc' 
+      }));
+    }
+
+    isInitializedRef.current = true;
 
     return () => {
       dispatch(resetInvoiceState());
     };
   }, [dispatch]);
+
+  // 2. State to URL Sync: Whenever filters, page, sorting, or tab change, update the URL
+  React.useEffect(() => {
+    if (!isInitializedRef.current || !mounted) return;
+
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams();
+
+      // Preserve active tab if set
+      const currentTab = searchParams.get('tab');
+      if (currentTab) {
+        params.set('tab', currentTab);
+      }
+
+      // Sync active filters
+      if (filters.search && filters.search.trim()) {
+        params.set('search', filters.search.trim());
+      }
+      if (filters.status && filters.status !== 'all') {
+        params.set('status', filters.status);
+      }
+      if (filters.partyType && filters.partyType !== 'all') {
+        params.set('partyType', filters.partyType);
+      }
+      if (filters.fromDate) {
+        params.set('fromDate', filters.fromDate);
+      }
+      if (filters.toDate) {
+        params.set('toDate', filters.toDate);
+      }
+      if (filters.process && filters.process !== 'all') {
+        params.set('process', filters.process);
+      }
+
+      // Sync pagination
+      if (pagination.currentPage > 1) {
+        params.set('page', String(pagination.currentPage));
+      }
+
+      // Sync sorting
+      if (invoiceSorting?.sortBy && invoiceSorting.sortBy !== 'id') {
+        params.set('sortBy', invoiceSorting.sortBy);
+      }
+      if (invoiceSorting?.sortOrder && invoiceSorting.sortOrder !== 'desc') {
+        params.set('sortOrder', invoiceSorting.sortOrder);
+      }
+
+      const currentQs = searchParams.toString();
+      const newQs = params.toString();
+
+      if (currentQs !== newQs) {
+        router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
+      }
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [
+    filters.search,
+    filters.status,
+    filters.partyType,
+    filters.fromDate,
+    filters.toDate,
+    filters.process,
+    pagination.currentPage,
+    invoiceSorting?.sortBy,
+    invoiceSorting?.sortOrder,
+    searchParams,
+    pathname,
+    router,
+    mounted
+  ]);
 
   if (!mounted) return null;
 

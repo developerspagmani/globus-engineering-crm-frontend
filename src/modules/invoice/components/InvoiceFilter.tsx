@@ -103,6 +103,19 @@ const InvoiceFilter: React.FC = () => {
               onChange={handleChange}
             />
           </div>
+
+          {(filters.search || (filters.status && filters.status !== 'all') || filters.fromDate || filters.toDate || (filters.process && filters.process !== 'all')) && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
+              style={{ height: '38px', borderRadius: '8px', fontSize: '0.78rem' }}
+              onClick={() => dispatch(setInvoiceFilters({ search: '', status: 'all', fromDate: '', toDate: '', process: 'all' }))}
+              title="Reset all filters"
+            >
+              <i className="bi bi-x-circle"></i>
+              <span>Clear</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

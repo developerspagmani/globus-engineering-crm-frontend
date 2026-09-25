@@ -17,17 +17,21 @@ import PaginationComponent from '@/components/shared/Pagination';
 import SortableHeader from '@/components/shared/SortableHeader';
 
 import ExportExcel from '@/components/shared/ExportExcel';
+import api from '@/lib/axios';
 
 const LeadsPage = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.leads);
+  const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
+  const [leadReminderDays, setLeadReminderDays] = useState<number>(1);
 
-  const [modal, setModal] = useState<{ isOpen: boolean; title: string; message: string }>({
+  const [modal, setModal] = useState<{ isOpen: boolean; title: string; message: string; type?: 'success' | 'error' | 'info' }>({
     isOpen: false,
     title: '',
-    message: ''
+    message: '',
+    type: 'success'
   });
 
   const [confirmModal, setConfirmModal] = useState<{ 
@@ -45,6 +49,19 @@ const LeadsPage = () => {
       dispatch(resetLeadState());
     };
   }, [dispatch]);
+
+  // Load configured lead visit reminder days from company mail settings
+  useEffect(() => {
+    if (activeCompany?.id) {
+      api.get('/settings/mail', { params: { company_id: activeCompany.id } })
+        .then(res => {
+          if (res.data?.leadReminderDays) {
+            setLeadReminderDays(Number(res.data.leadReminderDays));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [activeCompany?.id]);
 
   useEffect(() => {
     (dispatch as any)(fetchLeads({
@@ -114,9 +131,106 @@ const LeadsPage = () => {
     }
   };
 
+  const getVisitDateBadge = (dateStr?: string) => {
+    if (!dateStr) {
+      return <span className="text-muted small fst-italic">Not Scheduled</span>;
+    }
+
+    try {
+      const visitDate = new Date(dateStr);
+      if (isNaN(visitDate.getTime())) {
+        return <span className="text-muted small">{dateStr}</span>;
+      }
+
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const visitMidnight = new Date(visitDate.getFullYear(), visitDate.getMonth(), visitDate.getDate());
+      const diffDays = Math.round((visitMidnight.getTime() - todayMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+      const formatted = visitDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      if (diffDays === leadReminderDays) {
+        return (
+          <span className="badge bg-warning text-dark border border-warning-subtle px-2 py-1 rounded-pill small fw-bold" title={`Scheduled for automated visit reminder (${leadReminderDays} day${leadReminderDays > 1 ? 's' : ''} in advance)`}>
+            <i className="bi bi-bell-fill text-danger me-1"></i>
+            {diffDays === 1 ? 'Tomorrow' : `In ${diffDays} Days`} ({formatted})
+          </span>
+        );
+      } else if (diffDays === 0) {
+        return (
+          <span className="badge bg-danger text-white px-2 py-1 rounded-pill small fw-bold" title="Scheduled Today">
+            <i className="bi bi-clock-fill me-1"></i>
+            Today ({formatted})
+          </span>
+        );
+      } else if (diffDays === 1) {
+        return (
+          <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 rounded-pill small fw-semibold" title="Scheduled Tomorrow">
+            <i className="bi bi-calendar-event me-1"></i>
+            Tomorrow ({formatted})
+          </span>
+        );
+      } else if (diffDays < 0) {
+        return (
+          <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill small fw-semibold" title="Visit Date Has Passed">
+            <i className="bi bi-calendar-x me-1"></i>
+            Overdue ({formatted})
+          </span>
+        );
+      } else {
+        return (
+          <span className="badge bg-light text-dark border px-2 py-1 rounded-pill small fw-medium" title={`Upcoming in ${diffDays} days`}>
+            <i className="bi bi-calendar-event text-primary me-1"></i>
+            {formatted}
+          </span>
+        );
+      }
+    } catch {
+      return <span className="small text-muted">{dateStr}</span>;
+    }
+  };
+
+  const handleSendVisitReminder = async (lead: any) => {
+    if (!lead.agentId && !lead.agent_id) {
+      setModal({
+        isOpen: true,
+        title: 'No Sales Person Assigned',
+        message: 'This lead has not been assigned to a Sales Person yet. Please edit the lead and select a Sales Person first.'
+      });
+      return;
+    }
+
+    try {
+      setSendingReminderId(lead.id);
+      const res = await api.post(`/leads/${lead.id}/send-visit-reminder`, {
+        company_id: activeCompany?.id
+      });
+
+      setModal({
+        isOpen: true,
+        title: 'Visit Reminder Sent!',
+        message: res.data?.message || `Visit reminder notification sent to ${lead.agentName || 'Assigned Sales Person'} (${lead.agentEmail || res.data?.recipient || 'registered email'}).`
+      });
+    } catch (err: any) {
+      console.error('Failed to send visit reminder:', err);
+      setModal({
+        isOpen: true,
+        title: 'Failed to Send Reminder',
+        message: err.response?.data?.error || err.message || 'Could not send visit reminder email via SMTP.'
+      });
+    } finally {
+      setSendingReminderId(null);
+    }
+  };
+
   const handlePrintLeadRecord = (lead: any) => {
     const printWindow = window.open('', '', 'height=600,width=800');
     if (!printWindow) return;
+    const visitDateText = lead.next_visit_date || lead.nextVisitDate 
+      ? new Date(lead.next_visit_date || lead.nextVisitDate).toLocaleDateString('en-GB')
+      : 'Not Scheduled';
+    const agentText = lead.agentName ? `${lead.agentName} (${lead.agentEmail || 'No Email'})` : 'Unassigned';
+
     printWindow.document.write('<html><head><title>Lead Summary</title>');
     printWindow.document.write('<style>body { font-family: var(--font-inter), Inter, sans-serif; padding: 40px; color: #333; } .header { border-bottom: 2px solid #ea580c; padding-bottom: 20px; margin-bottom: 30px; } .label { font-weight: bold; color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; } .value { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }</style>');
     printWindow.document.write('</head><body>');
@@ -126,6 +240,8 @@ const LeadsPage = () => {
     printWindow.document.write(`<div><div class="label">Company</div><div class="value">${lead.company}</div></div>`);
     printWindow.document.write(`<div><div class="label">Source</div><div class="value">${lead.source}</div></div>`);
     printWindow.document.write(`<div><div class="label">Industry</div><div class="value">${lead.industry}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Next Visit Date</div><div class="value">${visitDateText}</div></div>`);
+    printWindow.document.write(`<div><div class="label">Assigned Sales Person</div><div class="value">${agentText}</div></div>`);
     printWindow.document.write(`<div><div class="label">Current Status</div><div class="value">${lead.status.toUpperCase()}</div></div>`);
     printWindow.document.write('</div>');
     printWindow.document.write('<div style="margin-top: 50px; text-align: center; font-size: 0.8rem; color: #999; border-top: 1px solid #eee; padding-top: 20px;">Prospect Inquiry Record on ' + new Date().toLocaleString() + '</div>');
@@ -136,6 +252,11 @@ const LeadsPage = () => {
 
   const handleExportPDFLeadRecord = (lead: any) => {
     const doc = new jsPDF();
+    const visitDateText = lead.next_visit_date || lead.nextVisitDate 
+      ? new Date(lead.next_visit_date || lead.nextVisitDate).toLocaleDateString('en-GB')
+      : 'Not Scheduled';
+    const agentText = lead.agentName ? `${lead.agentName} (${lead.agentEmail || 'No Email'})` : 'Unassigned';
+
     doc.setFillColor(37, 99, 235); doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("GLOBUS ENGINEERING", 14, 25);
     doc.setFontSize(10); doc.text("LEAD SUMMARY RECORD", 14, 32);
@@ -144,6 +265,8 @@ const LeadsPage = () => {
       startY: 60,
       body: [
         ['Contact Name', lead.name], ['Company', lead.company],
+        ['Next Visit Date', visitDateText],
+        ['Assigned Sales Person', agentText],
         ['Source', lead.source], ['Industry', lead.industry],
         ['Current Status', lead.status.toUpperCase()]
       ],
@@ -162,10 +285,28 @@ const LeadsPage = () => {
           <p className="text-muted small mb-0">Follow up with potential industrial partners and conversion funnels.</p>
         </div>
         <div className="d-flex align-items-center gap-2">
+          <Link 
+            href="/settings?tab=mail" 
+            className="badge bg-light text-muted border text-decoration-none px-3 py-2 rounded-pill small d-flex align-items-center gap-1 shadow-xs"
+            title="Click to configure lead reminder days in Settings"
+          >
+            <i className="bi bi-bell-fill text-warning"></i>
+            <span>Reminder: <strong>{leadReminderDays} day{leadReminderDays > 1 ? 's' : ''} before</strong></span>
+            <i className="bi bi-gear text-secondary ms-1" style={{ fontSize: '11px' }}></i>
+          </Link>
           <ExportExcel
             data={items}
             fileName="Leads_List"
-            headers={{ name: 'Name', company: 'Company', industry: 'Industry', source: 'Source', status: 'Status', createdAt: 'Inquiry Date' }}
+            headers={{ 
+              name: 'Name', 
+              company: 'Company', 
+              nextVisitDate: 'Next Visit Date',
+              agentName: 'Sales Person',
+              industry: 'Industry', 
+              source: 'Source', 
+              status: 'Status', 
+              createdAt: 'Inquiry Date' 
+            }}
             buttonText="Export List"
           />
           {checkActionPermission(user, 'mod_lead', 'create') && (
@@ -232,6 +373,8 @@ const LeadsPage = () => {
           <thead>
             <tr className="bg-light">
               <SortableHeader field="name" label="Prospect Info" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="px-4 py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+              <SortableHeader field="next_visit_date" label="Next Visit" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Sales Person</th>
               <SortableHeader field="source" label="Source" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
               <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
               <SortableHeader field="industry" label="Industry" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
@@ -241,13 +384,13 @@ const LeadsPage = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5}>
+                <td colSpan={7}>
                   <Loader text="Fetching Leads..." />
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-5 text-muted fw-600">No leads found in your current view.</td>
+                <td colSpan={7} className="text-center py-5 text-muted fw-600">No leads found in your current view.</td>
               </tr>
             ) : (
               paginatedItems.map((lead, index) => (
@@ -260,6 +403,27 @@ const LeadsPage = () => {
                           <div className="small text-muted fw-600">{lead.company}</div>
                        </div>
                     </div>
+                  </td>
+                  <td>
+                    {getVisitDateBadge(lead.next_visit_date || lead.nextVisitDate)}
+                  </td>
+                  <td>
+                    {lead.agentName ? (
+                      <div>
+                        <div className="fw-700 text-dark small">
+                          <i className="bi bi-person-fill text-primary me-1"></i>
+                          {lead.agentName}
+                        </div>
+                        {lead.agentEmail && (
+                          <div className="text-muted small" style={{ fontSize: '0.78rem' }} title={lead.agentEmail}>
+                            <i className="bi bi-envelope me-1"></i>
+                            {lead.agentEmail}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="badge bg-secondary-subtle text-secondary px-2 py-1 rounded-pill small">Unassigned</span>
+                    )}
                   </td>
                   <td>
                     <span className="small fw-700 text-muted "><i className="bi bi-box-arrow-in-right me-1"></i>{lead.source}</span>
@@ -289,6 +453,26 @@ const LeadsPage = () => {
                             <i className="bi bi-three-dots-vertical fs-5"></i>
                           </button>
                           <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-${lead.id}`}>
+                            <li>
+                              <button 
+                                className="dropdown-item d-flex align-items-center gap-2 py-2 text-primary" 
+                                type="button"
+                                disabled={sendingReminderId === lead.id}
+                                onClick={() => handleSendVisitReminder(lead)}
+                              >
+                                {sendingReminderId === lead.id ? (
+                                  <>
+                                    <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                                    <span className="small fw-semibold">Sending Reminder...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <i className="bi bi-bell-fill text-warning"></i>
+                                    <span className="small fw-semibold">Send Visit Reminder to Agent</span>
+                                  </>
+                                )}
+                              </button>
+                            </li>
                             {checkActionPermission(user, 'mod_lead', 'edit') && (
                               <li>
                                 <button className="dropdown-item d-flex align-items-center gap-2 py-2 text-success" type="button" onClick={() => handlePromoteParams(lead)}>
@@ -351,7 +535,7 @@ const LeadsPage = () => {
       <StatusModal 
         isOpen={modal.isOpen}
         onClose={() => setModal(prev => ({ ...prev, isOpen: false }))}
-        type="success"
+        type={modal.type || 'success'}
         title={modal.title}
         message={modal.message}
       />

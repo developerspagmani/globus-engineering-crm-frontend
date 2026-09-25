@@ -105,6 +105,7 @@ export const fetchInvoices = createAsyncThunk(
   'invoices/fetchAll',
   async (params: { 
     company_id?: string; 
+    id?: string | number;
     page?: number; 
     limit?: number; 
     search?: string; 
@@ -120,9 +121,10 @@ export const fetchInvoices = createAsyncThunk(
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, fromDate, toDate, process, type, partyType, customerId, invoice_nos, sortBy, sortOrder } = params;
-      let url = `/invoices?page=${page}&limit=${limit}`;
+      const { company_id, id, page = 1, limit = 10, search, status, fromDate, toDate, process, type, partyType, customerId, invoice_nos, sortBy, sortOrder } = params;
+      let url = `/invoices?page=${page}&limit=${id ? 100 : limit}`;
       if (company_id) url += `&company_id=${company_id}`;
+      if (id) url += `&id=${id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
@@ -433,7 +435,19 @@ const invoiceSlice = createSlice({
       })
       .addCase(fetchInvoices.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.items;
+        if (action.meta.arg?.id && state.items.length > 0) {
+          const fetchedItems = action.payload.items;
+          fetchedItems.forEach((item: Invoice) => {
+            const idx = state.items.findIndex((i: Invoice) => String(i.id) === String(item.id));
+            if (idx !== -1) {
+              state.items[idx] = item;
+            } else {
+              state.items.push(item);
+            }
+          });
+        } else {
+          state.items = action.payload.items;
+        }
         state.pagination.totalItems = action.payload.pagination.total;
         state.pagination.totalPages = action.payload.pagination.totalPages;
         state.pagination.currentPage = action.payload.pagination.page;

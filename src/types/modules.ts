@@ -8,6 +8,9 @@ export interface InvoiceItem {
   amount: number;
   total: number;
   wopQty?: number;
+  hsnCode?: string;
+  unit?: string;
+  originalIndex?: number;
 }
 
 export interface Invoice {
@@ -293,6 +296,11 @@ export interface Lead {
   assignedArea?: string; // New field for Sprint 2
   notes?: string;
   next_visit_date?: string;
+  nextVisitDate?: string;
+  agentName?: string;
+  agentEmail?: string;
+  agentPhone?: string;
+  productInterest?: string;
   createdAt: string;
 }
 

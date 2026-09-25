@@ -273,7 +273,9 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                      ) as any;
 
                      const unitPrice = pf ? pf.price : 0;
-                     const qty = item.vendorWorkBalance ?? item.billingBalance ?? item.remainingQty ?? item.quantity ?? 0;
+                     const qty = isVendor 
+                        ? Number(item.vendorWorkBalance ?? item.billingBalance ?? 0)
+                        : Number(item.billingBalance ?? 0);
                      const isWop = prev.billType === 'Without Process' || String(prev.billType).toLowerCase().includes('without');
                      const amount = isWop ? 0 : qty * unitPrice;
                      const tax = amount * (prev.taxRate / 100);
@@ -308,13 +310,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
       setInwardLoading(true);
       try {
-         // First try to filter from already-loaded Redux inwards (supports both customers and vendors)
-         // Exclude 'completed' inwards — they are fully billed and should not appear in the selection dropdown
+         // Set immediate local state if available to avoid UI lag
          const filtered = inwards.filter((inv: any) => {
             const notCompleted = (inv.status || '').toLowerCase() !== 'completed';
+            const isVendor = isVendorParty || !!inv.vendorId || inv.partyType === 'vendor';
             let hasBillable = false;
             (inv.items || []).forEach((it: any) => {
-               const bal = it.vendorWorkBalance ?? it.billingBalance ?? it.remainingQty ?? it.quantity ?? 0;
+               const bal = isVendor 
+                  ? (it.vendorWorkBalance ?? it.billingBalance ?? 0)
+                  : (it.billingBalance ?? 0);
                if (Number(bal) > 0) hasBillable = true;
             });
             if (isVendorParty) {
@@ -325,55 +329,61 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
          if (filtered.length > 0) {
             setPendingInwards(filtered);
-            setInwardLoading(false);
-            return;
          }
 
-         // Fallback: fetch from backend API
-         const activeToken = authToken || localStorage.getItem('token');
-         if (activeToken) {
-            const url = isVendorParty
-               ? `/api/inward?vendorId=${partyId}&status=pending&limit=100`
-               : `/api/inward/pending/${partyId}`;
-            const res = await fetch(url, {
-               headers: {
-                  'Authorization': `Bearer ${activeToken.replace(/^"|"$/g, '')}`
-               }
+         // Always fetch latest live pending records directly from server with up-to-date balances
+         const url = isVendorParty
+            ? `/inward?vendorId=${partyId}&status=pending&purpose=invoice&limit=100`
+            : `/inward/pending/${partyId}?purpose=invoice`;
+         const res = await api.get(url);
+         const data = res.data;
+         const results = Array.isArray(data) ? data : (data?.items || []);
+         const finalResults = results.filter((inv: any) => {
+            const notCompleted = (inv.status || '').toLowerCase() !== 'completed';
+            const isVendor = isVendorParty || !!inv.vendorId || inv.partyType === 'vendor';
+            let hasBillable = false;
+            (inv.items || []).forEach((it: any) => {
+               const bal = isVendor 
+                  ? (it.vendorWorkBalance ?? it.billingBalance ?? 0)
+                  : (it.billingBalance ?? 0);
+               if (Number(bal) > 0) hasBillable = true;
             });
-            const data = await res.json();
-            const results = Array.isArray(data) ? data : (data?.items || []);
-            const finalResults = results.filter((inv: any) => {
-               let hasBillable = false;
-               (inv.items || []).forEach((it: any) => {
-                  const bal = it.vendorWorkBalance ?? it.billingBalance ?? it.remainingQty ?? it.quantity ?? 0;
-                  if (Number(bal) > 0) hasBillable = true;
-               });
-               return hasBillable;
-            });
-            setPendingInwards(finalResults);
-         }
+            return notCompleted && hasBillable;
+         });
+         setPendingInwards(finalResults);
       } catch (err) {
+         console.error('Failed to fetch pending inwards from server', err);
       } finally {
          setInwardLoading(false);
       }
    };
 
    useEffect(() => {
-      if (inwardId && inwards.length > 0 && customers.length > 0) {
-         const inward = inwards.find(i => i.id === inwardId);
-         if (inward) {
-            populateFromInward(inward);
-            const isVendorInward = !!(inward as any).vendorId || !!(inward as any).vendor_id;
-            fetchPendingForCustomer((inward as any).customerId || (inward as any).customer_id || (inward as any).vendorId || (inward as any).vendor_id || '', isVendorInward)
-               .then(() => setInwardInitLoading(false))
-               .catch(() => setInwardInitLoading(false));
-         } else {
-            setInwardInitLoading(false);
-         }
+      if (inwardId && customers.length > 0) {
+         // Prioritize fetching live balance directly from server
+         api.get(`/inward/${inwardId}`)
+            .then((res: any) => {
+               const entry = res.data;
+               if (entry) {
+                  populateFromInward(entry);
+                  const isVendorInward = !!(entry as any).vendorId || !!(entry as any).vendor_id;
+                  fetchPendingForCustomer((entry as any).customerId || (entry as any).customer_id || (entry as any).vendorId || (entry as any).vendor_id || '', isVendorInward);
+               }
+            })
+            .catch((err: any) => {
+               console.error('Failed to fetch live inward by id, falling back to store', err);
+               const inward = inwards.find(i => i.id === inwardId);
+               if (inward) {
+                  populateFromInward(inward);
+                  const isVendorInward = !!(inward as any).vendorId || !!(inward as any).vendor_id;
+                  fetchPendingForCustomer((inward as any).customerId || (inward as any).customer_id || (inward as any).vendorId || (inward as any).vendor_id || '', isVendorInward);
+               }
+            })
+            .finally(() => setInwardInitLoading(false));
       } else if (!inwardId) {
          setInwardInitLoading(false);
       }
-   }, [inwardId, inwards, priceFixings, customers]);
+   }, [inwardId, priceFixings, customers]);
 
    useEffect(() => {
       const subTotal = formData.items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
@@ -468,7 +478,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       setInwardLoading(true);
       try {
          const activeToken = authToken || localStorage.getItem('token');
-         const res = await fetch(`/api/inward?search=${encodeURIComponent(query)}&status=pending&limit=10`, {
+         const res = await fetch(`/api/inward?search=${encodeURIComponent(query)}&status=pending&purpose=invoice&limit=10`, {
             headers: {
                'Authorization': `Bearer ${activeToken?.replace(/^"|"$/g, '')}`
             }
@@ -924,7 +934,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                     <option value="">Select Inward Reference</option>
                                     {pendingInwards.map(i => (
                                        <option key={i.id} value={i.id}>
-                                          #{i.inward_no} - {i.po_reference || 'No PO'} ({i.items.reduce((s: number, it: any) => s + ((it.vendorWorkBalance ?? it.billingBalance) || 0), 0)} billable)
+                                          #{i.inward_no || (i as any).inwardNo} - {i.po_reference || (i as any).poReference || 'No PO'} ({(i.items || []).reduce((s: number, it: any) => s + Number((!!i.vendorId || (i as any).party_type === 'vendor' || i.partyType === 'vendor') ? (it.vendorWorkBalance ?? it.billingBalance ?? 0) : (it.billingBalance ?? 0)), 0)} billable)
                                        </option>
                                     ))}
                                  </>

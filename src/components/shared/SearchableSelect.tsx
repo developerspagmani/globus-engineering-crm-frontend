@@ -38,8 +38,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const uniqueOptions = Array.from(new Map(options.map(item => [String(item.value), item])).values());
 
   const selectedOption = uniqueOptions.find(o => String(o.value) === String(value));
-  
-  const filteredOptions = uniqueOptions.filter(o => 
+
+  const filteredOptions = uniqueOptions.filter(o =>
     String(o.label || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -67,10 +67,10 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   return (
     <div className={`position-relative searchable-select ${className}`} ref={containerRef}>
-      <div 
-        className={`form-select bg-transparent d-flex align-items-center justify-content-between ${disabled ? 'disabled' : ''} ${isOpen ? 'show' : ''}`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        style={{ cursor: disabled ? 'not-allowed' : 'pointer', minHeight: '38px', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '2.5rem' }}
+      <div
+        className={`form-select bg-transparent d-flex align-items-center justify-content-between ${isOpen ? 'show' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ cursor: 'pointer', minHeight: '38px', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '2.5rem' }}
       >
         <span className={!selectedOption ? 'text-muted' : 'fw-bold text-dark'}>
           {selectedOption ? (selectedOption.displayLabel || selectedOption.label) : placeholder}
@@ -80,31 +80,31 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       {isOpen && (
         <div className="dropdown-menu show w-100 shadow-lg border-0 mt-1 py-2 px-2" style={{ maxHeight: '300px', overflowY: 'auto', zIndex: 1050, position: 'absolute', top: '100%', left: 0 }}>
           <div className="px-1 mb-2 sticky-top bg-white py-1">
-             <div className="input-group input-group-sm border rounded-pill overflow-hidden shadow-sm">
-                <span className="input-group-text border-0 bg-transparent ps-3"><i className="bi bi-search text-muted"></i></span>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  className="form-control border-0 shadow-none py-2"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => {
-                     if (e.key === 'Escape') {
-                        setIsOpen(false);
-                     } else if (e.key === 'Enter') {
-                        // Prevent form submission
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // If there is exactly one or a highlighted result, select it
-                        if (filteredOptions.length > 0) {
-                           handleSelect(filteredOptions[0].value);
-                        }
-                     }
-                  }}
-                />
-             </div>
+            <div className="input-group input-group-sm border rounded-pill overflow-hidden shadow-sm">
+              <span className="input-group-text border-0 bg-transparent ps-3"><i className="bi bi-search text-muted"></i></span>
+              <input
+                ref={inputRef}
+                type="text"
+                className="form-control border-0 shadow-none py-2"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsOpen(false);
+                  } else if (e.key === 'Enter') {
+                    // Prevent form submission
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // If there is exactly one or a highlighted result, select it
+                    if (filteredOptions.length > 0) {
+                      handleSelect(filteredOptions[0].value);
+                    }
+                  }
+                }}
+              />
+            </div>
           </div>
           <div className="options-list">
             {filteredOptions.length > 0 ? (
@@ -114,9 +114,9 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                   type="button"
                   className={`dropdown-item rounded-2 py-2 px-3 mb-1 w-100 border-0 transition-all ${String(option.value) === String(value) ? 'bg-primary text-white shadow-sm fw-bold' : 'bg-transparent text-dark'}`}
                   onClick={() => handleSelect(option.value)}
-                  style={{ 
-                    textAlign: 'left', 
-                    fontSize: '0.75rem', 
+                  style={{
+                    textAlign: 'left',
+                    fontSize: '0.75rem',
                     fontWeight: String(option.value) === String(value) ? '700' : '500',
                     whiteSpace: 'normal',
                     display: 'block',
@@ -130,30 +130,30 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             ) : (
               !onCreateNew && (
                 <div className="text-center py-4 text-muted small">
-                   <i className="bi bi-inbox fs-4 d-block mb-1 opacity-50"></i>
-                   No results found
+                  <i className="bi bi-inbox fs-4 d-block mb-1 opacity-50"></i>
+                  No results found
                 </div>
               )
             )}
-            
+
             {onCreateNew && searchTerm.trim() !== "" && !uniqueOptions.some(o => String(o.label).toLowerCase() === searchTerm.toLowerCase().trim()) && (
-               <button
-                  type="button"
-                  className="dropdown-item rounded-2 py-2 px-3 mt-2 w-100 border-0 text-primary fw-bold"
-                  style={{ backgroundColor: '#e0f2fe', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px' }}
-                  onClick={() => {
-                     onCreateNew(searchTerm);
-                     setIsOpen(false);
-                     setSearchTerm("");
-                  }}
-               >
-                  <i className="bi bi-plus-circle-fill"></i> Add &quot;{searchTerm}&quot;
-               </button>
+              <button
+                type="button"
+                className="dropdown-item rounded-2 py-2 px-3 mt-2 w-100 border-0 text-primary fw-bold"
+                style={{ backgroundColor: '#e0f2fe', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px' }}
+                onClick={() => {
+                  onCreateNew(searchTerm);
+                  setIsOpen(false);
+                  setSearchTerm("");
+                }}
+              >
+                <i className="bi bi-plus-circle-fill"></i> Add &quot;{searchTerm}&quot;
+              </button>
             )}
           </div>
         </div>
       )}
-      
+
       <style jsx>{`
         .searchable-select :global(.form-select) {
            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");

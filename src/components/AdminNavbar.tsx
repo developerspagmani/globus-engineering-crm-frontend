@@ -181,8 +181,8 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
             <li><Link className="dropdown-item py-2" href="/settings?tab=profile"><i className="bi bi-person me-2"></i> My Profile</Link></li>
             <li><Link className="dropdown-item py-2" href="/settings?tab=security"><i className="bi bi-shield-lock me-2"></i> Security</Link></li>
             <li><Link className="dropdown-item py-2" href="/settings?tab=appearance"><i className="bi bi-palette me-2"></i> Appearance</Link></li>
-            <li><hr className="dropdown-divider" /></li>
             <li><Link className="dropdown-item py-2" href="/settings?tab=company"><i className="bi bi-building me-2"></i> Company Settings</Link></li>
+            <li><Link className="dropdown-item py-2" href="/settings?tab=mail"><i className="bi bi-envelope-at me-2"></i> Mail & SMTP Settings</Link></li>
             <li><hr className="dropdown-divider" /></li>
             <li><button className="dropdown-item py-2 text-danger font-weight-bold" onClick={handleLogout}><i className="bi bi-box-arrow-right me-2"></i> Logout</button></li>
           </ul>

@@ -18,6 +18,7 @@ import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
 import SortableHeader from '@/components/shared/SortableHeader';
+import InvoiceEmailReminderToggle from '@/modules/invoice/components/InvoiceEmailReminderToggle';
 
 
 const PendingPaymentPage = () => {
@@ -26,6 +27,8 @@ const PendingPaymentPage = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [partyType, setPartyType] = useState<'all' | 'customer' | 'vendor'>('customer');
   const [printGroup, setPrintGroup] = useState<any>(null);
+  const [reminderInvoice, setReminderInvoice] = useState<any | null>(null);
+  const [invoiceSelectGroup, setInvoiceSelectGroup] = useState<any | null>(null);
   
   const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -331,6 +334,22 @@ const PendingPaymentPage = () => {
                               >
                                 <i className="bi bi-printer-fill fs-6"></i>
                               </button>
+
+                              <button
+                                className="btn border-0 d-flex align-items-center justify-content-center p-0 shadow-sm"
+                                title="Send Email Reminder"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (group.invoices.length === 1) {
+                                    setReminderInvoice(group.invoices[0]);
+                                  } else {
+                                    setInvoiceSelectGroup(group);
+                                  }
+                                }}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f59e0b', color: '#fff' }}
+                              >
+                                <i className="bi bi-bell-fill fs-6"></i>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -378,6 +397,122 @@ const PendingPaymentPage = () => {
             }}
           />
         </div>
+      )}
+
+      {/* Invoice Selector Modal (when customer has multiple pending invoices) */}
+      {invoiceSelectGroup && (
+        <div 
+          className="modal fade show d-block" 
+          tabIndex={-1} 
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
+          onClick={() => setInvoiceSelectGroup(null)}
+        >
+          <div 
+            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content shadow border-0 rounded-4 overflow-hidden">
+              <div className="modal-header border-bottom px-4 py-3 bg-light">
+                <div>
+                  <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2 mb-0">
+                    <i className="bi bi-bell-fill text-warning"></i>
+                    Send Email Reminder
+                  </h5>
+                  <div className="text-muted small mt-1">
+                    Select an invoice for <strong className="text-dark">{invoiceSelectGroup.customerName}</strong>
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setInvoiceSelectGroup(null)}
+                ></button>
+              </div>
+              <div className="modal-body p-0" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                <div className="table-responsive">
+                  <table className="table align-middle mb-0 table-hover">
+                    <thead className="table-light">
+                      <tr>
+                        <th className="x-small text-muted text-uppercase fw-bold px-4 py-2 border-0">Invoice No</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0">Date</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0">Total</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0 text-end">Pending</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0 text-center">Status</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0 text-end px-4">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoiceSelectGroup.invoices.map((inv: any) => {
+                        const pendingBal = (inv.grandTotal || 0) - (inv.paidAmount || 0);
+                        const overdue = calculateOverdueDays(inv.dueDate);
+                        return (
+                          <tr key={inv.id}>
+                            <td className="px-4 fw-bold text-primary">
+                              {inv.invoiceNumber}
+                            </td>
+                            <td className="small text-muted">
+                              {inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="small text-muted">
+                              ₹ {(inv.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="small fw-bold text-danger text-end">
+                              ₹ {pendingBal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="text-center">
+                              {overdue > 0 ? (
+                                <span className="badge rounded-pill bg-danger-subtle text-danger px-2" style={{ fontSize: '0.7rem' }}>
+                                  {overdue}d Overdue
+                                </span>
+                              ) : (
+                                <span className="badge rounded-pill bg-success-subtle text-success px-2" style={{ fontSize: '0.7rem' }}>
+                                  On Time
+                                </span>
+                              )}
+                            </td>
+                            <td className="text-end px-4">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm"
+                                onClick={() => {
+                                  const selectedInv = inv;
+                                  setInvoiceSelectGroup(null);
+                                  setReminderInvoice(selectedInv);
+                                }}
+                              >
+                                <i className="bi bi-bell-fill"></i>
+                                Send Reminder
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-footer border-top px-4 py-2 bg-light">
+                <button 
+                  type="button" 
+                  className="btn btn-sm btn-outline-secondary rounded-pill px-3" 
+                  onClick={() => setInvoiceSelectGroup(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Email Reminder Modal */}
+      {reminderInvoice && (
+        <InvoiceEmailReminderToggle
+          invoice={reminderInvoice}
+          modalOnly={true}
+          autoOpenSend={true}
+          onClose={() => setReminderInvoice(null)}
+        />
       )}
 
       <style jsx>{`

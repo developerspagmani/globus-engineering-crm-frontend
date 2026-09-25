@@ -7,6 +7,7 @@ import { RootState } from '@/redux/store';
 
 interface LedgerAuditPrintTemplateProps {
   entries: LedgerEntry[];
+  allEntries?: LedgerEntry[];
   company: Company | null;
   dateFrom?: string;
   dateTo?: string;
@@ -28,6 +29,7 @@ const formatLedgerDate = (dateStr: string) => {
 
 const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
   entries,
+  allEntries,
   company,
   dateFrom,
   dateTo,
@@ -53,8 +55,9 @@ const LedgerAuditPrintTemplate: React.FC<LedgerAuditPrintTemplateProps> = ({
   // Sort entries by date for the audit
   const sortedEntries = [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const totalDebit = entries.reduce((sum, e) => sum + (e.type === 'debit' ? e.amount : 0), 0);
-  const totalCredit = entries.reduce((sum, e) => sum + (e.type === 'credit' ? e.amount : 0), 0);
+  const summaryEntries = allEntries || entries;
+  const totalDebit = summaryEntries.reduce((sum, e) => sum + (e.type === 'debit' ? e.amount : 0), 0);
+  const totalCredit = summaryEntries.reduce((sum, e) => sum + (e.type === 'credit' ? e.amount : 0), 0);
 
   const isDebitOpening = openingBalance >= 0;
   const absOpeningBalance = Math.abs(openingBalance);

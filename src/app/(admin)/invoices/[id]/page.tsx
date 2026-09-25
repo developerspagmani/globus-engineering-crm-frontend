@@ -18,36 +18,42 @@ export default function InvoiceDetailPage() {
   const { items: invoices, loading: invoiceLoading } = useSelector((state: RootState) => state.invoices);
   const { company } = useSelector((state: RootState) => state.auth);
 
-  const invoice = invoices.find(inv => inv.id === id);
+  const invoice = invoices.find(inv => String(inv.id) === String(id));
 
   React.useEffect(() => {
-    if (!invoice && !invoiceLoading && company?.id) {
-      dispatch(fetchInvoices({ company_id: company.id }) as any);
+    if (!invoice && id) {
+      dispatch(fetchInvoices({ company_id: company?.id, id }) as any);
     }
-  }, [invoice, invoiceLoading, company?.id, dispatch]);
+  }, [invoice, company?.id, id, dispatch]);
 
-  if (invoiceLoading && !invoice) {
+  if (invoiceLoading || (!invoice && invoices.length === 0)) {
     return (
-      <div className="container py-5 text-center">
-        <div className="spinner-border text-secondary" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <ModuleGuard moduleId="mod_invoice">
+        <div className="container py-5 text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2 text-muted fw-semibold">Loading invoice details...</p>
         </div>
-        <p className="mt-2">Loading invoice details...</p>
-      </div>
+      </ModuleGuard>
     );
   }
 
   return (
     <ModuleGuard moduleId="mod_invoice">
       <div className="container py-4">
-
-
         {!invoice ? (
-          <div className="alert alert-warning">
-            Invoice with ID: {id} not found.
+          <div className="alert alert-warning d-flex align-items-center justify-content-between">
+            <div>
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              Invoice with ID: <strong>{id}</strong> not found.
+            </div>
+            <Link href="/invoices" className="btn btn-sm btn-outline-dark">
+              Return to Invoices
+            </Link>
           </div>
         ) : (
-          <React.Suspense fallback={<div>Loading preview...</div>}>
+          <React.Suspense fallback={<div className="text-center py-4 text-muted">Loading preview...</div>}>
             <InvoicePreview invoice={invoice} company={company} />
           </React.Suspense>
         )}

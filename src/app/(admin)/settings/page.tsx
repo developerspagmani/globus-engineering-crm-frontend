@@ -10,6 +10,7 @@ import CompanySettings from '@/modules/settings/components/CompanySettings';
 import SecuritySettings from '@/modules/settings/components/SecuritySettings';
 import AppearanceSettings from '@/modules/settings/components/AppearanceSettings';
 import InvoiceSettings from '@/modules/settings/components/InvoiceSettings';
+import MailSettings from '@/modules/settings/components/MailSettings';
 import LedgerSettings from '@/modules/settings/components/LedgerSettings';
 import LedgerSettingsPreview from '@/modules/ledger/components/LedgerSettingsPreview';
 import InvoicePreview from '@/modules/invoice/components/InvoicePreview';
@@ -53,7 +54,7 @@ const SettingsContent = () => {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
   const [mounted, setMounted] = useState(false);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
     const tabFromUrl = searchParams.get('tab');
@@ -77,6 +78,7 @@ const SettingsContent = () => {
     { id: 'profile', label: 'My Profile', icon: 'bi-person' },
     { id: 'company', label: 'Company Profile', icon: 'bi-building', hidden: !canManageCompany },
     { id: 'invoice', label: 'Invoice Configuration', icon: 'bi-file-earmark-text', hidden: !canManageCompany },
+    { id: 'mail', label: 'SMTP & Mail Configuration', icon: 'bi-envelope-at', hidden: !canManageCompany },
     { id: 'security', label: 'Security', icon: 'bi-shield-lock' },
     { id: 'appearance', label: 'Appearance', icon: 'bi-palette' },
   ];
@@ -92,6 +94,7 @@ const SettingsContent = () => {
           </div>
         </div>
       );
+      case 'mail': return <MailSettings />;
       case 'security': return <SecuritySettings />;
       case 'appearance': return <AppearanceSettings />;
       default: return <ProfileSettings />;
@@ -104,13 +107,13 @@ const SettingsContent = () => {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h3 className="fw-900 tracking-tight text-dark mb-1">
-               Invoice Configuration
+              Invoice Configuration
             </h3>
             <p className="text-muted small mb-0">Professionalize your industrial templates with high-precision configuration.</p>
           </div>
           <div className="d-flex gap-2 align-items-center">
-            <button 
-              onClick={() => setShowInvoicePreview(true)} 
+            <button
+              onClick={() => setShowInvoicePreview(true)}
               className="btn btn-white border rounded-4 px-4 py-2 shadow-sm fw-bold d-flex align-items-center gap-2"
             >
               <i className="bi bi-eye-fill text-primary"></i> Live Preview
@@ -121,13 +124,13 @@ const SettingsContent = () => {
         {renderContent()}
 
         {/* Preview Modal */}
-        <PreviewModal 
-          isOpen={showInvoicePreview} 
-          onClose={() => setShowInvoicePreview(false)} 
+        <PreviewModal
+          isOpen={showInvoicePreview}
+          onClose={() => setShowInvoicePreview(false)}
           title="Invoice Template Preview"
         >
-          <InvoicePreview 
-            invoice={mockInvoices[0]} 
+          <InvoicePreview
+            invoice={mockInvoices[0]}
             company={company}
             hideControls={true}
           />
@@ -153,7 +156,7 @@ const SettingsContent = () => {
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={`list-group-item list-group-item-action border-0 px-3 py-3 d-flex align-items-center justify-content-start ${activeTab === tab.id ? 'active' : 'text-muted'}`}
-                  style={{ 
+                  style={{
                     backgroundColor: activeTab === tab.id ? 'var(--accent-soft)' : 'transparent',
                     color: activeTab === tab.id ? 'var(--accent-color)' : '',
                     borderRadius: '0',
@@ -175,11 +178,11 @@ const SettingsContent = () => {
 
           {company && (
             <div className="card border-0 shadow-sm rounded-4 mt-4 bg-dark text-white overflow-hidden">
-               <div className="card-body p-4">
-                  <div className="x-small text-capitalize tracking-widest opacity-50 mb-2">Active Context</div>
-                  <div className="fw-bold mb-1">{company?.name || 'Globus Enterprise'}</div>
-                  <div className="x-small opacity-75">{company?.plan || 'Standard'} Enterprise Plan</div>
-               </div>
+              <div className="card-body p-4">
+                <div className="x-small text-capitalize tracking-widest opacity-50 mb-2">Active Context</div>
+                <div className="fw-bold mb-1">{company?.name || 'Globus Enterprise'}</div>
+                <div className="x-small opacity-75">{company?.plan || 'Standard'} Enterprise Plan</div>
+              </div>
             </div>
           )}
         </div>

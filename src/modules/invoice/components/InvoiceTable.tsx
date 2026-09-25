@@ -7,6 +7,9 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import IndustrialInvoice from './IndustrialInvoice';
+import ModernTaxInvoice from './ModernTaxInvoice';
+import InvoiceLayoutModal, { InvoiceLayoutFormat } from './InvoiceLayoutModal';
+import InvoiceEmailReminderToggle from './InvoiceEmailReminderToggle';
 import { deleteInvoice, setInvoicePage, fetchNextNumbers, fetchInvoices, setInvoiceSorting } from '@/redux/features/invoiceSlice';
 import { deleteInward, fetchInwards, setInwardSorting } from '@/redux/features/inwardSlice';
 import Link from 'next/link';
@@ -32,6 +35,7 @@ const InvoiceTable: React.FC = () => {
     (searchParams.get('tab') as any) || 'ADD_INVOICE'
   );
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null; type: 'invoice' | 'inward' | null }>({ isOpen: false, id: null, type: null });
+  const [reminderModalInvoice, setReminderModalInvoice] = useState<any | null>(null);
 
   // Sync activeTab whenever the URL tab param changes (e.g. navigating from dashboard cards)
   React.useEffect(() => {
@@ -43,9 +47,22 @@ const InvoiceTable: React.FC = () => {
 
   const handleTabChange = (tab: any) => { setActiveTab(tab); const params = new URLSearchParams(searchParams.toString()); params.set('tab', tab); router.push(`${pathname}?${params.toString()}`); };
 
-  const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'invoice' | 'inward'} | null>(null);
+  const [downloadingItem, setDownloadingItem] = useState<{item: any, type: 'invoice' | 'inward', layout?: InvoiceLayoutFormat} | null>(null);
   const downloadRef = React.useRef<HTMLDivElement>(null);
   const { settings: invoiceSettings } = useSelector((state: RootState) => state.invoices);
+  const [layoutModal, setLayoutModal] = useState<{
+    isOpen: boolean;
+    item: any | null;
+    actionType: 'print' | 'export';
+    defaultCopies?: string;
+    typeParam?: string;
+  }>({
+    isOpen: false,
+    item: null,
+    actionType: 'print',
+    defaultCopies: 'ORIGINAL,DUPLICATE,TRIPLICATE',
+    typeParam: undefined
+  });
 
   React.useEffect(() => {
     if (downloadingItem && downloadRef.current) {
@@ -60,7 +77,7 @@ const InvoiceTable: React.FC = () => {
           const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
           pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
           const fileName = downloadingItem.type === 'invoice' 
-            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}.pdf`
+            ? `INVOICE_${downloadingItem.item.invoiceNumber || downloadingItem.item.id}_${(downloadingItem.layout || 'CLASSIC').toUpperCase()}.pdf`
             : `INWARD_${downloadingItem.item.inwardNo || downloadingItem.item.id}.pdf`;
           pdf.save(fileName);
           setDownloadingItem(null);
@@ -70,10 +87,16 @@ const InvoiceTable: React.FC = () => {
     }
   }, [downloadingItem]);
 
-  const handlePrintRecord = (item: any) => {
+  const handlePrintRecord = (item: any, defaultCopies = 'ORIGINAL,DUPLICATE,TRIPLICATE', typeParam?: string) => {
     const isInvoice = !!item.invoiceNumber;
     if (isInvoice) {
-      router.push(`/invoices/${item.id}?print=true`);
+      setLayoutModal({
+        isOpen: true,
+        item,
+        actionType: 'print',
+        defaultCopies,
+        typeParam
+      });
       return;
     }
     router.push(`/logistics-print?type=inward&id=${item.id}&print=true`);
@@ -81,7 +104,15 @@ const InvoiceTable: React.FC = () => {
 
   const handleExportPDFRecord = (item: any) => {
     const isInvoice = !!item.invoiceNumber;
-    setDownloadingItem({ item, type: isInvoice ? 'invoice' : 'inward' });
+    if (isInvoice) {
+      setLayoutModal({
+        isOpen: true,
+        item,
+        actionType: 'export'
+      });
+      return;
+    }
+    setDownloadingItem({ item, type: 'inward' });
   };
 
   const handleDeleteParams = (id: string, type: 'invoice' | 'inward') => { setDeleteModal({ isOpen: true, id, type }); };
@@ -93,6 +124,7 @@ const InvoiceTable: React.FC = () => {
         (dispatch as any)(fetchInwards({ 
           company_id: activeCompany.id,
           status: 'pending',
+          purpose: 'invoice',
           partyType: (filters as any).partyType,
           limit: 100, // Fetch more for selection
           sortBy: inwardSorting?.sortBy,
@@ -135,13 +167,22 @@ const InvoiceTable: React.FC = () => {
     
     if (user?.role !== 'super_admin' && activeCompany && itemCompId !== activeCompId) return false;
     
+    // Completed inwards are already finished and must not appear under invoice selection
+    if ((item.status || '').toLowerCase() === 'completed') return false;
+
     const isVendor = !!item.vendorId || item.partyType === 'vendor';
-    // We only want inwards that actually have something remaining to bill, but for vendors we allow them to show if they are pending
-    const hasRemaining = (item.totalRemaining ?? 1) > 0;
-    // Also check if there's any billing balance left specifically, if the backend provides it
-    const hasBillingBalance = item.items ? item.items.some((i: any) => (i.billingBalance ?? i.remainingQty ?? 1) > 0) : true;
+    // Only show inwards that have at least one item with remaining billing balance
+    const hasBillingBalance = item.items && item.items.length > 0
+      ? item.items.some((i: any) => {
+          const bal = isVendor 
+            ? (i.vendorWorkBalance ?? i.billingBalance ?? 0)
+            : (i.billingBalance ?? 0);
+          return Number(bal) > 0;
+        })
+      : Number(item.totalRemaining || 0) > 0;
     
-    if (!isVendor && (!hasRemaining || !hasBillingBalance)) return false;
+    if (!hasBillingBalance) return false;
+
     const search = String(filters.search || '').toLowerCase();
     const custName = String(item.customerName || item.vendorName || '').toLowerCase();
     const dcNo = String(item.dcNo || item.challanNo || '').toLowerCase();
@@ -283,22 +324,22 @@ const InvoiceTable: React.FC = () => {
                              <>
                                 <li><h6 className="dropdown-header text-uppercase" style={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8' }}>Print Copies</h6></li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=ORIGINAL,DUPLICATE,TRIPLICATE`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE,TRIPLICATE'); }}>
                                       <i className="bi bi-printer-fill text-primary"></i> Print All Copies (3)
                                    </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=ORIGINAL`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL'); }}>
                                       <i className="bi bi-printer"></i> Print Original Only
                                    </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=DUPLICATE`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'DUPLICATE'); }}>
                                       <i className="bi bi-printer"></i> Print Duplicate Only
                                    </button>
                                 </li>
                                 <li>
-                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&copies=TRIPLICATE`); }}>
+                                   <button className="dropdown-item d-flex align-items-center gap-2 py-2 small" onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'TRIPLICATE'); }}>
                                       <i className="bi bi-printer"></i> Print Triplicate Only
                                    </button>
                                 </li>
@@ -316,12 +357,25 @@ const InvoiceTable: React.FC = () => {
                               <i className="bi bi-file-earmark-pdf text-danger"></i> Export PDF
                             </button>
                           </li>
+                          {!!item.invoiceNumber && activeTab !== 'ADD_INVOICE' && (
+                            <li>
+                              <button 
+                                className="dropdown-item d-flex align-items-center gap-2 py-2 small" 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setReminderModalInvoice(item); 
+                                }}
+                              >
+                                <i className="bi bi-bell-fill text-warning"></i> Send Email Reminder
+                              </button>
+                            </li>
+                          )}
                           {item.type === 'BOTH' && (
                             <>
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-primary"
-                                  onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&type=WP`); }}
+                                  onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE,TRIPLICATE', 'WP'); }}
                                 >
                                   <i className="bi bi-printer-fill"></i> WP Print
                                 </button>
@@ -329,7 +383,7 @@ const InvoiceTable: React.FC = () => {
                               <li>
                                 <button
                                   className="dropdown-item d-flex align-items-center gap-2 py-2 small fw-bold text-danger"
-                                  onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${item.id}?print=true&type=WOP`); }}
+                                  onClick={(e) => { e.stopPropagation(); handlePrintRecord(item, 'ORIGINAL,DUPLICATE', 'WOP'); }}
                                 >
                                   <i className="bi bi-printer-fill"></i> WOP Print
                                 </button>
@@ -374,11 +428,19 @@ const InvoiceTable: React.FC = () => {
         <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
           <div ref={downloadRef}>
             {downloadingItem.type === 'invoice' ? (
-              <IndustrialInvoice 
-                invoice={downloadingItem.item} 
-                company={activeCompany} 
-                settings={invoiceSettings} 
-              />
+              downloadingItem.layout === 'modern' ? (
+                <ModernTaxInvoice
+                  invoice={downloadingItem.item}
+                  company={activeCompany}
+                  settings={invoiceSettings}
+                />
+              ) : (
+                <IndustrialInvoice 
+                  invoice={downloadingItem.item} 
+                  company={activeCompany} 
+                  settings={invoiceSettings} 
+                />
+              )
             ) : (
               <IndustrialDocument 
                 data={downloadingItem.item} 
@@ -388,6 +450,50 @@ const InvoiceTable: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Invoice Layout Choice Modal */}
+      <InvoiceLayoutModal
+        isOpen={layoutModal.isOpen}
+        actionType={layoutModal.actionType}
+        invoiceNumber={layoutModal.item?.invoiceNumber}
+        defaultCopies={layoutModal.defaultCopies}
+        onClose={() => setLayoutModal({ isOpen: false, item: null, actionType: 'print' })}
+        onConfirm={(chosenLayout, chosenCopies) => {
+          const item = layoutModal.item;
+          const action = layoutModal.actionType;
+          const typeParam = layoutModal.typeParam;
+          setLayoutModal({ isOpen: false, item: null, actionType: 'print' });
+
+          if (!item) return;
+
+          if (action === 'print') {
+            const queryParams = new URLSearchParams();
+            queryParams.set('print', 'true');
+            queryParams.set('layout', chosenLayout);
+            if (chosenCopies) queryParams.set('copies', chosenCopies);
+            if (typeParam) queryParams.set('type', typeParam);
+
+            router.push(`/invoices/${item.id}?${queryParams.toString()}`);
+          } else {
+            // Action is export PDF
+            setDownloadingItem({
+              item,
+              type: 'invoice',
+              layout: chosenLayout
+            });
+          }
+        }}
+      />
+
+      {/* Invoice Email Reminder Modal */}
+      {reminderModalInvoice && (
+        <InvoiceEmailReminderToggle
+          invoice={reminderModalInvoice}
+          modalOnly={true}
+          autoOpenSend={true}
+          onClose={() => setReminderModalInvoice(null)}
+        />
       )}
     </div>
   );
