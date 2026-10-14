@@ -15,7 +15,7 @@ export const mapInvoice = (inv: any): Invoice => {
     : JSON.parse(inv.items_json || '[]');
 
   const grandTotal = parseFloat(String(inv.grandTotal || inv.grand_total || '0').replace(/[^\d.]/g, '')) || 0;
-  const subTotal = parseFloat(String(inv.subTotal || inv.total || '0').replace(/[^\d.]/g, '')) || 0;
+  const subTotal = parseFloat(String(inv.subTotal || inv.sub_total || inv.total || '0').replace(/[^\d.]/g, '')) || 0;
 
   const customerName = cleanStr(inv.customer_name) || cleanStr(inv.customerName) || cleanStr(inv.customer?.customer_name) || 'N/A';
 
@@ -53,20 +53,22 @@ export const mapInvoice = (inv: any): Invoice => {
     grandTotal,
     status: inv.status?.toLowerCase() || 'draft',
     items: items.map((it: any) => {
-      const quantity = parseFloat(String(it.quantity || it.qty || '0').replace(/[^\d.]/g, '')) || 0;
-      const unitPrice = parseFloat(String(it.unitPrice || it.unit_price || it.price || '0').replace(/[^\d.]/g, '')) || 0;
-      const amount = parseFloat(String(it.amount || it.item_total || it.total || (quantity * unitPrice) || '0').replace(/[^\d.]/g, '')) || 0;
+      const isWop = String(inv.billType || inv.bill_type || '').toLowerCase().includes('without');
+      const quantity = isWop ? 0 : (parseFloat(String(it.quantity ?? it.qty ?? '0').replace(/[^\d.]/g, '')) || 0);
+      const unitPrice = parseFloat(String(it.unitPrice ?? it.unit_price ?? it.price ?? '0').replace(/[^\d.]/g, '')) || 0;
+      const calculatedAmount = parseFloat((quantity * unitPrice).toFixed(2));
+      const amount = isWop ? 0 : (parseFloat(String(it.amount ?? '0').replace(/[^\d.]/g, '')) || calculatedAmount);
       return {
         id: it.id || Math.random().toString(36).substr(2, 9),
         description: it.description || '',
         process: it.process || '',
         quantity,
-        wopQty: parseFloat(String(it.wopQty || it.wop_qty || '0').replace(/[^\d.]/g, '')) || 0,
+        wopQty: parseFloat(String(it.wopQty ?? it.wop_qty ?? '0').replace(/[^\d.]/g, '')) || 0,
         hsnCode: it.hsnCode || it.hsn_code || '',
         unitPrice,
         amount,
         tax: parseFloat(String(it.tax || '0').replace(/[^\d.]/g, '')) || 0,
-        total: parseFloat(String(it.total || '0').replace(/[^\d.]/g, '')) || 0
+        total: parseFloat(String(it.total || '0').replace(/[^\d.]/g, '')) || (amount + (parseFloat(String(it.tax || '0')) || 0))
       };
     }),
     subTotal,
@@ -132,7 +134,7 @@ export const fetchInvoices = createAsyncThunk(
       if (process && process !== 'all') url += `&process=${encodeURIComponent(process)}`;
       if (type && type !== 'all') url += `&type=${type}`;
       if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
-      if (customerId) url += `&customer_id=${customerId}`;
+      if (customerId && customerId !== 'all') url += `&customer_id=${customerId}`;
       if (invoice_nos) url += `&invoice_nos=${encodeURIComponent(invoice_nos)}`;
       if (sortBy) url += `&sortBy=${sortBy}`;
       if (sortOrder) url += `&sortOrder=${sortOrder}`;
@@ -291,6 +293,7 @@ interface InvoiceState {
     fromDate: string;
     toDate: string;
     process?: string;
+    customerId?: string;
   };
   pagination: {
     currentPage: number;
@@ -351,6 +354,7 @@ const initialState: InvoiceState = {
     fromDate: '',
     toDate: '',
     process: 'all',
+    customerId: 'all',
   },
   pagination: {
     currentPage: 1,

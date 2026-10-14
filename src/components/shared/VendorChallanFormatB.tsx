@@ -70,6 +70,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
       ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-')
       : '-';
    const coatingName = data.coatingName || data.processType || 'ULTRA COATING';
+   const vehicleNo = data.vehicleNo || data.vehicle_no || data.vehicle || '-';
 
    const invoiceRef = data.invoiceReference || data.invoiceRef || '-';
    // Invoice date same as date
@@ -149,17 +150,21 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                   <div className="fmtb-dc-val">{data.jobNo || data.jobValue || data.job || data.amount || '-'}</div>
                </div>
                {((data.status === 'cancelled' && data.inwardNo) || (data.processName === 'REJECTED / RETURNED')) && (
-                        <div className="fmtb-dc-row">
-                           <div className="cha-dc-key" style={{ color: '#000' }}>STATUS</div>
-                           <div className="cha-dc-val" style={{ fontSize: '18px', fontWeight: '900', color: '#000', letterSpacing: '1px' }}>CANCELLED</div>
-                        </div>
-                     )}
-                     {data.processName && data.processName !== "REJECTED / RETURNED" && !(data.status === "cancelled" && data.inwardNo) && (
+                  <div className="fmtb-dc-row">
+                     <div className="cha-dc-key" style={{ color: '#000' }}>STATUS</div>
+                     <div className="cha-dc-val" style={{ fontSize: '18px', fontWeight: '900', color: '#000', letterSpacing: '1px' }}>CANCELLED</div>
+                  </div>
+               )}
+               {data.partyType === 'customer' && data.processName && data.processName !== "REJECTED / RETURNED" && !(data.status === "cancelled" && data.inwardNo) && (
                   <div className="fmtb-dc-row">
                      <div className="fmtb-dc-key">PROCESS</div>
                      <div className="fmtb-dc-val" style={{ fontSize: '14px', fontWeight: '900' }}>{data.processName}</div>
                   </div>
                )}
+               <div className="fmtb-dc-row">
+                  <div className="fmtb-dc-key">VEHICLE NO</div>
+                  <div className="fmtb-dc-val" style={{ fontSize: '12px', fontWeight: '900' }}>{vehicleNo}</div>
+               </div>
                {data.partyType !== 'customer' && (
                   <div className="fmtb-dc-row">
                      <div className="fmtb-dc-key">COATING</div>

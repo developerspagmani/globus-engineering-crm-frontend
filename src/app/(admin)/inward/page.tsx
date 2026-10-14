@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchInwards, deleteInward, setInwardFilters, setInwardPage, setInwardSorting, resetInwardState } from '@/redux/features/inwardSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -27,10 +30,75 @@ export default function InwardListPage() {
   const searchParams = useSearchParams();
   const partyTypeFilter = searchParams.get('type') as 'customer' | 'vendor' | null;
   const { items: inwards, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.inward);
+  const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const { company, user } = useSelector((state: RootState) => state.auth);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
   const isInitializedRef = React.useRef(false);
+
+  // Fetch customers & vendors if not yet in state
+  useEffect(() => {
+    if (company?.id) {
+      if (customers.length === 0) {
+        (dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 }));
+      }
+      if (vendors.length === 0) {
+        (dispatch as any)(fetchVendors({ company_id: company.id, limit: 1000 }));
+      }
+    }
+  }, [dispatch, company?.id, customers.length, vendors.length]);
+
+  const effectivePartyType = partyTypeFilter || filters.partyType || 'customer';
+  const isVendor = effectivePartyType === 'vendor';
+
+  const partyOptions = useMemo(() => {
+    if (effectivePartyType === 'vendor') {
+      const sorted = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Vendors', displayLabel: 'All Vendors' },
+        ...sorted.map(v => ({
+          value: String(v.id),
+          label: v.name || v.company || `Vendor #${v.id}`,
+          displayLabel: v.name || v.company || `Vendor #${v.id}`
+        }))
+      ];
+    } else if (effectivePartyType === 'customer') {
+      const sorted = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      return [
+        { value: 'all', label: 'All Customers', displayLabel: 'All Customers' },
+        ...sorted.map(c => ({
+          value: String(c.id),
+          label: c.company || c.name || `Customer #${c.id}`,
+          displayLabel: c.company || c.name || `Customer #${c.id}`
+        }))
+      ];
+    } else {
+      const sortedCustomers = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      const sortedVendors = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Parties', displayLabel: 'All Parties' },
+        ...sortedCustomers.map(c => ({
+          value: String(c.id),
+          label: `${c.company || c.name} (Customer)`,
+          displayLabel: c.company || c.name
+        })),
+        ...sortedVendors.map(v => ({
+          value: String(v.id),
+          label: `${v.name || v.company} (Vendor)`,
+          displayLabel: v.name || v.company
+        }))
+      ];
+    }
+  }, [effectivePartyType, vendors, customers]);
 
   // 1. Initial Load: Read all query parameters from URL and populate Redux state
   useEffect(() => {
@@ -38,6 +106,7 @@ export default function InwardListPage() {
 
     const qType = searchParams.get('type') as 'customer' | 'vendor' | null;
     const qSearch = searchParams.get('search');
+    const qCustomerId = searchParams.get('customerId') || searchParams.get('customer_id');
     const qStatus = searchParams.get('status');
     const qFromDate = searchParams.get('fromDate');
     const qToDate = searchParams.get('toDate');
@@ -48,6 +117,7 @@ export default function InwardListPage() {
     const initialFilters: any = {};
     if (qType) initialFilters.partyType = qType;
     if (qSearch !== null && qSearch !== '') initialFilters.search = qSearch;
+    if (qCustomerId !== null && qCustomerId !== '' && qCustomerId !== 'all') initialFilters.customerId = qCustomerId;
     if (qStatus !== null && qStatus !== '') initialFilters.status = qStatus;
     if (qFromDate !== null && qFromDate !== '') initialFilters.fromDate = qFromDate;
     if (qToDate !== null && qToDate !== '') initialFilters.toDate = qToDate;
@@ -89,6 +159,9 @@ export default function InwardListPage() {
       if (filters.search && filters.search.trim()) {
         params.set('search', filters.search.trim());
       }
+      if (filters.customerId && filters.customerId !== 'all') {
+        params.set('customerId', filters.customerId);
+      }
       if (filters.status && filters.status !== 'all') {
         params.set('status', filters.status);
       }
@@ -121,6 +194,7 @@ export default function InwardListPage() {
     return () => clearTimeout(handler);
   }, [
     filters.search,
+    filters.customerId,
     filters.status,
     filters.partyType,
     filters.fromDate,
@@ -141,13 +215,14 @@ export default function InwardListPage() {
       limit: pagination.itemsPerPage,
       search: filters.search,
       partyType: partyTypeFilter || filters.partyType,
+      customerId: filters.customerId,
       status: filters.status !== 'all' ? filters.status : undefined,
       fromDate: filters.fromDate,
       toDate: filters.toDate,
       sortBy: sorting.sortBy,
       sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
+  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.customerId, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
   const paginatedInwards = inwards;
@@ -227,24 +302,19 @@ export default function InwardListPage() {
         </div>
 
         {/* Filter Section - Aligned in one row */}
-        <div className="card filter-card">
-          <div className="card-body">
-            <div className="filter-bar-row">
-              <div className="filter-item-search">
-                <div className="search-group">
-                  <span className="input-group-text">
-                    <i className="bi bi-search"></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search by party name..."
-                    className="form-control search-bar"
-                    value={filters.search}
-                    onChange={(e) => dispatch(setInwardFilters({ search: e.target.value }))}
-                  />
-                </div>
+        <div className="card filter-card" style={{ overflow: 'visible', position: 'relative', zIndex: 100 }}>
+          <div className="card-body p-3" style={{ overflow: 'visible' }}>
+            <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+              <div className="filter-item-select flex-grow-1 inward-customer-filter" style={{ minWidth: '260px' }}>
+                <SearchableSelect
+                  options={partyOptions}
+                  value={filters.customerId || 'all'}
+                  onChange={(val) => dispatch(setInwardFilters({ customerId: String(val) }))}
+                  placeholder={isVendor ? 'Select Vendor' : 'Select Customer'}
+                  className="w-100"
+                />
               </div>
-              <div className="filter-item-select">
+              <div className="filter-item-select" style={{ minWidth: '150px' }}>
                 <select className="form-select search-bar"
                   value={filters.status} onChange={(e) => dispatch(setInwardFilters({ status: e.target.value as any }))}>
                   <option value="all">All Status</option>
@@ -269,12 +339,12 @@ export default function InwardListPage() {
                 />
               </div>
 
-              {(filters.search || (filters.status && filters.status !== 'all') || filters.fromDate || filters.toDate) && (
+              {((filters.customerId && filters.customerId !== 'all') || filters.search || (filters.status && filters.status !== 'all') || filters.fromDate || filters.toDate) && (
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
                   style={{ height: '38px', borderRadius: '8px', fontSize: '0.78rem' }}
-                  onClick={() => dispatch(setInwardFilters({ search: '', status: 'all', fromDate: '', toDate: '' }))}
+                  onClick={() => dispatch(setInwardFilters({ search: '', status: 'all', fromDate: '', toDate: '', customerId: 'all' }))}
                   title="Reset all filters"
                 >
                   <i className="bi bi-x-circle"></i>
@@ -286,7 +356,7 @@ export default function InwardListPage() {
         </div>
 
         {/* Table Section */}
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white" style={{ position: 'relative', zIndex: 1 }}>
           <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
             {loading ? (
               <Loader text="Loading Inward Records..." />
@@ -380,6 +450,14 @@ export default function InwardListPage() {
         .fw-black { font-weight: 900; }
         .bg-light-soft { background-color: #f7f9fc; }
         .table-responsive { min-height: 400px; padding-bottom: 80px; }
+        .inward-customer-filter :global(.form-select) {
+          height: 42px !important;
+          min-height: 42px !important;
+          border-radius: 0.5rem !important;
+          border: 1px solid #e2e8f0 !important;
+          background-color: #fff !important;
+          font-size: 0.875rem !important;
+        }
       `}</style>
       
       {/* Hidden Download Generator */}

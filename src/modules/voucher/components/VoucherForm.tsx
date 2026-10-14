@@ -439,7 +439,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
     try {
       setIsSubmitting(true);
-      const calculatedTDS = formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0);
+      const commonTdsVal = Number(formData.commonTds) || 0;
+      const calculatedTDS = formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0) + commonTdsVal;
       const calculatedOthers = formData.selectedInvoices.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0);
 
       const voucherPayload: any = {
@@ -457,7 +458,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         paymentMode: formData.paymentMode as any,
         chequeNo: formData.paymentMode === 'cash' ? '' : formData.chequeNo,
         description: `Payment for ${formData.partyType}: ${formData.selectedInvoices.map(i => `${i.invoiceNo} (₹${i.amount})`).join(', ')} (Adjust: ₹${totalAdjustmentAmount})`,
-        referenceNo: formData.selectedInvoices.map(i => `${i.invoiceNo} (${i.amount}|${i.adjustmentType}:${i.adjustmentValue})`).join(', '),
+        referenceNo: formData.selectedInvoices.map((i, idx) => `${i.invoiceNo} (${i.amount}|${i.adjustmentType}:${(formData.selectedInvoices.length === 1 && commonTdsVal > 0 && !i.adjustmentValue) ? commonTdsVal : (i.adjustmentValue || 0)})`).join(', '),
         status: 'posted',
         company_id: user?.company_id || activeCompany?.id || ''
       };
@@ -482,16 +483,22 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         }
         console.log('[VoucherForm] Resolved inwardId:', inwardId, 'inwardNo:', inwardNo);
 
-        const currentPaymentItems = formData.selectedInvoices.map(i => ({
-          id: i.id,
-          invoiceNo: i.invoiceNo,
-          amount: i.amount,
-          adjustmentType: i.adjustmentType,
-          adjustment_type: i.adjustmentType,
-          adjustmentValue: i.adjustmentValue,
-          adjustment_value: i.adjustmentValue,
-          date: formData.date
-        }));
+        const currentPaymentItems = formData.selectedInvoices.map((i, index) => {
+          let itemAdj = Number(i.adjustmentValue || 0);
+          if (formData.selectedInvoices.length === 1 && commonTdsVal > 0 && itemAdj === 0) {
+            itemAdj = commonTdsVal;
+          }
+          return {
+            id: i.id,
+            invoiceNo: i.invoiceNo,
+            amount: i.amount,
+            adjustmentType: i.adjustmentType || 'TDS',
+            adjustment_type: i.adjustmentType || 'TDS',
+            adjustmentValue: itemAdj,
+            adjustment_value: itemAdj,
+            date: formData.date
+          };
+        });
 
         if (inwardId) {
           try {
@@ -666,8 +673,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               // Truly no matching existing voucher — create new
               await (dispatch as any)(createVoucher({ 
                 ...voucherPayload,
-                tdsAmount: (Number(voucherPayload.tdsAmount) || 0) + commonTdsAmount,
-                tds_amount: (Number(voucherPayload.tds_amount) || 0) + commonTdsAmount,
+                tdsAmount: Number(voucherPayload.tdsAmount) || 0,
+                tds_amount: Number(voucherPayload.tds_amount) || 0,
                 items: currentPaymentItems 
               } as any)).unwrap();
               if (activeCompany?.id) {
@@ -679,8 +686,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
             console.error('[VoucherForm] Fallback consolidation failed, creating new:', fallbackErr);
             await (dispatch as any)(createVoucher({ 
               ...voucherPayload,
-              tdsAmount: (Number(voucherPayload.tdsAmount) || 0) + commonTdsAmount,
-              tds_amount: (Number(voucherPayload.tds_amount) || 0) + commonTdsAmount,
+              tdsAmount: Number(voucherPayload.tdsAmount) || 0,
+              tds_amount: Number(voucherPayload.tds_amount) || 0,
               items: currentPaymentItems 
             } as any)).unwrap();
           }
@@ -696,8 +703,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         await (dispatch as any)(updateVoucher({ 
           ...initialData!, 
           ...voucherPayload,
-          tdsAmount: (Number(voucherPayload.tdsAmount) || 0) + commonTdsAmount,
-          tds_amount: (Number(voucherPayload.tds_amount) || 0) + commonTdsAmount,
+          tdsAmount: Number(voucherPayload.tdsAmount) || 0,
+          tds_amount: Number(voucherPayload.tds_amount) || 0,
           items: formData.selectedInvoices.map(i => ({
             id: i.id,
             invoiceNo: i.invoiceNo,

@@ -66,7 +66,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   };
 
   return (
-    <div className={`position-relative searchable-select ${className}`} ref={containerRef}>
+    <div
+      className={`position-relative searchable-select ${className}`}
+      ref={containerRef}
+      style={{ zIndex: isOpen ? 1060 : 'auto' }}
+    >
       <div
         className={`form-select bg-transparent d-flex align-items-center justify-content-between ${isOpen ? 'show' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
@@ -78,7 +82,19 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       </div>
 
       {isOpen && (
-        <div className="dropdown-menu show w-100 shadow-lg border-0 mt-1 py-2 px-2" style={{ maxHeight: '300px', overflowY: 'auto', zIndex: 1050, position: 'absolute', top: '100%', left: 0 }}>
+        <div
+          className="dropdown-menu show w-100 shadow-lg border-0 mt-1 py-2 px-2"
+          style={{
+            maxHeight: '320px',
+            overflowY: 'auto',
+            zIndex: 9999,
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            backgroundColor: '#ffffff',
+            boxShadow: '0 12px 28px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.08)'
+          }}
+        >
           <div className="px-1 mb-2 sticky-top bg-white py-1">
             <div className="input-group input-group-sm border rounded-pill overflow-hidden shadow-sm">
               <span className="input-group-text border-0 bg-transparent ps-3"><i className="bi bi-search text-muted"></i></span>

@@ -16,17 +16,19 @@ export const fetchInwards = createAsyncThunk(
     toDate?: string;
     id?: string;
     partyType?: string;
+    customerId?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, status, purpose, fromDate, toDate, id, partyType, sortBy, sortOrder } = params;
+      const { company_id, page = 1, limit = 10, search, status, purpose, fromDate, toDate, id, partyType, customerId, sortBy, sortOrder } = params;
       let url = `/inward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (purpose) url += `&purpose=${purpose}`;
       if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
+      if (customerId && customerId !== 'all') url += `&customerId=${customerId}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (id) url += `&id=${id}`;
@@ -269,6 +271,7 @@ interface InwardState {
     partyType: 'all' | 'customer' | 'vendor';
     fromDate: string;
     toDate: string;
+    customerId?: string;
   };
   pagination: {
     currentPage: number;
@@ -297,6 +300,7 @@ const initialState: InwardState = {
     partyType: 'all',
     fromDate: '',
     toDate: '',
+    customerId: 'all',
   },
   pagination: {
     currentPage: 1,

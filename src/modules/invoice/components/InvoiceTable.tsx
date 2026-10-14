@@ -140,6 +140,7 @@ const InvoiceTable: React.FC = () => {
           status: 'pending',
           purpose: 'invoice',
           partyType: (filters as any).partyType,
+          customerId: filters.customerId,
           limit: 100, // Fetch more for selection
           sortBy: inwardSorting?.sortBy,
           sortOrder: inwardSorting?.sortOrder
@@ -147,7 +148,7 @@ const InvoiceTable: React.FC = () => {
       }
       (dispatch as any)(fetchNextNumbers({ companyId: activeCompany.id }));
     }
-  }, [dispatch, activeCompany?.id, activeTab, inwardSorting?.sortBy, inwardSorting?.sortOrder, (filters as any).partyType]);
+  }, [dispatch, activeCompany?.id, activeTab, inwardSorting?.sortBy, inwardSorting?.sortOrder, (filters as any).partyType, filters.customerId]);
 
   React.useEffect(() => {
     if (activeCompany?.id) {
@@ -168,6 +169,7 @@ const InvoiceTable: React.FC = () => {
         toDate: filters.toDate,
         process: filters.process,
         partyType: (filters as any).partyType,
+        customerId: filters.customerId,
         type: typeMap[activeTab] || 'all',
         sortBy: invoiceSorting?.sortBy,
         sortOrder: invoiceSorting?.sortOrder
@@ -196,6 +198,11 @@ const InvoiceTable: React.FC = () => {
       : Number(item.totalRemaining || 0) > 0;
 
     if (!hasBillingBalance) return false;
+
+    if (filters.customerId && filters.customerId !== 'all') {
+      const partyId = String(item.customerId || (item as any).customer_id || item.vendorId || (item as any).vendor_id || '');
+      if (partyId !== String(filters.customerId)) return false;
+    }
 
     const search = String(filters.search || '').toLowerCase();
     const custName = String(item.customerName || item.vendorName || '').toLowerCase();
@@ -253,7 +260,7 @@ const InvoiceTable: React.FC = () => {
   );
 
   return (
-    <div className="card shadow-sm border-0 bg-white rounded-4" style={{ overflow: 'visible' }}>
+    <div className="card shadow-sm border-0 bg-white rounded-4" style={{ overflow: 'visible', position: 'relative', zIndex: 1 }}>
       {renderTabs()}
       <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px', overflow: 'visible' }}>
         <table className="table align-middle mb-0 table-hover bg-white mb-0">

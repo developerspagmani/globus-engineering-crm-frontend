@@ -47,11 +47,17 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    if (String(invoice.type).toUpperCase() === 'BOTH' && typeParam) {
       if (typeParam === 'WP') {
          // `quantity` already stores the WP (billed) quantity — do NOT subtract wopQty
-         displayItems = invoice.items.map(it => ({
-            ...it,
-            quantity: Number(it.quantity || 0),
-            amount: Number(it.amount || 0)
-         })).filter(it => it.quantity > 0);
+         displayItems = invoice.items.map(it => {
+            const qty = Number(it.quantity || 0);
+            const price = Number(it.unitPrice || (it as any).price || 0);
+            const amount = Number(it.amount) > 0 ? Number(it.amount) : Number((qty * price).toFixed(2));
+            return {
+               ...it,
+               quantity: qty,
+               unitPrice: price,
+               amount
+            };
+         }).filter(it => it.quantity > 0);
          
          const subTotal = displayItems.reduce((sum, it) => sum + it.amount, 0);
          const taxableAmount = subTotal - (invoice.discount || 0);
@@ -67,7 +73,7 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
       } else if (typeParam === 'WOP') {
          displayItems = invoice.items.map((it, idx) => ({
             ...it,
-            quantity: Number(it.wopQty || 0),
+            quantity: Number(it.wopQty !== undefined ? it.wopQty : it.quantity) || 0,
             amount: 0,
             unitPrice: 0,
             originalIndex: idx + 1
@@ -85,15 +91,40 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
    } else if (isWOP) {
       displayItems = displayItems.map((it, idx) => ({
          ...it,
-         quantity: Number(it.wopQty) || Number(it.quantity) || 0,
+         quantity: Number(it.wopQty !== undefined ? it.wopQty : it.quantity) || 0,
          amount: 0,
          unitPrice: 0,
          originalIndex: idx + 1
       })).filter(it => it.quantity > 0);
+
+      displayInvoice = {
+         ...invoice,
+         items: displayItems,
+         subTotal: 0,
+         taxTotal: 0,
+         grandTotal: 0
+      };
    } else {
       // Default case for Tax Invoices (or BOTH without explicit typeParam)
       // Hide items that have 0 quantity on the Tax Invoice view
-      displayItems = displayItems.filter(it => Number(it.quantity || 0) > 0);
+      displayItems = displayItems.map(it => {
+         const qty = Number(it.quantity || 0);
+         const price = Number(it.unitPrice || (it as any).price || 0);
+         const amount = Number(it.amount) > 0 ? Number(it.amount) : Number((qty * price).toFixed(2));
+         return {
+            ...it,
+            quantity: qty,
+            unitPrice: price,
+            amount
+         };
+      }).filter(it => it.quantity > 0);
+
+      const subTotal = displayItems.reduce((sum, it) => sum + it.amount, 0);
+      displayInvoice = {
+         ...invoice,
+         items: displayItems,
+         subTotal: displayInvoice.subTotal || subTotal
+      };
    }
 
    const isRoundOffEnabled = settings?.enableRoundOff !== false;
@@ -671,10 +702,12 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                                Total Quantity
                             </td>
                             <td style={{ textAlign: 'center', borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', fontWeight: 'bold', borderRight: '1px solid #000000' }}>
-                               {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
+                               {(invoice.items || []).reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0)}
                             </td>
                             <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', borderRight: '1px solid #000000' }}></td>
-                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', borderRight: 'none' }}></td>
+                            <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', padding: '8px 12px', borderRight: 'none', textAlign: 'right', fontWeight: 'bold' }}>
+                               {((invoice.items || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || ((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0))), 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
                          </tr>
                       </tfoot>
                    )}
@@ -688,7 +721,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                                Total Quantity
                             </td>
                             <td style={{ borderTop: '1px solid #000000', borderBottom: 'none', borderRight: 'none', padding: '8px 12px', fontWeight: 'bold', textAlign: 'center', fontSize: '11px', color: '#000' }}>
-                               {invoice.items.reduce((sum: number, item: any) => sum + (Number(item.wopQty) || Number(item.quantity) || 0), 0)}
+                               {(invoice.items || []).reduce((sum: number, item: any) => sum + (Number(item.wopQty !== undefined ? item.wopQty : item.quantity) || 0), 0)}
                             </td>
                          </tr>
                       </tfoot>

@@ -189,7 +189,24 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             discount: initialData.discount || 0,
             inwardId: initialData.inwardId || (initialData as any).inward_id || undefined,
             dueDate: initialData.dueDate || (initialData as any).due_date ? new Date(initialData.dueDate || (initialData as any).due_date).toISOString().split('T')[0] : '',
-            items: initialData.items || []
+            items: (initialData.items || []).map((it: any) => {
+               const isWop = String(initialData.billType || (initialData as any).bill_type || '').toLowerCase().includes('without');
+               const qty = isWop ? 0 : (Number(it.quantity ?? it.qty ?? 0) || 0);
+               const wop = Number(it.wopQty ?? it.wop_qty ?? 0) || 0;
+               const price = Number(it.unitPrice ?? it.unit_price ?? it.price ?? 0) || 0;
+               const amount = isWop ? 0 : Number((qty * price).toFixed(2));
+               const rate = Number(initialData.taxRate || (initialData as any).tax_rate || 18);
+               const tax = Number((amount * (rate / 100)).toFixed(2));
+               return {
+                  ...it,
+                  quantity: qty,
+                  wopQty: wop,
+                  unitPrice: price,
+                  amount,
+                  tax,
+                  total: Number((amount + tax).toFixed(2))
+               };
+            })
          };
          setFormData(mappedData);
 
@@ -386,10 +403,20 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
    }, [inwardId, priceFixings, customers]);
 
    useEffect(() => {
-      const subTotal = formData.items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
-      const taxableAmount = subTotal - Number(formData.discount || 0);
-      const taxTotal = (taxableAmount * Number(formData.taxRate || 0)) / 100;
-      const grandTotal = Math.round(taxableAmount + taxTotal + Number(formData.otherCharges || 0));
+      const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
+      const subTotal = isWop ? 0 : Number((formData.items || []).reduce((sum: number, item: any) => {
+         const qty = isWop ? 0 : (Number(item.quantity) || 0);
+         const price = Number(item.unitPrice) || 0;
+         const amt = Number(item.amount !== undefined && item.amount !== null ? item.amount : (qty * price));
+         return sum + amt;
+      }, 0).toFixed(2));
+
+      const discount = Number(formData.discount || 0);
+      const taxableAmount = Math.max(0, subTotal - discount);
+      const taxRate = Number(formData.taxRate || 0);
+      const taxTotal = isWop ? 0 : Number(((taxableAmount * taxRate) / 100).toFixed(2));
+      const otherCharges = Number(formData.otherCharges || 0);
+      const grandTotal = isWop ? 0 : Math.round(taxableAmount + taxTotal + otherCharges);
 
       if (formData.subTotal !== subTotal || formData.taxTotal !== taxTotal || formData.grandTotal !== grandTotal) {
          setFormData((prev: any) => ({
@@ -399,36 +426,40 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             grandTotal
          }));
       }
-   }, [formData.items, formData.discount, formData.otherCharges, formData.taxRate, formData.subTotal, formData.taxTotal, formData.grandTotal]);
+   }, [formData.items, formData.discount, formData.otherCharges, formData.taxRate, formData.billType]);
 
    // Recalculate items when billType or taxRate changes
    useEffect(() => {
-      if (formData.items.length > 0) {
+      if (formData.items && formData.items.length > 0) {
          const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
-         const updatedItems = formData.items.map((item: any) => {
-            const taxableQty = isWop ? 0 : (item.quantity || 0);
-            
-            const amount = taxableQty * (item.unitPrice || 0);
-            const tax = amount * (formData.taxRate / 100);
+         const isWp = formData.billType === 'With Process' || String(formData.billType).toLowerCase() === 'with_process';
+         const rate = Number(formData.taxRate) || 18;
 
+         const updatedItems = formData.items.map((item: any) => {
             let newQty = Number(item.quantity) || 0;
             let newWop = Number(item.wopQty) || 0;
             
             if (isWop) {
                newWop = newQty + newWop;
                newQty = 0;
-            } else if (formData.billType === 'With Process' || String(formData.billType).toLowerCase() === 'with_process') {
+            } else if (isWp) {
                newQty = newQty + newWop;
                newWop = 0;
             }
+
+            const taxableQty = isWop ? 0 : newQty;
+            const price = Number(item.unitPrice) || 0;
+            const amount = Number((taxableQty * price).toFixed(2));
+            const tax = Number((amount * (rate / 100)).toFixed(2));
 
             return {
                ...item,
                quantity: newQty,
                wopQty: newWop,
+               unitPrice: price,
                amount,
                tax,
-               total: amount + tax
+               total: Number((amount + tax).toFixed(2))
             };
          });
          
@@ -545,11 +576,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    const handleItemChange = (index: number, field: string, value: any) => {
       const newItems = [...formData.items];
-      const item = { ...newItems[index], [field]: value };
+      const item = { ...newItems[index] };
 
       if (field === 'quantity' || field === 'wopQty') {
+         let numericVal = value === '' ? 0 : Math.max(0, Number(value));
+         item[field] = value === '' ? '' : numericVal;
+         
          if (item.maxQty !== undefined) {
-            let numericVal = value === '' ? 0 : Number(value);
             const otherField = field === 'quantity' ? 'wopQty' : 'quantity';
             let otherVal = Number(item[otherField]) || 0;
             
@@ -566,6 +599,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                item[otherField] = item.maxQty - numericVal;
             }
          }
+      } else if (field === 'unitPrice') {
+         item.unitPrice = value === '' ? '' : Math.max(0, Number(value));
+      } else {
+         item[field] = value;
       }
 
       if (field === 'description' || field === 'process' || field === 'customerId') {
@@ -576,14 +613,15 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          item.priceFixingId = pf ? pf.id : undefined;
       }
 
-      if (field === 'quantity' || field === 'wopQty' || field === 'unitPrice' || field === 'description' || field === 'process') {
-         const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
-         const taxableQty = isWop ? 0 : (item.quantity || 0);
-            
-         item.amount = taxableQty * (item.unitPrice || 0);
-         item.tax = item.amount * (formData.taxRate / 100);
-         item.total = item.amount + item.tax;
-      }
+      // Calculate item amount, tax, and total
+      const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
+      const qty = isWop ? 0 : (Number(item.quantity) || 0);
+      const price = Number(item.unitPrice) || 0;
+      const rate = Number(formData.taxRate) || 18;
+         
+      item.amount = Number((qty * price).toFixed(2));
+      item.tax = Number((item.amount * (rate / 100)).toFixed(2));
+      item.total = Number((item.amount + item.tax).toFixed(2));
 
       newItems[index] = item;
       setFormData((prev: any) => ({ ...prev, items: newItems }));
@@ -617,18 +655,43 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          }
 
          // Clean items to remove internal UI fields (like priceFixingId) before sending to backend
+         const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
+         const isWp = formData.billType === 'With Process' || String(formData.billType).toLowerCase() === 'with_process' || formData.billType === 'INVOICE';
+         
          const cleanedItems = formData.items.map(({ priceFixingId, maxQty, ...rest }: any) => {
-            const isWop = formData.billType === 'Without Process' || String(formData.billType).toLowerCase().includes('without');
-            const isWp = formData.billType === 'With Process' || String(formData.billType).toLowerCase() === 'with_process' || formData.billType === 'INVOICE';
-            
-            if (isWop) {
-               rest.quantity = 0;
-            } else if (isWp) {
-               rest.wopQty = 0;
-            }
-            return rest;
+            const qty = isWop ? 0 : (Number(rest.quantity) || 0);
+            const wop = isWp ? 0 : (Number(rest.wopQty) || 0);
+            const price = Number(rest.unitPrice) || 0;
+            const amount = isWop ? 0 : Number((qty * price).toFixed(2));
+            const taxRate = Number(formData.taxRate) || 18;
+            const tax = Number((amount * (taxRate / 100)).toFixed(2));
+
+            return {
+               ...rest,
+               quantity: qty,
+               wopQty: wop,
+               unitPrice: price,
+               amount,
+               tax,
+               total: Number((amount + tax).toFixed(2))
+            };
          });
-         const submissionData = { ...formData, items: cleanedItems };
+
+         const calculatedSubTotal = isWop ? 0 : Number(cleanedItems.reduce((sum: number, it: any) => sum + it.amount, 0).toFixed(2));
+         const discount = Number(formData.discount || 0);
+         const taxableAmount = Math.max(0, calculatedSubTotal - discount);
+         const taxRate = Number(formData.taxRate) || 18;
+         const calculatedTaxTotal = isWop ? 0 : Number(((taxableAmount * taxRate) / 100).toFixed(2));
+         const otherCharges = Number(formData.otherCharges || 0);
+         const calculatedGrandTotal = isWop ? 0 : Math.round(taxableAmount + calculatedTaxTotal + otherCharges);
+
+         const submissionData = {
+            ...formData,
+            items: cleanedItems,
+            subTotal: calculatedSubTotal,
+            taxTotal: calculatedTaxTotal,
+            grandTotal: calculatedGrandTotal
+         };
 
          if (mode === 'create') {
             const result = await (dispatch as any)(addInvoice(submissionData)).unwrap();
@@ -1341,7 +1404,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                                            <input type="number" className="form-control bg-transparent p-1 text-end" value={item.unitPrice} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={e => handleItemChange(index, 'unitPrice', e.target.value)} />
                                         </td>
                                         <td className="py-3 text-end fw-semibold">
-                                           ₹ {(item.amount || 0).toFixed(2)}
+                                           ₹ {((item.amount !== undefined && item.amount !== null && Number(item.amount) > 0) ? Number(item.amount) : ((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0))).toFixed(2)}
                                         </td>
                                      </>
                                   )}

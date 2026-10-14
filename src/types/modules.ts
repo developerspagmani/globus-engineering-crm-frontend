@@ -4,6 +4,8 @@ export interface InvoiceItem {
   process?: string;
   quantity: number;
   unitPrice: number;
+  price?: number;
+  qty?: number;
   tax: number;
   amount: number;
   total: number;

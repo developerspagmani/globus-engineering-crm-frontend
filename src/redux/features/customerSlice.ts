@@ -22,7 +22,7 @@ export const fetchCustomers = createAsyncThunk(
       let url = `/customers?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
-      if (id) url += `&id=${id}`;
+      if (id && id !== 'all') url += `&id=${id}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (industry && industry !== 'all') url += `&industry=${encodeURIComponent(industry)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
@@ -37,6 +37,20 @@ export const fetchCustomers = createAsyncThunk(
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch customers');
+    }
+  }
+);
+
+export const fetchDropdownCustomers = createAsyncThunk(
+  'customers/fetchDropdown',
+  async (params: { company_id?: string } | undefined, { rejectWithValue }) => {
+    try {
+      let url = `/customers?page=1&limit=5000`;
+      if (params?.company_id) url += `&companyId=${params.company_id}`;
+      const response = await api.get(url);
+      return response.data.items || [];
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch dropdown customers');
     }
   }
 );
@@ -79,10 +93,12 @@ export const deleteCustomer = createAsyncThunk(
 
 interface CustomerState {
   items: Customer[];
+  dropdownCustomers: Customer[];
   loading: boolean;
   error: string | null;
   filters: {
     search: string;
+    customerId?: string;
     status: string;
     industry: string;
     fromDate: string;
@@ -102,10 +118,12 @@ interface CustomerState {
 
 const initialState: CustomerState = {
   items: [],
+  dropdownCustomers: [],
   loading: false,
   error: null,
   filters: {
     search: '',
+    customerId: 'all',
     status: 'all',
     industry: 'all',
     fromDate: '',
@@ -137,6 +155,11 @@ const customerSlice = createSlice({
     setSorting: (state, action: PayloadAction<{ sortBy: string, sortOrder: 'asc' | 'desc' }>) => {
       state.sorting = action.payload;
       state.pagination.currentPage = 1;
+    },
+    resetCustomerState: (state) => {
+      state.filters = initialState.filters;
+      state.pagination = initialState.pagination;
+      state.sorting = initialState.sorting;
     },
   },
   extraReducers: (builder) => {
@@ -195,9 +218,8 @@ const customerSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      .addCase(createCustomer.fulfilled, (state, action: PayloadAction<any>) => {
-        const c = action.payload;
-        state.items.unshift({
+      .addCase(fetchDropdownCustomers.fulfilled, (state, action) => {
+        state.dropdownCustomers = (action.payload || []).map((c: any) => ({
           id: c.id?.toString() || '',
           name: c.name || c.customer_name || '',
           email: c.email || '',
@@ -234,60 +256,108 @@ const customerSlice = createSlice({
           paymentTerms: c.paymentTerms || c.payment_terms,
           company_id: c.company_id,
           createdAt: c.createdAt || c.app_created_at
-        });
+        }));
+      })
+      .addCase(createCustomer.fulfilled, (state, action: PayloadAction<any>) => {
+        const c = action.payload;
+        const newCustomer: Customer = {
+          id: c.id?.toString() || '',
+          name: c.name || c.customer_name || '',
+          email: c.email || '',
+          phone: c.phone || '',
+          company: c.company || c.name || c.customer_name || '',
+          industry: c.industry || '',
+          status: c.status || 'active',
+          street1: c.street1,
+          street2: c.street2,
+          city: c.city,
+          state: c.state,
+          stateCode: c.stateCode || c.state_code,
+          pinCode: c.pinCode || c.pin_code,
+          contactPerson1: c.contactPerson1 || c.contact_person1,
+          designation1: c.designation1 || c.designation1,
+          emailId1: c.emailId1 || c.email_id1,
+          phoneNumber1: c.phoneNumber1 || c.phone_number1,
+          contactPerson2: c.contactPerson2 || c.contact_person2,
+          designation2: c.designation2 || c.designation2,
+          emailId2: c.emailId2 || c.email_id2,
+          phoneNumber2: c.phoneNumber2 || c.phone_number2,
+          contactPerson3: c.contactPerson3 || c.contact_person3,
+          designation3: c.designation3 || c.designation3,
+          emailId3: c.emailId3 || c.email_id3,
+          phoneNumber3: c.phoneNumber3 || c.phone_number3,
+          landline: c.landline || c.land_line,
+          fax: c.fax,
+          gst: c.gst,
+          tin: c.tin,
+          cst: c.cst,
+          tc: c.tc,
+          vmc: c.vmc,
+          hmc: c.hmc,
+          paymentTerms: c.paymentTerms || c.payment_terms,
+          company_id: c.company_id,
+          createdAt: c.createdAt || c.app_created_at
+        };
+        state.items.unshift(newCustomer);
+        state.dropdownCustomers.unshift(newCustomer);
       })
       .addCase(updateCustomer.fulfilled, (state, action) => {
         const c = action.payload;
+        const updatedCustomer: Partial<Customer> = {
+          id: c.id?.toString() || '',
+          name: c.name || c.customer_name || '',
+          email: c.email || '',
+          phone: c.phone || '',
+          company: c.company || c.name || c.customer_name || '',
+          industry: c.industry || '',
+          status: c.status || 'active',
+          street1: c.street1,
+          street2: c.street2,
+          city: c.city,
+          state: c.state,
+          stateCode: c.stateCode || c.state_code,
+          pinCode: c.pinCode || c.pin_code,
+          contactPerson1: c.contactPerson1 || c.contact_person1,
+          designation1: c.designation1 || c.designation1,
+          emailId1: c.emailId1 || c.email_id1,
+          phoneNumber1: c.phoneNumber1 || c.phone_number1,
+          contactPerson2: c.contactPerson2 || c.contact_person2,
+          designation2: c.designation2 || c.designation2,
+          emailId2: c.emailId2 || c.email_id2,
+          phoneNumber2: c.phoneNumber2 || c.phone_number2,
+          contactPerson3: c.contactPerson3 || c.contact_person3,
+          designation3: c.designation3 || c.designation3,
+          emailId3: c.emailId3 || c.email_id3,
+          phoneNumber3: c.phoneNumber3 || c.phone_number3,
+          landline: c.landline || c.land_line,
+          fax: c.fax,
+          gst: c.gst,
+          tin: c.tin,
+          cst: c.cst,
+          tc: c.tc,
+          vmc: c.vmc,
+          hmc: c.hmc,
+          paymentTerms: c.paymentTerms || c.payment_terms,
+          company_id: c.company_id,
+          createdAt: c.createdAt || c.app_created_at
+        };
         const index = state.items.findIndex(item => item.id === c.id.toString());
         if (index !== -1) {
-          state.items[index] = {
-            ...state.items[index],
-            id: c.id?.toString() || '',
-            name: c.name || c.customer_name || '',
-            email: c.email || '',
-            phone: c.phone || '',
-            company: c.company || c.name || c.customer_name || '',
-            industry: c.industry || '',
-            status: c.status || 'active',
-            street1: c.street1,
-            street2: c.street2,
-            city: c.city,
-            state: c.state,
-            stateCode: c.stateCode || c.state_code,
-            pinCode: c.pinCode || c.pin_code,
-            contactPerson1: c.contactPerson1 || c.contact_person1,
-            designation1: c.designation1 || c.designation1,
-            emailId1: c.emailId1 || c.email_id1,
-            phoneNumber1: c.phoneNumber1 || c.phone_number1,
-            contactPerson2: c.contactPerson2 || c.contact_person2,
-            designation2: c.designation2 || c.designation2,
-            emailId2: c.emailId2 || c.email_id2,
-            phoneNumber2: c.phoneNumber2 || c.phone_number2,
-            contactPerson3: c.contactPerson3 || c.contact_person3,
-            designation3: c.designation3 || c.designation3,
-            emailId3: c.emailId3 || c.email_id3,
-            phoneNumber3: c.phoneNumber3 || c.phone_number3,
-            landline: c.landline || c.land_line,
-            fax: c.fax,
-            gst: c.gst,
-            tin: c.tin,
-            cst: c.cst,
-            tc: c.tc,
-            vmc: c.vmc,
-            hmc: c.hmc,
-            paymentTerms: c.paymentTerms || c.payment_terms,
-            company_id: c.company_id,
-            createdAt: c.createdAt || c.app_created_at
-          };
+          state.items[index] = { ...state.items[index], ...updatedCustomer } as Customer;
+        }
+        const dropdownIndex = state.dropdownCustomers.findIndex(item => item.id === c.id.toString());
+        if (dropdownIndex !== -1) {
+          state.dropdownCustomers[dropdownIndex] = { ...state.dropdownCustomers[dropdownIndex], ...updatedCustomer } as Customer;
         }
       })
       .addCase(deleteCustomer.fulfilled, (state, action) => {
         state.items = state.items.filter(c => c.id !== action.payload);
+        state.dropdownCustomers = state.dropdownCustomers.filter(c => c.id !== action.payload);
       });
   }
 });
 
-export const { setFilters, setPage, setSorting } = customerSlice.actions;
+export const { setFilters, setPage, setSorting, resetCustomerState } = customerSlice.actions;
 
 export const addCustomer = createCustomer;
 export default customerSlice.reducer;

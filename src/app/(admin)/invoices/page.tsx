@@ -34,6 +34,7 @@ export default function InvoiceHistoryPage() {
     const qFromDate = searchParams.get('fromDate');
     const qToDate = searchParams.get('toDate');
     const qProcess = searchParams.get('process');
+    const qCustomerId = searchParams.get('customerId') || searchParams.get('customer_id');
     const qPage = searchParams.get('page');
     const qSortBy = searchParams.get('sortBy');
     const qSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
@@ -45,6 +46,7 @@ export default function InvoiceHistoryPage() {
     if (qFromDate !== null && qFromDate !== '') initialFilters.fromDate = qFromDate;
     if (qToDate !== null && qToDate !== '') initialFilters.toDate = qToDate;
     if (qProcess !== null && qProcess !== '') initialFilters.process = qProcess;
+    if (qCustomerId !== null && qCustomerId !== '' && qCustomerId !== 'all') initialFilters.customerId = qCustomerId;
 
     if (Object.keys(initialFilters).length > 0) {
       dispatch(setInvoiceFilters(initialFilters));
@@ -100,6 +102,9 @@ export default function InvoiceHistoryPage() {
       if (filters.process && filters.process !== 'all') {
         params.set('process', filters.process);
       }
+      if (filters.customerId && filters.customerId !== 'all') {
+        params.set('customerId', filters.customerId);
+      }
 
       // Sync pagination
       if (pagination.currentPage > 1) {
@@ -130,6 +135,7 @@ export default function InvoiceHistoryPage() {
     filters.fromDate,
     filters.toDate,
     filters.process,
+    filters.customerId,
     pagination.currentPage,
     invoiceSorting?.sortBy,
     invoiceSorting?.sortOrder,
@@ -172,7 +178,8 @@ export default function InvoiceHistoryPage() {
                   fromDate: filters.fromDate || '',
                   toDate: filters.toDate || '',
                   partyType: filters.partyType || 'all',
-                  process: filters.process || 'all'
+                  process: filters.process || 'all',
+                  ...(filters.customerId && filters.customerId !== 'all' ? { customer_id: filters.customerId } : {})
                 });
                 const response = await api.get(`/invoices?${params.toString()}`);
                 return response.data.items.map((raw: any) => {

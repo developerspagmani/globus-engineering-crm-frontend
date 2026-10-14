@@ -30,13 +30,14 @@ const CustomerTable: React.FC = () => {
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
       search: filters.search,
+      id: filters.customerId && filters.customerId !== 'all' ? filters.customerId : undefined,
       status: filters.status,
       fromDate: filters.fromDate,
       toDate: filters.toDate,
       sortBy: sorting.sortBy,
       sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
+  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.customerId, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
@@ -97,7 +98,7 @@ const CustomerTable: React.FC = () => {
   };
 
   return (
-    <div className="card shadow-sm border-0 bg-white rounded-4 overflow-hidden">
+    <div className="card shadow-sm border-0 bg-white rounded-4 overflow-hidden" style={{ position: 'relative', zIndex: 1 }}>
       <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
           <table className="table table-hover align-middle mb-0">
             <thead className="bg-light">

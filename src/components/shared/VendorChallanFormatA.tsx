@@ -47,6 +47,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
    const dcDate = data.date
       ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-')
       : '-';
+   const vehicleNo = data.vehicleNo || data.vehicle_no || data.vehicle || '-';
 
    const items: any[] = data.items || [];
    const totalQty = items.reduce((s: number, it: any) => s + Number(it.quantity || 0), 0);
@@ -121,12 +122,16 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                            <div className="cha-dc-val" style={{ fontSize: '18px', fontWeight: '900', color: '#000', letterSpacing: '1px' }}>CANCELLED</div>
                         </div>
                      )}
-                     {data.processName && data.processName !== "REJECTED / RETURNED" && !(data.status === "cancelled" && data.inwardNo) && (
+                     {data.partyType === 'customer' && data.processName && data.processName !== "REJECTED / RETURNED" && !(data.status === "cancelled" && data.inwardNo) && (
                         <div className="cha-dc-row">
                            <div className="cha-dc-key">PROCESS</div>
                            <div className="cha-dc-val" style={{ fontSize: '14px', fontWeight: 'bold', color: '#000' }}>{data.processName}</div>
                         </div>
                      )}
+                     <div className="cha-dc-row">
+                        <div className="cha-dc-key">VEHICLE NO</div>
+                        <div className="cha-dc-val cha-dc-veh-val">{vehicleNo}</div>
+                     </div>
                      {data.partyType !== 'customer' && (
                         <div className="cha-dc-row">
                            <div className="cha-dc-key">COATING</div>
@@ -404,6 +409,11 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                font-size: 13px;
                font-weight: bold;
                color: #333;
+            }
+            .cha-dc-veh-val {
+               font-size: 13px;
+               font-weight: bold;
+               color: #000;
             }
 
             /* ── TABLE ─────────────────────────────────────── */

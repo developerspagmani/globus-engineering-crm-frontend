@@ -1,63 +1,80 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { setFilters } from '@/redux/features/customerSlice';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { setFilters, fetchDropdownCustomers } from '@/redux/features/customerSlice';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 
 const CustomerFilter: React.FC = () => {
   const dispatch = useDispatch();
-  const { filters } = useSelector((state: RootState) => state.customers);
-  const [searchTerm, setSearchTerm] = React.useState(filters.search);
+  const { filters, dropdownCustomers, items } = useSelector((state: RootState) => state.customers);
+  const activeCompanyId = useSelector((state: RootState) => state.auth.company?.id);
 
-  // Sync local state with redux filters (e.g. on clear)
-  React.useEffect(() => {
-    setSearchTerm(filters.search);
-  }, [filters.search]);
+  useEffect(() => {
+    if (activeCompanyId && dropdownCustomers.length === 0) {
+      dispatch(fetchDropdownCustomers({ company_id: activeCompanyId }) as any);
+    }
+  }, [activeCompanyId, dropdownCustomers.length, dispatch]);
 
-  // Debounce search
-  React.useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchTerm !== filters.search) {
-        dispatch(setFilters({ search: searchTerm }));
-      }
-    }, 500);
+  const customerList = dropdownCustomers.length > 0 ? dropdownCustomers : items;
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, dispatch, filters.search]);
+  const customerOptions = useMemo(() => {
+    const sorted = [...customerList].sort((a, b) =>
+      (a.company || a.name || '').localeCompare(b.company || b.name || '')
+    );
+    return [
+      { value: 'all', label: 'All Customers', displayLabel: 'All Customers' },
+      ...sorted.map(c => ({
+        value: String(c.id),
+        label: c.company || c.name || `Customer #${c.id}`,
+        displayLabel: c.company || c.name || `Customer #${c.id}`
+      }))
+    ];
+  }, [customerList]);
+
+  const handleCustomerChange = (val: string | number) => {
+    dispatch(setFilters({ customerId: String(val) }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if (name === 'search') {
-      setSearchTerm(value);
-    } else {
-      dispatch(setFilters({ [name]: value }));
-    }
+    dispatch(setFilters({ [name]: value }));
+  };
+
+  const hasActiveFilters = Boolean(
+    (filters.customerId && filters.customerId !== 'all') ||
+    filters.search ||
+    (filters.status && filters.status !== 'all') ||
+    filters.fromDate ||
+    filters.toDate
+  );
+
+  const handleClear = () => {
+    dispatch(setFilters({
+      customerId: 'all',
+      search: '',
+      status: 'all',
+      fromDate: '',
+      toDate: ''
+    }));
   };
 
   return (
-    <div className="card filter-card">
-      <div className="card-body">
-        <div className="filter-bar-row">
-          <div className="filter-item-search">
-            <div className="search-group">
-              <span className="input-group-text">
-                <i className="bi bi-search"></i>
-              </span>
-              <input
-                type="text"
-                className="form-control search-bar"
-                placeholder="Search by customer name..."
-                name="search"
-                value={searchTerm}
-                onChange={handleChange}
-              />
-            </div>
+    <div className="card filter-card mb-4" style={{ overflow: 'visible', position: 'relative', zIndex: 100 }}>
+      <div className="card-body p-3" style={{ overflow: 'visible' }}>
+        <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+          <div className="filter-item-select flex-grow-1 customer-select-filter" style={{ minWidth: '260px' }}>
+            <SearchableSelect
+              options={customerOptions}
+              value={filters.customerId || 'all'}
+              onChange={handleCustomerChange}
+              placeholder="Select Customer"
+              className="w-100"
+            />
           </div>
 
-          <div className="filter-item-select">
+          <div className="filter-item-select" style={{ minWidth: '150px' }}>
             <select
               className="form-select search-bar"
               name="status"
@@ -88,8 +105,32 @@ const CustomerFilter: React.FC = () => {
               onChange={handleChange}
             />
           </div>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
+              style={{ height: '38px', borderRadius: '8px', fontSize: '0.78rem' }}
+              onClick={handleClear}
+              title="Reset all filters"
+            >
+              <i className="bi bi-x-circle"></i>
+              <span>Clear</span>
+            </button>
+          )}
         </div>
       </div>
+
+      <style jsx>{`
+        .customer-select-filter :global(.form-select) {
+          height: 42px !important;
+          min-height: 42px !important;
+          border-radius: 0.5rem !important;
+          border: 1px solid #e2e8f0 !important;
+          background-color: #fff !important;
+          font-size: 0.875rem !important;
+        }
+      `}</style>
     </div>
   );
 };

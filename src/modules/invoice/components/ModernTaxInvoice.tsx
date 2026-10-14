@@ -38,18 +38,24 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
   if (String(invoice.type).toUpperCase() === 'BOTH' && typeParam) {
     if (typeParam === 'WP') {
       displayItems = invoice.items
-        .map(it => ({
-          ...it,
-          quantity: Number(it.quantity || 0),
-          amount: Number(it.amount || 0)
-        }))
+        .map(it => {
+          const qty = Number(it.quantity || 0);
+          const price = Number(it.unitPrice || (it as any).price || 0);
+          const amount = Number(it.amount) > 0 ? Number(it.amount) : Number((qty * price).toFixed(2));
+          return {
+            ...it,
+            quantity: qty,
+            unitPrice: price,
+            amount
+          };
+        })
         .filter(it => it.quantity > 0);
       isWOP = false;
     } else if (typeParam === 'WOP') {
       displayItems = invoice.items
         .map((it, idx) => ({
           ...it,
-          quantity: Number(it.wopQty) || Number(it.quantity) || 0,
+          quantity: Number(it.wopQty !== undefined ? it.wopQty : it.quantity) || 0,
           amount: 0,
           unitPrice: 0,
           originalIndex: idx + 1
@@ -61,14 +67,26 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
     displayItems = displayItems
       .map((it, idx) => ({
         ...it,
-        quantity: Number(it.wopQty) || Number(it.quantity) || 0,
+        quantity: Number(it.wopQty !== undefined ? it.wopQty : it.quantity) || 0,
         amount: 0,
         unitPrice: 0,
         originalIndex: idx + 1
       }))
       .filter(it => it.quantity > 0);
   } else {
-    displayItems = displayItems.filter(it => Number(it.quantity || 0) > 0);
+    displayItems = displayItems
+      .map(it => {
+        const qty = Number(it.quantity || 0);
+        const price = Number(it.unitPrice || (it as any).price || 0);
+        const amount = Number(it.amount) > 0 ? Number(it.amount) : Number((qty * price).toFixed(2));
+        return {
+          ...it,
+          quantity: qty,
+          unitPrice: price,
+          amount
+        };
+      })
+      .filter(it => Number(it.quantity || 0) > 0);
   }
 
   // Financial Calculations
@@ -329,7 +347,7 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
               {displayItems.map((item, idx) => {
                 const qty = Number(item.quantity || 0);
                 const unitPrice = Number(item.unitPrice || 0);
-                const itemTotal = Number(item.amount) || (qty * unitPrice);
+                const itemTotal = Number(item.amount) > 0 ? Number(item.amount) : (qty * unitPrice);
 
                 return (
                   <tr key={idx} className="item-row">
