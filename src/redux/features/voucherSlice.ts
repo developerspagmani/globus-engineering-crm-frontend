@@ -14,13 +14,14 @@ export const fetchVouchers = createAsyncThunk(
     fromDate?: string;
     toDate?: string;
     partyId?: string;
+    customerId?: string;
     partyType?: string;
     id?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, type, status, fromDate, toDate, partyId, id, sortBy, sortOrder } = params;
+      const { company_id, page = 1, limit = 10, search, type, status, fromDate, toDate, partyId, customerId, id, sortBy, sortOrder } = params;
       let url = `/vouchers?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -29,7 +30,8 @@ export const fetchVouchers = createAsyncThunk(
       if (status && status !== 'all') url += `&status=${status}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
-      if (partyId) url += `&partyId=${partyId}`;
+      const targetPartyId = customerId || partyId;
+      if (targetPartyId && targetPartyId !== 'all') url += `&partyId=${targetPartyId}`;
       if (id) url += `&id=${id}`;
       if (sortBy) url += `&sortBy=${sortBy}`;
       if (sortOrder) url += `&sortOrder=${sortOrder}`;
@@ -164,6 +166,8 @@ interface VoucherState {
   error: string | null;
   filters: {
     search: string;
+    customerId?: string;
+    partyId?: string;
     type: 'all' | 'payment' | 'receipt' | 'journal' | 'contra';
     partyType: 'all' | 'customer' | 'vendor';
     status: 'all' | 'draft' | 'posted' | 'cancelled';
@@ -193,6 +197,8 @@ const initialState: VoucherState = {
   error: null,
   filters: {
     search: '',
+    customerId: 'all',
+    partyId: 'all',
     type: 'all',
     partyType: 'customer',
     status: 'all',

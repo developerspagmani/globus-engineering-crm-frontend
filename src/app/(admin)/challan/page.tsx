@@ -1,14 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 
 import { RootState } from '@/redux/store';
 import { setChallanFilters, setChallanPage, fetchChallans, deleteChallan, setChallanSorting } from '@/redux/features/challanSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 import Breadcrumb from '@/components/Breadcrumb';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
 import html2canvas from 'html2canvas';
@@ -23,15 +26,20 @@ import SortableHeader from '@/components/shared/SortableHeader';
 const ChallanPage = () => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading, sorting } = useSelector((state: RootState) => state.challan);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
-  const [mounted, setMounted] = React.useState(false);
+  const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
 
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const [mounted, setMounted] = useState(false);
+  const isInitializedRef = useRef(false);
 
   // State and Hooks (Must be called before any early returns)
   const [downloadingItem, setDownloadingItem] = useState<any>(null);
-  const downloadRef = React.useRef<HTMLDivElement>(null);
+  const downloadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (downloadingItem && downloadRef.current) {
@@ -53,22 +61,207 @@ const ChallanPage = () => {
     }
   }, [downloadingItem]);
 
-  React.useEffect(() => {
+  // Fetch customers & vendors if not yet in state
+  useEffect(() => {
+    if (activeCompany?.id) {
+      if (customers.length === 0) {
+        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      }
+      if (vendors.length === 0) {
+        (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      }
+    }
+  }, [dispatch, activeCompany?.id, customers.length, vendors.length]);
+
+  const effectivePartyType = filters.partyType || 'customer';
+  const isVendor = effectivePartyType === 'vendor';
+
+  const partyOptions = useMemo(() => {
+    if (effectivePartyType === 'vendor') {
+      const sorted = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Vendors', displayLabel: 'All Vendors' },
+        ...sorted.map(v => ({
+          value: String(v.id),
+          label: v.name || v.company || `Vendor #${v.id}`,
+          displayLabel: v.name || v.company || `Vendor #${v.id}`
+        }))
+      ];
+    } else if (effectivePartyType === 'customer') {
+      const sorted = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      return [
+        { value: 'all', label: 'All Customers', displayLabel: 'All Customers' },
+        ...sorted.map(c => ({
+          value: String(c.id),
+          label: c.company || c.name || `Customer #${c.id}`,
+          displayLabel: c.company || c.name || `Customer #${c.id}`
+        }))
+      ];
+    } else {
+      const sortedCustomers = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      const sortedVendors = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Parties', displayLabel: 'All Parties' },
+        ...sortedCustomers.map(c => ({
+          value: String(c.id),
+          label: `${c.company || c.name} (Customer)`,
+          displayLabel: c.company || c.name
+        })),
+        ...sortedVendors.map(v => ({
+          value: String(v.id),
+          label: `${v.name || v.company} (Vendor)`,
+          displayLabel: v.name || v.company
+        }))
+      ];
+    }
+  }, [effectivePartyType, vendors, customers]);
+
+  // 1. Initial Load: Read all query parameters from URL and populate Redux state
+  useEffect(() => {
     setMounted(true);
+
+    const qPartyType = searchParams.get('partyType') || searchParams.get('type');
+    const qSearch = searchParams.get('search');
+    const qCustomerId = searchParams.get('customerId') || searchParams.get('customer_id') || searchParams.get('partyId');
+    const qStatus = searchParams.get('status');
+    const qBillType = searchParams.get('bill_type');
+    const qFromDate = searchParams.get('fromDate');
+    const qToDate = searchParams.get('toDate');
+    const qPage = searchParams.get('page');
+    const qSortBy = searchParams.get('sortBy');
+    const qSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
+
+    const initialFilters: any = {};
+    if (qPartyType) initialFilters.partyType = qPartyType;
+    if (qSearch !== null && qSearch !== '') initialFilters.search = qSearch;
+    if (qCustomerId !== null && qCustomerId !== '' && qCustomerId !== 'all') initialFilters.customerId = qCustomerId;
+    if (qStatus !== null && qStatus !== '') initialFilters.status = qStatus;
+    if (qBillType !== null && qBillType !== '') initialFilters.bill_type = qBillType;
+    if (qFromDate !== null && qFromDate !== '') initialFilters.fromDate = qFromDate;
+    if (qToDate !== null && qToDate !== '') initialFilters.toDate = qToDate;
+
+    if (Object.keys(initialFilters).length > 0) {
+      dispatch(setChallanFilters(initialFilters));
+    }
+
+    if (qPage && !isNaN(parseInt(qPage)) && parseInt(qPage) > 1) {
+      dispatch(setChallanPage(parseInt(qPage)));
+    }
+
+    if (qSortBy) {
+      dispatch(setChallanSorting({
+        sortBy: qSortBy,
+        sortOrder: qSortOrder === 'asc' ? 'asc' : 'desc'
+      }));
+    }
+
+    isInitializedRef.current = true;
+  }, [dispatch]);
+
+  // 2. State to URL Sync
+  useEffect(() => {
+    if (!isInitializedRef.current || !mounted) return;
+
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams();
+
+      if (filters.partyType && filters.partyType !== 'customer') {
+        params.set('partyType', filters.partyType);
+      }
+      if (filters.search && filters.search.trim()) {
+        params.set('search', filters.search.trim());
+      }
+      if (filters.customerId && filters.customerId !== 'all') {
+        params.set('customerId', filters.customerId);
+      }
+      if (filters.status && filters.status !== 'all') {
+        params.set('status', filters.status);
+      }
+      if (filters.bill_type && filters.bill_type !== 'all') {
+        params.set('bill_type', filters.bill_type);
+      }
+      if (filters.fromDate) {
+        params.set('fromDate', filters.fromDate);
+      }
+      if (filters.toDate) {
+        params.set('toDate', filters.toDate);
+      }
+
+      if (pagination.currentPage > 1) {
+        params.set('page', String(pagination.currentPage));
+      }
+
+      if (sorting?.sortBy && sorting.sortBy !== 'created_at' && sorting.sortBy !== 'id') {
+        params.set('sortBy', sorting.sortBy);
+      }
+      if (sorting?.sortOrder && sorting.sortOrder !== 'desc') {
+        params.set('sortOrder', sorting.sortOrder);
+      }
+
+      const currentQs = searchParams.toString();
+      const newQs = params.toString();
+
+      if (currentQs !== newQs) {
+        router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
+      }
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [
+    filters.search,
+    filters.customerId,
+    filters.status,
+    filters.partyType,
+    filters.bill_type,
+    filters.fromDate,
+    filters.toDate,
+    pagination.currentPage,
+    sorting?.sortBy,
+    sorting?.sortOrder,
+    searchParams,
+    pathname,
+    router,
+    mounted
+  ]);
+
+  useEffect(() => {
     (dispatch as any)(fetchChallans({
       company_id: activeCompany?.id,
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
       search: filters.search,
-      partyType: filters.partyType,
-      status: filters.status,
-      bill_type: filters.bill_type,
+      partyType: filters.partyType !== 'all' ? filters.partyType : undefined,
+      customerId: filters.customerId !== 'all' ? filters.customerId : undefined,
+      status: filters.status !== 'all' ? filters.status : undefined,
+      bill_type: filters.bill_type !== 'all' ? filters.bill_type : undefined,
       fromDate: filters.fromDate,
       toDate: filters.toDate,
       sortBy: sorting.sortBy,
       sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType, filters.status, filters.bill_type, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
+  }, [
+    dispatch,
+    activeCompany?.id,
+    pagination.currentPage,
+    pagination.itemsPerPage,
+    filters.search,
+    filters.partyType,
+    filters.customerId,
+    filters.status,
+    filters.bill_type,
+    filters.fromDate,
+    filters.toDate,
+    sorting.sortBy,
+    sorting.sortOrder
+  ]);
 
   if (!mounted) return <Loader text="Initializing..." />;
 
@@ -146,17 +339,30 @@ const ChallanPage = () => {
         </div>
       </div>
 
-      <div className="card filter-card">
-        <div className="card-body p-3">
+      <div className="card filter-card" style={{ overflow: 'visible', position: 'relative', zIndex: 100 }}>
+        <div className="card-body p-3" style={{ overflow: 'visible' }}>
           <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+            {/* Party Type Toggle */}
             <div className="filter-item-select" style={{ minWidth: '150px' }}>
               <PartyTypeToggle
                 partyType={(filters.partyType as any) || 'customer'}
-                setPartyType={(val) => dispatch(setChallanFilters({ partyType: val }))}
+                setPartyType={(val) => dispatch(setChallanFilters({ partyType: val, customerId: 'all' }))}
               />
             </div>
             
-            <div className="filter-item-search flex-grow-1">
+            {/* Separate Customer Dropdown List with Search Input */}
+            <div className="filter-item-select flex-grow-1 challan-customer-filter" style={{ minWidth: '240px' }}>
+              <SearchableSelect
+                options={partyOptions}
+                value={filters.customerId || 'all'}
+                onChange={(val) => dispatch(setChallanFilters({ customerId: String(val) }))}
+                placeholder={isVendor ? 'Select Vendor' : 'Select Customer'}
+                className="w-100"
+              />
+            </div>
+
+            {/* General Search Input */}
+            <div className="filter-item-search" style={{ minWidth: '220px' }}>
               <div className="search-group">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
@@ -164,13 +370,14 @@ const ChallanPage = () => {
                 <input
                   type="text"
                   className="form-control search-bar"
-                  placeholder="Search by challan or party..."
+                  placeholder="Search by challan no, vehicle..."
                   value={filters.search}
                   onChange={(e) => dispatch(setChallanFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
 
+            {/* Bill Type Filter */}
             <div className="filter-item-select" style={{ minWidth: '150px' }}>
               <select
                 className="form-select search-bar"
@@ -184,6 +391,7 @@ const ChallanPage = () => {
               </select>
             </div>
 
+            {/* Status Filter */}
             <div className="filter-item-select" style={{ minWidth: '150px' }}>
               <select
                 className="form-select search-bar"
@@ -197,6 +405,7 @@ const ChallanPage = () => {
               </select>
             </div>
 
+            {/* Date Filter Group */}
             <div className="date-filter-group">
               <input
                 type="date"
@@ -212,11 +421,25 @@ const ChallanPage = () => {
                 onChange={(e) => dispatch(setChallanFilters({ toDate: e.target.value }))}
               />
             </div>
+
+            {/* Clear Filter Button */}
+            {((filters.customerId && filters.customerId !== 'all') || filters.search || (filters.status && filters.status !== 'all') || (filters.bill_type && filters.bill_type !== 'all') || filters.fromDate || filters.toDate) && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
+                style={{ height: '38px', borderRadius: '8px', fontSize: '0.78rem' }}
+                onClick={() => dispatch(setChallanFilters({ search: '', status: 'all', bill_type: 'all', fromDate: '', toDate: '', customerId: 'all' }))}
+                title="Reset all filters"
+              >
+                <i className="bi bi-x-circle"></i>
+                <span>Clear</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm">
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white" style={{ position: 'relative', zIndex: 1 }}>
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">

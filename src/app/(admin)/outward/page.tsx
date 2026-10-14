@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { fetchOutwards, deleteOutward, setOutwardFilters, setOutwardPage, setOutwardSorting, resetOutwardState } from '@/redux/features/outwardSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 import Breadcrumb from '@/components/Breadcrumb';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
@@ -12,7 +15,7 @@ import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 import SortableHeader from '@/components/shared/SortableHeader';
@@ -23,21 +26,188 @@ import html2canvas from 'html2canvas';
 export default function OutwardListPage() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const partyTypeFilter = searchParams.get('type') as 'customer' | 'vendor' | null;
   const { items: outwards, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.outward);
+  const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
   const { company, user } = useSelector((state: RootState) => state.auth);
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
+  const isInitializedRef = useRef(false);
 
+  // Fetch customers & vendors if not yet in state
+  useEffect(() => {
+    if (company?.id) {
+      if (customers.length === 0) {
+        (dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 }));
+      }
+      if (vendors.length === 0) {
+        (dispatch as any)(fetchVendors({ company_id: company.id, limit: 1000 }));
+      }
+    }
+  }, [dispatch, company?.id, customers.length, vendors.length]);
 
+  const effectivePartyType = partyTypeFilter || (filters.partyType !== 'all' ? filters.partyType : null) || 'customer';
+  const isVendor = effectivePartyType === 'vendor';
+
+  const partyOptions = useMemo(() => {
+    if (effectivePartyType === 'vendor') {
+      const sorted = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Vendors', displayLabel: 'All Vendors' },
+        ...sorted.map(v => ({
+          value: String(v.id),
+          label: v.name || v.company || `Vendor #${v.id}`,
+          displayLabel: v.name || v.company || `Vendor #${v.id}`
+        }))
+      ];
+    } else if (effectivePartyType === 'customer') {
+      const sorted = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      return [
+        { value: 'all', label: 'All Customers', displayLabel: 'All Customers' },
+        ...sorted.map(c => ({
+          value: String(c.id),
+          label: c.company || c.name || `Customer #${c.id}`,
+          displayLabel: c.company || c.name || `Customer #${c.id}`
+        }))
+      ];
+    } else {
+      const sortedCustomers = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      const sortedVendors = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Parties', displayLabel: 'All Parties' },
+        ...sortedCustomers.map(c => ({
+          value: String(c.id),
+          label: `${c.company || c.name} (Customer)`,
+          displayLabel: c.company || c.name
+        })),
+        ...sortedVendors.map(v => ({
+          value: String(v.id),
+          label: `${v.name || v.company} (Vendor)`,
+          displayLabel: v.name || v.company
+        }))
+      ];
+    }
+  }, [effectivePartyType, vendors, customers]);
+
+  // 1. Initial Load: Read all query parameters from URL and populate Redux state
   useEffect(() => {
     setMounted(true);
+
+    const qType = searchParams.get('type') as 'customer' | 'vendor' | null;
+    const qSearch = searchParams.get('search');
+    const qCustomerId = searchParams.get('customerId') || searchParams.get('customer_id');
+    const qStatus = searchParams.get('status');
+    const qFromDate = searchParams.get('fromDate');
+    const qToDate = searchParams.get('toDate');
+    const qPage = searchParams.get('page');
+    const qSortBy = searchParams.get('sortBy');
+    const qSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
+
+    const initialFilters: any = {};
+    if (qType) initialFilters.partyType = qType;
+    if (qSearch !== null && qSearch !== '') initialFilters.search = qSearch;
+    if (qCustomerId !== null && qCustomerId !== '' && qCustomerId !== 'all') initialFilters.customerId = qCustomerId;
+    if (qStatus !== null && qStatus !== '') initialFilters.status = qStatus;
+    if (qFromDate !== null && qFromDate !== '') initialFilters.fromDate = qFromDate;
+    if (qToDate !== null && qToDate !== '') initialFilters.toDate = qToDate;
+
+    if (Object.keys(initialFilters).length > 0) {
+      dispatch(setOutwardFilters(initialFilters));
+    }
+
+    if (qPage && !isNaN(parseInt(qPage)) && parseInt(qPage) > 1) {
+      dispatch(setOutwardPage(parseInt(qPage)));
+    }
+
+    if (qSortBy) {
+      dispatch(setOutwardSorting({
+        sortBy: qSortBy,
+        sortOrder: qSortOrder === 'asc' ? 'asc' : 'desc'
+      }));
+    }
+
+    isInitializedRef.current = true;
+
     return () => {
       dispatch(resetOutwardState());
     };
   }, [dispatch]);
+
+  // 2. State to URL Sync: Whenever filters, page, or sorting change, update the URL
+  useEffect(() => {
+    if (!isInitializedRef.current || !mounted) return;
+
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams();
+
+      const currentType = searchParams.get('type') || (filters.partyType !== 'all' ? filters.partyType : null);
+      if (currentType) {
+        params.set('type', currentType);
+      }
+
+      if (filters.search && filters.search.trim()) {
+        params.set('search', filters.search.trim());
+      }
+      if (filters.customerId && filters.customerId !== 'all') {
+        params.set('customerId', filters.customerId);
+      }
+      if (filters.status && filters.status !== 'all') {
+        params.set('status', filters.status);
+      }
+      if (filters.fromDate) {
+        params.set('fromDate', filters.fromDate);
+      }
+      if (filters.toDate) {
+        params.set('toDate', filters.toDate);
+      }
+
+      if (pagination.currentPage > 1) {
+        params.set('page', String(pagination.currentPage));
+      }
+
+      if (sorting?.sortBy && sorting.sortBy !== 'outward_no' && sorting.sortBy !== 'id') {
+        params.set('sortBy', sorting.sortBy);
+      }
+      if (sorting?.sortOrder && sorting.sortOrder !== 'desc') {
+        params.set('sortOrder', sorting.sortOrder);
+      }
+
+      const currentQs = searchParams.toString();
+      const newQs = params.toString();
+
+      if (currentQs !== newQs) {
+        router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
+      }
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [
+    filters.search,
+    filters.customerId,
+    filters.status,
+    filters.partyType,
+    filters.fromDate,
+    filters.toDate,
+    pagination.currentPage,
+    sorting?.sortBy,
+    sorting?.sortOrder,
+    searchParams,
+    pathname,
+    router,
+    mounted
+  ]);
 
   useEffect(() => {
     (dispatch as any)(fetchOutwards({
@@ -45,14 +215,29 @@ export default function OutwardListPage() {
       page: pagination.currentPage,
       limit: pagination.itemsPerPage,
       search: filters.search,
-      partyType: partyTypeFilter || filters.partyType,
-      status: filters.status,
+      partyType: partyTypeFilter || (filters.partyType !== 'all' ? filters.partyType : undefined),
+      customerId: filters.customerId !== 'all' ? filters.customerId : undefined,
+      status: filters.status !== 'all' ? filters.status : undefined,
       fromDate: filters.fromDate,
       toDate: filters.toDate,
       sortBy: sorting.sortBy,
       sortOrder: sorting.sortOrder
     }));
-  }, [dispatch, company?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, partyTypeFilter, filters.partyType, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
+  }, [
+    dispatch,
+    company?.id,
+    pagination.currentPage,
+    pagination.itemsPerPage,
+    filters.search,
+    filters.customerId,
+    partyTypeFilter,
+    filters.partyType,
+    filters.status,
+    filters.fromDate,
+    filters.toDate,
+    sorting.sortBy,
+    sorting.sortOrder
+  ]);
 
   const totalPages = pagination.totalPages;
   const paginatedOutwards = outwards;
@@ -125,9 +310,21 @@ export default function OutwardListPage() {
         </div>
 
         {/* Filter Section - Aligned in one row */}
-        <div className="card filter-card">
-          <div className="card-body p-3">
-            <div className="filter-bar-row">
+        <div className="card filter-card" style={{ overflow: 'visible', position: 'relative', zIndex: 100 }}>
+          <div className="card-body p-3" style={{ overflow: 'visible' }}>
+            <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
+              {/* Separate Customer Dropdown List with Search Input */}
+              <div className="filter-item-select flex-grow-1 outward-customer-filter" style={{ minWidth: '260px' }}>
+                <SearchableSelect
+                  options={partyOptions}
+                  value={filters.customerId || 'all'}
+                  onChange={(val) => dispatch(setOutwardFilters({ customerId: String(val) }))}
+                  placeholder={isVendor ? 'Select Vendor' : 'Select Customer'}
+                  className="w-100"
+                />
+              </div>
+
+              {/* General Search Input */}
               <div className="filter-item-search">
                 <div className="search-group">
                   <span className="input-group-text">
@@ -135,13 +332,29 @@ export default function OutwardListPage() {
                   </span>
                   <input
                     type="text"
-                    placeholder="Search by outward no, party name..."
+                    placeholder="Search by outward no, invoice ref..."
                     className="form-control search-bar"
                     value={filters.search}
                     onChange={(e) => dispatch(setOutwardFilters({ search: e.target.value }))}
                   />
                 </div>
               </div>
+
+              {/* Status Filter */}
+              <div className="filter-item-select" style={{ minWidth: '150px' }}>
+                <select
+                  className="form-select search-bar"
+                  value={filters.status}
+                  onChange={(e) => dispatch(setOutwardFilters({ status: e.target.value as any }))}
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              {/* Date Filter Group */}
               <div className="date-filter-group">
                 <input
                   type="date"
@@ -157,11 +370,25 @@ export default function OutwardListPage() {
                   onChange={(e) => dispatch(setOutwardFilters({ toDate: e.target.value }))}
                 />
               </div>
+
+              {/* Clear Filter Button */}
+              {((filters.customerId && filters.customerId !== 'all') || filters.search || (filters.status && filters.status !== 'all') || filters.fromDate || filters.toDate) && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
+                  style={{ height: '38px', borderRadius: '8px', fontSize: '0.78rem' }}
+                  onClick={() => dispatch(setOutwardFilters({ search: '', status: 'all', fromDate: '', toDate: '', customerId: 'all' }))}
+                  title="Reset all filters"
+                >
+                  <i className="bi bi-x-circle"></i>
+                  <span>Clear</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white" style={{ position: 'relative', zIndex: 1 }}>
           <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
             {loading ? <Loader text="Loading Records..." /> : (
               <table className="table align-middle mb-0 table-hover">
@@ -226,7 +453,7 @@ export default function OutwardListPage() {
                     </tr>
                   ))}
                   {outwards.length === 0 && (
-                    <tr><td colSpan={8} className="text-center py-5 text-muted small">No outward entries found.</td></tr>
+                    <tr><td colSpan={9} className="text-center py-5 text-muted small">No outward entries found.</td></tr>
                   )}
                 </tbody>
               </table>

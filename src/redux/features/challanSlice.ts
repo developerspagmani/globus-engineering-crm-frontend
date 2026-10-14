@@ -10,6 +10,7 @@ export const fetchChallans = createAsyncThunk(
     limit?: number; 
     search?: string; 
     partyType?: string;
+    customerId?: string;
     id?: string;
     status?: string;
     type?: string;
@@ -20,11 +21,12 @@ export const fetchChallans = createAsyncThunk(
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id, status, type, bill_type, fromDate, toDate, sortBy, sortOrder } = params;
+      const { company_id, page = 1, limit = 10, search, id, status, type, bill_type, fromDate, toDate, sortBy, sortOrder, customerId } = params;
       let url = `/challans?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (params.partyType && params.partyType !== 'all') url += `&partyType=${params.partyType}`;
+      if (customerId && customerId !== 'all') url += `&customerId=${customerId}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (type && type !== 'all') url += `&type=${type}`;
       if (bill_type && bill_type !== 'all') url += `&bill_type=${encodeURIComponent(bill_type)}`;
@@ -191,6 +193,7 @@ interface ChallanState {
   error: string | null;
   filters: {
     search: string;
+    customerId?: string;
     type: 'all' | 'delivery' | 'returnable' | 'job_work';
     bill_type: string;
     partyType: 'all' | 'customer' | 'vendor';
@@ -216,6 +219,7 @@ const initialState: ChallanState = {
   error: null,
   filters: {
     search: '',
+    customerId: 'all',
     type: 'all',
     bill_type: 'all',
     partyType: 'customer',

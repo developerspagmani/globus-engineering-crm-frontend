@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { setVoucherFilters, setVoucherPage, fetchVouchers, deleteVoucher, resetVoucherState, setVoucherSorting } from '@/redux/features/voucherSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
+import { fetchVendors } from '@/redux/features/vendorSlice';
+import SearchableSelect from '@/components/shared/SearchableSelect';
 import Breadcrumb from '@/components/Breadcrumb';
 import { checkActionPermission } from '@/config/permissions';
 import jsPDF from 'jspdf';
@@ -24,18 +27,191 @@ import api from '@/lib/axios';
 const VoucherPage = () => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const { items, filters, pagination, loading, aggregates, sorting } = useSelector((state: RootState) => state.voucher);
+  const { items: customers } = useSelector((state: RootState) => state.customers);
+  const { items: vendors } = useSelector((state: RootState) => state.vendors);
+
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [mounted, setMounted] = useState(false);
+  const isInitializedRef = useRef(false);
 
+  // Fetch customers & vendors if not yet in state
+  useEffect(() => {
+    if (activeCompany?.id) {
+      if (customers.length === 0) {
+        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      }
+      if (vendors.length === 0) {
+        (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      }
+    }
+  }, [dispatch, activeCompany?.id, customers.length, vendors.length]);
 
+  const effectivePartyType = filters.partyType || 'customer';
+  const isVendor = effectivePartyType === 'vendor';
+
+  const partyOptions = useMemo(() => {
+    if (effectivePartyType === 'vendor') {
+      const sorted = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Vendors', displayLabel: 'All Vendors' },
+        ...sorted.map(v => ({
+          value: String(v.id),
+          label: v.name || v.company || `Vendor #${v.id}`,
+          displayLabel: v.name || v.company || `Vendor #${v.id}`
+        }))
+      ];
+    } else if (effectivePartyType === 'customer') {
+      const sorted = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      return [
+        { value: 'all', label: 'All Customers', displayLabel: 'All Customers' },
+        ...sorted.map(c => ({
+          value: String(c.id),
+          label: c.company || c.name || `Customer #${c.id}`,
+          displayLabel: c.company || c.name || `Customer #${c.id}`
+        }))
+      ];
+    } else {
+      const sortedCustomers = [...customers].sort((a, b) =>
+        (a.company || a.name || '').localeCompare(b.company || b.name || '')
+      );
+      const sortedVendors = [...vendors].sort((a, b) =>
+        (a.name || a.company || '').localeCompare(b.name || b.company || '')
+      );
+      return [
+        { value: 'all', label: 'All Parties', displayLabel: 'All Parties' },
+        ...sortedCustomers.map(c => ({
+          value: String(c.id),
+          label: `${c.company || c.name} (Customer)`,
+          displayLabel: c.company || c.name
+        })),
+        ...sortedVendors.map(v => ({
+          value: String(v.id),
+          label: `${v.name || v.company} (Vendor)`,
+          displayLabel: v.name || v.company
+        }))
+      ];
+    }
+  }, [effectivePartyType, vendors, customers]);
+
+  // 1. Initial Load: Read all query parameters from URL and populate Redux state
   useEffect(() => {
     setMounted(true);
+
+    const qPartyType = searchParams.get('partyType');
+    const qSearch = searchParams.get('search');
+    const qCustomerId = searchParams.get('customerId') || searchParams.get('customer_id') || searchParams.get('partyId');
+    const qType = searchParams.get('type');
+    const qStatus = searchParams.get('status');
+    const qFromDate = searchParams.get('fromDate');
+    const qToDate = searchParams.get('toDate');
+    const qPage = searchParams.get('page');
+    const qSortBy = searchParams.get('sortBy');
+    const qSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc';
+
+    const initialFilters: any = {};
+    if (qPartyType) initialFilters.partyType = qPartyType;
+    if (qSearch !== null && qSearch !== '') initialFilters.search = qSearch;
+    if (qCustomerId !== null && qCustomerId !== '' && qCustomerId !== 'all') initialFilters.customerId = qCustomerId;
+    if (qType !== null && qType !== '') initialFilters.type = qType;
+    if (qStatus !== null && qStatus !== '') initialFilters.status = qStatus;
+    if (qFromDate !== null && qFromDate !== '') initialFilters.fromDate = qFromDate;
+    if (qToDate !== null && qToDate !== '') initialFilters.toDate = qToDate;
+
+    if (Object.keys(initialFilters).length > 0) {
+      dispatch(setVoucherFilters(initialFilters));
+    }
+
+    if (qPage && !isNaN(parseInt(qPage)) && parseInt(qPage) > 1) {
+      dispatch(setVoucherPage(parseInt(qPage)));
+    }
+
+    if (qSortBy) {
+      dispatch(setVoucherSorting({
+        sortBy: qSortBy,
+        sortOrder: qSortOrder === 'asc' ? 'asc' : 'desc'
+      }));
+    }
+
+    isInitializedRef.current = true;
+
     return () => {
       dispatch(resetVoucherState());
     };
   }, [dispatch]);
+
+  // 2. State to URL Sync
+  useEffect(() => {
+    if (!isInitializedRef.current || !mounted) return;
+
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams();
+
+      if (filters.partyType && filters.partyType !== 'customer') {
+        params.set('partyType', filters.partyType);
+      }
+      if (filters.search && filters.search.trim()) {
+        params.set('search', filters.search.trim());
+      }
+      if (filters.customerId && filters.customerId !== 'all') {
+        params.set('customerId', filters.customerId);
+      }
+      if (filters.type && filters.type !== 'all') {
+        params.set('type', filters.type);
+      }
+      if (filters.status && filters.status !== 'all') {
+        params.set('status', filters.status);
+      }
+      if (filters.fromDate) {
+        params.set('fromDate', filters.fromDate);
+      }
+      if (filters.toDate) {
+        params.set('toDate', filters.toDate);
+      }
+
+      if (pagination.currentPage > 1) {
+        params.set('page', String(pagination.currentPage));
+      }
+
+      if (sorting?.sortBy && sorting.sortBy !== 'date' && sorting.sortBy !== 'id') {
+        params.set('sortBy', sorting.sortBy);
+      }
+      if (sorting?.sortOrder && sorting.sortOrder !== 'desc') {
+        params.set('sortOrder', sorting.sortOrder);
+      }
+
+      const currentQs = searchParams.toString();
+      const newQs = params.toString();
+
+      if (currentQs !== newQs) {
+        router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
+      }
+    }, 250);
+
+    return () => clearTimeout(handler);
+  }, [
+    filters.search,
+    filters.customerId,
+    filters.type,
+    filters.partyType,
+    filters.status,
+    filters.fromDate,
+    filters.toDate,
+    pagination.currentPage,
+    sorting?.sortBy,
+    sorting?.sortOrder,
+    searchParams,
+    pathname,
+    router,
+    mounted
+  ]);
 
   useEffect(() => {
     if (activeCompany?.id) {
@@ -44,16 +220,31 @@ const VoucherPage = () => {
         page: pagination.currentPage,
         limit: pagination.itemsPerPage,
         search: filters.search,
-        type: filters.type,
-        partyType: filters.partyType,
-        status: filters.status,
+        type: filters.type !== 'all' ? filters.type : undefined,
+        partyType: filters.partyType !== 'all' ? filters.partyType : undefined,
+        customerId: filters.customerId !== 'all' ? filters.customerId : undefined,
+        status: filters.status !== 'all' ? filters.status : undefined,
         fromDate: filters.fromDate,
         toDate: filters.toDate,
         sortBy: sorting.sortBy,
         sortOrder: sorting.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.type, filters.partyType, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
+  }, [
+    dispatch,
+    activeCompany?.id,
+    pagination.currentPage,
+    pagination.itemsPerPage,
+    filters.search,
+    filters.type,
+    filters.partyType,
+    filters.customerId,
+    filters.status,
+    filters.fromDate,
+    filters.toDate,
+    sorting.sortBy,
+    sorting.sortOrder
+  ]);
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
@@ -124,6 +315,8 @@ const VoucherPage = () => {
     if (filters.search) url += `&search=${encodeURIComponent(filters.search)}`;
     if (filters.type && filters.type !== 'all') url += `&type=${filters.type}`;
     if (filters.partyType) url += `&partyType=${filters.partyType}`;
+    const targetPartyId = filters.customerId || filters.partyId;
+    if (targetPartyId && targetPartyId !== 'all') url += `&partyId=${targetPartyId}`;
     if (filters.status && filters.status !== 'all') url += `&status=${filters.status}`;
     if (filters.fromDate) url += `&fromDate=${filters.fromDate}`;
     if (filters.toDate) url += `&toDate=${filters.toDate}`;
@@ -217,17 +410,29 @@ const VoucherPage = () => {
       </div>
 
       {/* Filters Card */}
-      <div className="card filter-card">
-        <div className="card-body p-3">
+      <div className="card filter-card" style={{ overflow: 'visible', position: 'relative', zIndex: 100 }}>
+        <div className="card-body p-3" style={{ overflow: 'visible' }}>
           <div className="filter-bar-row d-flex flex-wrap gap-2 align-items-center">
             <div className="filter-item-select" style={{ minWidth: '150px' }}>
               <PartyTypeToggle
                 partyType={(filters.partyType as any) || 'customer'}
-                setPartyType={(val) => dispatch(setVoucherFilters({ partyType: val }))}
+                setPartyType={(val) => dispatch(setVoucherFilters({ partyType: val, customerId: 'all', partyId: 'all' }))}
               />
             </div>
             
-            <div className="filter-item-search flex-grow-1">
+            {/* Separate Customer Dropdown List with Search Input */}
+            <div className="filter-item-select flex-grow-1 voucher-customer-filter" style={{ minWidth: '240px' }}>
+              <SearchableSelect
+                options={partyOptions}
+                value={filters.customerId || 'all'}
+                onChange={(val) => dispatch(setVoucherFilters({ customerId: String(val), partyId: String(val) }))}
+                placeholder={isVendor ? 'Select Vendor' : 'Select Customer'}
+                className="w-100"
+              />
+            </div>
+
+            {/* General Text Search */}
+            <div className="filter-item-search" style={{ minWidth: '220px' }}>
               <div className="search-group">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
@@ -235,14 +440,15 @@ const VoucherPage = () => {
                 <input 
                   type="text" 
                   className="form-control search-bar" 
-                  placeholder="Search by voucher no, party..." 
+                  placeholder="Search by voucher no, ref..." 
                   value={filters.search}
                   onChange={(e) => dispatch(setVoucherFilters({ search: e.target.value }))}
                 />
               </div>
             </div>
             
-            <div className="filter-item-select">
+            {/* Voucher Type Filter */}
+            <div className="filter-item-select" style={{ minWidth: '140px' }}>
               <select 
                 className="form-select search-bar" 
                 value={filters.type}
@@ -254,7 +460,8 @@ const VoucherPage = () => {
               </select>
             </div>
 
-            <div className="filter-item-select">
+            {/* Status Filter */}
+            <div className="filter-item-select" style={{ minWidth: '140px' }}>
               <select 
                 className="form-select search-bar" 
                 value={filters.status}
@@ -266,6 +473,7 @@ const VoucherPage = () => {
               </select>
             </div>
 
+            {/* Date Filter Group */}
             <div className="date-filter-group">
               <input 
                 type="date" 
@@ -281,11 +489,25 @@ const VoucherPage = () => {
                 onChange={(e) => dispatch(setVoucherFilters({ toDate: e.target.value }))}
               />
             </div>
+
+            {/* Clear Filter Button */}
+            {((filters.customerId && filters.customerId !== 'all') || filters.search || (filters.status && filters.status !== 'all') || (filters.type && filters.type !== 'all') || filters.fromDate || filters.toDate) && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
+                style={{ height: '38px', borderRadius: '8px', fontSize: '0.78rem' }}
+                onClick={() => dispatch(setVoucherFilters({ search: '', status: 'all', type: 'all', fromDate: '', toDate: '', customerId: 'all', partyId: 'all' }))}
+                title="Reset all filters"
+              >
+                <i className="bi bi-x-circle"></i>
+                <span>Clear</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm">
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white" style={{ position: 'relative', zIndex: 1 }}>
         <div className="card-body p-0">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">

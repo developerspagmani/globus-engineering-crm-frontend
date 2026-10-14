@@ -12,6 +12,7 @@ export const fetchOutwards = createAsyncThunk(
     search?: string; 
     id?: string;
     partyType?: string;
+    customerId?: string;
     status?: string;
     fromDate?: string;
     toDate?: string;
@@ -19,11 +20,12 @@ export const fetchOutwards = createAsyncThunk(
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, id, partyType, status, fromDate, toDate, sortBy, sortOrder } = params;
+      const { company_id, page = 1, limit = 10, search, id, partyType, customerId, status, fromDate, toDate, sortBy, sortOrder } = params;
       let url = `/outward?page=${page}&limit=${limit}`;
       if (company_id) url += `&companyId=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (partyType && partyType !== 'all') url += `&partyType=${partyType}`;
+      if (customerId && customerId !== 'all') url += `&customerId=${customerId}`;
       if (status && status !== 'all') url += `&status=${status}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
@@ -189,6 +191,7 @@ interface OutwardState {
   error: string | null;
   filters: {
     search: string;
+    customerId?: string;
     status: 'all' | 'pending' | 'completed' | 'cancelled';
     partyType: 'all' | 'customer' | 'vendor';
     fromDate: string;
@@ -212,6 +215,7 @@ const initialState: OutwardState = {
   error: null,
   filters: {
     search: '',
+    customerId: 'all',
     status: 'all',
     partyType: 'all',
     fromDate: '',
