@@ -59,10 +59,12 @@ const AdminNavbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
   React.useEffect(() => {
     setMounted(true);
-    // Fetch real companies from DB
-    const { fetchCompanies } = require('@/redux/features/companySlice');
-    dispatch(fetchCompanies());
-  }, [dispatch]);
+    // Fetch real companies from DB only if not already in store
+    if (companies.length === 0) {
+      const { fetchCompanies } = require('@/redux/features/companySlice');
+      dispatch(fetchCompanies());
+    }
+  }, [dispatch, companies.length]);
 
   const handleLogout = () => {
     dispatch(logout());

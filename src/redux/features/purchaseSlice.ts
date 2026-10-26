@@ -9,16 +9,37 @@ export const fetchPurchaseBills = createAsyncThunk(
     page?: number; 
     limit?: number; 
     search?: string; 
+    companyName?: string;
+    invoiceNo?: string;
+    dcNo?: string;
+    gstTin?: string;
     fromDate?: string;
     toDate?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }, { rejectWithValue }) => {
     try {
-      const { company_id, page = 1, limit = 10, search, fromDate, toDate, sortBy, sortOrder } = params;
+      const { 
+        company_id, 
+        page = 1, 
+        limit = 10, 
+        search, 
+        companyName, 
+        invoiceNo, 
+        dcNo, 
+        gstTin, 
+        fromDate, 
+        toDate, 
+        sortBy, 
+        sortOrder 
+      } = params;
       let url = `/purchase-bills?page=${page}&limit=${limit}`;
       if (company_id) url += `&company_id=${company_id}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (companyName && companyName !== 'all') url += `&companyName=${encodeURIComponent(companyName)}`;
+      if (invoiceNo && invoiceNo !== 'all') url += `&invoiceNo=${encodeURIComponent(invoiceNo)}`;
+      if (dcNo && dcNo !== 'all') url += `&dcNo=${encodeURIComponent(dcNo)}`;
+      if (gstTin && gstTin !== 'all') url += `&gstTin=${encodeURIComponent(gstTin)}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
       if (sortBy) url += `&sortBy=${sortBy}`;
@@ -77,6 +98,10 @@ interface PurchaseState {
   error: string | null;
   filters: {
     search: string;
+    companyName: string;
+    invoiceNo: string;
+    dcNo: string;
+    gstTin: string;
     fromDate: string;
     toDate: string;
   };
@@ -98,6 +123,10 @@ const initialState: PurchaseState = {
   error: null,
   filters: {
     search: '',
+    companyName: 'all',
+    invoiceNo: 'all',
+    dcNo: 'all',
+    gstTin: 'all',
     fromDate: '',
     toDate: '',
   },
@@ -135,6 +164,10 @@ const purchaseSlice = createSlice({
       state.error = null;
       state.filters = {
         search: '',
+        companyName: 'all',
+        invoiceNo: 'all',
+        dcNo: 'all',
+        gstTin: 'all',
         fromDate: '',
         toDate: '',
       };

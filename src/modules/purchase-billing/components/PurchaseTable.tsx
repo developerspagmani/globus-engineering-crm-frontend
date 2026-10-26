@@ -50,10 +50,12 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
           <thead className="bg-light text-muted text-uppercase fw-bold small">
             <tr className="border-bottom">
               <SortableHeader field="received_date" label="Received Date" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '110px' }} />
-              {/* This is the empty header column next to Received Date as shown in the screenshot */}
-              <th className="fw-semibold px-2 py-3 text-center" style={{ width: '60px' }}></th>
+              {/* S.No Column */}
+              <th className="fw-semibold px-2 py-3 text-center" style={{ width: '50px' }}>#</th>
               <SortableHeader field="company_name" label="Company Name" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '160px' }} />
-              <SortableHeader field="invoice_no" label="Invoice No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '100px' }} />
+              <SortableHeader field="gst_tin" label="GSTIN" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '140px' }} />
+              <SortableHeader field="invoice_no" label="Invoice No" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '120px' }} />
+              <SortableHeader field="dc_no" label="Challan (D.C No)" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3" style={{ minWidth: '130px' }} />
               <SortableHeader field="amount" label="Amount" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end" style={{ minWidth: '100px' }} />
               <SortableHeader field="grand_total" label="Grand Total" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="fw-semibold px-3 py-3 text-end text-primary" style={{ minWidth: '110px' }} />
               <th className="text-center fw-semibold px-3 py-3" style={{ width: '80px' }}>Action</th>
@@ -87,9 +89,19 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
                       {item.companyName || 'N/A'}
                     </td>
 
+                    {/* GSTIN */}
+                    <td className="px-3 text-muted small font-monospace">
+                      {item.gstTin || '-'}
+                    </td>
+
                     {/* Invoice No */}
                     <td className="px-3 text-dark small fw-semibold font-monospace">
-                      {item.invoiceNo}
+                      {item.invoiceNo || '-'}
+                    </td>
+
+                    {/* Challan (D.C No) */}
+                    <td className="px-3 text-dark small fw-semibold font-monospace">
+                      {item.dcNo || '-'}
                     </td>
 
                     {/* Amount */}

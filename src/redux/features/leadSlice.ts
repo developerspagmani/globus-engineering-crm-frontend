@@ -14,9 +14,23 @@ export const fetchLeads = createAsyncThunk(
     toDate?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    upcomingReminders?: boolean;
+    reminderScope?: string;
   }, { rejectWithValue }) => {
     try {
-      const { companyId, page = 1, limit = 10, search, status, fromDate, toDate, sortBy, sortOrder } = params;
+      const { 
+        companyId, 
+        page = 1, 
+        limit = 10, 
+        search, 
+        status, 
+        fromDate, 
+        toDate, 
+        sortBy, 
+        sortOrder,
+        upcomingReminders,
+        reminderScope
+      } = params;
       let url = `/leads?page=${page}&limit=${limit}`;
       if (companyId) url += `&companyId=${companyId}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -25,11 +39,14 @@ export const fetchLeads = createAsyncThunk(
       if (toDate) url += `&toDate=${toDate}`;
       if (sortBy) url += `&sortBy=${sortBy}`;
       if (sortOrder) url += `&sortOrder=${sortOrder}`;
+      if (upcomingReminders) url += `&upcomingReminders=true`;
+      if (reminderScope && reminderScope !== 'all') url += `&reminderScope=${reminderScope}`;
       
       const response = await api.get(url);
       return {
         items: response.data.items,
-        pagination: response.data.pagination
+        pagination: response.data.pagination,
+        upcomingCount: response.data.upcomingCount
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch leads');
@@ -82,12 +99,15 @@ interface LeadState {
   items: Lead[];
   loading: boolean;
   error: string | null;
+  upcomingCount: number;
   filters: {
     search: string;
     status: 'all' | 'new' | 'contacted' | 'qualified' | 'converted';
     source: 'all' | 'Web' | 'Referral' | 'Cold Call' | 'Exhibition';
     fromDate: string;
     toDate: string;
+    upcomingReminders?: boolean;
+    reminderScope?: string;
   };
   pagination: {
     currentPage: number;
@@ -105,12 +125,15 @@ const initialState: LeadState = {
   items: [],
   loading: false,
   error: null,
+  upcomingCount: 0,
   filters: {
     search: '',
     status: 'all',
     source: 'all',
     fromDate: '',
     toDate: '',
+    upcomingReminders: false,
+    reminderScope: 'all',
   },
   pagination: {
     currentPage: 1,
@@ -156,6 +179,9 @@ const leadSlice = createSlice({
         state.pagination.totalItems = action.payload.pagination.total;
         state.pagination.totalPages = action.payload.pagination.totalPages;
         state.pagination.currentPage = action.payload.pagination.page;
+        if (action.payload.upcomingCount !== undefined) {
+          state.upcomingCount = action.payload.upcomingCount;
+        }
         state.error = null;
       })
       .addCase(fetchLeads.rejected, (state, action) => {

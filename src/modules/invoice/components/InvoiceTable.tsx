@@ -146,9 +146,14 @@ const InvoiceTable: React.FC = () => {
           sortOrder: inwardSorting?.sortOrder
         }));
       }
-      (dispatch as any)(fetchNextNumbers({ companyId: activeCompany.id }));
     }
   }, [dispatch, activeCompany?.id, activeTab, inwardSorting?.sortBy, inwardSorting?.sortOrder, (filters as any).partyType, filters.customerId]);
+
+  React.useEffect(() => {
+    if (activeCompany?.id) {
+      (dispatch as any)(fetchNextNumbers({ companyId: activeCompany.id }));
+    }
+  }, [dispatch, activeCompany?.id]);
 
   React.useEffect(() => {
     if (activeCompany?.id) {
@@ -175,7 +180,22 @@ const InvoiceTable: React.FC = () => {
         sortOrder: invoiceSorting?.sortOrder
       }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters, activeTab, invoiceSorting?.sortBy, invoiceSorting?.sortOrder]);
+  }, [
+    dispatch, 
+    activeCompany?.id, 
+    pagination.currentPage, 
+    pagination.itemsPerPage, 
+    filters.search,
+    filters.status,
+    filters.fromDate,
+    filters.toDate,
+    filters.process,
+    (filters as any).partyType,
+    filters.customerId,
+    activeTab, 
+    invoiceSorting?.sortBy, 
+    invoiceSorting?.sortOrder
+  ]);
 
   const filteredInwards = inwards.filter(item => {
     const itemCompId = String(item.company_id || (item as any).companyId || '').toLowerCase();

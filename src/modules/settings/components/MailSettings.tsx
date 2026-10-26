@@ -19,6 +19,15 @@ interface MailFormData {
   reminderSchedule: string[];
   enableLeadReminders: boolean;
   leadReminderDays: number | string;
+  reminderExecutionTime: string;
+  enableSecondaryTime: boolean;
+  secondaryExecutionTime: string;
+  reminderDaysOfWeek: string[];
+  leadSameDayAlert: boolean;
+  customReminderDaysBefore: string;
+  customReminderDaysAfter: string;
+  lastRunTimestamp?: string | null;
+  lastRunStats?: { totalSent: number; invoicesSent: number; leadRemindersSent: number } | null;
 }
 
 const PRESETS = [
@@ -57,12 +66,27 @@ const PRESETS = [
 ];
 
 const REMINDER_OPTIONS = [
-  { id: '30_days', label: '30 Days Before Due Date', desc: 'Early payment heads-up' },
-  { id: '1_week', label: '7 Days Before Due Date', desc: 'Standard reminder' },
-  { id: '1_day', label: '1 Day Before Due Date', desc: 'Pre-due notification' },
-  { id: 'today', label: 'On Due Date', desc: 'Due date alert' },
-  { id: 'overdue_7_days', label: '7 Days Overdue', desc: 'First overdue notice' },
-  { id: 'overdue_15_days', label: '15 Days Overdue', desc: 'Urgent overdue notice' },
+  { id: '60_days', label: '60 Days Before Due Date', desc: 'Early quarter advance notice', category: 'pre_due' },
+  { id: '30_days', label: '30 Days Before Due Date', desc: 'Early payment heads-up', category: 'pre_due' },
+  { id: '15_days', label: '15 Days Before Due Date', desc: 'Mid-cycle reminder notice', category: 'pre_due' },
+  { id: '1_week', label: '7 Days Before Due Date', desc: 'Standard 1-week notice', category: 'pre_due' },
+  { id: '3_days', label: '3 Days Before Due Date', desc: 'Imminent due date alert', category: 'pre_due' },
+  { id: '1_day', label: '1 Day Before Due Date', desc: 'Pre-due notification', category: 'pre_due' },
+  { id: 'today', label: 'On Due Date', desc: 'Due date alert', category: 'pre_due' },
+  { id: 'overdue_3_days', label: '3 Days Overdue', desc: 'Grace period overdue alert', category: 'overdue' },
+  { id: 'overdue_7_days', label: '7 Days Overdue', desc: 'First overdue notice', category: 'overdue' },
+  { id: 'overdue_15_days', label: '15 Days Overdue', desc: 'Urgent overdue notice', category: 'overdue' },
+  { id: 'overdue_30_days', label: '30 Days Overdue', desc: 'Critical collection notice', category: 'overdue' },
+];
+
+const DAYS_OF_WEEK = [
+  { id: 'mon', label: 'Monday', short: 'Mon' },
+  { id: 'tue', label: 'Tuesday', short: 'Tue' },
+  { id: 'wed', label: 'Wednesday', short: 'Wed' },
+  { id: 'thu', label: 'Thursday', short: 'Thu' },
+  { id: 'fri', label: 'Friday', short: 'Fri' },
+  { id: 'sat', label: 'Saturday', short: 'Sat' },
+  { id: 'sun', label: 'Sunday', short: 'Sun' },
 ];
 
 const MailSettings: React.FC = () => {
@@ -81,12 +105,23 @@ const MailSettings: React.FC = () => {
     enableAutoReminders: true,
     reminderSchedule: ['30_days', '1_week', '1_day', 'today', 'overdue_7_days', 'overdue_15_days'],
     enableLeadReminders: true,
-    leadReminderDays: 1
+    leadReminderDays: 1,
+    reminderExecutionTime: '10:00',
+    enableSecondaryTime: true,
+    secondaryExecutionTime: '12:40',
+    reminderDaysOfWeek: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+    leadSameDayAlert: true,
+    customReminderDaysBefore: '',
+    customReminderDaysAfter: '',
+    lastRunTimestamp: null,
+    lastRunStats: null
   });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [triggeringManual, setTriggeringManual] = useState(false);
+  const [triggerResult, setTriggerResult] = useState<{ success: boolean; message: string; stats?: any } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [hasStoredPassword, setHasStoredPassword] = useState(false);
   const [testRecipient, setTestRecipient] = useState('');
@@ -122,7 +157,16 @@ const MailSettings: React.FC = () => {
           '30_days', '1_week', '1_day', 'today', 'overdue_7_days', 'overdue_15_days'
         ],
         enableLeadReminders: data.enableLeadReminders !== undefined ? data.enableLeadReminders : true,
-        leadReminderDays: data.leadReminderDays !== undefined ? data.leadReminderDays : 1
+        leadReminderDays: data.leadReminderDays !== undefined ? data.leadReminderDays : 1,
+        reminderExecutionTime: data.reminderExecutionTime || '10:00',
+        enableSecondaryTime: data.enableSecondaryTime !== undefined ? data.enableSecondaryTime : true,
+        secondaryExecutionTime: data.secondaryExecutionTime || '12:40',
+        reminderDaysOfWeek: Array.isArray(data.reminderDaysOfWeek) ? data.reminderDaysOfWeek : ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+        leadSameDayAlert: data.leadSameDayAlert !== undefined ? data.leadSameDayAlert : true,
+        customReminderDaysBefore: data.customReminderDaysBefore || '',
+        customReminderDaysAfter: data.customReminderDaysAfter || '',
+        lastRunTimestamp: data.lastRunTimestamp || null,
+        lastRunStats: data.lastRunStats || null
       });
       setHasStoredPassword(data.hasPassword || false);
       if (data.fromEmail) {
@@ -176,6 +220,67 @@ const MailSettings: React.FC = () => {
     });
   };
 
+  const toggleDayOfWeek = (dayId: string) => {
+    setFormData(prev => {
+      const current = prev.reminderDaysOfWeek || [];
+      const updated = current.includes(dayId)
+        ? current.filter(id => id !== dayId)
+        : [...current, dayId];
+      return { ...prev, reminderDaysOfWeek: updated };
+    });
+  };
+
+  const setAllDaysOfWeek = () => {
+    setFormData(prev => ({
+      ...prev,
+      reminderDaysOfWeek: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+    }));
+  };
+
+  const setWeekdaysOnly = () => {
+    setFormData(prev => ({
+      ...prev,
+      reminderDaysOfWeek: ['mon', 'tue', 'wed', 'thu', 'fri']
+    }));
+  };
+
+  const handleTriggerManualReminders = async () => {
+    if (!activeCompany?.id) return;
+    setTriggeringManual(true);
+    setTriggerResult(null);
+    try {
+      const res = await api.post('/settings/mail/run-reminders', {
+        company_id: activeCompany.id
+      });
+      setTriggerResult({
+        success: true,
+        message: res.data.message || 'Automated reminders check executed successfully!',
+        stats: {
+          totalSent: res.data.totalSent,
+          invoicesSent: res.data.invoicesSent,
+          leadRemindersSent: res.data.leadRemindersSent
+        }
+      });
+      setFormData(prev => ({
+        ...prev,
+        lastRunTimestamp: res.data.lastRunTimestamp,
+        lastRunStats: {
+          totalSent: res.data.totalSent,
+          invoicesSent: res.data.invoicesSent,
+          leadRemindersSent: res.data.leadRemindersSent
+        }
+      }));
+    } catch (err: any) {
+      console.error('Failed to trigger manual reminders:', err);
+      setTriggerResult({
+        success: false,
+        message: err.response?.data?.error || err.message || 'Failed to trigger automated reminders.'
+      });
+    } finally {
+      setTriggeringManual(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeCompany?.id) return;
@@ -205,7 +310,14 @@ const MailSettings: React.FC = () => {
         enableAutoReminders: formData.enableAutoReminders,
         reminderSchedule: formData.reminderSchedule,
         enableLeadReminders: formData.enableLeadReminders,
-        leadReminderDays: Number(formData.leadReminderDays) || 1
+        leadReminderDays: Number(formData.leadReminderDays) || 1,
+        reminderExecutionTime: formData.reminderExecutionTime || '10:00',
+        enableSecondaryTime: formData.enableSecondaryTime,
+        secondaryExecutionTime: formData.secondaryExecutionTime || '12:40',
+        reminderDaysOfWeek: formData.reminderDaysOfWeek,
+        leadSameDayAlert: formData.leadSameDayAlert,
+        customReminderDaysBefore: formData.customReminderDaysBefore || '',
+        customReminderDaysAfter: formData.customReminderDaysAfter || ''
       };
 
       const response = await api.put('/settings/mail', payload);
@@ -250,6 +362,8 @@ const MailSettings: React.FC = () => {
         secure: formData.secure,
         fromName: formData.fromName.trim(),
         fromEmail: formData.fromEmail.trim()
+      }, {
+        timeout: 30000
       });
 
       setTestResult({
@@ -575,16 +689,256 @@ const MailSettings: React.FC = () => {
                 </div>
               </div>
 
-              {/* Automated Reminder Schedule Section */}
+              {/* Live Scheduler Status & On-Demand Run Bar */}
+              <div className="col-12">
+                <div className="p-4 bg-dark text-white rounded-4 border shadow-sm">
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                    <div className="d-flex align-items-center gap-3">
+                      <div className="badge bg-warning bg-opacity-25 text-warning p-3 rounded-circle fs-4">
+                        <i className="bi bi-clock-history"></i>
+                      </div>
+                      <div>
+                        <div className="d-flex align-items-center gap-2">
+                          <h6 className="fw-bold mb-0 text-white fs-6">Automated Email Reminders Engine</h6>
+                          <span className={`badge rounded-pill ${formData.enableAutoReminders || formData.enableLeadReminders ? 'bg-success' : 'bg-secondary'}`}>
+                            {formData.enableAutoReminders || formData.enableLeadReminders ? 'Engine Active' : 'Engine Inactive'}
+                          </span>
+                        </div>
+                        <p className="text-secondary small mb-0 mt-1">
+                          Dynamic background scheduler dispatches payment invoices and sales lead visit alerts automatically based on configured dates and times.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="d-flex align-items-center gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-warning text-dark fw-bold rounded-pill px-4 py-2 d-flex align-items-center gap-2 shadow-sm"
+                        onClick={handleTriggerManualReminders}
+                        disabled={triggeringManual || (!formData.enableAutoReminders && !formData.enableLeadReminders)}
+                        title="Run an immediate reminder sweep right now without waiting for scheduled time"
+                      >
+                        {triggeringManual ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm text-dark" role="status" aria-hidden="true"></span>
+                            <span>Executing Sweep...</span>
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-play-circle-fill fs-5"></i>
+                            <span>Run Reminders Now</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {triggerResult && (
+                    <div className={`alert alert-${triggerResult.success ? 'success' : 'danger'} border-0 rounded-3 py-2 px-3 mb-3 small d-flex align-items-center justify-content-between`}>
+                      <div className="d-flex align-items-center gap-2">
+                        <i className={`bi ${triggerResult.success ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-danger'}`}></i>
+                        <span>{triggerResult.message}</span>
+                      </div>
+                      <button type="button" className="btn-close btn-sm shadow-none" onClick={() => setTriggerResult(null)}></button>
+                    </div>
+                  )}
+
+                  <div className="row g-3 pt-2 text-white-50 small border-top border-secondary border-opacity-50">
+                    <div className="col-md-3 col-sm-6">
+                      <div className="text-muted x-small text-uppercase fw-bold">Primary Dispatch Time</div>
+                      <div className="text-white fw-bold fs-6">
+                        <i className="bi bi-alarm text-warning me-1"></i>
+                        {formData.reminderExecutionTime || '10:00'} (IST)
+                      </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                      <div className="text-muted x-small text-uppercase fw-bold">Secondary Slot</div>
+                      <div className="text-white fw-bold fs-6">
+                        {formData.enableSecondaryTime ? (
+                          <>
+                            <i className="bi bi-clock text-info me-1"></i>
+                            {formData.secondaryExecutionTime || '12:40'} (IST)
+                          </>
+                        ) : (
+                          <span className="text-muted">Disabled</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                      <div className="text-muted x-small text-uppercase fw-bold">Active Days</div>
+                      <div className="text-white fw-bold fs-6">
+                        <i className="bi bi-calendar-week text-primary me-1"></i>
+                        {formData.reminderDaysOfWeek?.length === 7 
+                          ? 'Everyday' 
+                          : formData.reminderDaysOfWeek?.length === 5 && !formData.reminderDaysOfWeek?.includes('sat') && !formData.reminderDaysOfWeek?.includes('sun')
+                            ? 'Mon - Fri'
+                            : `${formData.reminderDaysOfWeek?.length || 0} Days/Week`}
+                      </div>
+                    </div>
+                    <div className="col-md-3 col-sm-6">
+                      <div className="text-muted x-small text-uppercase fw-bold">Last Execution</div>
+                      <div className="text-white fw-bold fs-6">
+                        <i className="bi bi-activity text-success me-1"></i>
+                        {formData.lastRunTimestamp ? new Date(formData.lastRunTimestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Pending Today'}
+                        {formData.lastRunStats && (
+                          <span className="ms-1 badge bg-secondary x-small">
+                            {formData.lastRunStats.totalSent} sent
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Date & Time Scheduling Configuration Section */}
+              <div className="col-12">
+                <div className="p-4 bg-white rounded-4 border">
+                  <div className="d-flex align-items-center gap-2 mb-3">
+                    <i className="bi bi-clock text-primary fs-5"></i>
+                    <div>
+                      <h6 className="fw-bold mb-0 text-dark">Time &amp; Frequency Dispatch Configuration</h6>
+                      <p className="text-muted small mb-0">Configure the exact times of day and active calendar days when email reminders are dispatched.</p>
+                    </div>
+                  </div>
+
+                  <div className="row g-4">
+                    {/* Primary Execution Time */}
+                    <div className="col-md-6 col-lg-3">
+                      <label className="form-label small fw-semibold text-muted">
+                        Primary Dispatch Time <span className="text-danger">*</span>
+                      </label>
+                      <div className="input-group">
+                        <span className="input-group-text bg-light text-primary">
+                          <i className="bi bi-alarm-fill"></i>
+                        </span>
+                        <input
+                          type="time"
+                          name="reminderExecutionTime"
+                          className="form-control shadow-none fw-bold"
+                          value={formData.reminderExecutionTime}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="form-text text-muted" style={{ fontSize: '11px' }}>
+                        Morning reminder delivery slot (IST).
+                      </div>
+                    </div>
+
+                    {/* Secondary Slot Toggle & Time */}
+                    <div className="col-md-6 col-lg-4">
+                      <div className="d-flex align-items-center justify-content-between mb-1">
+                        <label className="form-label small fw-semibold text-muted mb-0">
+                          Secondary Afternoon Dispatch Slot
+                        </label>
+                        <div className="form-check form-switch m-0">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="enableSecondaryTime"
+                            name="enableSecondaryTime"
+                            checked={formData.enableSecondaryTime}
+                            onChange={handleInputChange}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </div>
+                      </div>
+                      <div className="input-group">
+                        <span className="input-group-text bg-light text-info">
+                          <i className="bi bi-clock-fill"></i>
+                        </span>
+                        <input
+                          type="time"
+                          name="secondaryExecutionTime"
+                          className="form-control shadow-none fw-bold"
+                          value={formData.secondaryExecutionTime}
+                          onChange={handleInputChange}
+                          disabled={!formData.enableSecondaryTime}
+                        />
+                      </div>
+                      <div className="form-text text-muted" style={{ fontSize: '11px' }}>
+                        {formData.enableSecondaryTime ? 'Afternoon reminder delivery slot (IST).' : 'Secondary slot is currently disabled.'}
+                      </div>
+                    </div>
+
+                    {/* Timezone Info */}
+                    <div className="col-md-12 col-lg-5">
+                      <label className="form-label small fw-semibold text-muted">
+                        System Scheduling Timezone
+                      </label>
+                      <div className="p-2 px-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+                        <div className="d-flex align-items-center gap-2">
+                          <i className="bi bi-globe-americas text-primary fs-5"></i>
+                          <div>
+                            <div className="fw-bold small text-dark">Indian Standard Time (IST)</div>
+                            <div className="text-muted x-small">Asia/Kolkata (UTC+05:30)</div>
+                          </div>
+                        </div>
+                        <span className="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                          Server Live
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Active Dispatch Days */}
+                    <div className="col-12 pt-2 border-top">
+                      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                        <label className="form-label small fw-semibold text-muted mb-0">
+                          Allowed Dispatch Days of the Week
+                        </label>
+                        <div className="d-flex gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-0"
+                            style={{ fontSize: '0.75rem' }}
+                            onClick={setWeekdaysOnly}
+                          >
+                            Weekdays (Mon-Fri)
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-0"
+                            style={{ fontSize: '0.75rem' }}
+                            onClick={setAllDaysOfWeek}
+                          >
+                            Everyday (Mon-Sun)
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="d-flex flex-wrap gap-2">
+                        {DAYS_OF_WEEK.map(day => {
+                          const isSelected = formData.reminderDaysOfWeek?.includes(day.id);
+                          return (
+                            <button
+                              key={day.id}
+                              type="button"
+                              className={`btn btn-sm rounded-pill px-3 py-2 transition-all d-flex align-items-center gap-2 ${isSelected ? 'btn-primary shadow-sm fw-bold' : 'btn-light border text-muted'}`}
+                              onClick={() => toggleDayOfWeek(day.id)}
+                            >
+                              <i className={`bi ${isSelected ? 'bi-check-circle-fill' : 'bi-circle'}`}></i>
+                              <span>{day.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Automated Payment Reminders Schedule Section */}
               <div className="col-12">
                 <div className="p-4 bg-white rounded-4 border">
                   <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
                     <div>
                       <h6 className="fw-bold mb-1 d-flex align-items-center gap-2 text-dark">
-                        <i className="bi bi-alarm text-primary"></i> Automated Payment Reminders Schedule
+                        <i className="bi bi-file-earmark-check text-primary fs-5"></i> Automated Invoice Payment Reminders (Date-Based Milestones)
                       </h6>
                       <p className="text-muted small mb-0">
-                        Automatically dispatch polite email reminders with PDF invoices attached as payment due dates approach.
+                        Select which date offsets before and after invoice payment due dates trigger automated reminder emails with attached PDF copies.
                       </p>
                     </div>
 
@@ -606,30 +960,108 @@ const MailSettings: React.FC = () => {
                   </div>
 
                   {formData.enableAutoReminders && (
-                    <div className="row g-3 pt-2">
-                      {REMINDER_OPTIONS.map((opt) => {
-                        const isChecked = formData.reminderSchedule?.includes(opt.id);
-                        return (
-                          <div key={opt.id} className="col-md-4 col-sm-6">
-                            <div 
-                              className={`p-3 rounded-3 border d-flex align-items-start gap-2 cursor-pointer transition-all ${isChecked ? 'bg-primary-subtle border-primary-subtle' : 'bg-light border-light'}`}
-                              onClick={() => toggleReminderOption(opt.id)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <input
-                                type="checkbox"
-                                className="form-check-input mt-1"
-                                checked={isChecked}
-                                onChange={() => {}} // Controlled by parent div
-                              />
-                              <div>
-                                <div className="fw-bold small text-dark">{opt.label}</div>
-                                <div className="text-muted" style={{ fontSize: '11px' }}>{opt.desc}</div>
+                    <div className="pt-2">
+                      {/* Pre-Due Milestones */}
+                      <div className="mb-3">
+                        <div className="text-muted x-small fw-bold text-uppercase mb-2 d-flex align-items-center gap-1">
+                          <i className="bi bi-calendar-minus text-primary"></i> Pre-Due Date Notifications (Upcoming Payment Alerts)
+                        </div>
+                        <div className="row g-2">
+                          {REMINDER_OPTIONS.filter(o => o.category === 'pre_due').map((opt) => {
+                            const isChecked = formData.reminderSchedule?.includes(opt.id);
+                            return (
+                              <div key={opt.id} className="col-md-4 col-sm-6">
+                                <div 
+                                  className={`p-3 rounded-3 border d-flex align-items-start gap-2 cursor-pointer transition-all ${isChecked ? 'bg-primary-subtle border-primary-subtle' : 'bg-light border-light'}`}
+                                  onClick={() => toggleReminderOption(opt.id)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="form-check-input mt-1"
+                                    checked={isChecked}
+                                    onChange={() => {}}
+                                  />
+                                  <div>
+                                    <div className="fw-bold small text-dark">{opt.label}</div>
+                                    <div className="text-muted" style={{ fontSize: '11px' }}>{opt.desc}</div>
+                                  </div>
+                                </div>
                               </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Overdue Notices */}
+                      <div className="mb-3">
+                        <div className="text-muted x-small fw-bold text-uppercase mb-2 d-flex align-items-center gap-1">
+                          <i className="bi bi-exclamation-triangle-fill text-danger"></i> Overdue Payment Notices (Post Due-Date Reminders)
+                        </div>
+                        <div className="row g-2">
+                          {REMINDER_OPTIONS.filter(o => o.category === 'overdue').map((opt) => {
+                            const isChecked = formData.reminderSchedule?.includes(opt.id);
+                            return (
+                              <div key={opt.id} className="col-md-3 col-sm-6">
+                                <div 
+                                  className={`p-3 rounded-3 border d-flex align-items-start gap-2 cursor-pointer transition-all ${isChecked ? 'bg-danger-subtle border-danger-subtle' : 'bg-light border-light'}`}
+                                  onClick={() => toggleReminderOption(opt.id)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="form-check-input mt-1"
+                                    checked={isChecked}
+                                    onChange={() => {}}
+                                  />
+                                  <div>
+                                    <div className="fw-bold small text-dark">{opt.label}</div>
+                                    <div className="text-muted" style={{ fontSize: '11px' }}>{opt.desc}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Custom Additional Offsets */}
+                      <div className="p-3 bg-light rounded-3 border">
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <label className="form-label small fw-semibold text-muted mb-1">
+                              Custom Days Before Due Date <span className="fw-normal">(Optional, comma-separated)</span>
+                            </label>
+                            <input
+                              type="text"
+                              name="customReminderDaysBefore"
+                              className="form-control form-control-sm shadow-none"
+                              placeholder="e.g. 45, 20, 5"
+                              value={formData.customReminderDaysBefore}
+                              onChange={handleInputChange}
+                            />
+                            <div className="form-text text-muted" style={{ fontSize: '11px' }}>
+                              Add custom advance milestone days (e.g. 45 for 45 days before due date).
                             </div>
                           </div>
-                        );
-                      })}
+                          <div className="col-md-6">
+                            <label className="form-label small fw-semibold text-muted mb-1">
+                              Custom Overdue Days After Due Date <span className="fw-normal">(Optional, comma-separated)</span>
+                            </label>
+                            <input
+                              type="text"
+                              name="customReminderDaysAfter"
+                              className="form-control form-control-sm shadow-none"
+                              placeholder="e.g. 10, 21, 60"
+                              value={formData.customReminderDaysAfter}
+                              onChange={handleInputChange}
+                            />
+                            <div className="form-text text-muted" style={{ fontSize: '11px' }}>
+                              Add custom overdue notice days (e.g. 21 for 21 days past due date).
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -641,10 +1073,10 @@ const MailSettings: React.FC = () => {
                   <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
                     <div>
                       <h6 className="fw-bold mb-1 d-flex align-items-center gap-2 text-dark">
-                        <i className="bi bi-calendar-check text-success fs-5"></i> Automated Lead Visit Reminders Configuration
+                        <i className="bi bi-calendar-check text-success fs-5"></i> Automated Lead Visit Reminders (Date &amp; Time Based)
                       </h6>
                       <p className="text-muted small mb-0">
-                        Configure how many days in advance the assigned Sales Person receives an email reminder before their scheduled lead visit date.
+                        Configure advance notice days and same-day morning alerts dispatched to assigned Sales Persons before scheduled client visits.
                       </p>
                     </div>
 
@@ -670,7 +1102,7 @@ const MailSettings: React.FC = () => {
                       <div className="row g-3 align-items-center">
                         <div className="col-md-5">
                           <label className="form-label small fw-semibold text-muted mb-2">
-                            Send Reminder (Days Before Visit Date)
+                            Send Advance Reminder (Days Before Visit Date)
                           </label>
                           <div className="input-group">
                             <span className="input-group-text bg-light text-primary fw-bold">
@@ -715,12 +1147,43 @@ const MailSettings: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center gap-3">
-                        <div className="badge bg-success-subtle text-success p-2 rounded-circle fs-5">
-                          <i className="bi bi-clock-history"></i>
+                      {/* Same-Day Visit Morning Alert Option */}
+                      <div className="mt-3 p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="badge bg-warning-subtle text-warning-emphasis p-2 rounded-circle fs-5">
+                            <i className="bi bi-sun-fill"></i>
+                          </div>
+                          <div>
+                            <div className="fw-bold small text-dark">Same-Day Morning Visit Alert</div>
+                            <div className="text-muted x-small">
+                              Additionally send a prompt alert on the morning of the visit date itself at {formData.reminderExecutionTime || '10:00'}.
+                            </div>
+                          </div>
                         </div>
-                        <div className="small text-muted">
-                          <strong>Active Schedule Rule:</strong> The assigned Sales Person will receive the automated visit reminder email exactly <strong>{formData.leadReminderDays} day{Number(formData.leadReminderDays) > 1 ? 's' : ''}</strong> before the scheduled visit date during the daily scheduler runs (10:00 AM &amp; 12:40 PM).
+
+                        <div className="form-check form-switch m-0">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="leadSameDayAlert"
+                            name="leadSameDayAlert"
+                            checked={formData.leadSameDayAlert}
+                            onChange={handleInputChange}
+                            style={{ cursor: 'pointer' }}
+                          />
+                          <label className="form-check-label fw-semibold small ms-2" htmlFor="leadSameDayAlert" style={{ cursor: 'pointer' }}>
+                            {formData.leadSameDayAlert ? 'Enabled' : 'Disabled'}
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 p-3 bg-success-subtle bg-opacity-25 rounded-3 border border-success-subtle d-flex align-items-center gap-3">
+                        <div className="badge bg-success text-white p-2 rounded-circle fs-5">
+                          <i className="bi bi-check2-circle"></i>
+                        </div>
+                        <div className="small text-dark">
+                          <strong>Active Schedule Rule:</strong> Sales Persons will receive visit reminder notifications <strong>{formData.leadReminderDays} day{Number(formData.leadReminderDays) > 1 ? 's' : ''}</strong> in advance {formData.leadSameDayAlert ? 'and on the visit morning itself ' : ''}at <strong>{formData.reminderExecutionTime || '10:00'} IST</strong> {formData.enableSecondaryTime ? `(and afternoon check at ${formData.secondaryExecutionTime || '12:40'} IST)` : ''}.
                         </div>
                       </div>
                     </div>

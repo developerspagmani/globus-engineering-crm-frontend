@@ -9,6 +9,7 @@ import { addLead, updateLead } from '@/redux/features/leadSlice';
 import { fetchUsers } from '@/redux/features/companyUserSlice';
 import FullPageStatus from '@/components/FullPageStatus';
 import SearchableSelect from '@/components/shared/SearchableSelect';
+import api from '@/lib/axios';
 
 
 interface LeadFormProps {
@@ -58,7 +59,9 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
     type: 'success' | 'error';
     title: string;
     message: string;
-  }>({ isOpen: false, type: 'success', title: '', message: '' });
+    redirectOnClose?: boolean;
+  }>({ isOpen: false, type: 'success', title: '', message: '', redirectOnClose: true });
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
 
 
   useEffect(() => {
@@ -101,7 +104,8 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           isOpen: true,
           type: 'success',
           title: 'Success!',
-          message: "Lead incorporated successfully."
+          message: "Lead incorporated successfully.",
+          redirectOnClose: true
         });
       } else if (mode === 'edit' && initialData) {
         await (dispatch as any)(updateLead({ ...initialData, ...payload })).unwrap();
@@ -109,7 +113,8 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           isOpen: true,
           type: 'success',
           title: 'Success!',
-          message: "Prospect updated successfully."
+          message: "Prospect updated successfully.",
+          redirectOnClose: true
         });
       }
     } catch (err: any) {
@@ -120,8 +125,56 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
         message: err.message || "Failed to save lead."
       });
     } finally {
-
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSendReminderToAgent = async () => {
+    if (!formData.agentId) {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Sales Person Required',
+        message: 'Please assign a Sales Person to this lead before sending a visit reminder.',
+        redirectOnClose: false
+      });
+      return;
+    }
+
+    try {
+      setIsSendingReminder(true);
+      // If in edit mode, sync form values so the email contains updated visit date/assigned agent
+      if (initialData?.id && mode === 'edit') {
+        const payload = {
+          ...formData,
+          assigned_area: formData.assignedArea,
+        };
+        await (dispatch as any)(updateLead({ ...initialData, ...payload })).unwrap();
+      }
+
+      const leadId = initialData?.id;
+      const res = await api.post(`/leads/${leadId}/send-visit-reminder`, {
+        company_id: user?.company_id || formData.company_id
+      });
+
+      setModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Visit Reminder Sent!',
+        message: res.data?.message || 'Visit reminder email has been successfully sent to the assigned sales agent.',
+        redirectOnClose: false
+      });
+    } catch (err: any) {
+      console.error('Failed to send visit reminder:', err);
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Failed to Send Reminder',
+        message: err.response?.data?.error || err.message || 'Could not send visit reminder email via SMTP.',
+        redirectOnClose: false
+      });
+    } finally {
+      setIsSendingReminder(false);
     }
   };
 
@@ -296,26 +349,51 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
             ></textarea>
           </div>
 
-          <div className="text-end pt-4 border-top">
-            <button type="button" className="btn btn-link text-muted me-3 fw-700 text-decoration-none" onClick={() => router.push('/leads')}>
-              {mode === 'view' ? 'Back' : 'Dismiss'}
-            </button>
-            {mode !== 'view' && (
-              <button 
-                type="submit" 
-                className="btn btn-primary px-5 shadow-accent fw-bold rounded-pill d-flex align-items-center gap-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span>{mode === 'create' ? 'Incorporating...' : 'Updating...'}</span>
-                  </>
-                ) : (
-                  mode === 'create' ? 'Incorporate Lead' : 'Update Prospect'
-                )}
+          <div className="d-flex align-items-center justify-content-between pt-4 border-top flex-wrap gap-2">
+            <div>
+              {mode !== 'create' && initialData?.id && (
+                <button
+                  type="button"
+                  className="btn btn-warning text-dark fw-bold d-inline-flex align-items-center gap-2 shadow-xs rounded-pill px-4 py-2"
+                  onClick={handleSendReminderToAgent}
+                  disabled={isSendingReminder || isSubmitting}
+                  title="Send automated email reminder to the assigned sales agent"
+                >
+                  {isSendingReminder ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm text-dark" role="status" aria-hidden="true"></span>
+                      <span>Sending Reminder...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-bell-fill"></i>
+                      <span>Send Reminder to Agent</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <button type="button" className="btn btn-link text-muted me-2 fw-700 text-decoration-none" onClick={() => router.push('/leads')}>
+                {mode === 'view' ? 'Back' : 'Dismiss'}
               </button>
-            )}
+              {mode !== 'view' && (
+                <button 
+                  type="submit" 
+                  className="btn btn-primary px-5 shadow-accent fw-bold rounded-pill d-flex align-items-center gap-2"
+                  disabled={isSubmitting || isSendingReminder}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span>{mode === 'create' ? 'Incorporating...' : 'Updating...'}</span>
+                    </>
+                  ) : (
+                    mode === 'create' ? 'Incorporate Lead' : 'Update Prospect'
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </form>
       </div>
@@ -325,8 +403,11 @@ const LeadForm: React.FC<LeadFormProps> = ({ initialData, mode }) => {
           title={modal.title}
           message={modal.message}
           onClose={() => {
+            const shouldRedirect = modal.redirectOnClose !== false;
             setModal(prev => ({ ...prev, isOpen: false }));
-            if (modal.type === 'success') router.push('/leads');
+            if (modal.type === 'success' && shouldRedirect) {
+              router.push('/leads');
+            }
           }}
         />
       )}

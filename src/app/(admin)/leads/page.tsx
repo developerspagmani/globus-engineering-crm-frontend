@@ -23,9 +23,26 @@ const LeadsPage = () => {
   const [mounted, setMounted] = useState(false);
   const dispatch = useDispatch();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items, filters, pagination, sorting, loading } = useSelector((state: RootState) => state.leads);
+  const { items, filters, pagination, sorting, loading, upcomingCount } = useSelector((state: RootState) => state.leads);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [leadReminderDays, setLeadReminderDays] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<'all' | 'reminders'>('all');
+  const [reminderScope, setReminderScope] = useState<'all' | 'today' | 'tomorrow' | 'week' | 'overdue'>('all');
+
+  const [searchInput, setSearchInput] = useState(filters.search || '');
+
+  useEffect(() => {
+    setSearchInput(filters.search || '');
+  }, [filters.search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== (filters.search || '')) {
+        dispatch(setLeadFilters({ search: searchInput }));
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput, dispatch, filters.search]);
 
   const [modal, setModal] = useState<{ isOpen: boolean; title: string; message: string; type?: 'success' | 'error' | 'info' }>({
     isOpen: false,
@@ -73,14 +90,39 @@ const LeadsPage = () => {
       fromDate: filters.fromDate,
       toDate: filters.toDate,
       sortBy: sorting.sortBy,
-      sortOrder: sorting.sortOrder
+      sortOrder: sorting.sortOrder,
+      upcomingReminders: activeTab === 'reminders',
+      reminderScope: activeTab === 'reminders' ? reminderScope : undefined
     }));
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
+  }, [
+    dispatch, 
+    activeCompany?.id, 
+    pagination.currentPage, 
+    pagination.itemsPerPage, 
+    filters.search, 
+    filters.status, 
+    filters.fromDate, 
+    filters.toDate, 
+    sorting.sortBy, 
+    sorting.sortOrder,
+    activeTab,
+    reminderScope
+  ]);
 
   if (!mounted) return null;
 
   const totalPages = pagination.totalPages;
   const paginatedItems = items;
+
+  const handleTabChange = (tab: 'all' | 'reminders') => {
+    setActiveTab(tab);
+    dispatch(setLeadPage(1));
+  };
+
+  const handleReminderScopeChange = (scope: 'all' | 'today' | 'tomorrow' | 'week' | 'overdue') => {
+    setReminderScope(scope);
+    dispatch(setLeadPage(1));
+  };
 
   const handleSort = (field: string) => {
     const newOrder = sorting.sortBy === field && sorting.sortOrder === 'asc' ? 'desc' : 'asc';
@@ -296,7 +338,7 @@ const LeadsPage = () => {
           </Link>
           <ExportExcel
             data={items}
-            fileName="Leads_List"
+            fileName={activeTab === 'reminders' ? "Upcoming_Lead_Reminders" : "Leads_List"}
             headers={{ 
               name: 'Name', 
               company: 'Company', 
@@ -307,7 +349,7 @@ const LeadsPage = () => {
               status: 'Status', 
               createdAt: 'Inquiry Date' 
             }}
-            buttonText="Export List"
+            buttonText={activeTab === 'reminders' ? "Export Reminders" : "Export List"}
           />
           {checkActionPermission(user, 'mod_lead', 'create') && (
             <Link href="/leads/new" className="btn btn-primary btn-page-action px-4">
@@ -330,8 +372,8 @@ const LeadsPage = () => {
                   type="text"
                   className="form-control search-bar"
                   placeholder="Search prospects..."
-                  value={filters.search}
-                  onChange={(e) => dispatch(setLeadFilters({ search: e.target.value }))}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                 />
               </div>
             </div>
@@ -366,32 +408,303 @@ const LeadsPage = () => {
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm overflow-hidden">
+      {/* Lead Management Table with Tabs */}
+      <div className="card border-0 shadow-sm overflow-hidden rounded-4">
+        {/* Navigation Tabs Header */}
+        <div className="d-flex text-uppercase py-2 mb-0 px-3 bg-white border-bottom align-items-center justify-content-between flex-wrap gap-2">
+          <div className="d-flex gap-2 align-items-center">
+            <button
+              type="button"
+              className={`btn shadow-none border-0 rounded-3 py-2 px-3 fw-bold small transition-all d-flex align-items-center gap-2 ${activeTab === 'all' ? 'bg-primary-subtle text-primary border border-primary-subtle shadow-xs' : 'text-muted'}`}
+              onClick={() => handleTabChange('all')}
+            >
+              <i className="bi bi-people-fill"></i>
+              <span>All Prospects</span>
+              {activeTab === 'all' && (
+                <span className="badge bg-primary text-white rounded-pill px-2 py-1 ms-1">
+                  {pagination.totalItems || items.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className={`btn shadow-none border-0 rounded-3 py-2 px-3 fw-bold small transition-all d-flex align-items-center gap-2 ${activeTab === 'reminders' ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle shadow-xs' : 'text-muted'}`}
+              onClick={() => handleTabChange('reminders')}
+            >
+              <i className="bi bi-bell-fill text-warning"></i>
+              <span>Upcoming Reminders</span>
+              <span className={`badge rounded-pill px-2 py-1 ms-1 ${activeTab === 'reminders' ? 'bg-warning text-dark' : 'bg-secondary-subtle text-secondary'}`}>
+                {upcomingCount > 0 ? upcomingCount : items.filter(l => l.nextVisitDate || l.next_visit_date).length}
+              </span>
+            </button>
+          </div>
+
+          {/* Sub-filters for Upcoming Reminders Tab */}
+          {activeTab === 'reminders' && (
+            <div className="d-flex gap-1 align-items-center flex-wrap">
+              <span className="text-muted x-small fw-bold me-1 text-uppercase">Timeline:</span>
+              {[
+                { id: 'all', label: 'All Scheduled' },
+                { id: 'today', label: 'Today', icon: 'bi-clock-fill text-danger' },
+                { id: 'tomorrow', label: 'Tomorrow', icon: 'bi-calendar-event text-warning' },
+                { id: 'week', label: 'Next 7 Days', icon: 'bi-calendar-week text-primary' },
+                { id: 'overdue', label: 'Overdue', icon: 'bi-exclamation-triangle-fill text-danger' }
+              ].map(sub => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  className={`btn btn-sm rounded-pill px-2 py-1 shadow-none transition-all ${reminderScope === sub.id ? 'btn-dark text-white fw-bold shadow-xs' : 'btn-light border text-muted'}`}
+                  style={{ fontSize: '0.75rem' }}
+                  onClick={() => handleReminderScopeChange(sub.id as any)}
+                >
+                  {sub.icon && <i className={`bi ${sub.icon} me-1`}></i>}
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reminder Information Banner */}
+        {activeTab === 'reminders' && (
+          <div className="px-4 py-2 bg-warning-subtle bg-opacity-25 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div className="d-flex align-items-center gap-2 small text-dark">
+              <i className="bi bi-info-circle-fill text-warning fs-6"></i>
+              <span>Automated system triggers reminders to sales agents <strong>{leadReminderDays} day{leadReminderDays > 1 ? 's' : ''}</strong> before scheduled visit dates.</span>
+            </div>
+            <Link href="/settings?tab=mail" className="small text-decoration-none fw-semibold text-primary">
+              Configure Schedule in Settings &rarr;
+            </Link>
+          </div>
+        )}
+
         <div className="card-body p-0">
           <div className="table-responsive" style={{ minHeight: '400px', paddingBottom: '80px' }}>
             <table className="table table-hover align-middle mb-0">
           <thead>
-            <tr className="bg-light">
-              <SortableHeader field="name" label="Prospect Info" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="px-4 py-3 small fw-800 text-muted text-capitalize tracking-widest" />
-              <SortableHeader field="next_visit_date" label="Next Visit" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
-              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Sales Person</th>
-              <SortableHeader field="source" label="Source" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
-              <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
-              <SortableHeader field="industry" label="Industry" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
-              <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0 text-center px-4">Action</th>
-            </tr>
+            {activeTab === 'reminders' ? (
+              <tr className="bg-light">
+                <SortableHeader field="name" label="Prospect / Company" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="px-4 py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <SortableHeader field="next_visit_date" label="Scheduled Visit & Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Assigned Sales Person</th>
+                <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Contact Details</th>
+                <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0 text-center">Send Alert</th>
+                <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0 text-center px-4">Action</th>
+              </tr>
+            ) : (
+              <tr className="bg-light">
+                <SortableHeader field="name" label="Prospect Info" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="px-4 py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <SortableHeader field="next_visit_date" label="Next Visit" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0">Sales Person</th>
+                <SortableHeader field="source" label="Source" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <SortableHeader field="status" label="Status" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <SortableHeader field="industry" label="Industry" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-3 small fw-800 text-muted text-capitalize tracking-widest" />
+                <th className="py-3 small fw-800 text-muted text-capitalize tracking-widest border-0 text-center px-4">Action</th>
+              </tr>
+            )}
           </thead>
           <tbody>
             {loading ? (
               <tr>
                 <td colSpan={7}>
-                  <Loader text="Fetching Leads..." />
+                  <Loader text={activeTab === 'reminders' ? "Fetching Upcoming Reminders..." : "Fetching Leads..."} />
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-5 text-muted fw-600">No leads found in your current view.</td>
+                <td colSpan={7} className="text-center py-5">
+                  {activeTab === 'reminders' ? (
+                    <div className="py-4">
+                      <i className="bi bi-bell-slash text-muted" style={{ fontSize: '3rem', opacity: 0.4 }}></i>
+                      <h6 className="fw-bold text-dark mt-3 mb-1">No upcoming visit reminders found</h6>
+                      <p className="text-muted small mb-3">
+                        {reminderScope === 'all' 
+                          ? "There are no leads with scheduled visit dates yet." 
+                          : `No scheduled visits found for '${reminderScope}'.`}
+                      </p>
+                      <Link href="/leads/new" className="btn btn-sm btn-primary rounded-pill px-3">
+                        <i className="bi bi-plus-lg me-1"></i> Schedule a New Visit
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="text-muted fw-600">No leads found in your current view.</div>
+                  )}
+                </td>
               </tr>
+            ) : activeTab === 'reminders' ? (
+              paginatedItems.map((lead) => (
+                <tr key={lead.id} className="border-bottom table-row-hover">
+                  {/* Prospect / Company */}
+                  <td className="px-4 py-3">
+                    <div>
+                      <div className="fw-800 text-dark mb-0 fs-6">{lead.name}</div>
+                      <div className="small text-muted fw-600">{lead.company}</div>
+                      {lead.industry && (
+                        <span className="badge bg-light text-muted border border-light-subtle rounded-pill x-small mt-1">
+                          {lead.industry}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Scheduled Visit & Status */}
+                  <td>
+                    <div className="d-flex flex-column gap-1">
+                      {getVisitDateBadge(lead.next_visit_date || lead.nextVisitDate)}
+                      {lead.productInterest && (
+                        <div className="text-muted x-small text-truncate" style={{ maxWidth: '180px' }} title={lead.productInterest}>
+                          <i className="bi bi-tag me-1"></i>{lead.productInterest}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Assigned Sales Person */}
+                  <td>
+                    {lead.agentName ? (
+                      <div>
+                        <div className="fw-700 text-dark small">
+                          <i className="bi bi-person-fill text-primary me-1"></i>
+                          {lead.agentName}
+                        </div>
+                        {lead.agentEmail && (
+                          <div className="text-muted x-small" title={lead.agentEmail}>
+                            <i className="bi bi-envelope me-1"></i>
+                            {lead.agentEmail}
+                          </div>
+                        )}
+                        {lead.agentPhone && (
+                          <div className="text-muted x-small">
+                            <i className="bi bi-telephone me-1"></i>
+                            {lead.agentPhone}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="badge bg-warning-subtle text-warning-emphasis px-2 py-1 rounded-pill small">
+                        <i className="bi bi-exclamation-circle me-1"></i>Unassigned
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Contact Details */}
+                  <td>
+                    <div>
+                      {lead.phone && (
+                        <div>
+                          <a href={`tel:${lead.phone}`} className="text-decoration-none small text-dark fw-semibold">
+                            <i className="bi bi-telephone-fill text-success me-1"></i>{lead.phone}
+                          </a>
+                        </div>
+                      )}
+                      {lead.email && (
+                        <div>
+                          <a href={`mailto:${lead.email}`} className="text-decoration-none x-small text-muted text-truncate d-inline-block" style={{ maxWidth: '160px' }}>
+                            <i className="bi bi-envelope-fill text-secondary me-1"></i>{lead.email}
+                          </a>
+                        </div>
+                      )}
+                      {lead.assignedArea && (
+                        <div className="x-small text-muted">
+                          <i className="bi bi-geo-alt me-1"></i>{lead.assignedArea}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Status */}
+                  <td>{getStatusBadge(lead.status)}</td>
+
+                  {/* Send Alert Button */}
+                  <td className="text-center">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-warning text-dark border-warning-subtle shadow-none rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1"
+                      style={{ fontSize: '0.8rem' }}
+                      disabled={sendingReminderId === lead.id}
+                      onClick={() => handleSendVisitReminder(lead)}
+                      title="Send Email Reminder to Sales Person"
+                    >
+                      {sendingReminderId === lead.id ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm text-warning" role="status" aria-hidden="true"></span>
+                          <span>Sending...</span>
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-bell-fill text-warning"></i>
+                          <span className="fw-semibold">Send Reminder</span>
+                        </>
+                      )}
+                    </button>
+                  </td>
+
+                  {/* Action dropdown */}
+                  <td className="text-center px-4">
+                    <div className="d-flex justify-content-center gap-1">
+                      <Link href={`/leads/${lead.id}/edit`} className="btn-action-view" title="View Profile">
+                        <i className="bi bi-eye-fill"></i>
+                      </Link>
+                      {checkActionPermission(user, 'mod_lead', 'edit') && (
+                        <Link href={`/leads/${lead.id}/edit?edit=true`} className="btn-action-edit" title="Edit Lead">
+                          <i className="bi bi-pencil-fill"></i>
+                        </Link>
+                      )}
+                      <div className="dropdown">
+                        <button 
+                          className="btn btn-sm btn-outline-secondary border-0 text-muted p-0 ms-1 d-flex align-items-center justify-content-center" 
+                          type="button" 
+                          id={`actions-rem-${lead.id}`} 
+                          data-bs-toggle="dropdown" 
+                          aria-expanded="false"
+                          style={{ width: '32px', height: '32px', borderRadius: '8px' }}
+                        >
+                          <i className="bi bi-three-dots-vertical fs-5"></i>
+                        </button>
+                        <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 py-2" aria-labelledby={`actions-rem-${lead.id}`}>
+                          {checkActionPermission(user, 'mod_lead', 'edit') && (
+                            <li>
+                              <button className="dropdown-item d-flex align-items-center gap-2 py-2 text-success" type="button" onClick={() => handlePromoteParams(lead)}>
+                                <i className="bi bi-person-plus-fill"></i>
+                                <span className="small fw-bold">Promote to Customer</span>
+                              </button>
+                            </li>
+                          )}
+                          <li>
+                            <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handlePrintLeadRecord(lead)}>
+                              <i className="bi bi-printer text-primary"></i>
+                              <span className="small fw-semibold">Quick Print</span>
+                            </button>
+                          </li>
+                          <li>
+                            <button className="dropdown-item d-flex align-items-center gap-2 py-2" type="button" onClick={() => handleExportPDFLeadRecord(lead)}>
+                              <i className="bi bi-file-earmark-pdf text-danger"></i>
+                              <span className="small fw-semibold">Export PDF</span>
+                            </button>
+                          </li>
+                          {checkActionPermission(user, 'mod_lead', 'delete') && (
+                            <>
+                              <li><hr className="dropdown-divider opacity-50" /></li>
+                              <li>
+                                <button 
+                                  className="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" 
+                                  type="button" 
+                                  onClick={() => handleDeleteParams(lead.id)}
+                                >
+                                  <i className="bi bi-trash3"></i>
+                                  <span className="small fw-semibold">Remove Record</span>
+                                </button>
+                              </li>
+                            </>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))
             ) : (
               paginatedItems.map((lead, index) => (
                 <tr key={lead.id}>

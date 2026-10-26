@@ -67,6 +67,23 @@ const InvoiceFilter: React.FC = () => {
     }
   }, [isVendor, vendors, customers]);
 
+  const [searchInput, setSearchInput] = React.useState(filters.search || '');
+
+  // Keep local state in sync when external filters change (e.g. URL reset)
+  React.useEffect(() => {
+    setSearchInput(filters.search || '');
+  }, [filters.search]);
+
+  // Debounce dispatch to Redux by 400ms to reduce serverless CPU load
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== (filters.search || '')) {
+        dispatch(setInvoiceFilters({ search: searchInput }));
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput, dispatch, filters.search]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     dispatch(setInvoiceFilters({ [name]: value }));
@@ -110,8 +127,8 @@ const InvoiceFilter: React.FC = () => {
                     className="form-control search-bar"
                     placeholder="Search by invoice number, DC, PO..."
                     name="search"
-                    value={filters.search}
-                    onChange={handleChange}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                   />
                 </div>
               </div>
