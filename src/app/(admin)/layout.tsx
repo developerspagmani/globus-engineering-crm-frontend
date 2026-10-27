@@ -29,10 +29,19 @@ export default function AdminLayout({
   useEffect(() => {
     if (isSalesMap) {
       setSidebarCollapsed(true);
+    } else if (typeof window !== 'undefined' && window.innerWidth <= 992) {
+      setSidebarCollapsed(true);
     } else {
       setSidebarCollapsed(false);
     }
   }, [isSalesMap]);
+
+  // Auto-collapse sidebar on route change on mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 992) {
+      setSidebarCollapsed(true);
+    }
+  }, [pathname]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -42,7 +51,15 @@ export default function AdminLayout({
     <div className="admin-container">
       {!isSalesMap && (
         <React.Suspense fallback={<div className="sidebar d-print-none" style={{ width: sidebarCollapsed ? '80px' : '260px' }}></div>}>
-          <div className="d-print-none"><AdminSidebar collapsed={sidebarCollapsed} /></div>
+          <div className="d-print-none">
+            <AdminSidebar collapsed={sidebarCollapsed} onClose={() => setSidebarCollapsed(true)} />
+            {!sidebarCollapsed && (
+              <div 
+                className="sidebar-backdrop d-lg-none"
+                onClick={() => setSidebarCollapsed(true)}
+              />
+            )}
+          </div>
         </React.Suspense>
       )}
       <main className={`main-wrapper print-full-width ${isSalesMap ? '' : (sidebarCollapsed ? 'expanded' : '')}`} style={isSalesMap ? { marginLeft: 0 } : {}}>

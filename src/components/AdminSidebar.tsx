@@ -10,14 +10,22 @@ import { navigationConfig, hasPermission, NavItem } from '@/config/permissions';
 
 interface SidebarProps {
   collapsed: boolean;
+  onClose?: () => void;
 }
 
-const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
+const AdminSidebar: React.FC<SidebarProps> = ({ collapsed, onClose }) => {
   const [mounted, setMounted] = React.useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { user, company } = useSelector((state: RootState) => state.auth);
+
+  // Helper to close sidebar when a link is clicked on mobile
+  const handleNavClick = () => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 992) {
+      onClose?.();
+    }
+  };
 
   // State for expanded menus
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
@@ -81,7 +89,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   if (!mounted) return <div className="sidebar bg-white shadow-sm h-100" style={{ width: collapsed ? '80px' : '260px' }}></div>;
 
   return (
-    <div className={`sidebar bg-white shadow-sm h-100 d-flex flex-column ${collapsed ? 'collapsed' : ''}`} style={{ zIndex: 1000 }}>
+    <div className={`sidebar bg-white shadow-sm h-100 d-flex flex-column ${collapsed ? 'collapsed' : ''}`} style={{ zIndex: 1070 }}>
       {/* Brand Header */}
       <div className={`d-flex align-items-center justify-content-center mb-2 ${collapsed ? 'py-4' : 'p-4 gap-3'}`}>
         <div className="d-flex align-items-center justify-content-center rounded-3 shadow-sm bg-white" style={{ width: '45px', height: '45px', minWidth: '45px', overflow: 'hidden' }}>
@@ -92,13 +100,26 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           )}
         </div>
         {!collapsed && (
-          <div className="d-flex flex-column justify-content-center text-start">
-            <h6 className="fw-900 mb-0 text-dark tracking-tight" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>
-              {company?.name?.toLowerCase().includes('pricol') ? 'PRICOL' : (company?.name?.toUpperCase() || 'GLOBUS')}
-            </h6>
-            <p className="mb-0 text-uppercase fw-bold" style={{ fontSize: '0.7rem', color: '#ea580c', letterSpacing: '1px' }}>
-              {company?.name?.toLowerCase().includes('pricol') ? '' : 'Engineering'}
-            </p>
+          <div className="d-flex align-items-center justify-content-between flex-grow-1 overflow-hidden">
+            <div className="d-flex flex-column justify-content-center text-start overflow-hidden">
+              <h6 className="fw-900 mb-0 text-dark tracking-tight text-truncate" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>
+                {company?.name?.toLowerCase().includes('pricol') ? 'PRICOL' : (company?.name?.toUpperCase() || 'GLOBUS')}
+              </h6>
+              <p className="mb-0 text-uppercase fw-bold" style={{ fontSize: '0.7rem', color: '#ea580c', letterSpacing: '1px' }}>
+                {company?.name?.toLowerCase().includes('pricol') ? '' : 'Engineering'}
+              </p>
+            </div>
+            {onClose && (
+              <button 
+                type="button" 
+                className="btn btn-sm btn-light border-0 rounded-circle d-lg-none d-flex align-items-center justify-content-center p-0 ms-2 flex-shrink-0"
+                style={{ width: '32px', height: '32px' }}
+                onClick={onClose}
+                aria-label="Close sidebar"
+              >
+                <i className="bi bi-x-lg text-muted"></i>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -191,6 +212,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                           <Link
                             key={child.path}
                             href={child.path}
+                            onClick={handleNavClick}
                             className={`nav-link py-1 small rounded-2 ${isChildActive ? 'active fw-bold' : 'text-muted'}`}
                             style={{ 
                               fontSize: '0.85rem',
@@ -212,6 +234,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
               <Link
                 key={item.path}
                 href={item.path}
+                onClick={handleNavClick}
                 className={`nav-link ${isActive ? 'active' : ''}`}
                 title={collapsed ? item.name : ''}
               >
