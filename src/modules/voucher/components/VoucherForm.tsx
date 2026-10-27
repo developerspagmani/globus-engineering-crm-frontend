@@ -13,6 +13,7 @@ import SearchableSelect from '@/components/shared/SearchableSelect';
 
 import { fetchVendors } from '@/redux/features/vendorSlice';
 import { fetchInwards } from '@/redux/features/inwardSlice';
+import api from '@/lib/axios';
 
 interface VoucherFormProps {
   initialData?: Voucher;
@@ -76,6 +77,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
   const totalInvoiceAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   const commonTdsAmount = Number(formData.commonTds) || 0;
+  const totalItemTds = formData.selectedInvoices.reduce((sum, item) => sum + (item.adjustmentType === 'TDS' ? (Number(item.adjustmentValue) || 0) : 0), 0);
+  const totalTdsAmount = totalItemTds + commonTdsAmount;
   const totalAdjustmentAmount = formData.selectedInvoices.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0) + commonTdsAmount;
   const netPayableAmount = totalInvoiceAmount - totalAdjustmentAmount;
 
@@ -85,6 +88,56 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
     title: '',
     message: ''
   });
+
+  const [settleModal, setSettleModal] = useState<{
+    invoice: any;
+    step: 1 | 2;
+    acknowledged: boolean;
+  } | null>(null);
+  const [isSettling, setIsSettling] = useState(false);
+
+  const handleConfirmSettle = async (invoiceToSettle: any) => {
+    if (!invoiceToSettle) return;
+    try {
+      setIsSettling(true);
+      const invoiceId = invoiceToSettle.id;
+      const res = await api.patch(`/invoices/${invoiceId}/toggle-status`, { status: 'CLOSED' });
+      
+      if (res.data?.success) {
+        // Remove from selectedInvoices if currently selected
+        setFormData(prev => ({
+          ...prev,
+          selectedInvoices: prev.selectedInvoices.filter(i => String(i.id) !== String(invoiceId))
+        }));
+
+        // Refresh invoices in Redux so the settled invoice disappears from pending lists
+        if (activeCompany?.id) {
+          (dispatch as any)(fetchInvoices({ 
+            company_id: activeCompany.id, 
+            limit: 5000,
+            ...(formData.partyType === 'customer' && formData.partyId ? { customerId: formData.partyId } : {})
+          }));
+        }
+
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Invoice Settled',
+          message: `Invoice #${invoiceToSettle.invoiceNumber || invoiceToSettle.invoiceNo || invoiceId} has been successfully marked as SETTLED and removed from Pending Payments.`
+        });
+      }
+    } catch (err: any) {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Settlement Failed',
+        message: err.response?.data?.error || err.message || 'Failed to settle invoice.'
+      });
+    } finally {
+      setIsSettling(false);
+      setSettleModal(null);
+    }
+  };
 
 
 
@@ -249,6 +302,103 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
 
       const name = initialData.partyName || (initialData as any).party_name || foundParty?.name || (foundParty as any)?.company || '';
 
+      const initialTds = Number(initialData.tdsAmount || (initialData as any).tds_amount || (initialData as any).commonTds || 0);
+
+      let parsedInvoices: any[] = [];
+      // Priority 1: Use structured items array if available
+      if (initialData.items && Array.isArray(initialData.items) && initialData.items.length > 0) {
+        const mapped = initialData.items.map((it: any) => {
+          // Resolve real UUID from allInvoices to ensure all downstream matching (toggle, detail change) works
+          const itNo = String(it.invoiceNo || it.invoice_no || it.id || '').replace(/^0+/, '');
+          const resolvedInv = allInvoices.find((i: any) => {
+            const iNo = String(i.invoiceNumber || i.invoice_no || '').replace(/^0+/, '');
+            return iNo !== '' && itNo !== '' && iNo === itNo;
+          });
+          return {
+            id: resolvedInv ? String(resolvedInv.id) : (it.id || it.invoiceNo || it.invoice_no),
+            invoiceNo: it.invoiceNo || it.invoice_no || resolvedInv?.invoiceNumber || '',
+            invoiceDate: it.invoiceDate || it.invoice_date || (resolvedInv as any)?.invoice_date || (resolvedInv as any)?.date || '',
+            amount: Number(Number(it.amount || 0).toFixed(2)) || (resolvedInv ? Number((resolvedInv.grandTotal || 0).toFixed(2)) : 0),
+            adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
+            adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
+          };
+        });
+        
+        const deduplicated = new Map<string, any>();
+        mapped.forEach((item: any) => {
+          if (!deduplicated.has(item.id)) {
+            deduplicated.set(item.id, { ...item });
+          }
+        });
+        parsedInvoices = Array.from(deduplicated.values());
+      } else if (initialData.referenceNo) {
+        // Priority 2: Fallback to parsing referenceNo string (Legacy support)
+        const results: any[] = [];
+        const regex = /([^,(\s]+)\s*(?:\(([^)|]+)(?:\|([^)]+))?\))?/g;
+        let match;
+        
+        while ((match = regex.exec(initialData.referenceNo)) !== null) {
+          const invoiceNo = match[1].trim();
+          if (['₹', 'RS', 'INR'].includes(invoiceNo.toUpperCase())) continue;
+          
+          let amount = parseFloat((match[2] || '').replace(/[^\d.]/g, '')) || 0;
+          const adjStr = match[3] || '';
+          let adjValue = parseFloat(adjStr.replace(/[^\d.]/g, '')) || 0;
+          let adjType = adjStr.toUpperCase().includes('OTHERS') ? 'Others' : 'TDS';
+          
+          const normNo = invoiceNo.replace(/^0+/, '');
+          let inv = allInvoices.find(i => String(i.id) === invoiceNo);
+          if (!inv) {
+            inv = allInvoices.find(i => {
+              const iNo = String(i.invoiceNumber || (i as any).invoice_no || '').replace(/^0+/, '');
+              return (iNo !== '' && iNo === normNo) || 
+                     String(i.invoiceNumber) === invoiceNo;
+            });
+          }
+          
+          if (amount === 0 && inv) {
+            const pending = inv.grandTotal - (inv.paidAmount || 0);
+            amount = Number((pending > 0 ? pending : inv.grandTotal).toFixed(2));
+          }
+          
+          const key = inv?.id || invoiceNo;
+          const existing = results.find(r => r.id === key);
+          if (!existing) {
+            results.push({ 
+              id: key, 
+              invoiceNo: inv?.invoiceNumber || invoiceNo, 
+              amount: amount,
+              adjustmentType: adjType,
+              adjustmentValue: adjValue
+            });
+          }
+        }
+        
+        if (results.length === 1 && results[0].amount === 0 && initialData.amount > 0) {
+          results[0].amount = initialData.amount + (initialData.tdsAmount || 0) + (initialData.othersAmount || 0);
+        }
+        
+        if (results.length === 0 && initialData.amount > 0 && initialData.referenceNo) {
+           results.push({
+             id: initialData.referenceNo,
+             invoiceNo: initialData.referenceNo,
+             amount: initialData.amount,
+             adjustmentType: 'TDS',
+             adjustmentValue: 0
+           });
+        }
+        
+        parsedInvoices = results;
+      }
+
+      const parsedItemTds = parsedInvoices.reduce((sum, item) => sum + (item.adjustmentType === 'TDS' ? (Number(item.adjustmentValue) || 0) : 0), 0);
+      if (parsedInvoices.length === 1 && parsedItemTds === 0 && initialTds > 0) {
+        parsedInvoices[0].adjustmentType = 'TDS';
+        parsedInvoices[0].adjustmentValue = initialTds;
+      }
+
+      const calculatedCommonTds = Math.max(0, initialTds - (parsedItemTds > 0 ? parsedItemTds : (parsedInvoices.length === 1 ? initialTds : 0)));
+
       setFormData(prev => ({
         ...prev,
         date: initialData.date,
@@ -260,95 +410,8 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
         partyName: name,
         customerId: type === 'customer' ? targetId : '',
         vendorId: type === 'vendor' ? targetId : '',
-        selectedInvoices: (() => {
-          // Priority 1: Use structured items array if available
-          if (initialData.items && Array.isArray(initialData.items) && initialData.items.length > 0) {
-            const mapped = initialData.items.map((it: any) => {
-              // Resolve real UUID from allInvoices to ensure all downstream matching (toggle, detail change) works
-              const itNo = String(it.invoiceNo || it.invoice_no || it.id || '').replace(/^0+/, '');
-              const resolvedInv = allInvoices.find((i: any) => {
-                const iNo = String(i.invoiceNumber || i.invoice_no || '').replace(/^0+/, '');
-                return iNo !== '' && itNo !== '' && iNo === itNo;
-              });
-              return {
-                id: resolvedInv ? String(resolvedInv.id) : (it.id || it.invoiceNo || it.invoice_no),
-                invoiceNo: it.invoiceNo || it.invoice_no || resolvedInv?.invoiceNumber || '',
-                invoiceDate: it.invoiceDate || it.invoice_date || (resolvedInv as any)?.invoice_date || (resolvedInv as any)?.date || '',
-                amount: Number(Number(it.amount || 0).toFixed(2)) || (resolvedInv ? Number((resolvedInv.grandTotal || 0).toFixed(2)) : 0),
-                adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
-                adjustmentValue: Number(it.adjustmentValue || it.adjustment_value || 0)
-              };
-            });
-            
-            const deduplicated = new Map<string, any>();
-            mapped.forEach((item: any) => {
-              if (!deduplicated.has(item.id)) {
-                deduplicated.set(item.id, { ...item });
-              }
-            });
-            return Array.from(deduplicated.values());
-          }
-
-          // Priority 2: Fallback to parsing referenceNo string (Legacy support)
-          if (!initialData.referenceNo) return [];
-          
-          const results: any[] = [];
-          const regex = /([^,(\s]+)\s*(?:\(([^)|]+)(?:\|([^)]+))?\))?/g;
-          let match;
-          
-          while ((match = regex.exec(initialData.referenceNo)) !== null) {
-            const invoiceNo = match[1].trim();
-            if (['₹', 'RS', 'INR'].includes(invoiceNo.toUpperCase())) continue;
-            
-            let amount = parseFloat((match[2] || '').replace(/[^\d.]/g, '')) || 0;
-            const adjStr = match[3] || '';
-            let adjValue = parseFloat(adjStr.replace(/[^\d.]/g, '')) || 0;
-            let adjType = adjStr.toUpperCase().includes('OTHERS') ? 'Others' : 'TDS';
-            
-            const normNo = invoiceNo.replace(/^0+/, '');
-            let inv = allInvoices.find(i => String(i.id) === invoiceNo);
-            if (!inv) {
-              inv = allInvoices.find(i => {
-                const iNo = String(i.invoiceNumber || (i as any).invoice_no || '').replace(/^0+/, '');
-                return (iNo !== '' && iNo === normNo) || 
-                       String(i.invoiceNumber) === invoiceNo;
-              });
-            }
-            
-            if (amount === 0 && inv) {
-              const pending = inv.grandTotal - (inv.paidAmount || 0);
-              amount = Number((pending > 0 ? pending : inv.grandTotal).toFixed(2));
-            }
-            
-            const key = inv?.id || invoiceNo;
-            const existing = results.find(r => r.id === key);
-            if (!existing) {
-              results.push({ 
-                id: key, 
-                invoiceNo: inv?.invoiceNumber || invoiceNo, 
-                amount: amount,
-                adjustmentType: adjType,
-                adjustmentValue: adjValue
-              });
-            }
-          }
-          
-          if (results.length === 1 && results[0].amount === 0 && initialData.amount > 0) {
-            results[0].amount = initialData.amount + (initialData.tdsAmount || 0) + (initialData.othersAmount || 0);
-          }
-          
-          if (results.length === 0 && initialData.amount > 0 && initialData.referenceNo) {
-             results.push({
-               id: initialData.referenceNo,
-               invoiceNo: initialData.referenceNo,
-               amount: initialData.amount,
-               adjustmentType: 'TDS',
-               adjustmentValue: 0
-             });
-          }
-          
-          return results;
-        })()
+        commonTds: calculatedCommonTds,
+        selectedInvoices: parsedInvoices
       }));
     }
   }, [initialData, customers, vendors, allInvoices]); // Dependency on customers/vendors ensure it re-runs when lists size changes
@@ -537,9 +600,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               }
 
               const uniqueInvoiceAmount = uniqueNewItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-              const uniqueAdjustmentAmount = uniqueNewItems.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0);
+              const uniqueAdjustmentAmount = uniqueNewItems.reduce((sum, item) => sum + (Number(item.adjustmentValue) || 0), 0) + commonTdsVal;
               const uniqueNetPayable = uniqueInvoiceAmount - uniqueAdjustmentAmount;
-              const uniqueTDS = uniqueNewItems.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0);
+              const uniqueTDS = uniqueNewItems.reduce((s, it) => s + (it.adjustmentType === 'TDS' ? Number(it.adjustmentValue || 0) : 0), 0) + commonTdsVal;
               const uniqueOthers = uniqueNewItems.reduce((s, it) => s + (it.adjustmentType === 'Others' ? Number(it.adjustmentValue || 0) : 0), 0);
 
               const updatedPayload = {
@@ -964,12 +1027,15 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   <th className="small fw-bold py-3 text-muted text-center">INVOICE NO</th>
                   <th className="small fw-bold py-3 text-muted text-end">AMOUNT</th>
                   <th className="small fw-bold py-3 text-muted text-end">NET</th>
+                  {mode !== 'view' && (
+                    <th className="small fw-bold py-3 text-muted text-center" style={{ width: '130px' }}>ACTION</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="border-0">
                 {invoicesLoading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-5">
+                    <td colSpan={mode !== 'view' ? 6 : 5} className="text-center py-5">
                       <div className="spinner-border text-primary spinner-border-sm me-2" role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
@@ -1028,27 +1094,27 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                            <td className="small text-muted">{(inv.date || inv.invoice_date) ? new Date(inv.date || inv.invoice_date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                            <td className="small fw-bold text-center text-dark">
                              {selectedData && mode !== 'view' ? (
-                               <input 
-                                 type="text" 
-                                 className="form-control form-control-sm border-0 border-bottom text-center bg-transparent" 
-                                 value={selectedData.invoiceNo} 
-                                 onChange={(e) => handleInvoiceDetailChange(inv.id, 'invoiceNo', e.target.value)}
-                                 style={{ fontWeight: 'inherit' }}
-                               />
+                                <input 
+                                  type="text" 
+                                  className="form-control form-control-sm border-0 border-bottom text-center bg-transparent" 
+                                  value={selectedData.invoiceNo} 
+                                  onChange={(e) => handleInvoiceDetailChange(inv.id, 'invoiceNo', e.target.value)}
+                                  style={{ fontWeight: 'inherit' }}
+                                />
                              ) : (
                                selectedData?.invoiceNo || inv.invoiceNumber
                              )}
                            </td>
                            <td className="small fw-bold text-end text-dark">
                              {selectedData && mode !== 'view' ? (
-                               <input 
-                                 type="number" 
-                                 className="form-control form-control-sm border-0 border-bottom text-end bg-transparent" 
-                                 value={selectedData.amount} 
-                                 onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                 onChange={(e) => handleInvoiceDetailChange(inv.id, 'amount', e.target.value)}
-                                 style={{ fontWeight: 'inherit' }}
-                               />
+                                <input 
+                                  type="number" 
+                                  className="form-control form-control-sm border-0 border-bottom text-end bg-transparent" 
+                                  value={selectedData.amount} 
+                                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                  onChange={(e) => handleInvoiceDetailChange(inv.id, 'amount', e.target.value)}
+                                  style={{ fontWeight: 'inherit' }}
+                                />
                              ) : (
                                (Number(selectedData?.amount ?? inv.grandTotal ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })
                              )}
@@ -1056,11 +1122,32 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                            <td className="small fw-bold text-end" style={{ color: '#000' }}>
                              {(Number(selectedData?.amount ?? inv.grandTotal ?? 0) - Number(selectedData?.adjustmentValue ?? 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                            </td>
+                           {mode !== 'view' && (
+                             <td className="text-center">
+                               <button
+                                 type="button"
+                                 className="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 shadow-sm"
+                                 title="Close / Settle Invoice (Remove from Pending Payments)"
+                                 disabled={isSettling}
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   setSettleModal({
+                                     invoice: inv,
+                                     step: 1,
+                                     acknowledged: false,
+                                   });
+                                 }}
+                               >
+                                 <i className="bi bi-check2-circle text-success"></i>
+                                 <span style={{ fontSize: '11px', fontWeight: 600 }}>Settle</span>
+                               </button>
+                             </td>
+                           )}
                          </tr>
                          {selectedData && (expandedRows.has(invoiceId) || mode === 'view') && (
                            <tr className="bg-light-subtle border-bottom border-light">
                              <td colSpan={1} className="py-0"></td>
-                             <td colSpan={4} className="py-2">
+                             <td colSpan={mode !== 'view' ? 5 : 4} className="py-2">
                                <div className="d-flex align-items-center justify-content-start gap-4 py-1 border-start border-orange border-3" style={{ marginLeft: '60px', paddingLeft: '90px' }}>
                                  <div className="d-flex flex-column text-start">
                                    <span className="text-muted fw-bold text-uppercase mb-1" style={{ fontSize: '9px', letterSpacing: '0.5px' }}>Deduction Type</span>
@@ -1107,7 +1194,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     })}
                     {formData.partyType === 'customer' && formData.customerId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">
+                        <td colSpan={6} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String(inv.customerId) === String(formData.customerId)) 
                             ? "All invoices for this customer are fully paid" 
                             : "No invoices found for this customer"}
@@ -1116,7 +1203,7 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     )}
                     {formData.partyType === 'vendor' && formData.vendorId && customerInvoices.length === 0 && mode !== 'view' && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">
+                        <td colSpan={6} className="text-center py-5 text-muted small">
                           {allInvoices.some(inv => String((inv as any).vendorId || (inv as any).vendor_id) === String(formData.vendorId)) 
                             ? "All inward bills for this vendor are fully paid" 
                             : "No outstanding invoices found for this vendor"}
@@ -1125,12 +1212,12 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                     )}
                     {formData.partyType === 'customer' && !formData.customerId && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
+                        <td colSpan={mode !== 'view' ? 6 : 5} className="text-center py-5 text-muted small">Please select a customer to view invoices</td>
                       </tr>
                     )}
                     {formData.partyType === 'vendor' && !formData.vendorId && (
                       <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted small">Please select a vendor to view invoices</td>
+                        <td colSpan={mode !== 'view' ? 6 : 5} className="text-center py-5 text-muted small">Please select a vendor to view invoices</td>
                       </tr>
                     )}
                   </>
@@ -1138,39 +1225,56 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               </tbody>
               <tfoot className="border-0">
                 <tr>
-                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td colSpan={mode !== 'view' ? 4 : 3} className="border-bottom border-secondary-subtle"></td>
                   <td className="text-end py-2 text-muted small fw-semibold border-bottom border-secondary-subtle">Gross Total:</td>
                   <td className="fw-bold text-end py-2 text-dark border-bottom border-secondary-subtle" style={{ minWidth: '150px' }}>
                     ₹ {totalInvoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td colSpan={mode !== 'view' ? 4 : 3} className="border-bottom border-secondary-subtle"></td>
                   <td className="text-end py-2 text-muted small fw-semibold border-bottom border-secondary-subtle align-middle">TDS:</td>
                   <td className="fw-bold text-end py-2 text-muted border-bottom border-secondary-subtle align-middle">
                     <div className="d-flex align-items-center justify-content-end gap-1">
                       <span className="text-danger small">(-)</span>
                       <input 
                         type="number"
+                        step="any"
                         className="form-control form-control-sm text-end shadow-none d-inline-block"
                         style={{ width: '100px', fontWeight: 'bold' }}
                         placeholder="0.00"
-                        value={formData.commonTds || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, commonTds: Number(e.target.value) }))}
-                        disabled={mode === 'view'}
+                        value={
+                          totalTdsAmount > 0
+                            ? (mode === 'view' || formData.selectedInvoices.length > 1
+                                ? totalTdsAmount.toFixed(2)
+                                : (formData.commonTds !== undefined && formData.commonTds !== null && formData.commonTds !== 0 ? formData.commonTds : totalTdsAmount))
+                            : (formData.commonTds || '')
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : Number(e.target.value);
+                          setFormData(prev => {
+                            if (prev.selectedInvoices.length === 1) {
+                              const updated = [...prev.selectedInvoices];
+                              updated[0] = { ...updated[0], adjustmentType: 'TDS', adjustmentValue: val };
+                              return { ...prev, commonTds: 0, selectedInvoices: updated };
+                            }
+                            return { ...prev, commonTds: val };
+                          });
+                        }}
+                        disabled={mode === 'view' || (totalItemTds > 0 && formData.selectedInvoices.length > 1)}
                       />
                     </div>
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td colSpan={mode !== 'view' ? 4 : 3} className="border-bottom border-secondary-subtle"></td>
                   <td className="text-end py-2 text-muted small fw-semibold border-bottom border-secondary-subtle">Total Adjustments:</td>
                   <td className="fw-bold text-end py-2 text-muted border-bottom border-secondary-subtle">
                     (-) ₹ {totalAdjustmentAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3} className="border-bottom border-secondary-subtle"></td>
+                  <td colSpan={mode !== 'view' ? 4 : 3} className="border-bottom border-secondary-subtle"></td>
                   <td className="text-end py-3 fs-6 fw-bold text-secondary border-bottom border-secondary-subtle">Net Payable:</td>
                   <td className="fw-bold text-end py-3 fs-5 text-dark border-bottom border-secondary-subtle">
                     ₹ {netPayableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -1188,6 +1292,22 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
                   partyId: '', partyName: '', customerId: '', vendorId: '',
                   selectedInvoices: [], chequeNo: ''
                 }))}>CLEAR</button>
+                {formData.selectedInvoices.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn px-4 py-2 rounded-pill fw-bold text-dark border d-flex align-items-center gap-2 shadow-sm"
+                    style={{ backgroundColor: '#f8fafc' }}
+                    onClick={() => {
+                      const firstSelected = formData.selectedInvoices[0];
+                      const targetInv = allInvoices.find(i => String(i.id) === String(firstSelected.id)) || firstSelected;
+                      setSettleModal({ invoice: targetInv, step: 1, acknowledged: false });
+                    }}
+                    title="Close / Settle selected invoice without cash/bank payment voucher"
+                  >
+                    <i className="bi bi-check2-circle text-success fs-6"></i>
+                    <span>CONFIRM TO SETTLE</span>
+                  </button>
+                )}
                 <button
                   type="submit"
                   className="btn px-5 py-2 rounded-pill fw-bold shadow-sm text-white d-flex align-items-center gap-2"
@@ -1233,6 +1353,172 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ initialData, mode }) => {
               }
             }}
           />
+        )}
+
+        {/* Double Confirmation Modal for Settle / Close Invoice */}
+        {settleModal && (
+          <div 
+            className="modal fade show d-block" 
+            tabIndex={-1} 
+            style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1070 }}
+            onClick={() => {
+              if (!isSettling) setSettleModal(null);
+            }}
+          >
+            <div 
+              className="modal-dialog modal-dialog-centered" 
+              style={{ maxWidth: '520px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+                {settleModal.step === 1 ? (
+                  // Step 1: Initial Settlement Review
+                  <>
+                    <div className="modal-header border-bottom px-4 py-3 bg-light">
+                      <div className="d-flex align-items-center gap-2">
+                        <div className="rounded-circle bg-warning-subtle text-warning p-2 d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
+                          <i className="bi bi-exclamation-circle-fill fs-5"></i>
+                        </div>
+                        <div>
+                          <h5 className="modal-title fw-bold text-dark mb-0">Settle / Close Invoice</h5>
+                          <span className="badge bg-secondary-subtle text-secondary small">Step 1 of 2: Review Settlement</span>
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn-close" 
+                        disabled={isSettling}
+                        onClick={() => setSettleModal(null)}
+                      ></button>
+                    </div>
+                    <div className="modal-body p-4">
+                      <p className="text-muted small mb-3">
+                        You are about to mark this invoice as settled. Once confirmed, it will be <strong>removed from Pending Payments</strong> without creating a receipt voucher.
+                      </p>
+
+                      <div className="bg-light p-3 rounded-3 border mb-3">
+                        <div className="row g-2 small">
+                          <div className="col-5 text-muted">Party Name:</div>
+                          <div className="col-7 fw-bold text-dark text-truncate">{formData.partyName || settleModal.invoice.customerName || 'N/A'}</div>
+                          
+                          <div className="col-5 text-muted">Invoice Number:</div>
+                          <div className="col-7 fw-bold text-primary">{settleModal.invoice.invoiceNumber || settleModal.invoice.invoiceNo || settleModal.invoice.id}</div>
+                          
+                          <div className="col-5 text-muted">Invoice Date:</div>
+                          <div className="col-7 text-dark">{settleModal.invoice.date || settleModal.invoice.invoice_date ? new Date(settleModal.invoice.date || settleModal.invoice.invoice_date).toLocaleDateString('en-GB') : 'N/A'}</div>
+
+                          <div className="col-5 text-muted">Total / Balance:</div>
+                          <div className="col-7 fw-bold text-danger fs-6">
+                            ₹ {(settleModal.invoice.grandTotal || settleModal.invoice.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="alert alert-warning py-2 px-3 small d-flex align-items-center gap-2 mb-0">
+                        <i className="bi bi-info-circle-fill text-warning fs-5"></i>
+                        <div>Click <strong>Proceed to Confirm Settlement</strong> to finalize marking this invoice as settled.</div>
+                      </div>
+                    </div>
+                    <div className="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary rounded-pill px-4" 
+                        onClick={() => setSettleModal(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-dark rounded-pill px-4 d-inline-flex align-items-center gap-2 shadow-sm"
+                        onClick={() => setSettleModal({ ...settleModal, step: 2, acknowledged: false })}
+                      >
+                        Proceed to Confirm Settlement
+                        <i className="bi bi-arrow-right"></i>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  // Step 2: Final Double Confirmation
+                  <>
+                    <div className="modal-header border-bottom px-4 py-3 bg-danger-subtle text-danger">
+                      <div className="d-flex align-items-center gap-2">
+                        <div className="rounded-circle bg-danger text-white p-2 d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
+                          <i className="bi bi-shield-exclamation fs-5"></i>
+                        </div>
+                        <div>
+                          <h5 className="modal-title fw-bold text-danger mb-0">Confirm to Settled</h5>
+                          <span className="badge bg-danger text-white small">Step 2 of 2: Required Authorization</span>
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        className="btn-close" 
+                        disabled={isSettling}
+                        onClick={() => setSettleModal(null)}
+                      ></button>
+                    </div>
+                    <div className="modal-body p-4">
+                      <div className="text-center mb-3">
+                        <div className="fs-5 fw-bold text-dark mb-1">
+                          Confirm to Settle Invoice #{settleModal.invoice.invoiceNumber || settleModal.invoice.invoiceNo || settleModal.invoice.id}?
+                        </div>
+                        <div className="text-danger fw-semibold small">
+                          Balance to Settle: ₹ {(settleModal.invoice.grandTotal || settleModal.invoice.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+
+                      <div className="alert alert-secondary py-2 px-3 small text-muted mb-3">
+                        <i className="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                        This invoice will be marked as <strong>CLOSED</strong> in the database and immediately removed from Pending Payments.
+                      </div>
+
+                      <div className="form-check p-3 bg-light rounded-3 border">
+                        <input 
+                          className="form-check-input ms-0 me-2" 
+                          type="checkbox" 
+                          id="confirmToSettleCheckbox"
+                          checked={settleModal.acknowledged}
+                          onChange={(e) => setSettleModal({ ...settleModal, acknowledged: e.target.checked })}
+                        />
+                        <label className="form-check-label fw-bold text-dark small" htmlFor="confirmToSettleCheckbox" style={{ cursor: 'pointer' }}>
+                          I confirm to mark Invoice #{settleModal.invoice.invoiceNumber || settleModal.invoice.invoiceNo || settleModal.invoice.id} as Settled / Closed.
+                        </label>
+                      </div>
+                    </div>
+                    <div className="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary rounded-pill px-4" 
+                        disabled={isSettling}
+                        onClick={() => setSettleModal({ ...settleModal, step: 1 })}
+                      >
+                        <i className="bi bi-arrow-left me-1"></i>
+                        Back
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-danger rounded-pill px-4 d-inline-flex align-items-center gap-2 shadow-sm"
+                        disabled={!settleModal.acknowledged || isSettling}
+                        onClick={() => handleConfirmSettle(settleModal.invoice)}
+                      >
+                        {isSettling ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Settling Invoice...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-check2-circle"></i>
+                            Confirm to Settled
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

@@ -119,7 +119,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
     if (!company) return;
 
     const dbSettings = company.invoiceSettings || {};
-    
+
     // Check if we need to pull basic company info into settings
     if (!settings.companyName || settings.companyName === 'GLOBUS ENGINEERING MAIN' || settings.companyName === 'Globus Engineering Tools') {
       const initialSettings = {
@@ -147,14 +147,13 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
           <div className="d-flex align-items-center gap-2 flex-shrink-0">
             <BackButton />
             <h5 className="m-0 fw-bold text-dark pe-2">Invoice Preview</h5>
-            
+
             {/* Invoice Layout Format Switcher */}
             <div className="d-flex align-items-center bg-light border rounded-pill p-1 ms-1">
               <button
                 type="button"
-                className={`btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all ${
-                  layout === 'classic' ? 'btn-dark text-white shadow-sm' : 'text-muted'
-                }`}
+                className={`btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all ${layout === 'classic' ? 'btn-dark text-white shadow-sm' : 'text-muted'
+                  }`}
                 onClick={() => setLayout('classic')}
                 title="Format 1: Classic Industrial Globus layout"
               >
@@ -162,9 +161,8 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
               </button>
               <button
                 type="button"
-                className={`btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all ${
-                  layout === 'modern' ? 'btn-primary text-white shadow-sm' : 'text-muted'
-                }`}
+                className={`btn btn-sm rounded-pill px-3 py-1 fw-bold transition-all ${layout === 'modern' ? 'btn-primary text-white shadow-sm' : 'text-muted'
+                  }`}
                 onClick={() => setLayout('modern')}
                 title="Format 2: Modern Nexus Tax Invoice layout"
               >
@@ -174,39 +172,39 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice, company, hideC
 
             {layout === 'classic' && (
               <div className="declaration-toggle-wrapper ms-2 d-flex align-items-center gap-3">
-                 <label className="switch mb-0">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.showDeclaration}
-                      onChange={toggleDeclaration}
+                <label className="switch mb-0">
+                  <input
+                    type="checkbox"
+                    checked={settings.showDeclaration}
+                    onChange={toggleDeclaration}
+                  />
+                  <span className="slider round flex-shrink-0"></span>
+                  <span className="label-text">Declaration</span>
+                </label>
+                {(invoice?.billType === 'Without Process' || invoice?.type === 'WOP' || String(invoice?.billType || '').toLowerCase().includes('without')) && (
+                  <label className="switch mb-0">
+                    <input
+                      type="checkbox"
+                      checked={settings.showWopText !== false}
+                      onChange={toggleWopText}
                     />
                     <span className="slider round flex-shrink-0"></span>
-                    <span className="label-text">Declaration</span>
-                 </label>
-                 {(invoice?.billType === 'Without Process' || invoice?.type === 'WOP' || String(invoice?.billType || '').toLowerCase().includes('without')) && (
-                   <label className="switch mb-0">
-                      <input 
-                        type="checkbox" 
-                        checked={settings.showWopText !== false}
-                        onChange={toggleWopText}
-                      />
-                      <span className="slider round flex-shrink-0"></span>
-                      <span className="label-text">WOP Label</span>
-                   </label>
-                 )}
-                 <label className="switch mb-0">
-                    <input 
-                      type="checkbox" 
-                      checked={settings.enableRoundOff !== false}
-                      onChange={toggleRoundOff}
-                    />
-                    <span className="slider round flex-shrink-0"></span>
-                    <span className="label-text">Round Off</span>
-                 </label>
+                    <span className="label-text">WOP Label</span>
+                  </label>
+                )}
+                <label className="switch mb-0">
+                  <input
+                    type="checkbox"
+                    checked={settings.enableRoundOff !== false}
+                    onChange={toggleRoundOff}
+                  />
+                  <span className="slider round flex-shrink-0"></span>
+                  <span className="label-text">Round Off</span>
+                </label>
               </div>
             )}
           </div>
-          
+
           <div className="d-flex align-items-center gap-2 flex-shrink-0">
             {!isReadOnly && (
               <Link href={`/invoices/${invoice.id}/edit`} className="btn btn-outline-secondary d-flex align-items-center gap-1 px-3 fw-semibold rounded-pill text-nowrap">

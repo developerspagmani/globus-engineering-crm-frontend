@@ -251,7 +251,7 @@ const LedgerPrintTemplate: React.FC<LedgerPrintTemplateProps> = ({
                     return desc?.replace(/^Migrated\s+/i, '') || e.vchType || '-';
                   })()}
                 </td>
-                <td>{e.vchType === 'INVOICE' ? 'Sales' : e.vchType === 'RECEIPT' ? 'Receipt' : e.vchType || ''}</td>
+                <td>{e.vchType === 'INVOICE' ? 'Sales' : e.vchType === 'RECEIPT' ? 'Receipt' : e.vchType === 'JOURNAL' ? 'Journal' : e.vchType || ''}</td>
                 <td>{e.vchNo?.replace(/^REC-/i, '') || '-'}</td>
                 <td className="num">{e.debitValue > 0 ? fmt(e.debitValue) : ''}</td>
                 <td className="num">{e.creditValue > 0 ? fmt(e.creditValue) : ''}</td>

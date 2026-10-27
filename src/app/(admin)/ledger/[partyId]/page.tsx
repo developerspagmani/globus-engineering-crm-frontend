@@ -7,7 +7,6 @@ import { RootState } from '@/redux/store';
 import { fetchLedgerEntries, resetLedgerState } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
-import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import Link from 'next/link';
@@ -31,6 +30,7 @@ export default function LedgerDetailPage() {
 
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedQuarter, setSelectedQuarter] = useState<string>('ALL');
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
 
 
@@ -101,7 +101,7 @@ export default function LedgerDetailPage() {
   const { items: allEntries, loading, filters, error: ledgerError } = useSelector((state: RootState) => state.ledger);
   const { items: customers, loading: isCustomerLoading, error: customerError } = useSelector((state: RootState) => state.customers);
   const { items: vendors, loading: isVendorLoading, error: vendorError } = useSelector((state: RootState) => state.vendors);
-  const { items: allInvoices } = useSelector((state: RootState) => state.invoices);
+  const { items: allInvoices = [] } = useSelector((state: RootState) => state.invoices) || {};
 
   const yearsOptions = useMemo(() => {
     const years = new Set<number>();
@@ -156,9 +156,14 @@ export default function LedgerDetailPage() {
         dateFrom: dateFrom || filters.dateFrom,
         dateTo: dateTo || filters.dateTo
       }));
-      (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
-      (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
-      (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
+
+      // Only fetch master party lists if they haven't been loaded in Redux yet
+      if (customers.length === 0) {
+        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      }
+      if (vendors.length === 0) {
+        (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      }
     }
     
     return () => {
@@ -186,8 +191,10 @@ export default function LedgerDetailPage() {
                     scale: 2,
                     useCORS: true,
                     logging: false,
+                    backgroundColor: '#ffffff'
                 });
                 const imgData = canvas.toDataURL('image/png');
+                if (!imgData || imgData === 'data:,' || !imgData.startsWith('data:image/')) return;
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgProps = pdf.getImageProperties(imgData);
                 const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -274,34 +281,54 @@ export default function LedgerDetailPage() {
   const handlePrint = () => { window.print(); };
 
   const handleExportPDF = async () => {
-    if (!reportContainerRef.current) return;
-    const canvas = await html2canvas(reportContainerRef.current, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL('image/png');
-    
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    
-    const imgProps = pdf.getImageProperties(imgData);
-    const imgWidth = pdfWidth;
-    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-    
-    let heightLeft = imgHeight;
-    let position = 0;
+    if (!reportContainerRef.current || isExporting) return;
+    try {
+      setIsExporting(true);
+      // Brief pause to allow any rendering to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const canvas = await html2canvas(reportContainerRef.current, { 
+        scale: 2, 
+        useCORS: true, 
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      const imgData = canvas.toDataURL('image/png');
+      if (!imgData || imgData === 'data:,' || !imgData.startsWith('data:image/')) {
+        throw new Error('Canvas capture produced empty or invalid image data');
+      }
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth;
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
 
-    // Add first page
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
-
-    // Add additional pages if content exceeds one page
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
+      // Add first page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
+
+      // Add additional pages if content exceeds one page
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      const cleanPartyName = party?.name ? party.name.replace(/[^a-zA-Z0-9_-]/g, '_').toUpperCase() : 'STATEMENT';
+      pdf.save(`LEDGER_${cleanPartyName}_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+      alert('Unable to generate PDF statement directly. Please use the PRINT button and select "Save as PDF".');
+    } finally {
+      setIsExporting(false);
     }
-    
-    pdf.save(`LEDGER_${party?.name?.toUpperCase()}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Only show loader if we are actually fetching and don't have the party yet
@@ -349,8 +376,21 @@ export default function LedgerDetailPage() {
                      <button onClick={handlePrint} className="btn btn-outline-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
                          <i className="bi bi-printer-fill"></i> PRINT
                      </button>
-                     <button onClick={handleExportPDF} className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
-                         <i className="bi bi-file-earmark-pdf-fill"></i> EXPORT PDF
+                     <button 
+                       onClick={handleExportPDF} 
+                       disabled={isExporting}
+                       className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
+                     >
+                         {isExporting ? (
+                           <>
+                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                             <span>GENERATING...</span>
+                           </>
+                         ) : (
+                           <>
+                             <i className="bi bi-file-earmark-pdf-fill"></i> EXPORT PDF
+                           </>
+                         )}
                      </button>
                    </div>
               </div>
@@ -591,8 +631,8 @@ export default function LedgerDetailPage() {
             </div>
         )}
 
-        {/* LEDGER PRINT VIEW (Standard Accounting Format) */}
-        <div className="show-print-only" ref={reportContainerRef}>
+        {/* LEDGER PRINT & PDF EXPORT VIEW (Standard Accounting Format) */}
+        <div className="ledger-print-wrapper" ref={reportContainerRef}>
             <LedgerPrintTemplate 
                 party={party!} 
                 entries={allEntries} 
@@ -615,6 +655,17 @@ export default function LedgerDetailPage() {
             .ledger-professional-table th { background-color: #f8fafc; border-bottom: 2px solid #e2e8f0 !important; }
             .ledger-row:hover { background-color: #f7f9fc; }
             .show-print-only { display: none; }
+
+            /* Offscreen positioning for PDF capture while rendering on screen */
+            .ledger-print-wrapper {
+                position: fixed;
+                left: -9999px;
+                top: 0;
+                width: 210mm;
+                background-color: #ffffff;
+                z-index: -9999;
+                pointer-events: none;
+            }
             
             .ledger-print-table { border-collapse: collapse; font-family: var(--font-inter), Inter, sans-serif; font-size: 9pt; }
             .ledger-print-table th { font-weight: bold; border-color: #000 !important; }
@@ -623,6 +674,16 @@ export default function LedgerDetailPage() {
             @media print {
                 .hide-print { display: none !important; }
                 .show-print-only { display: block !important; }
+                .ledger-print-wrapper {
+                    position: static !important;
+                    left: auto !important;
+                    top: auto !important;
+                    width: 100% !important;
+                    display: block !important;
+                    z-index: auto !important;
+                    pointer-events: auto !important;
+                    background-color: transparent !important;
+                }
 
                 /* Collapse the page shell — no height, no padding, no min-height */
                 html, body {

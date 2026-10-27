@@ -8,7 +8,6 @@ import { RootState } from '@/redux/store';
 import { fetchLedgerEntries, addLedgerEntry, setLedgerFilters, setLedgerPage, resetLedgerState } from '@/redux/features/ledgerSlice';
 import { fetchCustomers } from '@/redux/features/customerSlice';
 import { fetchVendors } from '@/redux/features/vendorSlice';
-import { fetchInvoices } from '@/redux/features/invoiceSlice';
 import ModuleGuard from '@/components/ModuleGuard';
 import Loader from '@/components/Loader';
 import { checkActionPermission } from '@/config/permissions';
@@ -35,6 +34,7 @@ export default function LedgerPage() {
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditData, setAuditData] = useState<LedgerEntry[]>([]);
   const auditPrintRef = useRef<HTMLDivElement>(null);
+  const lastCompanyIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -43,20 +43,33 @@ export default function LedgerPage() {
     };
   }, [dispatch]);
 
+  // Fetch master party lists once when active company changes (or if empty in Redux)
+  useEffect(() => {
+    if (activeCompany?.id) {
+      const companyChanged = lastCompanyIdRef.current !== activeCompany.id;
+      if (companyChanged || customers.length === 0) {
+        (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
+      }
+      if (companyChanged || vendors.length === 0) {
+        (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
+      }
+      lastCompanyIdRef.current = activeCompany.id;
+    }
+  }, [dispatch, activeCompany?.id]);
+
+  // Fetch ledger entries for sorting parties by activity (independent of local party pagination)
   useEffect(() => {
     if (activeCompany?.id) {
        (dispatch as any)(fetchLedgerEntries({ 
           companyId: activeCompany.id,
-          page: pagination.currentPage,
-          limit: pagination.itemsPerPage,
-          search: filters.search,
+          page: 1,
+          limit: 1000,
+          dateFrom: filters.dateFrom,
+          dateTo: filters.dateTo,
           partyType: filters.partyType
        }));
-       (dispatch as any)(fetchCustomers({ company_id: activeCompany.id, limit: 1000 }));
-       (dispatch as any)(fetchVendors({ company_id: activeCompany.id, limit: 1000 }));
-       (dispatch as any)(fetchInvoices({ company_id: activeCompany.id }));
     }
-  }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.partyType]);
+  }, [dispatch, activeCompany?.id, filters.dateFrom, filters.dateTo, filters.partyType]);
 
   // DERIVE UNIQUE PARTIES FROM LEDGER ENTRIES + ALL CUSTOMERS/VENDORS
   const uniqueParties = React.useMemo(() => {

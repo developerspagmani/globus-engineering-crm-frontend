@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export type InvoiceLayoutFormat = 'classic' | 'modern';
 
@@ -23,21 +24,53 @@ export const InvoiceLayoutModal: React.FC<InvoiceLayoutModalProps> = ({
 }) => {
   const [selectedLayout, setSelectedLayout] = useState<InvoiceLayoutFormat>('modern');
   const [selectedCopies, setSelectedCopies] = useState<string>(defaultCopies);
+  const [mounted, setMounted] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (defaultCopies) {
       setSelectedCopies(defaultCopies);
     }
   }, [defaultCopies, isOpen]);
 
-  if (!isOpen) return null;
+  // Lock body scroll and listen for Escape key when open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleAction = () => {
     onConfirm(selectedLayout, selectedCopies);
   };
 
-  return (
-    <div className="modal-backdrop-custom animate-fade-in">
+  const modalContent = (
+    <div 
+      className="modal-backdrop-custom animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="modal-card-custom shadow-lg">
         {/* Header */}
         <div className="modal-header-custom border-bottom pb-3 mb-3 d-flex justify-content-between align-items-center">
@@ -182,101 +215,10 @@ export const InvoiceLayoutModal: React.FC<InvoiceLayoutModalProps> = ({
           </button>
         </div>
       </div>
-
-      <style jsx>{`
-        .modal-backdrop-custom {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 99999;
-          padding: 20px;
-        }
-
-        .modal-card-custom {
-          background: #ffffff;
-          border-radius: 16px;
-          width: 100%;
-          max-width: 580px;
-          padding: 24px;
-          animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes scaleUp {
-          from {
-            transform: scale(0.95);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-
-        .layout-options-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .layout-option-card {
-          border: 2px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 14px 16px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          background: #ffffff;
-        }
-
-        .layout-option-card:hover {
-          border-color: #94a3b8;
-          transform: translateY(-1px);
-        }
-
-        .layout-option-card.active-layout {
-          border-color: #2563eb;
-          background: #eff6ff;
-        }
-
-        .icon-wrapper {
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .modern-icon {
-          background: #dbeafe;
-          color: #1d4ed8;
-        }
-
-        .classic-icon {
-          background: #f1f5f9;
-          color: #475569;
-        }
-
-        .layout-features-list {
-          line-height: 1.5;
-        }
-
-        .layout-features-list li {
-          margin-bottom: 2px;
-        }
-
-        .x-small {
-          font-size: 11px;
-        }
-      `}</style>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default InvoiceLayoutModal;

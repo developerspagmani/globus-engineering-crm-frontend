@@ -19,6 +19,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import PaginationComponent from '@/components/shared/Pagination';
 import SortableHeader from '@/components/shared/SortableHeader';
 import InvoiceEmailReminderToggle from '@/modules/invoice/components/InvoiceEmailReminderToggle';
+import api from '@/lib/axios';
 
 
 const PendingPaymentPage = () => {
@@ -29,7 +30,10 @@ const PendingPaymentPage = () => {
   const [printGroup, setPrintGroup] = useState<any>(null);
   const [reminderInvoice, setReminderInvoice] = useState<any | null>(null);
   const [invoiceSelectGroup, setInvoiceSelectGroup] = useState<any | null>(null);
-  
+  const [closeModalGroup, setCloseModalGroup] = useState<any | null>(null);
+  const [closingInvoiceId, setClosingInvoiceId] = useState<string | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
   const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -53,13 +57,24 @@ const PendingPaymentPage = () => {
 
   // Filter for pending/billed but not paid invoices
   const pendingInvoices = items.filter(inv => {
-    const balance = (inv.grandTotal || 0) - (inv.paidAmount || 0);
-    const isPending = inv.status?.toLowerCase() !== 'paid' &&
-      inv.status?.toLowerCase() !== 'cancelled' &&
-      (balance > 0 || inv.status?.toLowerCase() === 'billed');
-    const isWOP = inv.billType === 'Without Process' || inv.billType === 'without_process' || inv.bill_type === 'Without Process' || inv.bill_type === 'without_process';
-    
-    if (!isPending || isWOP) return false;
+    const grand = inv.grandTotal || 0;
+    const paid = inv.paidAmount || 0;
+    const balance = grand - paid;
+    const status = (inv.status || '').toLowerCase().trim();
+
+    // If balance is <= 0.5, invoice is fully paid / settled
+    if (balance <= 0.5) return false;
+
+    // Check if status is paid, completed, closed, settled, or cancelled
+    const isClosedOrPaid = status === 'paid' || status === 'completed' || status === 'closed' || status === 'settled';
+    const isCancelled = status === 'cancelled';
+    if (isClosedOrPaid || isCancelled) return false;
+
+    // Invoice must have an actual total
+    if (grand <= 0) return false;
+
+    const isWOP = inv.billType === 'Without Process' || inv.billType === 'without_process' || inv.bill_type === 'Without Process' || inv.bill_type === 'without_process' || (inv.type === 'WOP');
+    if (isWOP) return false;
 
     const matchesSearch =
       (inv.customerName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
@@ -82,7 +97,7 @@ const PendingPaymentPage = () => {
       };
     }
     acc[key].invoices.push(inv);
-    acc[key].totalPending += (inv.grandTotal || 0) - (inv.paidAmount || 0);
+    acc[key].totalPending += Math.max(0, (inv.grandTotal || 0) - (inv.paidAmount || 0));
     return acc;
   }, {} as Record<string, { customerId: string, customerName: string, invoices: any[], totalPending: number, firstInvoice: any }>);
 
@@ -95,7 +110,7 @@ const PendingPaymentPage = () => {
     return diffDays > 0 ? diffDays : 0;
   };
 
-  let customerGroups = Object.values(groupedInvoices);
+  let customerGroups = Object.values(groupedInvoices).filter(g => g.totalPending > 0.5);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -161,6 +176,37 @@ const PendingPaymentPage = () => {
     setTimeout(() => window.print(), 300);
   };
 
+  // Handle toggling an invoice between CLOSED and BILLED (Open)
+  const handleToggleClose = async (inv: any) => {
+    try {
+      setClosingInvoiceId(String(inv.id));
+      const currentStatus = (inv.status || '').toLowerCase().trim();
+      const targetStatus = currentStatus === 'closed' ? 'BILLED' : 'CLOSED';
+
+      const res = await api.patch(`/invoices/${inv.id}/toggle-status`, { status: targetStatus });
+      if (res.data?.success) {
+        setActionFeedback({
+          message: `Invoice #${inv.invoiceNumber || inv.id} marked as ${targetStatus === 'CLOSED' ? 'Closed (Removed from Pending)' : 'Re-opened'}.`,
+          type: 'success'
+        });
+        setTimeout(() => setActionFeedback(null), 4000);
+        if (activeCompany?.id) {
+          (dispatch as any)(fetchInvoices({ company_id: activeCompany.id, limit: 1000, status: 'pending', partyType }));
+        }
+      }
+    } catch (err: any) {
+      setActionFeedback({
+        message: err.response?.data?.error || 'Failed to update invoice status',
+        type: 'error'
+      });
+      setTimeout(() => setActionFeedback(null), 4000);
+    } finally {
+      setClosingInvoiceId(null);
+      setCloseModalGroup(null);
+      setInvoiceSelectGroup(null);
+    }
+  };
+
   // Build the correct voucher creation URL — vendor invoices need partyType=vendor
   const getVoucherUrl = (inv: any) => {
     const inward = inwards.find(iw => String(iw.id) === String(inv.inwardId));
@@ -196,6 +242,17 @@ const PendingPaymentPage = () => {
             </button>
           </div>
         </div>
+
+        {/* Feedback Alert */}
+        {actionFeedback && (
+          <div className={`alert alert-${actionFeedback.type === 'success' ? 'success' : 'danger'} alert-dismissible fade show rounded-4 mb-3 shadow-sm d-flex align-items-center justify-content-between px-4 py-3`} role="alert">
+            <div className="d-flex align-items-center gap-2 fw-semibold">
+              <i className={`bi bi-${actionFeedback.type === 'success' ? 'check-circle-fill fs-5 text-success' : 'exclamation-triangle-fill fs-5 text-danger'}`}></i>
+              <span>{actionFeedback.message}</span>
+            </div>
+            <button type="button" className="btn-close" onClick={() => setActionFeedback(null)}></button>
+          </div>
+        )}
 
         {/* Filter Bar */}
         <div className="card filter-card">
@@ -264,7 +321,7 @@ const PendingPaymentPage = () => {
                   <tbody className="border-top-0">
                     {paginatedGroups.map((group, index) => {
                       const maxOverdueDays = Math.max(0, ...group.invoices.map(inv => calculateOverdueDays(inv.dueDate)));
-                      
+
                       const latestInvoice = group.invoices.reduce((latest, current) => {
                         const latestDate = latest.date ? new Date(latest.date).getTime() : 0;
                         const currentDate = current.date ? new Date(current.date).getTime() : 0;
@@ -401,14 +458,14 @@ const PendingPaymentPage = () => {
 
       {/* Invoice Selector Modal (when customer has multiple pending invoices) */}
       {invoiceSelectGroup && (
-        <div 
-          className="modal fade show d-block" 
-          tabIndex={-1} 
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
           style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
           onClick={() => setInvoiceSelectGroup(null)}
         >
-          <div 
-            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" 
+          <div
+            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-content shadow border-0 rounded-4 overflow-hidden">
@@ -422,9 +479,9 @@ const PendingPaymentPage = () => {
                     Select an invoice for <strong className="text-dark">{invoiceSelectGroup.customerName}</strong>
                   </div>
                 </div>
-                <button 
-                  type="button" 
-                  className="btn-close" 
+                <button
+                  type="button"
+                  className="btn-close"
                   onClick={() => setInvoiceSelectGroup(null)}
                 ></button>
               </div>
@@ -471,18 +528,35 @@ const PendingPaymentPage = () => {
                               )}
                             </td>
                             <td className="text-end px-4">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm"
-                                onClick={() => {
-                                  const selectedInv = inv;
-                                  setInvoiceSelectGroup(null);
-                                  setReminderInvoice(selectedInv);
-                                }}
-                              >
-                                <i className="bi bi-bell-fill"></i>
-                                Send Reminder
-                              </button>
+                              <div className="d-flex align-items-center justify-content-end gap-2">
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm"
+                                  onClick={() => {
+                                    const selectedInv = inv;
+                                    setInvoiceSelectGroup(null);
+                                    setReminderInvoice(selectedInv);
+                                  }}
+                                >
+                                  <i className="bi bi-bell-fill"></i>
+                                  Send Reminder
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm"
+                                  title="Mark this invoice as Closed"
+                                  disabled={closingInvoiceId === String(inv.id)}
+                                  onClick={() => {
+                                    if (confirm(`Mark Invoice #${inv.invoiceNumber} as Closed?`)) {
+                                      handleToggleClose(inv);
+                                    }
+                                  }}
+                                >
+                                  <i className="bi bi-check2-circle text-success"></i>
+                                  {closingInvoiceId === String(inv.id) ? 'Closing...' : 'Close'}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -492,9 +566,9 @@ const PendingPaymentPage = () => {
                 </div>
               </div>
               <div className="modal-footer border-top px-4 py-2 bg-light">
-                <button 
-                  type="button" 
-                  className="btn btn-sm btn-outline-secondary rounded-pill px-3" 
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary rounded-pill px-3"
                   onClick={() => setInvoiceSelectGroup(null)}
                 >
                   Close
@@ -513,6 +587,92 @@ const PendingPaymentPage = () => {
           autoOpenSend={true}
           onClose={() => setReminderInvoice(null)}
         />
+      )}
+
+      {/* Close Invoices Modal (when customer has multiple pending invoices) */}
+      {closeModalGroup && (
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
+          onClick={() => setCloseModalGroup(null)}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content shadow border-0 rounded-4 overflow-hidden">
+              <div className="modal-header border-bottom px-4 py-3 bg-light">
+                <div>
+                  <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2 mb-0">
+                    <i className="bi bi-check2-circle text-primary"></i>
+                    Close / Settle Invoice
+                  </h5>
+                  <div className="text-muted small mt-1">
+                    Select an invoice to mark as closed for <strong className="text-dark">{closeModalGroup.customerName}</strong>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setCloseModalGroup(null)}
+                ></button>
+              </div>
+              <div className="modal-body p-0" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                <div className="table-responsive">
+                  <table className="table align-middle mb-0 table-hover">
+                    <thead className="table-light">
+                      <tr>
+                        <th className="x-small text-muted text-uppercase fw-bold px-4 py-2 border-0">Invoice No</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0">Date</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0">Total</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0 text-end">Pending</th>
+                        <th className="x-small text-muted text-uppercase fw-bold py-2 border-0 text-end px-4">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {closeModalGroup.invoices.map((inv: any) => {
+                        const pendingBal = (inv.grandTotal || 0) - (inv.paidAmount || 0);
+                        return (
+                          <tr key={inv.id}>
+                            <td className="px-4 fw-bold text-primary">{inv.invoiceNumber}</td>
+                            <td className="small text-muted">{inv.date ? new Date(inv.date).toLocaleDateString() : 'N/A'}</td>
+                            <td className="small text-muted">₹ {(inv.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td className="small fw-bold text-danger text-end">₹ {pendingBal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td className="text-end px-4">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-dark rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-sm"
+                                disabled={closingInvoiceId === String(inv.id)}
+                                onClick={() => {
+                                  if (confirm(`Do you want to mark Invoice #${inv.invoiceNumber} as Closed? It will be removed from Pending Payments.`)) {
+                                    handleToggleClose(inv);
+                                  }
+                                }}
+                              >
+                                <i className="bi bi-check2-circle text-success"></i>
+                                {closingInvoiceId === String(inv.id) ? 'Closing...' : 'Close Invoice'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="modal-footer border-top px-4 py-2 bg-light">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                  onClick={() => setCloseModalGroup(null)}
+                >
+                  Close Window
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <style jsx>{`
