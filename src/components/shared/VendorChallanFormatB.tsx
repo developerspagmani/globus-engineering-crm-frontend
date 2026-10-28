@@ -58,6 +58,8 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
    const vendorAddress = data.address || data.partyAddress || '';
    const vendorGst = data.gstin || '';
    const vendorPan = data.pan || '';
+   const vendorPhone = data.phone || data.mobile || data.customerPhone || data.vendorPhone || '';
+   const specialInstructions = data.notes || data.specialInstructions || data.special_instructions || '';
    // Our company details (Bill To = us, since vendor sends goods to us for processing)
    // Actually in outward challan we send our goods TO vendor for processing
    // So BILL TO = Vendor, SHIP TO = Vendor
@@ -128,6 +130,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                {vendorAddress && <div className="fmtb-box-addr">{vendorAddress}</div>}
                {vendorGst && <div>GSTIN: {vendorGst}</div>}
                {vendorPan && <div>PAN Number: {vendorPan}</div>}
+               {vendorPhone && <div>Phone: {vendorPhone}</div>}
             </div>
 
             <div className="fmtb-ship-box">
@@ -139,7 +142,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
             <div className="fmtb-dc-box">
                <div className="fmtb-dc-row">
                   <div className="fmtb-dc-key">DC NUMBER</div>
-                  <div className="fmtb-dc-val">{dcNo}</div>
+                  <div className="fmtb-dc-val" style={{ fontWeight: '900' }}>{dcNo}</div>
                </div>
                <div className="fmtb-dc-row">
                   <div className="fmtb-dc-key">DC DATE</div>
@@ -158,17 +161,17 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                {data.partyType === 'customer' && data.processName && data.processName !== "REJECTED / RETURNED" && !(data.status === "cancelled" && data.inwardNo) && (
                   <div className="fmtb-dc-row">
                      <div className="fmtb-dc-key">PROCESS</div>
-                     <div className="fmtb-dc-val" style={{ fontSize: '14px', fontWeight: '900' }}>{data.processName}</div>
+                     <div className="fmtb-dc-val" style={{ fontWeight: '900' }}>{data.processName}</div>
                   </div>
                )}
                <div className="fmtb-dc-row">
                   <div className="fmtb-dc-key">VEHICLE NO</div>
-                  <div className="fmtb-dc-val" style={{ fontSize: '12px', fontWeight: '900' }}>{vehicleNo}</div>
+                  <div className="fmtb-dc-val" style={{ fontWeight: '900' }}>{vehicleNo}</div>
                </div>
                {data.partyType !== 'customer' && (
                   <div className="fmtb-dc-row">
                      <div className="fmtb-dc-key">COATING</div>
-                     <div className="fmtb-dc-val" style={{ fontSize: '14px', fontWeight: '900' }}>{coatingName}</div>
+                     <div className="fmtb-dc-val" style={{ fontWeight: '900' }}>{coatingName}</div>
                   </div>
                )}
             </div>
@@ -215,6 +218,10 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
          <div className="fmtb-purpose-area">
             <span className="fmtb-purpose-label">PURPOSE:</span>
             <span className="fmtb-purpose-val">{purpose}</span>
+         </div>
+         <div className="fmtb-purpose-area">
+            <span className="fmtb-purpose-label">SPECIAL INSTRUCTIONS:</span>
+            <span className="fmtb-purpose-val">{specialInstructions || '-'}</span>
          </div>
 
          <div className="fmtb-sign-area">

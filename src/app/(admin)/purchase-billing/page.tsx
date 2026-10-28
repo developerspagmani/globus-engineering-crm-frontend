@@ -188,6 +188,26 @@ export default function PurchaseBillingPage() {
     dispatch(setPurchaseFilters({ gstTin: v }));
   };
 
+  const handleFromDateChange = (val: string) => {
+    setFromDate(val);
+    dispatch(setPurchaseFilters({ fromDate: val }));
+  };
+
+  const handleToDateChange = (val: string) => {
+    setToDate(val);
+    dispatch(setPurchaseFilters({ toDate: val }));
+  };
+
+  // Debounce search input to avoid hitting backend on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== (filters.search || '')) {
+        dispatch(setPurchaseFilters({ search }));
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search, dispatch, filters.search]);
+
   // Update filters in Redux state when user submits local filter inputs
   const handleApplyFilters = (e: React.FormEvent) => {
     e.preventDefault();
@@ -462,22 +482,48 @@ export default function PurchaseBillingPage() {
 
               <div className="col-12 col-sm-6 col-md-3">
                 <label className="form-label text-muted x-small fw-bold text-uppercase mb-1">From Date</label>
-                <input
-                  type="date"
-                  className="form-control rounded-3 border-light-subtle shadow-none py-2"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
+                <div className="input-group">
+                  <input
+                    type="date"
+                    className="form-control rounded-3 border-light-subtle shadow-none py-2"
+                    value={fromDate}
+                    max={toDate || undefined}
+                    onChange={(e) => handleFromDateChange(e.target.value)}
+                  />
+                  {fromDate && (
+                    <button
+                      type="button"
+                      className="btn btn-light border border-start-0 border-light-subtle text-muted"
+                      onClick={() => handleFromDateChange('')}
+                      title="Clear From Date"
+                    >
+                      <i className="bi bi-x"></i>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="col-12 col-sm-6 col-md-3">
                 <label className="form-label text-muted x-small fw-bold text-uppercase mb-1">To Date</label>
-                <input
-                  type="date"
-                  className="form-control rounded-3 border-light-subtle shadow-none py-2"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
+                <div className="input-group">
+                  <input
+                    type="date"
+                    className="form-control rounded-3 border-light-subtle shadow-none py-2"
+                    value={toDate}
+                    min={fromDate || undefined}
+                    onChange={(e) => handleToDateChange(e.target.value)}
+                  />
+                  {toDate && (
+                    <button
+                      type="button"
+                      className="btn btn-light border border-start-0 border-light-subtle text-muted"
+                      onClick={() => handleToDateChange('')}
+                      title="Clear To Date"
+                    >
+                      <i className="bi bi-x"></i>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="col-12 col-md-2 d-flex gap-2">

@@ -103,7 +103,7 @@ const InvoiceFilter: React.FC = () => {
   );
 
   return (
-    <div className="card filter-card" style={{ overflow: 'visible', position: 'relative', zIndex: 100 }}>
+    <div className="card filter-card" style={{ overflow: 'visible', position: 'relative' }}>
       <div className="card-body p-3" style={{ overflow: 'visible' }}>
         {/* Row 1: Primary Search Row */}
         <div className="row g-2 align-items-center mb-3">
@@ -184,17 +184,17 @@ const InvoiceFilter: React.FC = () => {
             )}
 
             <div className="date-filter-group">
-              <input 
-                type="date" 
-                className="text-muted" 
+              <input
+                type="date"
+                className="text-muted"
                 name="fromDate"
                 value={filters.fromDate}
                 onChange={handleChange}
               />
               <span className="text-muted small fw-bold mx-1">TO</span>
-              <input 
-                type="date" 
-                className="text-muted" 
+              <input
+                type="date"
+                className="text-muted"
                 name="toDate"
                 value={filters.toDate}
                 onChange={handleChange}

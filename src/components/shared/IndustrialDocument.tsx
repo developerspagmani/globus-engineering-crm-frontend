@@ -317,6 +317,71 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
    const partyName = data.partyType === 'vendor' ? (data.vendorName || data.partyName || 'N/A Vendor') : (data.customerName || data.partyName || 'N/A Customer');
    const partyAddress = data.address || data.partyAddress || 'N/A';
 
+   // Parse individual settled invoice items for vouchers (from data.items or legacy referenceNo format)
+   const voucherInvoices = React.useMemo(() => {
+      if (type !== 'voucher') return [];
+      if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+         return data.items.map((it: any) => ({
+            id: it.id || it.invoiceNo || it.invoice_no,
+            invoiceNo: it.invoiceNo || it.invoice_no || it.id,
+            amount: parseFloat(String(it.amount || '0')) || 0,
+            adjustmentType: it.adjustmentType || it.adjustment_type || 'TDS',
+            adjustmentValue: parseFloat(String(it.adjustmentValue || it.adjustment_value || '0')) || 0
+         }));
+      }
+      if (!data.referenceNo) return [];
+
+      const results: any[] = [];
+      const regex = /([^,(\s]+)\s*(?:\(([^)|]+)(?:\|([^)]+))?\))?/g;
+      let match;
+      while ((match = regex.exec(data.referenceNo)) !== null) {
+         const invoiceNo = match[1].trim();
+         if (!invoiceNo || ['₹', 'RS', 'INR'].includes(invoiceNo.toUpperCase())) continue;
+         let amount = parseFloat((match[2] || '').replace(/[^\d.]/g, '')) || 0;
+         const adjStr = match[3] || '';
+         let adjValue = parseFloat(adjStr.replace(/[^\d.]/g, '')) || 0;
+         let adjType = adjStr.toUpperCase().includes('OTHERS') ? 'Others' : 'TDS';
+         results.push({
+            id: invoiceNo,
+            invoiceNo,
+            amount,
+            adjustmentType: adjType,
+            adjustmentValue: adjValue
+         });
+      }
+      return results;
+   }, [data.items, data.referenceNo, type]);
+
+   // Clean up REF NO to show neat invoice numbers instead of encoded (amount|TDS:0) strings
+   const cleanRefNo = React.useMemo(() => {
+      if (type !== 'voucher') return data.referenceNo || '-';
+      if (!data.referenceNo && voucherInvoices.length === 0) return '-';
+
+      const invoiceNums = voucherInvoices.length > 0
+         ? voucherInvoices.map((i: any) => String(i.invoiceNo || i.id).trim()).filter(Boolean)
+         : String(data.referenceNo || '')
+            .split(',')
+            .map((s: string) => s.trim().split('(')[0].trim())
+            .filter(Boolean);
+
+      if (invoiceNums.length === 0) return data.referenceNo || '-';
+      if (invoiceNums.length <= 4) {
+         return invoiceNums.join(', ');
+      }
+      return `${invoiceNums.slice(0, 3).join(', ')}... (+${invoiceNums.length - 3} more)`;
+   }, [data.referenceNo, voucherInvoices, type]);
+
+   const fullInvoiceNumsTooltip = React.useMemo(() => {
+      if (type !== 'voucher') return undefined;
+      const invoiceNums = voucherInvoices.length > 0
+         ? voucherInvoices.map((i: any) => String(i.invoiceNo || i.id).trim()).filter(Boolean)
+         : String(data.referenceNo || '')
+            .split(',')
+            .map((s: string) => s.trim().split('(')[0].trim())
+            .filter(Boolean);
+      return invoiceNums.length > 0 ? invoiceNums.join(', ') : undefined;
+   }, [data.referenceNo, voucherInvoices, type]);
+
    return (
       <div className="invoice-page" style={{ pageBreakAfter: isLastPage ? 'avoid' : 'always' }}>
          <div className={`page-border-box${isLastPage ? ' last-page' : ''}`}>
@@ -443,7 +508,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         <div className="p-meta-col">
                            <span>REF NO</span>
                            <span>:</span>
-                           <span className="p-meta-val">{data.referenceNo || '-'}</span>
+                           <span className="p-meta-val" title={fullInvoiceNumsTooltip}>{cleanRefNo}</span>
                         </div>
                      ) : (
                         <div className="p-meta-col">
@@ -514,19 +579,51 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         </tr>
                      </thead>
                      <tbody>
-                        {/* Main payment row */}
-                        <tr>
-                           <td style={{ textAlign: 'center' }}>1</td>
-                           <td style={{ fontWeight: 'bold', paddingLeft: '8px' }}>
-                              {data.description || `${(data.type || 'Payment').toUpperCase()} towards balance settlement`}
-                           </td>
-                           <td style={{ textAlign: 'center', textTransform: 'uppercase' }}>{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-')}</td>
-                           <td style={{ textAlign: 'right', paddingRight: '8px', fontFamily: 'Courier New, monospace' }}>
-                              {Number(data.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                           </td>
-                        </tr>
+                        {voucherInvoices.length > 0 ? (
+                           voucherInvoices.map((inv: any, idx: number) => {
+                              const invNo = inv.invoiceNo || inv.id;
+                              const invAmt = Number(inv.amount || 0);
+                              const adjVal = Number(inv.adjustmentValue || 0);
+                              const adjType = inv.adjustmentType || 'TDS';
+                              const netInvAmt = adjVal > 0 ? Math.max(0, invAmt - adjVal) : invAmt;
+
+                              return (
+                                 <tr key={`v-inv-${idx}`}>
+                                    <td style={{ textAlign: 'center' }}>{idx + 1}</td>
+                                    <td style={{ paddingLeft: '8px' }}>
+                                       <div style={{ fontWeight: 'bold' }}>
+                                          Against Invoice #{invNo}
+                                       </div>
+                                       {adjVal > 0 && (
+                                          <div style={{ fontSize: '10px', color: '#666' }}>
+                                             Gross: ₹{invAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })} | Less {adjType}: ₹{adjVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                          </div>
+                                       )}
+                                    </td>
+                                    <td style={{ textAlign: 'center', textTransform: 'uppercase' }}>
+                                       {data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-')}
+                                    </td>
+                                    <td style={{ textAlign: 'right', paddingRight: '8px', fontFamily: 'Courier New, monospace' }}>
+                                       {netInvAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </td>
+                                 </tr>
+                              );
+                           })
+                        ) : (
+                           /* Main payment row */
+                           <tr>
+                              <td style={{ textAlign: 'center' }}>1</td>
+                              <td style={{ fontWeight: 'bold', paddingLeft: '8px' }}>
+                                 {data.description || `${(data.type || 'Payment').toUpperCase()} towards balance settlement`}
+                              </td>
+                              <td style={{ textAlign: 'center', textTransform: 'uppercase' }}>{data.paymentMode === 'netbanking' ? 'NET BANKING' : (data.paymentMode || '-')}</td>
+                              <td style={{ textAlign: 'right', paddingRight: '8px', fontFamily: 'Courier New, monospace' }}>
+                                 {Number(data.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </td>
+                           </tr>
+                        )}
                         {/* Filler rows */}
-                        {[...Array(8)].map((_, i) => (
+                        {[...Array(Math.max(0, 8 - (voucherInvoices.length > 0 ? voucherInvoices.length : 1)))].map((_, i) => (
                            <tr key={`v-filler-${i}`}>
                               <td style={{ textAlign: 'center' }}>&nbsp;</td>
                               <td>&nbsp;</td>
@@ -543,6 +640,31 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                               </td>
                               <td>&nbsp;</td>
                            </tr>
+                        )}
+                        {/* Total TDS or Others Deductions if present */}
+                        {(Number(data.tdsAmount || data.tds_amount || 0) > 0 || Number(data.othersAmount || data.others_amount || 0) > 0) && (
+                           <>
+                              {Number(data.tdsAmount || data.tds_amount || 0) > 0 && (
+                                 <tr style={{ fontSize: '11px', background: '#fafafa' }}>
+                                    <td colSpan={3} style={{ textAlign: 'right', paddingRight: '16px', color: '#666' }}>
+                                       Total TDS Deducted:
+                                    </td>
+                                    <td style={{ textAlign: 'right', paddingRight: '8px', fontFamily: 'Courier New, monospace', color: '#c00' }}>
+                                       - {Number(data.tdsAmount || data.tds_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </td>
+                                 </tr>
+                              )}
+                              {Number(data.othersAmount || data.others_amount || 0) > 0 && (
+                                 <tr style={{ fontSize: '11px', background: '#fafafa' }}>
+                                    <td colSpan={3} style={{ textAlign: 'right', paddingRight: '16px', color: '#666' }}>
+                                       Other Deductions / Adjustments:
+                                    </td>
+                                    <td style={{ textAlign: 'right', paddingRight: '8px', fontFamily: 'Courier New, monospace', color: '#c00' }}>
+                                       - {Number(data.othersAmount || data.others_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </td>
+                                 </tr>
+                              )}
+                           </>
                         )}
                         {/* Total row */}
                         <tr style={{ fontWeight: '900', background: '#f0f0f0', borderTop: '1.5pt solid #000' }}>

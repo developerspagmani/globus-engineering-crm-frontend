@@ -40,14 +40,16 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
    const website = company?.website || 'www.globusengineeringtools.com';
 
    const vendorName = data.vendorName || data.customerName || data.partyName || '';
-   const vendorAddress = data.address || data.partyAddress || '';
-   const vendorGst = data.gstin || '';
+   const vendorAddress = data.address || data.partyAddress || [data.street1, data.street2, data.area, data.city, data.state, data.pinCode || data.pincode].filter(Boolean).join(', ') || data.vendorAddress || data.customerAddress || '';
+   const vendorGst = data.gstin || data.gst || data.vendorGst || data.customerGst || '';
+   const vendorPhone = data.phone || data.mobile || data.customerPhone || data.vendorPhone || '';
 
    const dcNo = data.outwardNo || data.dcNo || '-';
    const dcDate = data.date
       ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-')
       : '-';
    const vehicleNo = data.vehicleNo || data.vehicle_no || data.vehicle || '-';
+   const specialInstructions = data.notes || data.specialInstructions || data.special_instructions || '';
 
    const items: any[] = data.items || [];
    const totalQty = items.reduce((s: number, it: any) => s + Number(it.quantity || 0), 0);
@@ -98,7 +100,8 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                      <div className="cha-to-details">
                         <div className="cha-to-name">{vendorName}</div>
                         {vendorAddress && <div className="cha-to-addr">{vendorAddress}</div>}
-                        {vendorGst && <div className="cha-to-gst">GST No :{vendorGst}</div>}
+                        {vendorGst && <div className="cha-to-gst">GSTIN: {vendorGst}</div>}
+                        {vendorPhone && <div className="cha-to-phone">PHONE: {vendorPhone}</div>}
                      </div>
                   </div>
 
@@ -125,7 +128,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                      {data.partyType === 'customer' && data.processName && data.processName !== "REJECTED / RETURNED" && !(data.status === "cancelled" && data.inwardNo) && (
                         <div className="cha-dc-row">
                            <div className="cha-dc-key">PROCESS</div>
-                           <div className="cha-dc-val" style={{ fontSize: '14px', fontWeight: 'bold', color: '#000' }}>{data.processName}</div>
+                           <div className="cha-dc-val cha-dc-process-val">{data.processName}</div>
                         </div>
                      )}
                      <div className="cha-dc-row">
@@ -135,7 +138,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                      {data.partyType !== 'customer' && (
                         <div className="cha-dc-row">
                            <div className="cha-dc-key">COATING</div>
-                           <div className="cha-dc-val" style={{ fontSize: '14px', fontWeight: 'bold', color: '#000' }}>{data.coatingName || data.processType || 'ULTRA COATING'}</div>
+                           <div className="cha-dc-val cha-dc-coating-val">{data.coatingName || data.processType || 'ULTRA COATING'}</div>
                         </div>
                      )}
 
@@ -203,6 +206,11 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                   {/* Row 0 - Purpose */}
                   <div className="cha-foot-row cha-foot-purpose-row">
                      <div className="cha-foot-left cha-foot-purpose">PURPOSE: {data.purpose || '-'}</div>
+                     <div className="cha-foot-right"></div>
+                  </div>
+                  {/* Row 0.5 - Special Instructions */}
+                  <div className="cha-foot-row cha-foot-instruction-row">
+                     <div className="cha-foot-left cha-foot-instructions">SPECIAL INSTRUCTIONS: {specialInstructions || '-'}</div>
                      <div className="cha-foot-right"></div>
                   </div>
                   {/* Row 1 – Coating / Process label */}
@@ -340,24 +348,31 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
             .cha-to-details {
                display: flex;
                flex-direction: column;
-               align-items: center;
-               line-height: 1.6;
+               align-items: flex-start;
+               line-height: 1.45;
+               padding-left: 6px;
             }
             .cha-to-name {
                font-weight: 900;
                text-transform: uppercase;
-               text-align: center;
-               font-size: 16px;
+               text-align: left;
+               font-size: 13.5px;
+               color: #000;
+               margin-bottom: 2px;
             }
             .cha-to-addr {
                text-transform: uppercase;
-               text-align: center;
+               text-align: left;
                font-size: 9.5px;
+               color: #222;
+               margin-bottom: 2px;
+               max-width: 95%;
             }
-            .cha-to-gst {
+            .cha-to-gst, .cha-to-phone {
                font-size: 9.5px;
-               text-align: center;
+               text-align: left;
                font-weight: bold;
+               color: #222;
             }
             
             .cha-dc-right {
@@ -382,22 +397,25 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                border-right: 1pt solid #000;
                display: flex;
                align-items: center;
-               justify-content: center;
+               justify-content: flex-start;
                font-size: 9px;
                font-weight: bold;
                color: #333;
                background: #f8f8f8;
+               padding: 0 5px;
             }
             .cha-dc-val {
                flex: 1;
                display: flex;
                align-items: center;
-               justify-content: center;
+               justify-content: flex-start;
                color: #000;
+               text-align: left;
                letter-spacing: 0.5px;
+               padding: 0 5px;
             }
             .cha-dc-no-val {
-               font-size: 18px;
+               font-size: 14px;
                font-weight: 900;
             }
             .cha-dc-date-val {
@@ -409,6 +427,12 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                font-size: 13px;
                font-weight: bold;
                color: #333;
+            }
+            .cha-dc-process-val, .cha-dc-coating-val {
+               font-size: 12px;
+               font-weight: bold;
+               color: #000;
+               text-align: left;
             }
             .cha-dc-veh-val {
                font-size: 13px;
@@ -544,6 +568,15 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                font-size: 14px;
                min-height: 24px;
             }
+            /* Row 0.5 - Special Instructions */
+            .cha-foot-instruction-row .cha-foot-left {
+               font-weight: bold;
+               font-size: 12px;
+               min-height: 24px;
+               justify-content: flex-start;
+               padding-left: 12px;
+               text-align: left;
+            }
             /* Row 1 – coating shaded */
             .cha-foot-coating-row .cha-foot-left {
                background: #e6e6e6;
@@ -565,7 +598,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
             /* Row 3 – signatures */
             .cha-foot-sign-row .cha-foot-left,
             .cha-foot-sign-row .cha-foot-right {
-               min-height: 140px;
+               min-height: 125px;
                align-items: flex-end;
                padding-bottom: 12px;
                font-size: 9px;

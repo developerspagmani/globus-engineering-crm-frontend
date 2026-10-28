@@ -21,7 +21,7 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { items: purchaseBills, pagination, loading, sorting } = useSelector((state: RootState) => state.purchaseBills);
-  
+
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   const handleSort = (field: string) => {
@@ -78,7 +78,7 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
                     <td className="px-3 text-dark small fw-semibold">
                       {item.receivedDate ? new Date(item.receivedDate).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}
                     </td>
-                    
+
                     {/* Blank / S.No Column */}
                     <td className="px-2 text-center text-muted small font-monospace">
                       #{globalIndex}
@@ -121,7 +121,6 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
                           className="btn btn-sm btn-action-view"
                           title="View"
                           onClick={() => onView(item)}
-                          style={{ color: '#0dcaf0', background: '#e0f8fb', border: 'none', borderRadius: '6px', width: '28px', height: '28px' }}
                         >
                           <i className="bi bi-eye-fill"></i>
                         </button>
@@ -138,7 +137,6 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
                           className="btn btn-sm btn-action-print"
                           title="Print"
                           onClick={() => onPrint(item)}
-                          style={{ color: '#0d6efd', background: '#e7f1ff', border: 'none', borderRadius: '6px', width: '28px', height: '28px' }}
                         >
                           <i className="bi bi-printer-fill"></i>
                         </button>
@@ -147,7 +145,6 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
                             className="btn btn-sm btn-action-delete"
                             title="Delete"
                             onClick={() => handleDeleteTrigger(item.id)}
-                            style={{ color: '#dc3545', background: '#ffeef0', border: 'none', borderRadius: '6px', width: '28px', height: '28px' }}
                           >
                             <i className="bi bi-trash-fill"></i>
                           </button>

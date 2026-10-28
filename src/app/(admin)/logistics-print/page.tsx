@@ -53,8 +53,8 @@ const PrintContent = () => {
          setLoading(true);
          
          const fetchPromises = [];
-         if (customers.length === 0) fetchPromises.push((dispatch as any)(fetchCustomers({ company_id: company.id })));
-         if (vendors.length === 0) fetchPromises.push((dispatch as any)(fetchVendors({ company_id: company.id })));
+         if (customers.length === 0) fetchPromises.push((dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 })));
+         if (vendors.length === 0) fetchPromises.push((dispatch as any)(fetchVendors({ company_id: company.id, limit: 1000 })));
 
          if (type === 'inward') {
             fetchPromises.push((dispatch as any)(fetchInwardById(id)));
@@ -91,29 +91,37 @@ const PrintContent = () => {
             let enrichedData: any = { ...found };
             const anyFound = found as any;
             if (type === 'outward') {
-               if (anyFound.partyType === 'vendor' || anyFound.party_type === 'vendor') {
+               const pType = anyFound.partyType || anyFound.party_type || (anyFound.vendorId || anyFound.vendor_id ? 'vendor' : 'customer');
+               if (pType === 'vendor') {
                   const vId = anyFound.vendorId || anyFound.vendor_id;
-                  if (vId) {
-                     const vendorInfo = vendors.find(v => String(v.id) === String(vId));
-                     if (vendorInfo) {
-                        const addrParts = [vendorInfo.street1, vendorInfo.street2, vendorInfo.area, vendorInfo.city, vendorInfo.state, vendorInfo.pinCode].filter(Boolean);
-                        enrichedData.address = addrParts.join(', ');
-                        enrichedData.gstin = vendorInfo.gst || (vendorInfo as any).gstin || '';
-                        enrichedData.pan = (vendorInfo as any).pan || '';
-                     }
+                  let vendorInfo = vId ? vendors.find(v => String(v.id) === String(vId)) : null;
+                  if (!vendorInfo && anyFound.vendorName) {
+                     vendorInfo = vendors.find(v => (v.name || v.company) === anyFound.vendorName);
                   }
-               } else if (anyFound.partyType === 'customer' || anyFound.party_type === 'customer') {
+                  if (vendorInfo) {
+                     const addrParts = [vendorInfo.street1, vendorInfo.street2, vendorInfo.area, vendorInfo.city, vendorInfo.state, vendorInfo.pinCode].filter(Boolean);
+                     enrichedData.address = enrichedData.address || addrParts.join(', ');
+                     enrichedData.gstin = enrichedData.gstin || vendorInfo.gst || (vendorInfo as any).gstin || '';
+                     enrichedData.pan = enrichedData.pan || (vendorInfo as any).pan || '';
+                     enrichedData.phone = enrichedData.phone || vendorInfo.phone || '';
+                  }
+               } else {
                   const cId = anyFound.customerId || anyFound.customer_id;
-                  if (cId) {
-                     const customerInfo = customers.find(c => String(c.id) === String(cId));
-                     if (customerInfo) {
-                        const addrParts = [customerInfo.street1, customerInfo.street2, customerInfo.area, customerInfo.city, customerInfo.state, customerInfo.pinCode].filter(Boolean);
-                        enrichedData.address = addrParts.join(', ');
-                        enrichedData.gstin = customerInfo.gst || (customerInfo as any).gstin || '';
-                        enrichedData.pan = (customerInfo as any).pan || '';
-                     }
+                  let customerInfo = cId ? customers.find(c => String(c.id) === String(cId)) : null;
+                  if (!customerInfo && anyFound.customerName) {
+                     customerInfo = customers.find(c => (c.name || c.company) === anyFound.customerName);
+                  }
+                  if (customerInfo) {
+                     const addrParts = [customerInfo.street1, customerInfo.street2, customerInfo.area, customerInfo.city, customerInfo.state, customerInfo.pinCode].filter(Boolean);
+                     enrichedData.address = enrichedData.address || addrParts.join(', ');
+                     enrichedData.gstin = enrichedData.gstin || customerInfo.gst || (customerInfo as any).gstin || '';
+                     enrichedData.pan = enrichedData.pan || (customerInfo as any).pan || '';
+                     enrichedData.phone = enrichedData.phone || customerInfo.phone || '';
                   }
                }
+               enrichedData.vehicleNo = anyFound.vehicleNo || anyFound.vehicle_no || anyFound.vehicle || '';
+               enrichedData.coatingName = anyFound.coatingName || anyFound.coating_name || '';
+               enrichedData.notes = anyFound.notes || anyFound.specialInstructions || '';
             }
             setData(enrichedData);
          }

@@ -20,6 +20,7 @@ import ExportExcel from '@/components/shared/ExportExcel';
 import PaginationComponent from '@/components/shared/Pagination';
 import SortableHeader from '@/components/shared/SortableHeader';
 import IndustrialDocument from '@/components/shared/IndustrialDocument';
+import VendorChallanFormatA from '@/components/shared/VendorChallanFormatA';
 import html2canvas from 'html2canvas';
 
 
@@ -278,7 +279,26 @@ export default function OutwardListPage() {
   };
 
   const handleExportPDFOutward = (item: any) => {
-    setDownloadingItem(item);
+    let enriched = { ...item };
+    const pType = item.partyType || (item.vendorId ? 'vendor' : 'customer');
+    if (pType === 'vendor') {
+      const vend = vendors.find((v: any) => String(v.id) === String(item.vendorId) || (v.name || v.company) === item.vendorName);
+      if (vend) {
+        enriched.address = enriched.address || [vend.street1, vend.street2, vend.area, vend.city, vend.state, vend.pinCode].filter(Boolean).join(', ');
+        enriched.gstin = enriched.gstin || vend.gst || (vend as any).gstin || '';
+        enriched.phone = enriched.phone || vend.phone || '';
+      }
+    } else {
+      const cust = customers.find((c: any) => String(c.id) === String(item.customerId) || (c.name || c.company) === item.customerName);
+      if (cust) {
+        enriched.address = enriched.address || [cust.street1, cust.street2, cust.area, cust.city, cust.state, cust.pinCode || (cust as any).pin_code].filter(Boolean).join(', ');
+        enriched.gstin = enriched.gstin || cust.gst || '';
+        enriched.phone = enriched.phone || cust.phone || '';
+      }
+    }
+    enriched.vehicleNo = item.vehicleNo || item.vehicle_no || item.vehicle || '';
+    enriched.notes = item.notes || item.specialInstructions || '';
+    setDownloadingItem(enriched);
   };
 
   return (
@@ -482,7 +502,11 @@ export default function OutwardListPage() {
       {downloadingItem && (
         <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
           <div ref={downloadRef}>
-            <IndustrialDocument data={downloadingItem} type="outward" company={company!} />
+            <VendorChallanFormatA
+              data={downloadingItem}
+              company={company}
+              settings={company?.invoiceSettings}
+            />
           </div>
         </div>
       )}
