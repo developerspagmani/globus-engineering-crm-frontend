@@ -71,7 +71,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
    const dcDate = data.date
       ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-')
       : '-';
-   const coatingName = data.coatingName || data.processType || 'ULTRA COATING';
+   const coatingName = data.coatingName || data.processType || '';
    const vehicleNo = data.vehicleNo || data.vehicle_no || data.vehicle || '-';
 
    const invoiceRef = data.invoiceReference || data.invoiceRef || '-';
@@ -126,7 +126,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
          <div className="fmtb-address-row">
             <div className="fmtb-bill-box">
                <div className="fmtb-box-title">BILL TO</div>
-               <div className="fmtb-box-name">{data.inwardNo && vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
+               <div className="fmtb-box-name">{vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
                {vendorAddress && <div className="fmtb-box-addr">{vendorAddress}</div>}
                {vendorGst && <div>GSTIN: {vendorGst}</div>}
                {vendorPan && <div>PAN Number: {vendorPan}</div>}
@@ -135,7 +135,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
 
             <div className="fmtb-ship-box">
                <div className="fmtb-box-title">SHIP TO</div>
-               <div className="fmtb-box-name">{data.inwardNo && vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
+               <div className="fmtb-box-name">{vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
                {vendorAddress && <div className="fmtb-box-addr">{vendorAddress}</div>}
             </div>
 

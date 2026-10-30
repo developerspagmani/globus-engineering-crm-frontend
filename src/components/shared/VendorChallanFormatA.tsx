@@ -98,7 +98,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                   <div className="cha-to-left">
                      <div className="cha-to-label">TO,</div>
                      <div className="cha-to-details">
-                        <div className="cha-to-name">{data.inwardNo && vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
+                        <div className="cha-to-name">{vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
                         {vendorAddress && <div className="cha-to-addr">{vendorAddress}</div>}
                         {vendorGst && <div className="cha-to-gst">GSTIN: {vendorGst}</div>}
                         {vendorPhone && <div className="cha-to-phone">PHONE: {vendorPhone}</div>}
@@ -138,7 +138,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                      {data.partyType !== 'customer' && (
                         <div className="cha-dc-row">
                            <div className="cha-dc-key">COATING</div>
-                           <div className="cha-dc-val cha-dc-coating-val">{data.coatingName || data.processType || 'ULTRA COATING'}</div>
+                           <div className="cha-dc-val cha-dc-coating-val">{data.coatingName || data.processType || ''}</div>
                         </div>
                      )}
 
