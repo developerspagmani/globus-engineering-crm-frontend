@@ -5,11 +5,11 @@ import api from '@/lib/axios';
 // Thunks
 export const fetchOutwards = createAsyncThunk(
   'outwards/fetchAll',
-  async (params: { 
-    company_id?: string; 
-    page?: number; 
-    limit?: number; 
-    search?: string; 
+  async (params: {
+    company_id?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
     id?: string;
     partyType?: string;
     customerId?: string;
@@ -32,7 +32,7 @@ export const fetchOutwards = createAsyncThunk(
       if (id) url += `&id=${id}`;
       if (sortBy) url += `&sortBy=${sortBy}`;
       if (sortOrder) url += `&sortOrder=${sortOrder}`;
-      
+
       const response = await api.get(url);
       return {
         items: response.data.items.map((item: any) => ({
@@ -51,6 +51,8 @@ export const fetchOutwards = createAsyncThunk(
           purpose: item.purpose || '',
           driverName: item.driver_name || '',
           notes: item.notes || '',
+          customerNotes: item.customer_notes || item.customerNotes || '',
+          customer_notes: item.customer_notes || item.customerNotes || '',
           inwardId: item.inward_id || item.inwardId || '',
           inwardNo: item.inward_no || item.inwardNo || '',
           company_id: item.company_id?.toString() || '',
@@ -90,6 +92,8 @@ export const fetchOutwardById = createAsyncThunk(
         purpose: item.purpose || '',
         driverName: item.driver_name || '',
         notes: item.notes || '',
+        customerNotes: item.customer_notes || item.customerNotes || '',
+        customer_notes: item.customer_notes || item.customerNotes || '',
         inwardId: item.inward_id || item.inwardId || '',
         inwardNo: item.inward_no || item.inwardNo || '',
         company_id: item.company_id?.toString() || '',
@@ -124,6 +128,8 @@ export const createOutward = createAsyncThunk(
         purpose: data.purpose,
         driver_name: data.driverName,
         notes: data.notes,
+        customer_notes: data.customerNotes ?? data.customer_notes ?? '',
+        customerNotes: data.customerNotes ?? data.customer_notes ?? '',
         status: data.status,
         items: data.items,
         date: data.date,
@@ -158,6 +164,8 @@ export const updateOutward = createAsyncThunk(
         purpose: data.purpose,
         driver_name: data.driverName,
         notes: data.notes,
+        customer_notes: data.customerNotes ?? data.customer_notes ?? '',
+        customerNotes: data.customerNotes ?? data.customer_notes ?? '',
         status: data.status,
         items: data.items,
         date: data.date,
@@ -289,13 +297,25 @@ const outwardSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(updateOutward.fulfilled, (state, action) => {
-        const index = state.items.findIndex(i => i.id === action.payload.id);
+        const index = state.items.findIndex(i => String(i.id) === String(action.payload.id));
         if (index !== -1) {
-          state.items[index] = action.payload;
+          state.items[index] = {
+            ...state.items[index],
+            ...action.payload,
+            id: String(action.payload.id),
+            notes: action.payload.notes ?? state.items[index].notes ?? '',
+            customerNotes: action.payload.customer_notes ?? action.payload.customerNotes ?? state.items[index].customerNotes ?? '',
+            customer_notes: action.payload.customer_notes ?? action.payload.customerNotes ?? state.items[index].customer_notes ?? '',
+          };
         }
       })
       .addCase(createOutward.fulfilled, (state, action) => {
-        state.items.unshift(action.payload);
+        state.items.unshift({
+          ...action.payload,
+          id: String(action.payload.id),
+          customerNotes: action.payload.customer_notes ?? action.payload.customerNotes ?? '',
+          customer_notes: action.payload.customer_notes ?? action.payload.customerNotes ?? '',
+        });
       })
       .addCase(deleteOutward.fulfilled, (state, action) => {
         state.items = state.items.filter(i => i.id !== action.payload);

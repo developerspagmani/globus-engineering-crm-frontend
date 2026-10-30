@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Invoice } from '@/types/modules';
 import api from '@/lib/axios';
+import { updateCustomer } from './customerSlice';
 
 export const mapInvoice = (inv: any): Invoice => {
   const cleanStr = (val: any): string => {
@@ -17,10 +18,10 @@ export const mapInvoice = (inv: any): Invoice => {
   const grandTotal = parseFloat(String(inv.grandTotal || inv.grand_total || '0').replace(/[^\d.]/g, '')) || 0;
   const subTotal = parseFloat(String(inv.subTotal || inv.sub_total || inv.total || '0').replace(/[^\d.]/g, '')) || 0;
 
-  const customerName = cleanStr(inv.customer_name) || cleanStr(inv.customerName) || cleanStr(inv.customer?.customer_name) || 'N/A';
+  const customerName = cleanStr(inv.customer?.customer_name) || cleanStr(inv.customer_name) || cleanStr(inv.customerName) || 'N/A';
 
-  let address = cleanStr(inv.address);
-  if (!address && inv.customer) {
+  let address = '';
+  if (inv.customer) {
     const parts = [
       cleanStr(inv.customer.street1),
       cleanStr(inv.customer.street2),
@@ -32,9 +33,13 @@ export const mapInvoice = (inv: any): Invoice => {
     }
     address = parts.join(', ');
   }
+  if (!address) {
+    address = cleanStr(inv.address);
+  }
 
-  const gstin = cleanStr(inv.gstin) || cleanStr(inv.customer?.gst) || '';
-  const state = cleanStr(inv.state) || cleanStr(inv.customer?.state) || '';
+  const gstin = cleanStr(inv.customer?.gst) || cleanStr(inv.gstin) || '';
+  const state = cleanStr(inv.customer?.state) || cleanStr(inv.state) || '';
+  const stateCode = cleanStr(inv.stateCode) || cleanStr(inv.state_code) || cleanStr(inv.customer?.state_code) || cleanStr(inv.customer?.stateCode) || '';
 
   return {
     id: inv.id.toString(),
@@ -88,6 +93,7 @@ export const mapInvoice = (inv: any): Invoice => {
     notes: inv.notes || '',
     gstin,
     state,
+    stateCode,
     paidAmount: parseFloat(String(inv.paid_amount || inv.paidAmount || '0').replace(/[^\d.]/g, '')) || 0,
     otherCharges: parseFloat(String(inv.other_charges || inv.otherCharges || '0').replace(/[^\d.]/g, '')) || 0,
     otherChargesDesc: inv.other_charges_desc || inv.otherChargesDesc || '',
@@ -491,6 +497,47 @@ const invoiceSlice = createSlice({
           logo,
           logoSecondary
         };
+      })
+      .addCase(updateCustomer.fulfilled, (state, action) => {
+        const cust: any = action.payload;
+        if (!cust || !cust.id) return;
+        const cleanPart = (val: any): string => {
+          if (val === null || val === undefined) return '';
+          const s = String(val).trim();
+          return s.toLowerCase() === 'null' ? '' : s;
+        };
+        const newName = cleanPart(cust.name || cust.company || cust.customer_name);
+        const newAddress = [
+          cleanPart(cust.street1),
+          cleanPart(cust.street2),
+          cleanPart(cust.city),
+          cleanPart(cust.state),
+          cleanPart(cust.pinCode ?? cust.pin_code)
+        ].filter(Boolean).join(', ');
+        const newState = cleanPart(cust.state);
+        const newStateCode = cleanPart(cust.stateCode ?? cust.state_code);
+        const newGstin = cleanPart(cust.gst);
+
+        state.items = state.items.map((inv) => {
+          if (String(inv.customerId) !== String(cust.id)) return inv;
+          const prevName = cleanPart(inv.customerName).toLowerCase();
+          const prevAddr = cleanPart(inv.address).toLowerCase();
+          const prevState = cleanPart(inv.state).toLowerCase();
+          const prevGst = cleanPart(inv.gstin).toLowerCase();
+
+          return {
+            ...inv,
+            customerName: newName || inv.customerName,
+            address: newAddress,
+            state: newState,
+            stateCode: newStateCode,
+            gstin: newGstin,
+            shippingName: inv.shippingName && cleanPart(inv.shippingName).toLowerCase() === prevName ? (newName || inv.shippingName) : inv.shippingName,
+            shippingAddress: inv.shippingAddress && cleanPart(inv.shippingAddress).toLowerCase() === prevAddr ? newAddress : inv.shippingAddress,
+            shippingState: inv.shippingState && cleanPart(inv.shippingState).toLowerCase() === prevState ? newState : inv.shippingState,
+            shippingGstin: inv.shippingGstin && cleanPart(inv.shippingGstin).toLowerCase() === prevGst ? newGstin : inv.shippingGstin,
+          };
+        });
       });
   }
 });

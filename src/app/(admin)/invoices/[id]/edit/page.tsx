@@ -20,12 +20,12 @@ export default function EditInvoicePage() {
   const invoice = invoices.find(inv => String(inv.id) === String(id));
 
   useEffect(() => {
-    if (!invoice && id) {
+    if (id) {
       dispatch(fetchInvoices({ company_id: company?.id, id }) as any);
     }
-  }, [invoice, company?.id, id, dispatch]);
+  }, [company?.id, id, dispatch]);
 
-  if (invoiceLoading || (!invoice && invoices.length === 0)) {
+  if (!invoice && (invoiceLoading || invoices.length === 0)) {
     return (
       <ModuleGuard moduleId="mod_invoice">
         <div className="container py-5 text-center">

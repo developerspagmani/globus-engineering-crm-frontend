@@ -24,12 +24,13 @@ export default function EditCustomerPage() {
   const customer = items.find(c => String(c.id) === String(id));
 
   React.useEffect(() => {
-    if (items.length === 0 && activeCompany?.id && id) {
-      dispatch(fetchCustomers({ company_id: activeCompany.id, id }));
+    if (!customer && id) {
+      const companyId = activeCompany?.id || user?.company_id || (user as any)?.companyId;
+      dispatch(fetchCustomers({ company_id: companyId, id }));
     }
-  }, [dispatch, items.length, activeCompany?.id, id]);
+  }, [dispatch, customer, activeCompany?.id, user?.company_id, id]);
 
-  if (loading || (items.length === 0 && !customer)) {
+  if (loading && !customer) {
     return (
       <ModuleGuard moduleId="mod_customer">
         <div className="container-fluid py-4 min-vh-100 d-flex align-items-center justify-content-center">

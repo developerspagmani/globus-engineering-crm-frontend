@@ -73,8 +73,8 @@ const IndustrialDocument: React.FC<IndustrialDocumentProps> = ({ data, type, com
    };
 
    // Enrich data with party details if missing
-   const partyId = data.partyId || data.customerId || data.vendorId || (data as any).party_id;
-   const partyType = data.partyType || (data.vendorName ? 'vendor' : 'customer');
+   const partyId = data.partyId || data.customerId || data.vendorId || (data as any).party_id || (data as any).customer_id || (data as any).vendor_id;
+   const partyType = data.partyType || (data as any).party_type || ((data.vendorId || (data as any).vendor_id || data.vendorName || (data as any).vendor_name) ? 'vendor' : 'customer');
    
    let enrichedData = { ...data };
    
@@ -314,8 +314,26 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
    const targetRows = isLastPage ? (capacity - footerSpaceNeeded) : capacity;
    const fillerCount = 0;
 
-   const partyName = data.partyType === 'vendor' ? (data.vendorName || data.partyName || 'N/A Vendor') : (data.customerName || data.partyName || 'N/A Customer');
+   const isVendorParty = data.partyType === 'vendor' || data.party_type === 'vendor' || Boolean(data.vendorId || data.vendor_id || data.vendorName || data.vendor_name);
+   const partyName = isVendorParty
+      ? (data.vendorName || data.vendor_name || data.partyName || 'N/A Vendor')
+      : (data.customerName || data.customer_name || data.partyName || 'N/A Customer');
+   const shippingPartyName = data.shippingName || data.shipping_name || partyName;
    const partyAddress = data.address || data.partyAddress || 'N/A';
+
+   const renderPartyName = (nameStr: string) => {
+      if (!nameStr) return '';
+      if (type === 'inward' || type === 'statement') {
+         const cleanName = String(nameStr).trim().replace(/^m\/s\.?\s*/i, '');
+         return (
+            <>
+               <span style={{ textTransform: 'none' }}>M/s </span>
+               {cleanName}
+            </>
+         );
+      }
+      return nameStr;
+   };
 
    // Parse individual settled invoice items for vouchers (from data.items or legacy referenceNo format)
    const voucherInvoices = React.useMemo(() => {
@@ -529,7 +547,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">BILLING DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{type === 'statement' ? `M/s ${partyName}` : partyName}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{renderPartyName(partyName)}</strong></div>
                         <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>
@@ -548,7 +566,7 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                   <div className="p-addr-title">SHIPPING DETAILS :</div>
                   <div className="p-addr-content">
                      <div style={{ display: 'grid', gridTemplateColumns: '70px auto', rowGap: '2px' }}>
-                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{type === 'statement' ? `M/s ${data.shippingName || data.shipping_name || partyName}` : (data.shippingName || data.shipping_name || partyName)}</strong></div>
+                        <div style={{ fontWeight: 'bold', color: '#000' }}>Name</div><div>: <strong>{renderPartyName(shippingPartyName)}</strong></div>
                         <div style={{ alignSelf: 'start', fontWeight: 'bold', color: '#000' }}>Address</div>
                         <div style={{ lineHeight: '1.2', display: 'flex', alignItems: 'flex-start' }}>
                            <span style={{ flexShrink: 0, marginRight: '2px' }}>:</span>

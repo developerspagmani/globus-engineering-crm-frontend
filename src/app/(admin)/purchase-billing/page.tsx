@@ -18,7 +18,7 @@ import api from '@/lib/axios';
 export default function PurchaseBillingPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
-  const { items: purchaseBills, filters, pagination, sorting } = useSelector((state: RootState) => state.purchaseBills);
+  const { items: purchaseBills, filters, pagination, sorting, aggregates } = useSelector((state: RootState) => state.purchaseBills);
 
   const [mounted, setMounted] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -281,11 +281,11 @@ export default function PurchaseBillingPage() {
 
   if (!mounted) return null;
 
-  // Calculate high-level metrics for Summary Cards
-  const totalTaxable = purchaseBills.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const totalCgstSgst = purchaseBills.reduce((acc, curr) => acc + (curr.cgst || 0) + (curr.sgst || 0), 0);
-  const totalIgst = purchaseBills.reduce((acc, curr) => acc + (curr.igst || 0), 0);
-  const totalGrand = purchaseBills.reduce((acc, curr) => acc + (curr.grandTotal || 0), 0);
+  // Calculate high-level metrics for Summary Cards from all filtered records (with fallback to page items)
+  const totalTaxable = aggregates?.totalTaxable ?? purchaseBills.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const totalCgstSgst = aggregates?.totalCgstSgst ?? purchaseBills.reduce((acc, curr) => acc + (curr.cgst || 0) + (curr.sgst || 0), 0);
+  const totalIgst = aggregates?.totalIgst ?? purchaseBills.reduce((acc, curr) => acc + (curr.igst || 0), 0);
+  const totalGrand = aggregates?.totalGrand ?? purchaseBills.reduce((acc, curr) => acc + (curr.grandTotal || 0), 0);
 
   return (
     <ModuleGuard moduleId="mod_purchase_billing">

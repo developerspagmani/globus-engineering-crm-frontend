@@ -156,6 +156,22 @@ const PurchaseTable: React.FC<PurchaseTableProps> = ({ onEdit, onView, onPrint }
               })
             )}
           </tbody>
+          {purchaseBills.length > 0 && (
+            <tfoot className="table-light fw-bold">
+              <tr className="border-top border-2">
+                <td colSpan={6} className="px-3 py-2 text-muted small text-uppercase">
+                  Page Subtotal ({purchaseBills.length} item{purchaseBills.length > 1 ? 's' : ''})
+                </td>
+                <td className="px-3 py-2 text-end font-monospace">
+                  ₹{purchaseBills.reduce((acc, b) => acc + (Number(b.amount) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </td>
+                <td className="px-3 py-2 text-end text-primary font-monospace">
+                  ₹{purchaseBills.reduce((acc, b) => acc + (Number(b.grandTotal) || 0), 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

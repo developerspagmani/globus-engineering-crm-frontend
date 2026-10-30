@@ -49,7 +49,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
       ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-')
       : '-';
    const vehicleNo = data.vehicleNo || data.vehicle_no || data.vehicle || '-';
-   const specialInstructions = data.notes || data.specialInstructions || data.special_instructions || '';
+   const specialInstructions = data.customerNotes || data.customer_notes || '';
 
    const items: any[] = data.items || [];
    const totalQty = items.reduce((s: number, it: any) => s + Number(it.quantity || 0), 0);
@@ -98,7 +98,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                   <div className="cha-to-left">
                      <div className="cha-to-label">TO,</div>
                      <div className="cha-to-details">
-                        <div className="cha-to-name">{vendorName}</div>
+                        <div className="cha-to-name">{data.inwardNo && vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
                         {vendorAddress && <div className="cha-to-addr">{vendorAddress}</div>}
                         {vendorGst && <div className="cha-to-gst">GSTIN: {vendorGst}</div>}
                         {vendorPhone && <div className="cha-to-phone">PHONE: {vendorPhone}</div>}

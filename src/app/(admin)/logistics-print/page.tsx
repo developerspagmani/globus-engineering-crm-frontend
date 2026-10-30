@@ -122,6 +122,7 @@ const PrintContent = () => {
                enrichedData.vehicleNo = anyFound.vehicleNo || anyFound.vehicle_no || anyFound.vehicle || '';
                enrichedData.coatingName = anyFound.coatingName || anyFound.coating_name || '';
                enrichedData.notes = anyFound.notes || anyFound.specialInstructions || '';
+               enrichedData.customerNotes = anyFound.customerNotes || anyFound.customer_notes || '';
             }
             setData(enrichedData);
          }

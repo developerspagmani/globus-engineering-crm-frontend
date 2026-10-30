@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { useParams } from 'next/navigation';
 import { fetchInvoices } from '@/redux/features/invoiceSlice';
+import { fetchCustomers } from '@/redux/features/customerSlice';
 import InvoicePreview from '@/modules/invoice/components/InvoicePreview';
 import ModuleGuard from '@/components/ModuleGuard';
 import Link from 'next/link';
@@ -21,12 +22,13 @@ export default function InvoiceDetailPage() {
   const invoice = invoices.find(inv => String(inv.id) === String(id));
 
   React.useEffect(() => {
-    if (!invoice && id) {
+    if (id) {
       dispatch(fetchInvoices({ company_id: company?.id, id }) as any);
+      dispatch(fetchCustomers({ company_id: company?.id, limit: 1000 }) as any);
     }
-  }, [invoice, company?.id, id, dispatch]);
+  }, [company?.id, id, dispatch]);
 
-  if (invoiceLoading || (!invoice && invoices.length === 0)) {
+  if (!invoice && (invoiceLoading || invoices.length === 0)) {
     return (
       <ModuleGuard moduleId="mod_invoice">
         <div className="container py-5 text-center">

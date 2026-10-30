@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 import { Invoice, Company } from '@/types/modules';
 import { numberToWordsRupees } from '@/utils/numberToWords';
 
@@ -32,6 +34,60 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
   typeParam,
   copyType
 }) => {
+  const { items: customers } = useSelector((state: RootState) => state.customers || { items: [] });
+  const { items: vendors } = useSelector((state: RootState) => state.vendors || { items: [] });
+
+  const matchedParty = React.useMemo(() => {
+    const cid = String(invoice.customerId || '').trim();
+    const cname = String(invoice.customerName || '').trim().toLowerCase();
+    if (cid) {
+      const found = customers.find((c: any) => String(c.id) === cid) || vendors.find((v: any) => String(v.id) === cid);
+      if (found) return found;
+    }
+    if (cname && cname !== 'n/a') {
+      return customers.find((c: any) => String(c.name || c.company || '').trim().toLowerCase() === cname) ||
+             vendors.find((v: any) => String(v.name || v.company || '').trim().toLowerCase() === cname);
+    }
+    return undefined;
+  }, [customers, vendors, invoice.customerId, invoice.customerName]);
+
+  const cleanVal = (val: any): string => {
+    if (val === null || val === undefined) return '';
+    const s = String(val).trim();
+    return s.toLowerCase() === 'null' ? '' : s;
+  };
+
+  const matchedPartyAddress = matchedParty ? [
+    cleanVal((matchedParty as any).street1 || (matchedParty as any).address),
+    cleanVal((matchedParty as any).street2),
+    cleanVal((matchedParty as any).city),
+    cleanVal((matchedParty as any).state),
+    cleanVal((matchedParty as any).pinCode ?? (matchedParty as any).pin_code)
+  ].filter(Boolean).join(', ') : '';
+
+  const resolvedCustomerName = cleanVal(matchedParty?.name || (matchedParty as any)?.company) || cleanVal(invoice.customerName) || '-';
+  const resolvedAddress = matchedPartyAddress || cleanVal(invoice.address) || '';
+  const resolvedGstin = matchedParty ? cleanVal(matchedParty.gst || (matchedParty as any).gstin) : cleanVal(invoice.gstin);
+  const resolvedState = matchedParty ? (cleanVal(matchedParty.state) || cleanVal(invoice.state)) : cleanVal(invoice.state);
+  const billingStateCode = matchedParty
+    ? cleanVal(matchedParty.stateCode ?? (matchedParty as any).state_code)
+    : String(
+        invoice.stateCode ||
+        (invoice as any).state_code ||
+        (invoice as any).customer?.state_code ||
+        (invoice as any).customer?.stateCode ||
+        ''
+      ).trim();
+  const shippingStateVal = String(invoice.shippingState || (invoice as any).shipping_state || resolvedState || '').trim();
+  const billingStateVal = String(resolvedState || '').trim();
+  const shippingStateCode = String(
+    (invoice as any).shippingStateCode || (invoice as any).shipping_state_code || (
+      (!shippingStateVal || !billingStateVal || shippingStateVal.toLowerCase() === billingStateVal.toLowerCase())
+        ? billingStateCode
+        : ''
+    )
+  ).trim();
+
   let displayItems = [...(invoice.items || [])];
   let isWOP = typeParam === 'WOP' || String(invoice.type).toUpperCase() === 'WOP';
 
@@ -289,20 +345,20 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
           {/* Bill To */}
           <div className="party-card">
             <h3 className="party-title">Bill To :</h3>
-            <div className="party-name">{invoice.customerName || '-'}</div>
-            {invoice.address && (
+            <div className="party-name">{resolvedCustomerName}</div>
+            {resolvedAddress && (
               <div className="party-address" style={{ whiteSpace: 'pre-line' }}>
-                {invoice.address}
+                {resolvedAddress}
               </div>
             )}
-            {invoice.gstin && (
+            {resolvedGstin && (
               <div className="party-gstin">
                 <span>GSTIN: </span>
-                <strong>{invoice.gstin}</strong>
+                <strong>{resolvedGstin}</strong>
               </div>
             )}
-            {invoice.state && (
-              <div className="party-state">State: {invoice.state}</div>
+            {resolvedState && (
+              <div className="party-state">State: {resolvedState}{billingStateCode ? ` (Code: ${billingStateCode})` : ''}</div>
             )}
           </div>
 
@@ -310,21 +366,21 @@ export const ModernTaxInvoice: React.FC<ModernTaxInvoiceProps> = ({
           <div className="party-card">
             <h3 className="party-title">Ship To :</h3>
             <div className="party-name">
-              {invoice.shippingName || invoice.customerName || '-'}
+              {invoice.shippingName || resolvedCustomerName}
             </div>
-            {(invoice.shippingAddress || invoice.address) && (
+            {(invoice.shippingAddress || resolvedAddress) && (
               <div className="party-address" style={{ whiteSpace: 'pre-line' }}>
-                {invoice.shippingAddress || invoice.address}
+                {invoice.shippingAddress || resolvedAddress}
               </div>
             )}
-            {(invoice.shippingGstin || invoice.gstin) && (
+            {(invoice.shippingGstin || resolvedGstin) && (
               <div className="party-gstin">
                 <span>GSTIN : </span>
-                <strong>{invoice.shippingGstin || invoice.gstin}</strong>
+                <strong>{invoice.shippingGstin || resolvedGstin}</strong>
               </div>
             )}
-            {(invoice.shippingState || invoice.state) && (
-              <div className="party-state">State: {invoice.shippingState || invoice.state}</div>
+            {(invoice.shippingState || resolvedState) && (
+              <div className="party-state">State: {invoice.shippingState || resolvedState}{shippingStateCode ? ` (Code: ${shippingStateCode})` : ''}</div>
             )}
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState } from '@/redux/store';
 import { createCustomer, updateCustomer } from '@/redux/features/customerSlice';
+import { createLeadSync, deleteLeadSync } from '@/redux/features/leadSlice';
 import { Customer } from '@/types/modules';
 import FullPageStatus from '@/components/FullPageStatus';
 import StateSelect from '@/components/shared/StateSelect';
@@ -16,9 +17,11 @@ interface CustomerFormProps {
 }
 
 const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { user, company: activeCompany } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const router = useRouter();
+  const initializedIdRef = React.useRef<string | null>(null);
+
   const [formData, setFormData] = useState({
     customerType: 'Customer',
     name: '',
@@ -60,7 +63,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
   });
 
   useEffect(() => {
-    if (initialData) {
+    if (initialData && initializedIdRef.current !== initialData.id) {
+      initializedIdRef.current = initialData.id;
       setFormData({
         customerType: initialData.customerType || 'Customer',
         name: initialData.name || '',
@@ -68,7 +72,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         email: initialData.email || '',
         phone: initialData.phone || '',
         industry: initialData.industry || 'Automotive',
-        status: initialData.status || 'lead',
+        status: (initialData.status as Customer['status']) || 'active',
         agentId: initialData.agentId || '',
         street1: initialData.street1 || '',
         street2: initialData.street2 || '',
@@ -76,7 +80,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         area: initialData.area || '',
         state: initialData.state || '',
         stateCode: initialData.stateCode || '',
-        pinCode: initialData.pinCode || '',
+        pinCode: initialData.pinCode != null ? String(initialData.pinCode) : '',
         contactPerson1: initialData.contactPerson1 || '',
         designation1: initialData.designation1 || '',
         emailId1: initialData.emailId1 || '',
@@ -89,14 +93,14 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         designation3: initialData.designation3 || '',
         emailId3: initialData.emailId3 || '',
         phoneNumber3: initialData.phoneNumber3 || '',
-        landline: initialData.landline || '',
+        landline: initialData.landline != null ? String(initialData.landline) : '',
         fax: initialData.fax || '',
         gst: initialData.gst || '',
         tin: initialData.tin || '',
         cst: initialData.cst || '',
-        tc: initialData.tc || '',
-        vmc: initialData.vmc || '',
-        hmc: initialData.hmc || '',
+        tc: initialData.tc != null ? String(initialData.tc) : '',
+        vmc: initialData.vmc != null ? String(initialData.vmc) : '',
+        hmc: initialData.hmc != null ? String(initialData.hmc) : '',
         paymentTerms: initialData.paymentTerms || '',
         company_id: initialData.company_id || ''
       });
@@ -123,14 +127,12 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
     message: string;
   }>({ isOpen: false, type: 'success', title: '', message: '' });
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
       const finalData = { ...formData };
-      const sessionCompanyId = user?.company_id || (user as any)?.companyId;
+      const sessionCompanyId = activeCompany?.id || user?.company_id || (user as any)?.companyId;
 
       if (!finalData.company_id && sessionCompanyId) {
         finalData.company_id = sessionCompanyId;
@@ -142,34 +144,93 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
       }
 
       if (mode === 'create') {
-        const resultAction = await (dispatch as any)(createCustomer(formData));
+        const resultAction = await (dispatch as any)(createCustomer(finalData));
         if (createCustomer.fulfilled.match(resultAction)) {
+          const createdCustomer = resultAction.payload;
+          if (String(finalData.status || '').toLowerCase() === 'lead') {
+            await (dispatch as any)(createLeadSync({
+              id: createdCustomer?.id ? `cust_${createdCustomer.id}` : undefined,
+              name: finalData.contactPerson1 || finalData.name || 'Prospect',
+              company: finalData.name || finalData.company || 'Company',
+              email: finalData.email || finalData.emailId1 || '',
+              phone: finalData.phone || finalData.phoneNumber1 || '-',
+              industry: finalData.industry || 'Automotive',
+              source: 'Web',
+              status: 'new',
+              agentId: finalData.agentId || user?.id || '',
+              company_id: finalData.company_id || sessionCompanyId || 'comp_globus',
+              assignedArea: finalData.area || finalData.city || '',
+              notes: ''
+            } as any));
+          }
           setModal({
             isOpen: true,
             type: 'success',
             title: 'Success!',
             message: "Customer profile registered successfully."
           });
+        } else {
+          const errMsg = (resultAction.payload as string) || (resultAction.error?.message) || 'Failed to register customer';
+          setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Error',
+            message: errMsg
+          });
         }
       } else {
-        const resultAction = await (dispatch as any)(updateCustomer({ ...initialData!, ...formData }));
+        const payloadToUpdate = {
+          ...initialData,
+          ...finalData,
+          id: String(initialData?.id || ''),
+          createdAt: initialData?.createdAt || ''
+        };
+        const resultAction = await (dispatch as any)(updateCustomer(payloadToUpdate));
         if (updateCustomer.fulfilled.match(resultAction)) {
+          if (initialData?.id) {
+            if (String(finalData.status || '').toLowerCase() === 'lead') {
+              await (dispatch as any)(createLeadSync({
+                id: `cust_${initialData.id}`,
+                name: finalData.contactPerson1 || finalData.name || 'Prospect',
+                company: finalData.name || finalData.company || 'Company',
+                email: finalData.email || finalData.emailId1 || '',
+                phone: finalData.phone || finalData.phoneNumber1 || '-',
+                industry: finalData.industry || 'Automotive',
+                source: 'Web',
+                status: 'new',
+                agentId: finalData.agentId || user?.id || '',
+                company_id: finalData.company_id || sessionCompanyId || 'comp_globus',
+                assignedArea: finalData.area || finalData.city || '',
+                notes: ''
+              } as any));
+            } else if (String(initialData.status || '').toLowerCase() === 'lead') {
+              await (dispatch as any)(deleteLeadSync(`cust_${initialData.id}`));
+            }
+          }
           setModal({
             isOpen: true,
             type: 'success',
             title: 'Success!',
             message: "Customer profile updated successfully."
           });
+        } else {
+          const errMsg = (resultAction.payload as string) || (resultAction.error?.message) || 'Failed to update customer';
+          setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Error',
+            message: errMsg
+          });
         }
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save customer:', err);
       setModal({
         isOpen: true,
         type: 'error',
         title: 'Error',
-        message: 'Failed to save customer'
+        message: err?.message || 'Failed to save customer'
       });
     } finally {
       setIsSubmitting(false);
@@ -186,10 +247,10 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
         type={type}
         className="form-control"
         name={name}
-        value={formData[name]}
+        value={formData[name] ?? ''}
         onChange={handleChange}
         placeholder={label}
-       
+        required={required}
         disabled={mode === 'view'}
       />
     </div>
@@ -217,6 +278,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, mode }) => {
               {renderInput('Customer Name', 'name', 'text')}
               {renderInput('Email Address', 'email', 'text')}
               {renderInput('Phone Number', 'phone', 'text')}
+              {renderInput('Industry', 'industry', 'text')}
 
               <div className="col-md-6 mb-3">
                 <label className="form-label fw-bold x-small text-muted text-uppercase tracking-wider">Status</label>

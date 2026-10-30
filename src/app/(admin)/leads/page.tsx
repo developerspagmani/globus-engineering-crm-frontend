@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/redux/store';
 import { setLeadFilters, deleteLead, fetchLeads, setLeadPage, setLeadSorting, resetLeadState } from '@/redux/features/leadSlice';
-import { createCustomer } from '@/redux/features/customerSlice';
+import { createCustomer, updateCustomer } from '@/redux/features/customerSlice';
 import Breadcrumb from '@/components/Breadcrumb';
 import StatusModal from '@/components/StatusModal';
 import { checkActionPermission } from '@/config/permissions';
@@ -137,26 +137,41 @@ const LeadsPage = () => {
     setConfirmModal({ isOpen: true, id, type: 'delete' });
   };
 
-  const confirmAction = () => {
+  const confirmAction = async () => {
     if (!confirmModal.id || !confirmModal.type) return;
 
     if (confirmModal.type === 'promote') {
       const lead = confirmModal.leadData;
-      (dispatch as any)(createCustomer({
-        name: lead.name,
-        email: lead.email,
-        phone: lead.phone,
-        company: lead.company,
-        industry: lead.industry,
-        status: 'active',
-        agentId: lead.agentId,
-        company_id: lead.company_id,
-      }));
+      if (String(lead.id).startsWith('cust_')) {
+        const customerId = String(lead.id).replace(/^cust_/, '');
+        await (dispatch as any)(updateCustomer({
+          id: customerId,
+          name: lead.company || lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          company: lead.company || lead.name,
+          industry: lead.industry,
+          status: 'active',
+          agentId: lead.agentId,
+          company_id: lead.company_id || lead.companyId || activeCompany?.id,
+        }));
+      } else {
+        await (dispatch as any)(createCustomer({
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          company: lead.company,
+          industry: lead.industry,
+          status: 'active',
+          agentId: lead.agentId,
+          company_id: lead.company_id || lead.companyId || activeCompany?.id,
+        }));
+      }
       (dispatch as any)(deleteLead(lead.id));
       setModal({
         isOpen: true,
         title: 'Lead Converted!',
-        message: `${lead.company} is now an active customer. All logistics and invoicing modules are enabled for this client.`
+        message: `${lead.company || lead.name} is now an active customer. All logistics and invoicing modules are enabled for this client.`
       });
     } else if (confirmModal.type === 'delete') {
       (dispatch as any)(deleteLead(confirmModal.id));
@@ -164,8 +179,10 @@ const LeadsPage = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'new': return <span className="badge bg-primary-soft text-primary px-2 py-1 rounded-pill small fw-800">NEW</span>;
+    switch ((status || '').toLowerCase()) {
+      case 'new':
+      case 'lead':
+        return <span className="badge bg-primary-soft text-primary px-2 py-1 rounded-pill small fw-800">NEW</span>;
       case 'contacted': return <span className="badge bg-info-soft text-info px-2 py-1 rounded-pill small fw-800">CONTACTED</span>;
       case 'qualified': return <span className="badge bg-warning-soft text-warning px-2 py-1 rounded-pill small fw-800">QUALIFIED</span>;
       case 'converted': return <span className="badge bg-success-soft text-success px-2 py-1 rounded-pill small fw-800">CONVERTED</span>;
@@ -310,12 +327,12 @@ const LeadsPage = () => {
         ['Next Visit Date', visitDateText],
         ['Assigned Sales Person', agentText],
         ['Source', lead.source], ['Industry', lead.industry],
-        ['Current Status', lead.status.toUpperCase()]
+        ['Current Status', (lead.status || '').toUpperCase()]
       ],
       theme: 'grid', styles: { cellPadding: 8, fontSize: 10 },
       columnStyles: { 0: { fontStyle: 'bold', fillColor: [245, 245, 245], cellWidth: 50 } },
     });
-    doc.save(`lead_${lead.company.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`lead_${(lead.company || lead.name || 'record').replace(/\s+/g, '_')}.pdf`);
   };
 
   return (
@@ -858,7 +875,7 @@ const LeadsPage = () => {
         onClose={() => setConfirmModal({ isOpen: false, id: null, type: null })}
         onConfirm={confirmAction}
         title={confirmModal.type === 'promote' ? "Promote Prospect" : "Remove Lead Record"}
-        message={confirmModal.type === 'promote' ? `Are you sure you want to promote ${confirmModal.leadData?.company || 'this lead'} to an active customer? All logistics and invoicing modules will be enabled for this client.` : "Are you sure you want to delete this lead? All follow-up history will be permanently removed. This action cannot be undone."}
+        message={confirmModal.type === 'promote' ? `Are you sure you want to promote ${confirmModal.leadData?.company || confirmModal.leadData?.name || 'this lead'} to an active customer? All logistics and invoicing modules will be enabled for this client.` : "Are you sure you want to delete this lead? All follow-up history will be permanently removed. This action cannot be undone."}
       />
 
       <style jsx>{`

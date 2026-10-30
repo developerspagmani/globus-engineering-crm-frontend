@@ -48,7 +48,8 @@ export const fetchPurchaseBills = createAsyncThunk(
       const response = await api.get(url);
       return {
         items: response.data.items,
-        pagination: response.data.pagination
+        pagination: response.data.pagination,
+        aggregates: response.data.aggregates
       };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.error || 'Failed to fetch purchase bills');
@@ -115,6 +116,16 @@ interface PurchaseState {
     sortBy: string;
     sortOrder: 'asc' | 'desc';
   };
+  aggregates: {
+    totalTaxable: number;
+    totalCgst: number;
+    totalSgst: number;
+    totalCgstSgst: number;
+    totalIgst: number;
+    totalRoundOff: number;
+    totalTds: number;
+    totalGrand: number;
+  };
 }
 
 const initialState: PurchaseState = {
@@ -139,6 +150,16 @@ const initialState: PurchaseState = {
   sorting: {
     sortBy: 'received_date',
     sortOrder: 'desc',
+  },
+  aggregates: {
+    totalTaxable: 0,
+    totalCgst: 0,
+    totalSgst: 0,
+    totalCgstSgst: 0,
+    totalIgst: 0,
+    totalRoundOff: 0,
+    totalTds: 0,
+    totalGrand: 0,
   },
 };
 
@@ -177,6 +198,7 @@ const purchaseSlice = createSlice({
         totalItems: 0,
         totalPages: 0,
       };
+      state.aggregates = initialState.aggregates;
     }
   },
   extraReducers: (builder) => {
@@ -190,6 +212,16 @@ const purchaseSlice = createSlice({
         state.loading = false;
         state.items = action.payload.items;
         state.pagination = action.payload.pagination;
+        state.aggregates = action.payload.aggregates || {
+          totalTaxable: 0,
+          totalCgst: 0,
+          totalSgst: 0,
+          totalCgstSgst: 0,
+          totalIgst: 0,
+          totalRoundOff: 0,
+          totalTds: 0,
+          totalGrand: 0,
+        };
       })
       .addCase(fetchPurchaseBills.rejected, (state, action) => {
         state.loading = false;

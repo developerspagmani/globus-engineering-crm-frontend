@@ -152,7 +152,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
   const igstNum = Number(formData.igst) || 0;
   const roundOffNum = Number(formData.roundOff) || 0;
   const tdsNum = Number(formData.tds) || 0;
-  const grandTotal = amountNum + cgstNum + sgstNum + igstNum + roundOffNum + tdsNum;
+  const grandTotal = Math.max(0, Number((amountNum + cgstNum + sgstNum + igstNum + roundOffNum - tdsNum).toFixed(2)));
 
   // Real-time CGST/SGST calculator helper
   const applyGstRate = (ratePercent: number) => {
@@ -213,6 +213,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
       igst: igstNum,
       roundOff: roundOffNum,
       tds: tdsNum,
+      grandTotal: Number(grandTotal.toFixed(2)),
       vendorId: formData.vendorId || undefined,
       customerId: formData.customerId || undefined,
       company_id: activeCompany?.id
@@ -467,7 +468,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
 
                 {/* TDS */}
                 <div className="col-md-3">
-                  <label className="form-label text-danger-emphasis small fw-bold text-uppercase">TDS (+)</label>
+                  <label className="form-label text-danger-emphasis small fw-bold text-uppercase">TDS (-)</label>
                   <input
                     type="number"
                     step="any"
@@ -485,7 +486,7 @@ const PurchaseForm: React.FC<PurchaseFormProps> = ({ initialData, isOpen, mode =
               <div className="bg-light-subtle p-3 rounded-4 border border-light-subtle mt-4 d-flex justify-content-between align-items-center">
                 <div>
                   <span className="text-muted small fw-bold text-uppercase d-block">Grand Total</span>
-                  <span className="text-dark-emphasis small font-monospace">Taxable Value + Taxes + Round Off</span>
+                  <span className="text-dark-emphasis small font-monospace">Taxable Value + Taxes + Round Off - TDS</span>
                 </div>
                 <div className="h3 fw-bold text-primary mb-0 font-monospace">
                   ₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

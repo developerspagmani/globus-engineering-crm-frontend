@@ -56,12 +56,13 @@ export const fetchLeads = createAsyncThunk(
 
 export const createLeadSync = createAsyncThunk(
   'leads/create',
-  async (data: Omit<Lead, 'id' | 'createdAt'>, { rejectWithValue }) => {
+  async (data: Omit<Lead, 'id' | 'createdAt'> & { id?: string }, { rejectWithValue }) => {
     try {
       // Manual mapping if necessary - backend expects agent_id, company_id
       const payload = {
         ...data,
-        agent_id: (data as any).agentId // Map camelCase to snake_case for backend
+        agent_id: (data as any).agentId, // Map camelCase to snake_case for backend
+        assigned_area: (data as any).assignedArea || (data as any).assigned_area
       };
       const response = await api.post('/leads', payload);
       return response.data;
@@ -189,7 +190,12 @@ const leadSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(createLeadSync.fulfilled, (state, action: PayloadAction<Lead>) => {
-        state.items.unshift(action.payload);
+        const index = state.items.findIndex(item => item.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        } else {
+          state.items.unshift(action.payload);
+        }
       })
       .addCase(updateLeadSync.fulfilled, (state, action: PayloadAction<Lead>) => {
         const index = state.items.findIndex(item => item.id === action.payload.id);
@@ -210,4 +216,3 @@ export const updateLead = updateLeadSync;
 export const deleteLead = deleteLeadSync;
 
 export default leadSlice.reducer;
-

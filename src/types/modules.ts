@@ -56,6 +56,8 @@ export interface Invoice {
   paidAmount: number;
   gstin?: string;
   state?: string;
+  stateCode?: string;
+  state_code?: string;
   notes?: string;
   otherCharges?: number;
   otherChargesDesc?: string;
@@ -124,6 +126,8 @@ export interface OutwardEntry {
   purpose?: string;
   driverName?: string;
   notes?: string;
+  customerNotes?: string;
+  customer_notes?: string;
   company_id: string;
   inwardId?: string;
   inwardNo?: string;
@@ -280,8 +284,8 @@ export interface Customer {
   hmc?: string;
   paymentTerms?: string;
   agentId?: string;
-  company_id: string;
-  createdAt: string;
+  company_id?: string;
+  createdAt?: string;
 }
 
 export interface Lead {

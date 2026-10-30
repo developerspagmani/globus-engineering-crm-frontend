@@ -9,13 +9,11 @@ import SearchableSelect from '@/components/shared/SearchableSelect';
 const CustomerFilter: React.FC = () => {
   const dispatch = useDispatch();
   const { filters, dropdownCustomers, items } = useSelector((state: RootState) => state.customers);
-  const activeCompanyId = useSelector((state: RootState) => state.auth.company?.id);
+  const activeCompanyId = useSelector((state: RootState) => state.auth.company?.id || state.auth.user?.company_id || undefined);
 
   useEffect(() => {
-    if (activeCompanyId && dropdownCustomers.length === 0) {
-      dispatch(fetchDropdownCustomers({ company_id: activeCompanyId }) as any);
-    }
-  }, [activeCompanyId, dropdownCustomers.length, dispatch]);
+    dispatch(fetchDropdownCustomers({ company_id: activeCompanyId }) as any);
+  }, [activeCompanyId, dispatch]);
 
   const customerList = dropdownCustomers.length > 0 ? dropdownCustomers : items;
 

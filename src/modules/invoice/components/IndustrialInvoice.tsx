@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 import { Invoice, Company } from '@/types/modules';
 import { numberToWords } from '@/utils/numberToWords';
 
@@ -39,9 +41,53 @@ interface IndustrialInvoiceProps {
 }
 
 const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company, settings, typeParam, copiesProp }) => {
-   
+   const { items: customers } = useSelector((state: RootState) => state.customers || { items: [] });
+   const { items: vendors } = useSelector((state: RootState) => state.vendors || { items: [] });
+
+   const matchedParty = React.useMemo(() => {
+      const cid = String(invoice.customerId || '').trim();
+      const cname = String(invoice.customerName || '').trim().toLowerCase();
+      if (cid) {
+         const found = customers.find((c: any) => String(c.id) === cid) || vendors.find((v: any) => String(v.id) === cid);
+         if (found) return found;
+      }
+      if (cname && cname !== 'n/a') {
+         return customers.find((c: any) => String(c.name || c.company || '').trim().toLowerCase() === cname) ||
+                vendors.find((v: any) => String(v.name || v.company || '').trim().toLowerCase() === cname);
+      }
+      return undefined;
+   }, [customers, vendors, invoice.customerId, invoice.customerName]);
+
+   const cleanVal = (val: any): string => {
+      if (val === null || val === undefined) return '';
+      const s = String(val).trim();
+      return s.toLowerCase() === 'null' ? '' : s;
+   };
+
+   const matchedPartyAddress = matchedParty ? [
+      cleanVal((matchedParty as any).street1 || (matchedParty as any).address),
+      cleanVal((matchedParty as any).street2),
+      cleanVal((matchedParty as any).city),
+      cleanVal((matchedParty as any).state),
+      cleanVal((matchedParty as any).pinCode ?? (matchedParty as any).pin_code)
+   ].filter(Boolean).join(', ') : '';
+
+   const resolvedCustomerName = cleanVal(matchedParty?.name || (matchedParty as any)?.company) || cleanVal(invoice.customerName) || 'N/A';
+   const resolvedAddress = matchedPartyAddress || cleanVal(invoice.address) || '';
+   const resolvedGstin = matchedParty ? cleanVal(matchedParty.gst || (matchedParty as any).gstin) : cleanVal(invoice.gstin);
+   const resolvedState = matchedParty ? (cleanVal(matchedParty.state) || cleanVal(invoice.state)) : cleanVal(invoice.state);
+   const resolvedStateCode = matchedParty
+      ? cleanVal(matchedParty.stateCode ?? (matchedParty as any).state_code)
+      : String(
+           invoice.stateCode ||
+           (invoice as any).state_code ||
+           (invoice as any).customer?.state_code ||
+           (invoice as any).customer?.stateCode ||
+           ''
+        ).trim();
+
    let displayItems = [...invoice.items];
-   let displayInvoice = { ...invoice };
+   let displayInvoice: Invoice = { ...invoice };
    let isWOP = typeParam === 'WOP' || String(invoice.type).toUpperCase() === 'WOP';
 
    if (String(invoice.type).toUpperCase() === 'BOTH' && typeParam) {
@@ -126,6 +172,14 @@ const IndustrialInvoice: React.FC<IndustrialInvoiceProps> = ({ invoice, company,
          subTotal: displayInvoice.subTotal || subTotal
       };
    }
+   displayInvoice = {
+      ...displayInvoice,
+      customerName: resolvedCustomerName,
+      address: resolvedAddress,
+      gstin: resolvedGstin,
+      state: resolvedState,
+      stateCode: resolvedStateCode,
+   };
 
    const isRoundOffEnabled = settings?.enableRoundOff !== false;
    const exactSubTotal = Number(displayInvoice.subTotal || 0);
@@ -493,6 +547,16 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
       : (invoice.taxRate || 18);
    
    const taxRate = calculatedTaxRate;
+   const billingStateCode = String(invoice.stateCode || invoice.state_code || '').trim();
+   const shippingStateVal = String(invoice.shippingState || invoice.shipping_state || invoice.state || '').trim();
+   const billingStateVal = String(invoice.state || '').trim();
+   const shippingStateCode = String(
+      invoice.shippingStateCode || invoice.shipping_state_code || (
+         (!shippingStateVal || !billingStateVal || shippingStateVal.toLowerCase() === billingStateVal.toLowerCase())
+            ? billingStateCode
+            : ''
+      )
+   ).trim();
 
    return (
       <div
@@ -635,7 +699,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>M/s. {invoice.customerName}</div>
                       <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{invoice.address || 'N/A'}</div>
                       <div style={{ marginBottom: '4px' }}>GSTIN: {invoice.gstin || 'N/A'}</div>
-                      <div>State: {invoice.state || 'N/A'} (Code: {(invoice.state)?.toLowerCase() === 'telangana' ? '36' : '33'})</div>
+                      <div>State: {invoice.state || 'N/A'}{billingStateCode ? ` (Code: ${billingStateCode})` : ''}</div>
                    </div>
                 </div>
                 <div className="p-addr-box">
@@ -644,7 +708,7 @@ const InvoicePage = ({ invoice, company, settings, items, isLastPage, pageIndex,
                       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>M/s. {invoice.shippingName || invoice.shipping_name || invoice.customerName}</div>
                       <div style={{ marginBottom: '4px', whiteSpace: 'pre-line' }}>{invoice.shippingAddress || invoice.shipping_address || invoice.address || 'N/A'}</div>
                       <div style={{ marginBottom: '4px' }}>GSTIN: {invoice.shippingGstin || invoice.shipping_gstin || invoice.gstin || 'N/A'}</div>
-                      <div>State: {invoice.shippingState || invoice.shipping_state || invoice.state || 'N/A'} (Code: {(invoice.shippingState || invoice.shipping_state || invoice.state)?.toLowerCase() === 'telangana' ? '36' : '33'})</div>
+                      <div>State: {invoice.shippingState || invoice.shipping_state || invoice.state || 'N/A'}{shippingStateCode ? ` (Code: ${shippingStateCode})` : ''}</div>
                    </div>
                 </div>
              </div>

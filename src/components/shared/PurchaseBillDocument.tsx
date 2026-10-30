@@ -32,7 +32,7 @@ const PurchaseBillDocument: React.FC<PurchaseBillDocumentProps> = ({ bill, compa
     d ? new Date(d).toLocaleDateString('en-GB').replace(/\//g, '-') : '-';
 
   const grandTotal = bill.grandTotal ?? (
-    (bill.amount || 0) + (bill.cgst || 0) + (bill.sgst || 0) + (bill.igst || 0) + (bill.roundOff || 0)
+    (bill.amount || 0) + (bill.cgst || 0) + (bill.sgst || 0) + (bill.igst || 0) + (bill.roundOff || 0) - (bill.tds || 0)
   );
 
   const amountInWords = numberToWords(grandTotal);
@@ -170,6 +170,11 @@ const PurchaseBillDocument: React.FC<PurchaseBillDocumentProps> = ({ bill, compa
                 {/* Total row */}
                 <tr style={{ fontWeight: '900', background: '#f0f0f0', borderTop: '1.5pt solid #000' }}>
                   <td colSpan={4} style={{ textAlign: 'right', padding: '5px 12px', fontSize: '10px' }}>
+                    {Number(bill.tds || 0) > 0 && (
+                      <span style={{ marginRight: '15px', color: '#b91c1c' }}>
+                        TDS (-) : {Number(bill.tds).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
                     ROUND OFF : {Number(bill.roundOff || 0) !== 0
                       ? Number(bill.roundOff).toLocaleString('en-IN', { minimumFractionDigits: 2 })
                       : '-'}

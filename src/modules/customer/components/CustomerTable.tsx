@@ -40,7 +40,9 @@ const CustomerTable: React.FC = () => {
   }, [dispatch, activeCompany?.id, pagination.currentPage, pagination.itemsPerPage, filters.search, filters.customerId, filters.status, filters.fromDate, filters.toDate, sorting.sortBy, sorting.sortOrder]);
 
   const totalPages = pagination.totalPages;
-  const paginatedItems = items;
+  const paginatedItems = filters.customerId && filters.customerId !== 'all'
+    ? items.filter(c => String(c.id) === String(filters.customerId))
+    : items;
 
   const handleDeleteParams = (id: string) => {
     setDeleteModal({ isOpen: true, id });

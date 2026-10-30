@@ -65,6 +65,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
       shippingGstin: '',
       gstin: '',
       state: '',
+      stateCode: '',
       items: [{ id: '1', description: '', process: '', quantity: 1, wopQty: 0, unitPrice: 0, tax: 0, amount: 0, total: 0 }],
       subTotal: 0,
       taxTotal: 0,
@@ -165,9 +166,59 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
 
    useEffect(() => {
       if (initialData) {
+         const cleanVal = (val: any): string => {
+            if (val === null || val === undefined) return '';
+            const s = String(val).trim();
+            return s.toLowerCase() === 'null' ? '' : s;
+         };
+         const cid = String(initialData.customerId || '').trim();
+         const matchedParty = cid
+            ? (customers.find(c => String(c.id) === cid) || vendors.find(v => String(v.id) === cid))
+            : undefined;
+         const livePartyAddress = matchedParty ? [
+            cleanVal((matchedParty as any).street1 || (matchedParty as any).address),
+            cleanVal((matchedParty as any).street2),
+            cleanVal((matchedParty as any).city),
+            cleanVal((matchedParty as any).state),
+            cleanVal((matchedParty as any).pinCode ?? (matchedParty as any).pin_code)
+         ].filter(Boolean).join(', ') : '';
+
+         const resolvedCustomerName = cleanVal(matchedParty?.name || (matchedParty as any)?.company) || cleanVal(initialData.customerName);
+         const resolvedAddress = livePartyAddress || cleanVal(initialData.address);
+         const resolvedState = matchedParty ? (cleanVal(matchedParty.state) || cleanVal((initialData as any).state)) : cleanVal((initialData as any).state);
+         const resolvedStateCode = matchedParty
+            ? cleanVal(matchedParty.stateCode ?? (matchedParty as any).state_code)
+            : cleanVal((initialData as any).stateCode || (initialData as any).state_code);
+         const resolvedGstin = matchedParty ? (cleanVal(matchedParty.gst || (matchedParty as any).gstin) || cleanVal(initialData.gstin)) : cleanVal(initialData.gstin);
+
+         const initNameLower = cleanVal(initialData.customerName).toLowerCase();
+         const initAddrLower = cleanVal(initialData.address).toLowerCase();
+         const initStateLower = cleanVal((initialData as any).state).toLowerCase();
+         const initGstLower = cleanVal(initialData.gstin).toLowerCase();
+
+         const resolvedShippingName = initialData.shippingName && cleanVal(initialData.shippingName).toLowerCase() === initNameLower
+            ? resolvedCustomerName
+            : (initialData.shippingName || '');
+         const resolvedShippingAddress = initialData.shippingAddress && cleanVal(initialData.shippingAddress).toLowerCase() === initAddrLower
+            ? resolvedAddress
+            : (initialData.shippingAddress || '');
+         const resolvedShippingState = initialData.shippingState && cleanVal(initialData.shippingState).toLowerCase() === initStateLower
+            ? resolvedState
+            : (initialData.shippingState || '');
+         const resolvedShippingGstin = initialData.shippingGstin && cleanVal(initialData.shippingGstin).toLowerCase() === initGstLower
+            ? resolvedGstin
+            : (initialData.shippingGstin || '');
+
          const mappedData = {
             ...initialData,
-            customerId: String(initialData.customerId || ''),
+            customerId: cid,
+            customerName: resolvedCustomerName,
+            address: resolvedAddress,
+            gstin: resolvedGstin,
+            shippingName: resolvedShippingName,
+            shippingAddress: resolvedShippingAddress,
+            shippingState: resolvedShippingState,
+            shippingGstin: resolvedShippingGstin,
             invoiceNumber: initialData.invoiceNumber || (initialData as any).invoice_no,
             date: initialData.date || (initialData as any).invoice_date,
             billType: (initialData.billType || (initialData as any).bill_type || initialData.type || 'with_process').toLowerCase().includes('without') ||
@@ -181,7 +232,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
             po_date: initialData.poDate || (initialData as any).po_date || '',
             dcDate: initialData.dcDate || (initialData as any).dc_date || '',
             dc_date: initialData.dcDate || (initialData as any).dc_date || '',
-            state: (initialData as any).state || '',
+            state: resolvedState,
+            stateCode: resolvedStateCode,
             challanNumber: initialData.challanNumber || (initialData as any).delivery_no || (initialData as any).challanNumber || '',
             otherCharges: initialData.otherCharges || (initialData as any).other_charges || 0,
             otherChargesDesc: initialData.otherChargesDesc || (initialData as any).other_charges_desc || '',
@@ -234,7 +286,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
              .catch(err => console.error('Failed to fetch maxQty', err));
          }
       }
-   }, [initialData, mode]);
+   }, [initialData, mode, customers, vendors]);
 
    const populateFromInward = (inward: any) => {
       const partyId = inward.customerId || inward.customer_id || inward.vendorId || (inward as any).vendor_id;
@@ -245,8 +297,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          : customers.find(c => String(c.id) === String(partyId));
 
       const formattedAddress = isVendor 
-         ? [(party as any)?.address, (party as any)?.city, (party as any)?.state].filter(Boolean).join(', ')
-         : [(party as any)?.street1, (party as any)?.city, (party as any)?.state].filter(Boolean).join(', ');
+         ? [(party as any)?.address || (party as any)?.street1, (party as any)?.street2, (party as any)?.city, (party as any)?.state, (party as any)?.pinCode ?? (party as any)?.pin_code].filter(Boolean).join(', ')
+         : [(party as any)?.street1, (party as any)?.street2, (party as any)?.city, (party as any)?.state, (party as any)?.pinCode ?? (party as any)?.pin_code].filter(Boolean).join(', ');
 
       const formatToDateInput = (d: any) => {
          if (!d) return '';
@@ -279,6 +331,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
                dc_date: dDate,
                gstin: (inward as any).gstin || party?.gst || (party as any)?.gstin || prev.gstin,
                state: (inward as any).state || party?.state || prev.state,
+               stateCode: (inward as any).stateCode || (inward as any).state_code || (party as any)?.stateCode || (party as any)?.state_code || prev.stateCode || '',
                inwardId: inward.id,
                items: (inward.items || [])
                   .map((item: any, idx: number) => {
@@ -476,18 +529,26 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ initialData, mode }) => {
          const customer = customers.find(c => c.id === value);
          const vendor = vendors.find(v => v.id === value);
          const entity = customer || vendor;
+         const entityAddress = entity ? [
+            (entity as any)?.street1 || (entity as any)?.address,
+            (entity as any)?.street2,
+            (entity as any)?.city,
+            (entity as any)?.state,
+            (entity as any)?.pinCode ?? (entity as any)?.pin_code
+         ].filter(Boolean).join(', ') : '';
 
          setFormData((prev: any) => ({
             ...prev,
             [name]: value,
             customerName: entity?.name || (entity as any)?.company || '',
-            address: (entity as any)?.address || (entity as any)?.street1 || '',
+            address: entityAddress || (entity as any)?.address || (entity as any)?.street1 || '',
             shippingName: (entity as any)?.shippingName || (entity as any)?.shipping_name || '',
             shippingAddress: (entity as any)?.shippingAddress || (entity as any)?.shipping_address || '',
             shippingState: (entity as any)?.shippingState || (entity as any)?.shipping_state || '',
             shippingGstin: (entity as any)?.shippingGstin || (entity as any)?.shipping_gstin || '',
             gstin: entity?.gst || (entity as any)?.gstin || '',
             state: entity?.state || '',
+            stateCode: (entity as any)?.stateCode || (entity as any)?.state_code || '',
             inwardId: undefined
          }));
 

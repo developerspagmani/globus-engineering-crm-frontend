@@ -59,7 +59,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
    const vendorGst = data.gstin || '';
    const vendorPan = data.pan || '';
    const vendorPhone = data.phone || data.mobile || data.customerPhone || data.vendorPhone || '';
-   const specialInstructions = data.notes || data.specialInstructions || data.special_instructions || '';
+   const specialInstructions = data.customerNotes || data.customer_notes || '';
    // Our company details (Bill To = us, since vendor sends goods to us for processing)
    // Actually in outward challan we send our goods TO vendor for processing
    // So BILL TO = Vendor, SHIP TO = Vendor
@@ -126,7 +126,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
          <div className="fmtb-address-row">
             <div className="fmtb-bill-box">
                <div className="fmtb-box-title">BILL TO</div>
-               <div className="fmtb-box-name">{vendorName}</div>
+               <div className="fmtb-box-name">{data.inwardNo && vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
                {vendorAddress && <div className="fmtb-box-addr">{vendorAddress}</div>}
                {vendorGst && <div>GSTIN: {vendorGst}</div>}
                {vendorPan && <div>PAN Number: {vendorPan}</div>}
@@ -135,7 +135,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
 
             <div className="fmtb-ship-box">
                <div className="fmtb-box-title">SHIP TO</div>
-               <div className="fmtb-box-name">{vendorName}</div>
+               <div className="fmtb-box-name">{data.inwardNo && vendorName ? <><span style={{ textTransform: 'none' }}>M/s </span>{String(vendorName).trim().replace(/^m\/s\.?\s*/i, '')}</> : vendorName}</div>
                {vendorAddress && <div className="fmtb-box-addr">{vendorAddress}</div>}
             </div>
 
