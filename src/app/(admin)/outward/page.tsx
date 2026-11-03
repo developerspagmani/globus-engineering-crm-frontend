@@ -297,6 +297,7 @@ export default function OutwardListPage() {
       }
     }
     enriched.vehicleNo = item.vehicleNo || item.vehicle_no || item.vehicle || '';
+    enriched.challanNo = item.challanNo || item.challan_no || '';
     enriched.notes = item.notes || item.specialInstructions || '';
     enriched.customerNotes = item.customerNotes || item.customer_notes || '';
     setDownloadingItem(enriched);

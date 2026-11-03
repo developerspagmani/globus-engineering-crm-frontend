@@ -49,6 +49,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
       ? new Date(data.date).toLocaleDateString('en-GB').replace(/\//g, '-')
       : '-';
    const vehicleNo = data.vehicleNo || data.vehicle_no || data.vehicle || '-';
+   const docRefNo = data.challanNo || data.challan_no || data.docRefNo || data.doc_ref_no || '';
    const specialInstructions = data.customerNotes || data.customer_notes || '';
 
    const items: any[] = data.items || [];
@@ -135,6 +136,13 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                         <div className="cha-dc-key">VEHICLE NO</div>
                         <div className="cha-dc-val cha-dc-veh-val">{vehicleNo}</div>
                      </div>
+
+                     {Boolean(docRefNo && docRefNo !== '-') && (
+                        <div className="cha-dc-row">
+                           <div className="cha-dc-key">DOC REF NO</div>
+                           <div className="cha-dc-val cha-dc-docref-val">{docRefNo}</div>
+                        </div>
+                     )}
                      {data.partyType !== 'customer' && (
                         <div className="cha-dc-row">
                            <div className="cha-dc-key">COATING</div>
@@ -434,7 +442,7 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                color: #000;
                text-align: left;
             }
-            .cha-dc-veh-val {
+            .cha-dc-veh-val, .cha-dc-docref-val {
                font-size: 13px;
                font-weight: bold;
                color: #000;

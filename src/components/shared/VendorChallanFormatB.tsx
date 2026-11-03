@@ -73,6 +73,7 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
       : '-';
    const coatingName = data.coatingName || data.processType || '';
    const vehicleNo = data.vehicleNo || data.vehicle_no || data.vehicle || '-';
+   const docRefNo = data.challanNo || data.challan_no || data.docRefNo || data.doc_ref_no || '';
 
    const invoiceRef = data.invoiceReference || data.invoiceRef || '-';
    // Invoice date same as date
@@ -168,6 +169,12 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                   <div className="fmtb-dc-key">VEHICLE NO</div>
                   <div className="fmtb-dc-val" style={{ fontWeight: '900' }}>{vehicleNo}</div>
                </div>
+               {Boolean(docRefNo && docRefNo !== '-') && (
+                  <div className="fmtb-dc-row">
+                     <div className="fmtb-dc-key">DOC REF NO</div>
+                     <div className="fmtb-dc-val" style={{ fontWeight: '900' }}>{docRefNo}</div>
+                  </div>
+               )}
                {data.partyType !== 'customer' && (
                   <div className="fmtb-dc-row">
                      <div className="fmtb-dc-key">COATING</div>

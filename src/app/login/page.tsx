@@ -8,14 +8,14 @@ import api from '@/lib/axios';
 import { loginStart, loginSuccess, loginFailure } from '@/redux/features/authSlice';
 import { RootState } from '@/redux/store';
 
-function LoginForm({ 
-  companyId, 
-  title, 
+function LoginForm({
+  companyId,
+  title,
   subtitle,
   companies
-}: { 
-  companyId: string | null, 
-  title: string, 
+}: {
+  companyId: string | null,
+  title: string,
   subtitle: string,
   companies: any[]
 }) {
@@ -23,7 +23,7 @@ function LoginForm({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [selectedContext, setSelectedContext] = useState<string>('');
-  
+
   // Sync selectedContext when companyId prop changes
   useEffect(() => {
     if (companyId) {
@@ -32,7 +32,7 @@ function LoginForm({
   }, [companyId]);
   const router = useRouter();
   const dispatch = useDispatch();
-  
+
   const [localError, setLocalError] = useState('');
   const [localLoading, setLocalLoading] = useState(false);
 
@@ -56,7 +56,7 @@ function LoginForm({
         company: company || null,
         token: token
       }));
-      
+
       const searchParams = new URLSearchParams(window.location.search);
       const redirect = searchParams.get('redirect');
 
@@ -160,7 +160,7 @@ function LoginForm({
               />
               <button
                 type="button"
-                className="reveal-btn"
+                className="btn btn-dark reveal-btn"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 <i className={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'}`}></i>
@@ -172,7 +172,7 @@ function LoginForm({
             {/* Submit Button */}
             <button
               type="submit"
-              className="btn-auth-primary d-flex align-items-center justify-content-center gap-2 w-100"
+              className="btn btn-primary btn-auth-primary d-flex align-items-center justify-content-center gap-2 w-100"
               disabled={localLoading || !companyId}
             >
               {localLoading ? (
@@ -187,7 +187,7 @@ function LoginForm({
                 </>
               )}
             </button>
-            
+
           </div>
         </form>
       </div>
@@ -205,7 +205,7 @@ function LoginContent() {
   const [dbCompanies, setDbCompanies] = useState<any[]>([]);
   const [globusId, setGlobusId] = useState<string | null>(null);
   const [wingsmanId, setWingsmanId] = useState<string | null>(null);
-  
+
   const searchParams = useSearchParams();
   const msg = searchParams.get('msg');
   const { error } = useSelector((state: RootState) => state.auth);
@@ -218,8 +218,8 @@ function LoginContent() {
         const companies = res.data;
         setDbCompanies(companies);
         const gCompany = companies.find((c: any) => c.name.toLowerCase().includes('globus'));
-        const wCompany = companies.find((c: any) => 
-          c.name.toLowerCase().includes('wingsman') || 
+        const wCompany = companies.find((c: any) =>
+          c.name.toLowerCase().includes('wingsman') ||
           c.name.toLowerCase().includes('wings')
         );
         if (gCompany) setGlobusId(gCompany.id);
@@ -245,7 +245,7 @@ function LoginContent() {
       <div className="ambient-blob blob-3"></div>
 
       <div className="container position-relative z-1">
-        
+
         {msg === 'session_expired' && !error && (
           <div className="row justify-content-center mb-4">
             <div className="col-12 col-md-8 col-lg-6">
@@ -268,18 +268,18 @@ function LoginContent() {
 
         <div className="row justify-content-center g-4">
           <div className="col-12 col-lg-5">
-            <LoginForm 
-              companyId={globusId} 
-              title="Globus" 
-              subtitle="Access the Globus Engineering Ecosystem" 
+            <LoginForm
+              companyId={globusId}
+              title="Globus"
+              subtitle="Access the Globus Engineering Ecosystem"
               companies={dbCompanies}
             />
           </div>
           <div className="col-12 col-lg-5">
-            <LoginForm 
-              companyId={wingsmanId} 
-              title="Wingsman" 
-              subtitle="Access the Wingsman Portal" 
+            <LoginForm
+              companyId={wingsmanId}
+              title="Wingsman"
+              subtitle="Access the Wingsman Portal"
               companies={dbCompanies}
             />
           </div>

@@ -530,9 +530,9 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                         </div>
                      ) : (
                         <div className="p-meta-col">
-                           <span>{type === 'inward' ? 'DC NO' : 'CHALLAN NO'}</span>
+                           <span>{type === 'inward' ? 'DC NO' : (type === 'outward' ? 'DOC REF NO' : 'CHALLAN NO')}</span>
                            <span>:</span>
-                           <span className="p-meta-val">{data.dcNo || data.challanNo || '-'}</span>
+                           <span className="p-meta-val">{data.challanNo || data.challan_no || data.dcNo || '-'}</span>
                         </div>
                      )}
                   </div>
