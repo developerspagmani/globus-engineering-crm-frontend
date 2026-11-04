@@ -172,7 +172,7 @@ export default function InvoiceHistoryPage() {
                 const { mapInvoice } = await import('@/redux/features/invoiceSlice');
                 const params = new URLSearchParams({
                   company_id: activeCompany?.id || '',
-                  limit: '5000',
+                  limit: '100000',
                   search: filters.search || '',
                   status: filters.status || 'all',
                   fromDate: filters.fromDate || '',
@@ -182,17 +182,32 @@ export default function InvoiceHistoryPage() {
                   ...(filters.customerId && filters.customerId !== 'all' ? { customer_id: filters.customerId } : {})
                 });
                 const response = await api.get(`/invoices?${params.toString()}`);
-                return response.data.items.map((raw: any) => {
+                return (response.data.items || []).map((raw: any) => {
                   const inv = mapInvoice(raw);
                   const qty = inv.items.reduce((acc, it) => acc + (it.quantity || 0) + (it.wopQty || 0), 0);
                   const sac = (inv.items[0] as any)?.hsnCode || '';
-                  const expectedGrand = inv.subTotal + inv.taxTotal;
-                  const roundOff = inv.grandTotal - expectedGrand;
+                  const taxableAmount = inv.subTotal || 0;
+                  const cgst = parseFloat(String(inv.gst1 || '0').replace(/[^\d.]/g, '')) || 0;
+                  const sgst = parseFloat(String(inv.gst2 || '0').replace(/[^\d.]/g, '')) || 0;
+                  const igst = parseFloat(String(inv.igst || '0').replace(/[^\d.]/g, '')) || 0;
+                  const otherCharges = inv.otherCharges || 0;
+                  const grandTotal = inv.grandTotal || 0;
+
+                  // Tax sum: CGST + SGST + IGST (or taxTotal if taxes are not segregated)
+                  const taxes = (cgst + sgst + igst) > 0 ? (cgst + sgst + igst) : (inv.taxTotal || 0);
+                  const beforeRound = taxableAmount + taxes + otherCharges;
+                  const roundOffVal = Math.round((grandTotal - beforeRound) * 100) / 100;
+
                   return {
                     ...inv,
                     qty,
                     sac,
-                    roundOff: Math.abs(roundOff) > 0.01 ? roundOff.toFixed(2) : 0
+                    subTotal: taxableAmount,
+                    gst1: cgst > 0 ? cgst : 0,
+                    gst2: sgst > 0 ? sgst : 0,
+                    igst: igst > 0 ? igst : 0,
+                    roundOff: Math.abs(roundOffVal) > 0.001 ? roundOffVal : 0,
+                    grandTotal
                   };
                 });
               }}
