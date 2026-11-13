@@ -300,6 +300,9 @@ export default function OutwardListPage() {
     enriched.challanNo = item.challanNo || item.challan_no || '';
     enriched.notes = item.notes || item.specialInstructions || '';
     enriched.customerNotes = item.customerNotes || item.customer_notes || '';
+    enriched.amount = item.amount ?? item.customerJobValue ?? item.jobValue ?? 0;
+    enriched.customerJobValue = item.customerJobValue ?? item.jobValue ?? (item.amount ? item.amount : '');
+    enriched.jobValue = item.jobValue ?? item.customerJobValue ?? (item.amount ? item.amount : '');
     setDownloadingItem(enriched);
   };
 
@@ -317,9 +320,12 @@ export default function OutwardListPage() {
           </div>
           <div className="d-flex align-items-center gap-2">
             <ExportExcel
-              data={outwards}
+              data={outwards.map(o => ({
+                ...o,
+                jobValue: o.customerJobValue || o.jobValue || (o.amount ? o.amount : '-')
+              }))}
               fileName="Outward_Records"
-              headers={{ outwardNo: 'Outward No', partyType: 'Type', customerName: 'Customer', vendorName: 'Vendor', invoiceReference: 'Invoice Ref', date: 'Date' }}
+              headers={{ outwardNo: 'Outward No', partyType: 'Type', customerName: 'Customer', vendorName: 'Vendor', invoiceReference: 'Invoice Ref', date: 'Date', jobValue: 'Job Value' }}
               buttonText="Export List"
             />
             {mounted && checkActionPermission(user, 'mod_outward', 'create') && (
@@ -422,6 +428,7 @@ export default function OutwardListPage() {
                     <SortableHeader field="party_type" label="TYPE" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
                     <SortableHeader field="invoice_reference" label="INVOICE REF" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
                     <SortableHeader field="vehicle_no" label="VEHICLE NO" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
+                    <SortableHeader field="amount" label="JOB VALUE" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
                     <SortableHeader field="date" label="DATE" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
                     <SortableHeader field="status" label="STATUS" currentSortBy={sorting.sortBy} currentSortOrder={sorting.sortOrder} onSort={handleSort} className="py-4" />
                     <th className="py-4 border-0 text-center px-4" style={{ width: '130px' }}>ACTION</th>
@@ -443,6 +450,7 @@ export default function OutwardListPage() {
                       </td>
                       <td><span className="badge bg-light text-dark border-0 shadow-inner px-2 py-1 fw-bold" style={{ borderRadius: '6px' }}>{item.invoiceReference || '-'}</span></td>
                       <td className="text-muted small fw-bold text-capitalize">{item.vehicleNo || '-'}</td>
+                      <td className="text-muted small fw-bold">{item.amount ? `₹${Number(item.amount).toLocaleString('en-IN')}` : '-'}</td>
                       <td className="text-nowrap text-muted small fw-bold">{item.date ? new Date(item.date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}</td>
                       <td>
                         <span className={`badge rounded-pill px-3 py-1 small fw-bold ${item.status === 'completed' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
@@ -475,7 +483,7 @@ export default function OutwardListPage() {
                     </tr>
                   ))}
                   {outwards.length === 0 && (
-                    <tr><td colSpan={9} className="text-center py-5 text-muted small">No outward entries found.</td></tr>
+                    <tr><td colSpan={10} className="text-center py-5 text-muted small">No outward entries found.</td></tr>
                   )}
                 </tbody>
               </table>

@@ -117,8 +117,8 @@ const VendorChallanFormatA: React.FC<FormatAProps> = ({ data, company, settings:
                         <div className="cha-dc-val cha-dc-date-val">{dcDate}</div>
                      </div>
                      <div className="cha-dc-row">
-                        <div className="cha-dc-key">JOB VALUE</div>
-                        <div className="cha-dc-val cha-dc-job-val">{data.jobNo || data.jobValue || data.job || data.amount || '-'}</div>
+                        <div className="cha-dc-key" style={data.partyType === 'customer' ? { fontSize: '7.5px', lineHeight: '1.1' } : {}}>{data.partyType === 'customer' ? 'JOB VALUE' : 'JOB VALUE'}</div>
+                        <div className="cha-dc-val cha-dc-job-val">{data.customerJobValue || data.jobValue || (data.amount !== undefined && data.amount !== null && data.amount !== 0 ? data.amount : '') || data.jobNo || data.job || '-'}</div>
                      </div>
                      {((data.status === 'cancelled' && data.inwardNo) || (data.processName === 'REJECTED / RETURNED')) && (
                         <div className="cha-dc-row">

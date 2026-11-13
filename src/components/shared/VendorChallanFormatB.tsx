@@ -150,8 +150,8 @@ const VendorChallanFormatB: React.FC<FormatBProps> = ({ data, company, settings:
                   <div className="fmtb-dc-val">{dcDate}</div>
                </div>
                <div className="fmtb-dc-row">
-                  <div className="fmtb-dc-key">JOB VALUE</div>
-                  <div className="fmtb-dc-val">{data.jobNo || data.jobValue || data.job || data.amount || '-'}</div>
+                  <div className="fmtb-dc-key">{data.partyType === 'customer' ? 'JOB VALUE' : 'JOB VALUE'}</div>
+                  <div className="fmtb-dc-val">{data.customerJobValue || data.jobValue || (data.amount !== undefined && data.amount !== null && data.amount !== 0 ? data.amount : '') || data.jobNo || data.job || '-'}</div>
                </div>
                {((data.status === 'cancelled' && data.inwardNo) || (data.processName === 'REJECTED / RETURNED')) && (
                   <div className="fmtb-dc-row">

@@ -134,6 +134,8 @@ export interface OutwardEntry {
   date: string;
   status: 'pending' | 'completed' | 'cancelled';
   amount?: number;
+  customerJobValue?: number | string;
+  jobValue?: number | string;
   items: { description: string; quantity: number; unit: string }[];
   createdAt: string;
 }

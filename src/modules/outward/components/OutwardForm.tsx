@@ -68,7 +68,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
     date: initialData?.date || new Date().toISOString().split('T')[0],
     status: initialData?.status || 'completed',
     items: initialData?.items || [{ description: '', quantity: 0, unit: 'pcs' }],
-    amount: initialData?.amount || 0,
+    amount: (initialData as any)?.amount ?? (initialData as any)?.customerJobValue ?? (initialData as any)?.jobValue ?? 0,
   });
 
   useEffect(() => {
@@ -104,7 +104,7 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
         date: initialData.date,
         status: initialData.status,
         items: initialData.items,
-        amount: initialData.amount || 0,
+        amount: (initialData as any)?.amount ?? (initialData as any)?.customerJobValue ?? (initialData as any)?.jobValue ?? 0,
       });
     }
   }, [initialData]);
@@ -244,7 +244,11 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
         notes: formData.notes,
         customerNotes: formData.customerNotes || '',
         customer_notes: formData.customerNotes || '',
-        process_name: formData.processName
+        process_name: formData.processName,
+        amount: parseFloat(String(formData.amount || 0)),
+        customer_job_value: parseFloat(String(formData.amount || 0)),
+        customerJobValue: parseFloat(String(formData.amount || 0)),
+        jobValue: parseFloat(String(formData.amount || 0))
       };
 
       if (mode === 'create') {
@@ -436,14 +440,23 @@ const OutwardForm: React.FC<OutwardFormProps> = ({ initialData, mode, initialPar
                   </div>
                 </div>
 
-                {formData.partyType === 'vendor' && (
-                  <div className="row mb-3 align-items-center">
-                    <label className="col-4 text-muted small fw-bold text-danger">JOB VALUE (INR)</label>
-                    <div className="col-8">
-                      <input type="number" className="form-control border-danger-subtle bg-danger-light rounded-pill px-3 py-2 fw-bold text-danger" name="amount" value={formData.amount || ''} onWheel={(e) => (e.target as HTMLInputElement).blur()} onChange={handleChange} placeholder="Value for Ledger" disabled={mode === 'view'} />
-                    </div>
+                <div className="row mb-3 align-items-center">
+                  <label className={`col-4 ${formData.partyType === 'vendor' ? 'text-muted small fw-bold text-danger' : 'text-muted x-small fw-bold'}`}>
+                    {formData.partyType === 'customer' ? 'JOB VALUE (INR)' : 'JOB VALUE (INR)'}
+                  </label>
+                  <div className="col-8">
+                    <input
+                      type="number"
+                      className={`form-control`}
+                      name="amount"
+                      value={formData.amount !== undefined && formData.amount !== null && formData.amount !== 0 ? formData.amount : (formData.amount === 0 && mode === 'view' ? '0' : (formData.amount || ''))}
+                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                      onChange={handleChange}
+                      placeholder={formData.partyType === 'customer' ? 'Enter Job Value' : 'Value for Ledger'}
+                      disabled={mode === 'view'}
+                    />
                   </div>
-                )}
+                </div>
                 <div className="row mb-3 align-items-center">
                   <label className="col-4 text-muted x-small fw-bold">NOTES</label>
                   <div className="col-8">

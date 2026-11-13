@@ -60,6 +60,8 @@ export const fetchOutwards = createAsyncThunk(
           status: item.status || 'pending',
           items: item.items || [],
           amount: item.amount || 0,
+          customerJobValue: item.customerJobValue ?? item.customer_job_value ?? item.amount ?? 0,
+          jobValue: item.jobValue ?? item.amount ?? 0,
           createdAt: item.created_at
         })),
         pagination: response.data.pagination
@@ -101,6 +103,8 @@ export const fetchOutwardById = createAsyncThunk(
         status: item.status || 'pending',
         items: item.items || [],
         amount: item.amount || 0,
+        customerJobValue: item.customerJobValue ?? item.customer_job_value ?? item.amount ?? 0,
+        jobValue: item.jobValue ?? item.amount ?? 0,
         createdAt: item.created_at
       };
     } catch (err: any) {

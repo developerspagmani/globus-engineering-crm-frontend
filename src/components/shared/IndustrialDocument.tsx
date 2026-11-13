@@ -535,6 +535,13 @@ const DocumentPage = ({ data, type, company, settings, items, isLastPage, totalI
                            <span className="p-meta-val">{data.challanNo || data.challan_no || data.dcNo || '-'}</span>
                         </div>
                      )}
+                     {type === 'outward' && (
+                        <div className="p-meta-col">
+                           <span>{data.partyType === 'customer' ? 'JOB VALUE' : 'JOB VALUE'}</span>
+                           <span>:</span>
+                           <span className="p-meta-val">{data.customerJobValue || data.jobValue || (data.amount !== undefined && data.amount !== null && data.amount !== 0 ? data.amount : '') || '-'}</span>
+                        </div>
+                     )}
                   </div>
                )}
             </div>

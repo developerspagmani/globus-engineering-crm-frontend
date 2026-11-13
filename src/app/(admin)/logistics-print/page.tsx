@@ -51,7 +51,7 @@ const PrintContent = () => {
 
       const fetchData = async () => {
          setLoading(true);
-         
+
          const fetchPromises = [];
          if (customers.length === 0) fetchPromises.push((dispatch as any)(fetchCustomers({ company_id: company.id, limit: 1000 })));
          if (vendors.length === 0) fetchPromises.push((dispatch as any)(fetchVendors({ company_id: company.id, limit: 1000 })));
@@ -86,7 +86,7 @@ const PrintContent = () => {
          else if (type === 'outward') found = outwardData.find(o => String(o.id) === tid);
          else if (type === 'challan') found = challanData.find(c => String(c.id) === tid);
          else if (type === 'voucher') found = voucherData.find(v => String(v.id) === tid);
-         
+
          if (found) {
             let enrichedData: any = { ...found };
             const anyFound = found as any;
@@ -124,6 +124,9 @@ const PrintContent = () => {
                enrichedData.coatingName = anyFound.coatingName || anyFound.coating_name || '';
                enrichedData.notes = anyFound.notes || anyFound.specialInstructions || '';
                enrichedData.customerNotes = anyFound.customerNotes || anyFound.customer_notes || '';
+               enrichedData.amount = anyFound.amount ?? anyFound.customerJobValue ?? anyFound.jobValue ?? 0;
+               enrichedData.customerJobValue = anyFound.customerJobValue ?? anyFound.jobValue ?? (anyFound.amount ? anyFound.amount : '');
+               enrichedData.jobValue = anyFound.jobValue ?? anyFound.customerJobValue ?? (anyFound.amount ? anyFound.amount : '');
             }
             setData(enrichedData);
          }
@@ -137,7 +140,7 @@ const PrintContent = () => {
          }, 1200);
          return () => clearTimeout(timer);
       }
-      
+
       if (data && download) {
          const triggerDownload = async () => {
             // Wait for images and layout to settle
@@ -175,33 +178,34 @@ const PrintContent = () => {
 
    const handleExportExcel = () => {
       if (!data) return;
-      
+
       const wb = XLSX.utils.book_new();
       const headerData = [
          ["Outward No", data.outwardNo || ""],
          ["Date", data.date ? new Date(data.date).toLocaleDateString('en-GB') : ""],
-         ["Vendor Name", data.vendorName || data.partyName || ""],
+         [data.partyType === 'vendor' ? "Vendor Name" : "Customer Name", data.vendorName || data.customerName || data.partyName || ""],
          ["Coating Name", data.coatingName || ""],
          ["Purpose", data.purpose || ""],
          ["Vehicle No", data.vehicleNo || data.driverName || ""],
+         [data.partyType === 'customer' ? "Job Value" : "Job Value", data.customerJobValue || data.jobValue || (data.amount ? data.amount : "") || ""],
          ["Notes", data.notes || ""],
          [],
          ["S.NO", "DESCRIPTION", "QUANTITY", "UNIT"]
       ];
-      
+
       const itemsData = (data.items || []).map((item: any, idx: number) => [
          idx + 1,
          item.description || "",
          Number(item.quantity) || 0,
          item.unit || "pcs"
       ]);
-      
+
       const totalQty = itemsData.reduce((sum: number, row: any) => sum + (Number(row[2]) || 0), 0);
       itemsData.push(["", "TOTAL QUANTITY", totalQty, ""]);
-      
+
       const wsData = [...headerData, ...itemsData];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
-      
+
       XLSX.utils.book_append_sheet(wb, ws, "Outward");
       XLSX.writeFile(wb, `Outward_${data.outwardNo || 'Vendor'}.xlsx`);
    };
@@ -223,7 +227,7 @@ const PrintContent = () => {
                <BackButton />
                <h4 className="m-0 fw-bold text-dark text-capitalize">{type} Preview</h4>
             </div>
-            
+
             <div className="d-flex align-items-center gap-3 flex-wrap">
                {isOutwardChallan && (
                   <div className="d-flex align-items-center gap-0 rounded-pill border overflow-hidden" style={{ border: '1.5px solid #dee2e6' }}>
@@ -248,11 +252,11 @@ const PrintContent = () => {
 
                {!isOutwardChallan && (
                   <div className="form-check form-switch mb-0">
-                     <input 
-                        className="form-check-input" 
-                        type="checkbox" 
-                        id="declarationToggle" 
-                        checked={showDeclaration} 
+                     <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="declarationToggle"
+                        checked={showDeclaration}
                         onChange={(e) => setShowDeclaration(e.target.checked)}
                      />
                      <label className="form-check-label small fw-bold text-muted" htmlFor="declarationToggle">
@@ -292,15 +296,15 @@ const PrintContent = () => {
                   />
                )
             ) : (
-               <IndustrialDocument 
-                  data={data} 
-                  type={type} 
-                  company={company} 
-                  settings={{ ...company?.invoiceSettings, showDeclaration }} 
+               <IndustrialDocument
+                  data={data}
+                  type={type}
+                  company={company}
+                  settings={{ ...company?.invoiceSettings, showDeclaration }}
                />
             )}
          </div>
-         
+
          <style jsx>{`
             .print-preview-container {
                min-height: 100vh;
